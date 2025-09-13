@@ -47,7 +47,7 @@ buildExpired = false
     url = "https://x.com/Hex4C59/"
   [[params.socialIcons]]
     name = "RSS"
-    url = "/public/index.xml"
+    url = "/index.xml"
   [[params.socialIcons]]
   name = "leetcode"
   url = "https://www.leetcode.cn/hex4c59"
