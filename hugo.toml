@@ -46,9 +46,6 @@ buildExpired = false
     name = "twitter"
     url = "https://x.com/Hex4C59/"
   [[params.socialIcons]]
-    name = "RSS"
-    url = "/index.xml"
-  [[params.socialIcons]]
   name = "leetcode"
   url = "https://www.leetcode.cn/hex4c59"
   [[params.socialIcons]]
@@ -100,8 +97,3 @@ buildExpired = false
     name = "Tags"
     url = "/tags/"
     weight = 15
-  [[menu.main]]
-  identifier = "rss"
-  name = "RSS"
-  url = "/index.xml"
-  weight = 30
