@@ -1,6 +1,41 @@
-# 文件名: .gitignore
+# 文件名: .github/workflows/deploy-hugo.yml
 
-# Hugo
-public/
-resources/
-.hugo_build.lock
+name: Deploy Hugo Site to Pages
+
+# 触发条件：当 source 分支收到 push 操作时触发
+on:
+  push:
+    branches:
+      - source
+
+# 设置 jobs
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest # 运行环境
+    steps:
+      # 第一步：检出你的代码，包括主题子模块
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: true  # 拉取 Git Submodule
+          fetch-depth: 0    # 拉取所有 history, 以便 hugo lastmod 等功能正常工作
+
+      # 第二步：设置 Hugo 环境
+      - name: Setup Hugo
+        uses: peaceiris/actions-hugo@v2
+        with:
+          hugo-version: 'latest'
+          # extended: true # 如果你的主题需要Sass/SCSS，请取消此行注释
+
+      # 第三步：运行 hugo 命令构建网站
+      - name: Build
+        run: hugo --minify
+
+      # 第四步：部署到 gh-pages 分支
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages # 部署到 gh-pages 分支
+          publish_dir: ./public   # Hugo 生成的静态文件目录
+          cname: www.hex4c59.fun  # 你的自定义域名，Action会自动创建CNAME文件
