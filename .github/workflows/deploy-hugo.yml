@@ -1,4 +1,6 @@
-name: Deploy Hugo site to Pages
+# 文件名: .github/workflows/deploy-hugo.yml (最终精简版)
+
+name: Deploy Hugo Site to Pages
 
 on:
   push:
@@ -11,35 +13,31 @@ permissions:
 
 concurrency:
   group: "pages"
-  cancel-in-progress: false
+  cancel-in-progress: true # 修改为 true，可以自动取消旧的运行
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
           submodules: true
           fetch-depth: 0
-
-      - uses: actions/setup-go@v5
-        with:
-          go-version: stable
-          cache: false
-
+      
       - name: Setup Hugo
-        uses: peaceiris/actions-hugo@v3   # ← 官方已发布 v3
+        uses: peaceiris/actions-hugo@v2 # 使用最稳定的 v2 版本
         with:
-          hugo-version: latest
+          hugo-version: 'latest'
           extended: true
 
       - name: Build
-        run: hugo --buildFuture --minify
+        run: hugo --gc --minify --buildFuture # --gc 会清理旧文件，更稳健
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3   # ← 升级
+        uses: actions/upload-pages-artifact@v3
         with:
-          path: ./public
+          path: ./public # 确保只上传 public 目录
 
   deploy:
     environment:
@@ -50,4 +48,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4   # ← 升级
+        uses: actions/deploy-pages@v4
