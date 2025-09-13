@@ -1,28 +1,27 @@
-# 文件名: hugo.toml
+# 文件名: hugo.toml (修正版)
 
 baseURL = "https://www.hex4c59.fun/"
 languageCode = "zh-cn"
 title = "Hex4C59's Blog"
 theme = "PaperMod"
-paginate = 5 # 每页显示5篇文章
+
+# 使用新的分页配置格式
+[pagination]
+  pageSize = 5
 
 [params]
     author = "Hex4C59"
     description = "这是我的博客描述"
-    # 让主题知道主页应该显示文章列表
     mainSections = ["posts"] 
 
-    # --- 以下是让主页看起来更完整的推荐配置 ---
     [params.homeInfoParams]
         Title = "你好，我是 Hex4C59 👋"
         Content = "欢迎来到我的博客。在这里我会分享一些关于技术和生活的思考。"
 
-    # 社交链接图标配置
     [[params.socialIcons]]
         name = "github"
-        url = "https://github.com/Hex4C59" # 请替换成你的 GitHub 用户名
+        url = "https://github.com/Hex4C59"
 
-# --- 菜单配置保持不变 ---
 [menu]
   [[menu.main]]
     identifier = "archives"
