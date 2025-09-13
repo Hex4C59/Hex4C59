@@ -36,7 +36,7 @@ buildExpired = false
   # 主页的配置
   [params.homeInfoParams]
     Title = "好的想法需要地方降落，否则它们只会飘走!"
-    Content = "欢迎来到我的博客。在这里我会分享一些关于技术和生活的思考。"
+    Content = "👋欢迎来到我的博客。在这里我会分享一些关于技术和生活的思考。"
 
   # 社交图标的配置
   [[params.socialIcons]]
@@ -46,8 +46,11 @@ buildExpired = false
     name = "twitter"
     url = "https://x.com/Hex4C59/"
   [[params.socialIcons]]
+    name = "RSS"
+    url = "/public/index.xml"
+  [[params.socialIcons]]
   name = "leetcode"
-  url = "leetcode.cn/hex4c59"
+  url = "https://www.leetcode.cn/hex4c59"
   [[params.socialIcons]]
     name = "reddit"
     url = "https://www.reddit.com/u/ParticularTwo2653"
