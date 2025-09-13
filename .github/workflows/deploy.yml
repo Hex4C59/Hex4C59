@@ -25,6 +25,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: stable
+          cache: false
 
       - name: Setup Hugo
         uses: peaceiris/actions-hugo@v3   # ← 官方已发布 v3
