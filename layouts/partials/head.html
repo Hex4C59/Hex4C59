@@ -15,7 +15,7 @@
 <meta name="description" content="{{- with .Description -}}{{- . -}}{{- else -}}{{- with .Summary -}}{{- . -}}{{- else -}}{{- .Site.Params.Description -}}{{- end -}}{{- end -}}">
 <meta name="author" content="{{- .Params.author | default .Site.Params.author -}}">
 <link rel="canonical" href="{{ .Permalink }}">
-<link crossorigin="anonymous" href="/assets/css/stylesheet.css" rel="preload stylesheet" as="style">
+<link crossorigin="anonymous" href="{{ "/assets/css/stylesheet.css" | relURL }}" rel="preload stylesheet" as="style">
 
 {{- /* --- 这里是我们手动添加的 Favicon 链接 --- */}}
 <link rel="icon" href="/favicon.png" type="image/png">
