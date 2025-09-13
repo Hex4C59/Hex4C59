@@ -1,35 +1,92 @@
-# 文件名: hugo.toml (修正版)
+# 文件名: hugo.toml (最终版)
 
 baseURL = "https://www.hex4c59.fun/"
 languageCode = "zh-cn"
-title = "Hex4C59's Blog"
+title = "Hex4C59's Blog" # 这里的标题会显示在浏览器标签页上
 theme = "PaperMod"
-
-# 使用新的分页配置格式
 [pagination]
   pageSize = 5
 
+# --- 新增：让文章摘要在主页显示 ---
+[outputs]
+  home = ["HTML", "RSS", "JSON"]
+
+# --- 新增：配置网站主页 ---
 [params]
     author = "Hex4C59"
-    description = "这是我的博客描述"
-    mainSections = ["posts"] 
+    description = "在这里记录我的学习与思考" # 网站的整体描述
+    defaultTheme = "auto" # "light", "dark" 或 "auto"
+    mainSections = ["posts"] # 告诉主页去哪里找文章列表
 
+    # --- 这里是主页的核心配置 ---
     [params.homeInfoParams]
-        Title = "你好，我是 Hex4C59 👋"
-        Content = "欢迎来到我的博客。在这里我会分享一些关于技术和生活的思考。"
+        Title = "好的想法需要地方降落，否则它们只会飘走!" # 主页的大标题
+        Content = "欢迎来到我的博客。在这里我会分享一些关于技术和生活的思考。" # 标题下的简介内容
 
+    # --- 配置社交媒体链接图标 ---
     [[params.socialIcons]]
         name = "github"
-        url = "https://github.com/Hex4C59"
+        url = "https://github.com/Hex4C59" # 替换成你的 GitHub 地址
+
+    [[params.socialIcons]]
+        name = "twitter"
+        url = "https://x.com/Hex4C59/" # 替换成你的 Twitter 地址
+
+    [[params.socialIcons]]
+        name = "email"
+        url = "mailto:liuyang5511@gmail.com" # 修正了 .com 并添加了 mailto:
+
+    [params.assets]
+    favicon = "favicon.png"
+
+
+    # --- 新增：让文章列表显示更多信息 ---
+    [params.cover]
+        hidden = true # 不显示文章的封面图
+        hiddenInList = true # 在文章列表里也不显示
+        hiddenInSingle = true # 在文章内页也不显示
+
+    [params.fuseOpts] # 增强搜索功能
+        isCaseSensitive = false
+        shouldSort = true
+        location = 0
+        distance = 1000
+        threshold = 0.4
+        minMatchCharLength = 0
+        keys = ["title", "permalink", "summary", "content"]
+
+    [params.ShowPostNavLinks]
+    # 在文章末尾显示“上一篇”和“下一篇”的链接
+    enabled = true
+
+     # 显示预计阅读时间
+    ShowReadingTime = true
+
+    # 显示文章的字数统计
+    ShowWordCount = true
+
+    # 在文章列表和文章页面都显示面包屑导航 (例如：主页 > Posts > Why We Think)
+    ShowBreadCrumbs = true
+
 
 [menu]
   [[menu.main]]
-    identifier = "archives"
-    name = "归档"
+    identifier = "posts"
+    name = "Posts"
+    url = "/posts/"
+    weight = 1
+  [[menu.main]]
+    identifier = "archive"
+    name = "Archive" 
     url = "/archives/"
-    weight = 10
+    weight = 5
   [[menu.main]]
     identifier = "search"
-    name = "搜索"
+    name = "Search" 
     url = "/search/"
-    weight = 20
+    weight = 10
+  [[menu.main]]
+    identifier = "tags"
+    name = "Tags" # 标签
+    url = "/tags/"
+    weight = 15
