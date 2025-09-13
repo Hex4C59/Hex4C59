@@ -1,4 +1,4 @@
-{{- /* layouts/partials/head.html */ -}}
+{{- /* layouts/partials/head.html (最终修正版) */ -}}
 
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -17,10 +17,10 @@
 <link rel="canonical" href="{{ .Permalink }}">
 <link crossorigin="anonymous" href="{{ "/assets/css/stylesheet.css" | relURL }}" rel="preload stylesheet" as="style">
 
-{{- /* --- 这里是我们手动添加的 Favicon 链接 --- */}}
-<link rel="icon" href="/favicon.png" type="image/png">
-<link rel="apple-touch-icon" href="/favicon.png">
-{{- /* --- 添加结束 --- */}}
+{{- /* --- 这是我们唯一的、最终的 Favicon 链接 --- */}}
+<link rel="icon" href="/favicon.png?v=2" type="image/png">
+<link rel="apple-touch-icon" href="/favicon.png?v=2">
+{{- /* --- 结束 --- */}}
 
 <meta name="theme-color" content="#2e2e33">
 <meta name="msapplication-TileColor" content="#2e2e33">
@@ -39,8 +39,3 @@
 {{- partial "analytics/gtag.html" . -}}
 {{- end -}}
 {{- partial "head_custom.html" . -}}
-
-{{- /* --- This is our custom Favicon section --- */}}
-<link rel="icon" href="/favicon.png?v=2" type="image/png">
-<link rel="apple-touch-icon" href="/favicon.png?v=2">
-{{- /* --- End of custom Favicon section --- */}}
