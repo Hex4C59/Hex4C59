@@ -45,9 +45,10 @@ buildExpired = false
   [[params.socialIcons]]
     name = "twitter"
     url = "https://x.com/Hex4C59/"
-  [[params.socialIcons]]
-    name = "email"
-    url = "mailto:101914276+Hex4C59@users.noreply.github.com"
+    
+  # [[params.socialIcons]]
+  #   name = "email"
+  #   url = "mailto:101914276+Hex4C59@users.noreply.github.com"
 
   # 资源文件的配置
   # [params.assets]
