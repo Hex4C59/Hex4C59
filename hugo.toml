@@ -1,4 +1,17 @@
-baseURL = 'https://www.hexc459.fun/'
+baseURL = 'https://www.hex4c59.fun/'
 languageCode = 'zh-cn'
-title = 'Hex4C59's Blog'
+title = "Hex4C59's Blog"
 theme = 'PaperMod'
+
+[params]
+    author = "Hex4C59" 
+    description = "这是我的博客描述" 
+[menu]
+  [[menu.main]]
+    identifier = "archives"
+    url = "/archives/"
+    weight = 10
+  [[menu.main]]
+    identifier = "search"
+    url = "/search/"
+    weight = 20
