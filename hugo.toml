@@ -45,6 +45,12 @@ buildExpired = false
   [[params.socialIcons]]
     name = "twitter"
     url = "https://x.com/Hex4C59/"
+  [[params.socialIcons]]
+  name = "leetcode"
+  url = "leetcode.cn/hex4c59"
+  [[params.socialIcons]]
+    name = "reddit"
+    url = "https://www.reddit.com/u/ParticularTwo2653"
 
   # 资源文件的配置
   [params.assets]
@@ -91,3 +97,8 @@ buildExpired = false
     name = "Tags"
     url = "/tags/"
     weight = 15
+  [[menu.main]]
+  identifier = "rss"
+  name = "RSS"
+  url = "/index.xml"
+  weight = 30
