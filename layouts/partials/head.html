@@ -1,0 +1,46 @@
+{{- /* layouts/partials/head.html */ -}}
+
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>{{- .Page.Title | default .Site.Title -}}</title>
+
+{{- if .Keywords -}}
+<meta name="keywords" content="{{- range .Keywords -}}{{- . -}}, {{- end -}}">
+{{- else -}}
+<meta name="keywords" content="{{- range .Params.tags -}}{{- . -}}, {{- end -}}">
+{{- end -}}
+
+<meta name="description" content="{{- with .Description -}}{{- . -}}{{- else -}}{{- with .Summary -}}{{- . -}}{{- else -}}{{- .Site.Params.Description -}}{{- end -}}{{- end -}}">
+<meta name="author" content="{{- .Params.author | default .Site.Params.author -}}">
+<link rel="canonical" href="{{ .Permalink }}">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.css" rel="preload stylesheet" as="style">
+
+{{- /* --- 这里是我们手动添加的 Favicon 链接 --- */}}
+<link rel="icon" href="/favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="/favicon.png">
+{{- /* --- 添加结束 --- */}}
+
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+    </style>
+</noscript>
+{{- if .Site.Params.analytics.google -}}
+{{- partial "analytics/google.html" . -}}
+{{- end -}}
+{{- if .Site.Params.analytics.gtag -}}
+{{- partial "analytics/gtag.html" . -}}
+{{- end -}}
+{{- partial "head_custom.html" . -}}
+
+{{- /* --- This is our custom Favicon section --- */}}
+<link rel="icon" href="/favicon.png?v=2" type="image/png">
+<link rel="apple-touch-icon" href="/favicon.png?v=2">
+{{- /* --- End of custom Favicon section --- */}}
