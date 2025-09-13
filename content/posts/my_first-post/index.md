@@ -8,4 +8,4 @@ tags = ["随笔"]
 +++
 
 种一棵树最好的时间是十年前，第二好的时间是现在。
-![测试](content\posts\my_first-post\image.png)
+![测试](image.png)
