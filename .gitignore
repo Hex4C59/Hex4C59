@@ -1,2 +1,6 @@
-themes\\*
-PaperMod/
+# 文件名: .gitignore
+
+# Hugo
+public/
+resources/
+.hugo_build.lock
