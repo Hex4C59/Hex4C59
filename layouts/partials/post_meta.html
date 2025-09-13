@@ -1,0 +1,34 @@
+{{- /* layouts/partials/post_meta.html */ -}}
+
+{{- /* Date */ -}}
+{{- if not .Date.IsZero -}}
+<span class="post-meta">
+    Date: {{ .Date.Format "January 2, 2006" }}
+</span>
+{{- end -}}
+
+{{- /* Reading Time */ -}}
+{{- if .IsPage -}}
+    {{- if .Site.Params.ShowReadingTime -}}
+    <span class="post-meta">
+        &nbsp;|&nbsp;Estimated Reading Time: {{ .ReadingTime }} min
+    </span>
+    {{- end -}}
+{{- end -}}
+
+{{- /* --- 这里是新增的字数统计 --- */ -}}
+{{- if .IsPage -}}
+    {{- if .Site.Params.ShowWordCount -}}
+    <span class="post-meta">
+        &nbsp;|&nbsp;Word Count: {{ .WordCount }}
+    </span>
+    {{- end -}}
+{{- end -}}
+{{- /* --- 新增部分结束 --- */ -}}
+
+{{- /* Author */ -}}
+{{- with .Params.author -}}
+<span class="post-meta">
+    &nbsp;|&nbsp;Author: {{ . }}
+</span>
+{{- end -}}
