@@ -48,8 +48,10 @@ buildExpired = false
 
   # 资源文件的配置
   [params.assets]
-    favicon = "favicon.png"
-    disableFingerprinting = true
+    favicon = "favicon.ico"
+    favicon16x16 = "favicon.png"
+    favicon32x32 = "favicon.png" 
+    apple_touch_icon = "favicon.png"
 
   # 文章封面的配置
   [params.cover]
