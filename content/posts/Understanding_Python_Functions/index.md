@@ -1,7 +1,7 @@
 +++
 title = "Python函数的一些思考"
 date = 2025-09-14T11:08:49+08:00
-draft = true
+draft = false
 Toc = true
 author = "Hex4C59"
 tags = ["Python", "编程"]
