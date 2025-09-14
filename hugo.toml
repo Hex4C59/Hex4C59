@@ -28,6 +28,7 @@ buildExpired = false
   ShowWordCount = true
   ShowBreadCrumbs = true
   ShowPostNavLinks = true
+  ShowLastmode = true
 
   # 归档页面的配置
   [params.archives]
