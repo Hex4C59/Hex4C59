@@ -4,7 +4,8 @@ baseURL = "https://www.hex4c59.fun/"
 languageCode = "zh-cn"
 title = "Hex4C59's Blog"
 theme = "PaperMod"
-hasCJKLanguage = true 
+hasCJKLanguage = true
+enableGitInfo = true  
 
 # Hugo 会为 "archives", "search", "tags" 等页面自动生成列表，无需手动创建 .md 文件
 enableRobotsTXT = true
