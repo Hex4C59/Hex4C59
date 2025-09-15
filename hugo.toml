@@ -31,6 +31,8 @@ buildExpired = false
   ShowPostNavLinks = true
   ShowLastmode = true
   ShowToc = true
+  math = true
+  katex = "/katex/"
 
   # 归档页面的配置
   [params.archives]
@@ -100,3 +102,8 @@ buildExpired = false
     name = "Tags"
     url = "/tags/"
     weight = 15
+
+[markup]
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = true
