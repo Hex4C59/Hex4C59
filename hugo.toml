@@ -7,6 +7,10 @@ theme = "PaperMod"
 hasCJKLanguage = true
 enableGitInfo = true  
 
+[author]
+  name = "Hex4C59"
+  email = "hex4c59@users.noreply.github.com"
+
 # Hugo 会为 "archives", "search", "tags" 等页面自动生成列表，无需手动创建 .md 文件
 enableRobotsTXT = true
 buildFuture = true
@@ -23,6 +27,7 @@ buildExpired = false
 [params]
   author = "Hex4C59"
   description = "在这里记录我的学习与思考"
+  authorEmail = "hex4c59@users.noreply.github.com"
   defaultTheme = "auto"
   mainSections = ["posts"]
   ShowReadingTime = true
