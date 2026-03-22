@@ -1,0 +1,520 @@
+{{- define "main" }}
+
+<header class="page-header">
+  {{- partial "breadcrumbs.html" . }}
+  <h1>{{ .Title }}</h1>
+  {{- if .Description }}
+  <div class="post-description">
+    {{ .Description | markdownify }}
+  </div>
+  {{- end }}
+</header>
+
+{{- if .Content }}
+<div class="post-content">
+  {{ .Content }}
+</div>
+{{- end }}
+
+{{- $pages := .RegularPages.ByDate.Reverse }}
+{{- $recentPages := first 6 (.RegularPages.ByLastmod.Reverse) }}
+{{- $beginner := where $pages "Params.difficulty" "beginner" }}
+{{- $intermediate := where $pages "Params.difficulty" "intermediate" }}
+{{- $advanced := where $pages "Params.difficulty" "advanced" }}
+{{- $concept := where $pages "Params.article_type" "concept" }}
+{{- $tutorial := where $pages "Params.article_type" "tutorial" }}
+{{- $practice := where $pages "Params.article_type" "practice" }}
+{{- $scratch := newScratch }}
+{{- range $pages }}
+  {{- with .Params.topics }}
+    {{- $scratch.Add "topics" . }}
+  {{- end }}
+  {{- with .Params.frameworks }}
+    {{- $scratch.Add "frameworks" . }}
+  {{- end }}
+  {{- with .Params.series }}
+    {{- $scratch.Add "series" . }}
+  {{- end }}
+{{- end }}
+{{- $topicPool := $scratch.Get "topics" | default (slice) }}
+{{- $frameworkPool := $scratch.Get "frameworks" | default (slice) }}
+{{- $seriesPool := $scratch.Get "series" | default (slice) }}
+{{- $allTopics := sort (uniq $topicPool) }}
+{{- $allFrameworks := sort (uniq $frameworkPool) }}
+{{- $allSeries := sort (uniq $seriesPool) }}
+{{- $latestPage := index $recentPages 0 }}
+
+<section class="agent-hero" aria-label="Agent 专题导航">
+  <div class="agent-hero-card">
+    <p class="agent-eyebrow">专题导航</p>
+    <h2>从概念理解到工程落地，系统整理 Agent 相关内容</h2>
+    <p class="agent-hero-copy">这个页面面向两类读者：一类是刚开始接触 Agent，希望先建立整体框架；另一类是已经开始做项目，希望快速查找工具调用、记忆、规划、评测与实战案例。</p>
+    <div class="agent-hero-actions">
+      <a class="agent-hero-link" href="#agent-learning-path">从入门开始</a>
+      <a class="agent-hero-link" href="#agent-featured-posts">看最近更新</a>
+      <a class="agent-hero-link" href="#agent-all-posts">查看全部文章</a>
+    </div>
+  </div>
+</section>
+
+<section class="agent-overview" aria-label="Agent 专题概览">
+  <div class="agent-overview-grid">
+    <div class="agent-stat-card">
+      <span class="agent-stat-label">文章总数</span>
+      <strong class="agent-stat-value">{{ len $pages }}</strong>
+    </div>
+    <div class="agent-stat-card">
+      <span class="agent-stat-label">专题系列</span>
+      <strong class="agent-stat-value">{{ len $allSeries }}</strong>
+    </div>
+    <div class="agent-stat-card">
+      <span class="agent-stat-label">主题标签</span>
+      <strong class="agent-stat-value">{{ len $allTopics }}</strong>
+    </div>
+    <div class="agent-stat-card">
+      <span class="agent-stat-label">最近更新</span>
+      <strong class="agent-stat-value agent-stat-value-date">{{- with $latestPage -}}{{ .Lastmod.Format "2006-01-02" }}{{- else -}}待开始{{- end -}}</strong>
+    </div>
+  </div>
+</section>
+
+<section id="agent-learning-path" class="agent-section" aria-label="推荐学习路径">
+  <div class="post-content agent-section-heading">
+    <h2>推荐学习路径</h2>
+    <p class="agent-section-intro">如果你准备长期写 Agent 内容，页面最好不仅能展示文章，还能承担“导航”和“路线图”的作用。下面这三条路径分别对应入门认知、系统设计与实践落地。</p>
+  </div>
+
+  <div class="agent-path-grid">
+    <article class="agent-path-card">
+      <span class="agent-path-step">01</span>
+      <h3>入门认知</h3>
+      <p>先建立整体框架，理解 Agent 到底是什么、解决什么问题，以及它和普通聊天机器人、固定工作流之间的区别。</p>
+      <ul>
+        <li>什么是 Agent</li>
+        <li>Agent vs Workflow</li>
+        <li>最小可用 Agent 的组成</li>
+        <li>Tool Use / ReAct / Planning 基本概念</li>
+      </ul>
+    </article>
+
+    <article class="agent-path-card">
+      <span class="agent-path-step">02</span>
+      <h3>系统设计</h3>
+      <p>当你开始真正搭建 Agent，就会遇到上下文边界、状态流转、工具约束、记忆设计与评测方式等工程问题。</p>
+      <ul>
+        <li>Prompt 与上下文管理</li>
+        <li>工具调用与错误恢复</li>
+        <li>短期记忆与长期记忆</li>
+        <li>规划、反思与评测机制</li>
+      </ul>
+    </article>
+
+    <article class="agent-path-card">
+      <span class="agent-path-step">03</span>
+      <h3>实践落地</h3>
+      <p>最后再看真实案例，重点关注一个 Agent 为什么可用、哪里会失败，以及如何在成本、稳定性和效果之间做平衡。</p>
+      <ul>
+        <li>Coding Agent</li>
+        <li>Browser Agent</li>
+        <li>Research / RAG Agent</li>
+        <li>Multi-Agent 协作</li>
+      </ul>
+    </article>
+  </div>
+</section>
+
+<section class="agent-section" aria-label="主题地图">
+  <div class="post-content agent-section-heading">
+    <h2>主题地图</h2>
+    <p class="agent-section-intro">如果你不是按时间顺序读文章，而是想按主题集中看内容，可以优先从下面这些方向切入。</p>
+  </div>
+
+  <div class="agent-topic-grid">
+    <article class="agent-topic-card">
+      <h3>Concepts</h3>
+      <p>理解 Agent 的基本定义、常见范式和边界问题。</p>
+      <div class="agent-chip-row">
+        <span class="agent-chip">agent</span>
+        <span class="agent-chip">workflow</span>
+        <span class="agent-chip">react</span>
+        <span class="agent-chip">reflection</span>
+      </div>
+    </article>
+
+    <article class="agent-topic-card">
+      <h3>Core Components</h3>
+      <p>围绕模型、提示词、工具、记忆、规划与状态管理建立系统结构。</p>
+      <div class="agent-chip-row">
+        <span class="agent-chip">prompt</span>
+        <span class="agent-chip">tools</span>
+        <span class="agent-chip">memory</span>
+        <span class="agent-chip">planning</span>
+      </div>
+    </article>
+
+    <article class="agent-topic-card">
+      <h3>Engineering</h3>
+      <p>关注可观测性、调试、评测、成本、稳定性和失败恢复这些真正决定可用性的细节。</p>
+      <div class="agent-chip-row">
+        <span class="agent-chip">eval</span>
+        <span class="agent-chip">debugging</span>
+        <span class="agent-chip">safety</span>
+        <span class="agent-chip">latency</span>
+      </div>
+    </article>
+
+    <article class="agent-topic-card">
+      <h3>Use Cases</h3>
+      <p>通过具体案例理解不同 Agent 形态如何落地，以及不同场景下的取舍逻辑。</p>
+      <div class="agent-chip-row">
+        <span class="agent-chip">coding</span>
+        <span class="agent-chip">browser</span>
+        <span class="agent-chip">research</span>
+        <span class="agent-chip">multi-agent</span>
+      </div>
+    </article>
+  </div>
+</section>
+
+<section id="agent-featured-posts" class="agent-section" aria-label="最近更新文章">
+  <div class="post-content agent-section-heading">
+    <h2>最近更新</h2>
+    <p class="agent-section-intro">优先展示最近补充或重写过的文章。如果你刚开始写这个专题，可以把这里当成阶段性首页，持续打磨 3 到 5 篇核心内容。</p>
+  </div>
+
+  {{- if gt (len $recentPages) 0 }}
+    {{- range $recentPages }}
+    {{- $excerpt := .Description | default .Summary }}
+    {{- $topics := .Params.topics | default (slice) }}
+    {{- $frameworks := .Params.frameworks | default (slice) }}
+    <article class="post-entry agent-entry agent-entry-featured">
+      <header class="entry-header">
+        <div class="agent-entry-badges">
+          {{- with .Params.difficulty }}
+          <span class="agent-badge agent-badge-difficulty agent-badge-{{ . | lower }}">{{ . | title }}</span>
+          {{- end }}
+          {{- with .Params.article_type }}
+          <span class="agent-badge agent-badge-type">{{ . | title }}</span>
+          {{- end }}
+          {{- with .Params.series }}
+          <span class="agent-badge agent-badge-series">{{ delimit . " / " }}</span>
+          {{- end }}
+        </div>
+        <h2 class="entry-hint-parent">{{ .Title }}</h2>
+      </header>
+
+      <div class="entry-content">
+        <p>{{ $excerpt | plainify | htmlUnescape }}</p>
+      </div>
+
+      {{- with $topics }}
+      <div class="agent-chip-row">
+        {{- range first 5 . }}
+        <span class="agent-chip">#{{ . }}</span>
+        {{- end }}
+      </div>
+      {{- end }}
+
+      {{- with $frameworks }}
+      <div class="agent-chip-row agent-chip-row-secondary">
+        {{- range . }}
+        <span class="agent-chip agent-chip-secondary">{{ . }}</span>
+        {{- end }}
+      </div>
+      {{- end }}
+
+      <footer class="entry-footer agent-entry-footer">
+        <span>发布于 {{ .Date.Format "2006-01-02" }}</span>
+        {{- if ne .Lastmod .Date }}
+        <span>更新于 {{ .Lastmod.Format "2006-01-02" }}</span>
+        {{- end }}
+        <span>{{ .ReadingTime }} 分钟阅读</span>
+      </footer>
+      <a class="entry-link" aria-label="post link to {{ .Title | plainify }}" href="{{ .Permalink }}"></a>
+    </article>
+    {{- end }}
+  {{- else }}
+    <div class="agent-empty-panel">
+      <h3>最近更新区域还没有文章</h3>
+      <p>你已经有了专题首页，下一步可以先写 3 篇最关键的入口文章，例如：什么是 Agent、一个可用 Agent 的最小架构、以及 Tool Use 为什么是 Agent 的核心能力。</p>
+    </div>
+  {{- end }}
+</section>
+
+<section id="agent-all-posts" class="agent-section" aria-label="全部 Agent 文章">
+  <div class="post-content agent-section-heading">
+    <h2>全部文章</h2>
+    <p class="agent-section-intro">支持按难度、类型、主题和框架筛选，也可以切换排序方式。这样页面既能作为专题首页，也能作为后续内容积累后的索引页。</p>
+  </div>
+
+  <div class="agent-overview-grid agent-overview-grid-secondary">
+    <div class="agent-stat-card">
+      <span class="agent-stat-label">入门</span>
+      <strong class="agent-stat-value">{{ len $beginner }}</strong>
+    </div>
+    <div class="agent-stat-card">
+      <span class="agent-stat-label">进阶</span>
+      <strong class="agent-stat-value">{{ len $intermediate }}</strong>
+    </div>
+    <div class="agent-stat-card">
+      <span class="agent-stat-label">高阶</span>
+      <strong class="agent-stat-value">{{ len $advanced }}</strong>
+    </div>
+    <div class="agent-stat-card">
+      <span class="agent-stat-label">概念 / 教程 / 实战</span>
+      <strong class="agent-stat-value agent-stat-value-mixed">{{ len $concept }} / {{ len $tutorial }} / {{ len $practice }}</strong>
+    </div>
+  </div>
+
+  <section class="agent-controls" aria-label="Agent 文章筛选与排序">
+    <div class="agent-control-group">
+      <span class="agent-control-label">难度</span>
+      <div class="agent-filter-row" data-filter-group="difficulty">
+        <button type="button" class="agent-filter-button is-active" data-difficulty="all">全部</button>
+        <button type="button" class="agent-filter-button" data-difficulty="beginner">入门</button>
+        <button type="button" class="agent-filter-button" data-difficulty="intermediate">进阶</button>
+        <button type="button" class="agent-filter-button" data-difficulty="advanced">高阶</button>
+      </div>
+    </div>
+
+    <div class="agent-control-group">
+      <span class="agent-control-label">类型</span>
+      <div class="agent-filter-row" data-filter-group="type">
+        <button type="button" class="agent-filter-button is-active" data-type="all">全部</button>
+        <button type="button" class="agent-filter-button" data-type="concept">概念</button>
+        <button type="button" class="agent-filter-button" data-type="tutorial">教程</button>
+        <button type="button" class="agent-filter-button" data-type="practice">实战</button>
+        <button type="button" class="agent-filter-button" data-type="review">复盘</button>
+        <button type="button" class="agent-filter-button" data-type="eval">评测</button>
+      </div>
+    </div>
+
+    <div class="agent-control-group">
+      <label class="agent-control-label" for="agent-sort-select">排序</label>
+      <select id="agent-sort-select" class="agent-sort-select">
+        <option value="recent">最近更新</option>
+        <option value="newest">最新发布</option>
+        <option value="difficulty">按难度</option>
+        <option value="title">标题 A-Z</option>
+      </select>
+    </div>
+
+    {{- if gt (len $allTopics) 0 }}
+    <div class="agent-control-group">
+      <span class="agent-control-label">主题</span>
+      <div class="agent-filter-row agent-filter-row-tags" data-filter-group="topic">
+        <button type="button" class="agent-filter-button is-active" data-topic="all">全部主题</button>
+        {{- range $allTopics }}
+        <button type="button" class="agent-filter-button" data-topic="{{ . | lower }}">#{{ . }}</button>
+        {{- end }}
+      </div>
+    </div>
+    {{- end }}
+
+    {{- if gt (len $allFrameworks) 0 }}
+    <div class="agent-control-group">
+      <span class="agent-control-label">框架 / 方案</span>
+      <div class="agent-filter-row agent-filter-row-tags" data-filter-group="framework">
+        <button type="button" class="agent-filter-button is-active" data-framework="all">全部框架</button>
+        {{- range $allFrameworks }}
+        <button type="button" class="agent-filter-button" data-framework="{{ . | lower }}">{{ . }}</button>
+        {{- end }}
+      </div>
+    </div>
+    {{- end }}
+  </section>
+
+  <div id="agent-all-post-list" class="agent-post-list">
+    {{- range $pages }}
+    {{- $excerpt := .Description | default .Summary }}
+    {{- $topics := .Params.topics | default (slice) }}
+    {{- $frameworks := .Params.frameworks | default (slice) }}
+    {{- $difficulty := .Params.difficulty | default "unknown" | lower }}
+    {{- $articleType := .Params.article_type | default "unknown" | lower }}
+    <article
+      class="post-entry agent-entry agent-list-entry"
+      data-difficulty="{{ $difficulty }}"
+      data-type="{{ $articleType }}"
+      data-topics="{{ delimit $topics "," | lower }}"
+      data-frameworks="{{ delimit $frameworks "," | lower }}"
+      data-title="{{ .Title | lower }}"
+      data-lastmod="{{ .Lastmod.Format "20060102150405" }}"
+      data-date="{{ .Date.Format "20060102150405" }}">
+      <header class="entry-header">
+        <div class="agent-entry-badges">
+          {{- with .Params.difficulty }}
+          <span class="agent-badge agent-badge-difficulty agent-badge-{{ . | lower }}">{{ . | title }}</span>
+          {{- end }}
+          {{- with .Params.article_type }}
+          <span class="agent-badge agent-badge-type">{{ . | title }}</span>
+          {{- end }}
+          {{- with .Params.series }}
+          <span class="agent-badge agent-badge-series">{{ delimit . " / " }}</span>
+          {{- end }}
+        </div>
+        <h2 class="entry-hint-parent">{{ .Title }}</h2>
+      </header>
+
+      <div class="entry-content">
+        <p>{{ $excerpt | plainify | htmlUnescape }}</p>
+      </div>
+
+      <div class="agent-entry-meta">
+        {{- with $topics }}
+        <div class="agent-chip-row">
+          {{- range first 6 . }}
+          <span class="agent-chip">#{{ . }}</span>
+          {{- end }}
+        </div>
+        {{- end }}
+
+        {{- with $frameworks }}
+        <div class="agent-chip-row agent-chip-row-secondary">
+          {{- range . }}
+          <span class="agent-chip agent-chip-secondary">{{ . }}</span>
+          {{- end }}
+        </div>
+        {{- end }}
+      </div>
+
+      <footer class="entry-footer agent-entry-footer">
+        <span>发布于 {{ .Date.Format "2006-01-02" }}</span>
+        {{- if ne .Lastmod .Date }}
+        <span>更新于 {{ .Lastmod.Format "2006-01-02" }}</span>
+        {{- end }}
+        <span>{{ .ReadingTime }} 分钟阅读</span>
+      </footer>
+      <a class="entry-link" aria-label="post link to {{ .Title | plainify }}" href="{{ .Permalink }}"></a>
+    </article>
+    {{- end }}
+  </div>
+
+  <p id="agent-empty-state" class="agent-empty-state" {{ if eq (len $pages) 0 }}{{ else }}hidden{{ end }}>当前筛选条件下还没有匹配的文章。你可以先写几篇带 `difficulty`、`article_type`、`topics`、`frameworks` 字段的文章，页面会自动生成筛选项。</p>
+</section>
+
+<script>
+  (() => {
+    const list = document.getElementById('agent-all-post-list');
+    if (!list) return;
+
+    const cards = Array.from(list.querySelectorAll('.agent-list-entry'));
+    const difficultyButtons = Array.from(document.querySelectorAll('.agent-filter-button[data-difficulty]'));
+    const typeButtons = Array.from(document.querySelectorAll('.agent-filter-button[data-type]'));
+    const topicButtons = Array.from(document.querySelectorAll('.agent-filter-button[data-topic]'));
+    const frameworkButtons = Array.from(document.querySelectorAll('.agent-filter-button[data-framework]'));
+    const sortSelect = document.getElementById('agent-sort-select');
+    const emptyState = document.getElementById('agent-empty-state');
+
+    let activeDifficulty = 'all';
+    let activeType = 'all';
+    let activeTopic = 'all';
+    let activeFramework = 'all';
+    let sortMode = sortSelect ? sortSelect.value : 'recent';
+
+    const difficultyRank = {
+      beginner: 1,
+      intermediate: 2,
+      advanced: 3,
+      unknown: 99,
+    };
+
+    const setActiveButton = (buttons, key, value) => {
+      buttons.forEach((button) => {
+        button.classList.toggle('is-active', button.dataset[key] === value);
+      });
+    };
+
+    const sortCards = (items) => {
+      const sorted = [...items];
+      sorted.sort((left, right) => {
+        const leftLastmod = Number(left.dataset.lastmod || 0);
+        const rightLastmod = Number(right.dataset.lastmod || 0);
+        const leftDate = Number(left.dataset.date || 0);
+        const rightDate = Number(right.dataset.date || 0);
+        const leftTitle = left.dataset.title || '';
+        const rightTitle = right.dataset.title || '';
+        const leftDifficulty = difficultyRank[left.dataset.difficulty || 'unknown'] || 99;
+        const rightDifficulty = difficultyRank[right.dataset.difficulty || 'unknown'] || 99;
+
+        switch (sortMode) {
+          case 'newest':
+            return rightDate - leftDate || rightLastmod - leftLastmod;
+          case 'difficulty':
+            return leftDifficulty - rightDifficulty || rightLastmod - leftLastmod;
+          case 'title':
+            return leftTitle.localeCompare(rightTitle, 'zh-Hans-CN');
+          case 'recent':
+          default:
+            return rightLastmod - leftLastmod || rightDate - leftDate;
+        }
+      });
+
+      sorted.forEach((card) => list.appendChild(card));
+      return sorted;
+    };
+
+    const applyFilters = () => {
+      const sortedCards = sortCards(cards);
+      let visibleCount = 0;
+
+      sortedCards.forEach((card) => {
+        const matchesDifficulty = activeDifficulty === 'all' || card.dataset.difficulty === activeDifficulty;
+        const matchesType = activeType === 'all' || card.dataset.type === activeType;
+        const topics = (card.dataset.topics || '').split(',').filter(Boolean);
+        const frameworks = (card.dataset.frameworks || '').split(',').filter(Boolean);
+        const matchesTopic = activeTopic === 'all' || topics.includes(activeTopic);
+        const matchesFramework = activeFramework === 'all' || frameworks.includes(activeFramework);
+        const visible = matchesDifficulty && matchesType && matchesTopic && matchesFramework;
+        card.hidden = !visible;
+        if (visible) visibleCount += 1;
+      });
+
+      if (emptyState) {
+        emptyState.hidden = visibleCount !== 0;
+      }
+    };
+
+    difficultyButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        activeDifficulty = button.dataset.difficulty || 'all';
+        setActiveButton(difficultyButtons, 'difficulty', activeDifficulty);
+        applyFilters();
+      });
+    });
+
+    typeButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        activeType = button.dataset.type || 'all';
+        setActiveButton(typeButtons, 'type', activeType);
+        applyFilters();
+      });
+    });
+
+    topicButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        activeTopic = button.dataset.topic || 'all';
+        setActiveButton(topicButtons, 'topic', activeTopic);
+        applyFilters();
+      });
+    });
+
+    frameworkButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        activeFramework = button.dataset.framework || 'all';
+        setActiveButton(frameworkButtons, 'framework', activeFramework);
+        applyFilters();
+      });
+    });
+
+    if (sortSelect) {
+      sortSelect.addEventListener('change', () => {
+        sortMode = sortSelect.value;
+        applyFilters();
+      });
+    }
+
+    applyFilters();
+  })();
+</script>
+
+{{- end }}

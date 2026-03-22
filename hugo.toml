@@ -125,6 +125,11 @@ buildExpired = false
     url = "/leetcode/"
     weight = 5
   [[menu.main]]
+    identifier = "agent"
+    name = "Agent"
+    url = "/agent/"
+    weight = 8
+  [[menu.main]]
     identifier = "archive"
     name = "Archive"
     url = "/archives/"
