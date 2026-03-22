@@ -17,57 +17,285 @@
 {{- end }}
 
 {{- $pages := .RegularPages.ByParam "problem_id" }}
+{{- $recentPages := first 8 (.RegularPages.ByLastmod.Reverse) }}
 {{- $easy := where $pages "Params.difficulty" "easy" }}
 {{- $medium := where $pages "Params.difficulty" "medium" }}
 {{- $hard := where $pages "Params.difficulty" "hard" }}
+{{- $scratch := newScratch }}
+{{- range $pages }}
+  {{- with .Params.tags }}
+    {{- $scratch.Add "tags" . }}
+  {{- end }}
+{{- end }}
+{{- $tagPool := $scratch.Get "tags" | default (slice) }}
+{{- $allTags := sort (uniq $tagPool) }}
 
-<div class="post-content">
+<div class="post-content leetcode-overview">
   <h2>概览</h2>
-  <ul>
-    <li>题解总数：{{ len $pages }}</li>
-    <li>Easy：{{ len $easy }}</li>
-    <li>Medium：{{ len $medium }}</li>
-    <li>Hard：{{ len $hard }}</li>
-  </ul>
+  <div class="leetcode-overview-grid">
+    <div class="leetcode-stat-card">
+      <span class="leetcode-stat-label">题解总数</span>
+      <strong class="leetcode-stat-value">{{ len $pages }}</strong>
+    </div>
+    <div class="leetcode-stat-card">
+      <span class="leetcode-stat-label">Easy</span>
+      <strong class="leetcode-stat-value">{{ len $easy }}</strong>
+    </div>
+    <div class="leetcode-stat-card">
+      <span class="leetcode-stat-label">Medium</span>
+      <strong class="leetcode-stat-value">{{ len $medium }}</strong>
+    </div>
+    <div class="leetcode-stat-card">
+      <span class="leetcode-stat-label">Hard</span>
+      <strong class="leetcode-stat-value">{{ len $hard }}</strong>
+    </div>
+  </div>
 
   <h2>最近更新</h2>
+  <p class="leetcode-section-intro">优先展示最近整理或补充过的题解，卡片中会直接显示题号、难度、标签、语言与摘要。</p>
 </div>
 
-{{- range first 8 (.RegularPages.ByLastmod.Reverse) }}
-<article class="post-entry">
+{{- range $recentPages }}
+{{- $excerpt := .Description | default .Summary }}
+<article class="post-entry leetcode-entry leetcode-entry-featured">
   <header class="entry-header">
+    <div class="leetcode-entry-badges">
+      {{- with .Params.difficulty }}
+      <span class="leetcode-badge leetcode-badge-difficulty leetcode-badge-{{ . | lower }}">{{ . | title }}</span>
+      {{- end }}
+      {{- with .Params.series }}
+      <span class="leetcode-badge leetcode-badge-series">{{ delimit . " / " }}</span>
+      {{- end }}
+    </div>
     <h2 class="entry-hint-parent">{{ .Title }}</h2>
   </header>
+
   <div class="entry-content">
-    <p>{{ .Summary | plainify | htmlUnescape }}</p>
+    <p>{{ $excerpt | plainify | htmlUnescape }}</p>
   </div>
-  <footer class="entry-footer">
-    {{- partial "post_meta.html" . -}}
+
+  {{- with .Params.tags }}
+  <div class="leetcode-chip-row">
+    {{- range first 4 . }}
+    <span class="leetcode-chip">#{{ . }}</span>
+    {{- end }}
+  </div>
+  {{- end }}
+
+  {{- with .Params.languages }}
+  <div class="leetcode-chip-row leetcode-chip-row-secondary">
+    {{- range . }}
+    <span class="leetcode-chip leetcode-chip-secondary">{{ . }}</span>
+    {{- end }}
+  </div>
+  {{- end }}
+
+  <footer class="entry-footer leetcode-entry-footer">
+    <span>发布于 {{ .Date.Format "2006-01-02" }}</span>
+    {{- if ne .Lastmod .Date }}
+    <span>更新于 {{ .Lastmod.Format "2006-01-02" }}</span>
+    {{- end }}
+    <span>{{ .ReadingTime }} 分钟阅读</span>
   </footer>
   <a class="entry-link" aria-label="post link to {{ .Title | plainify }}" href="{{ .Permalink }}"></a>
 </article>
 {{- end }}
 
-<div class="post-content">
+<div class="post-content leetcode-all-posts-header">
   <h2>全部题解</h2>
+  <p class="leetcode-section-intro">支持按难度、标签筛选，并可在题号顺序和最近更新之间切换，方便专题复习或按进度回看。</p>
 </div>
 
-{{- range $pages }}
-<article class="post-entry">
-  <header class="entry-header">
-    <h2 class="entry-hint-parent">
-      {{ .Title }}
-      {{- with .Params.difficulty }}<sup>[{{ . }}]</sup>{{ end }}
-    </h2>
-  </header>
-  <div class="entry-content">
-    <p>{{ .Summary | plainify | htmlUnescape }}</p>
+<section class="leetcode-controls" aria-label="LeetCode 题解筛选与排序">
+  <div class="leetcode-control-group">
+    <span class="leetcode-control-label">难度</span>
+    <div class="leetcode-filter-row" data-filter-group="difficulty">
+      <button type="button" class="leetcode-filter-button is-active" data-difficulty="all">全部</button>
+      <button type="button" class="leetcode-filter-button" data-difficulty="easy">Easy</button>
+      <button type="button" class="leetcode-filter-button" data-difficulty="medium">Medium</button>
+      <button type="button" class="leetcode-filter-button" data-difficulty="hard">Hard</button>
+    </div>
   </div>
-  <footer class="entry-footer">
-    {{- partial "post_meta.html" . -}}
-  </footer>
-  <a class="entry-link" aria-label="post link to {{ .Title | plainify }}" href="{{ .Permalink }}"></a>
-</article>
-{{- end }}
+
+  <div class="leetcode-control-group">
+    <label class="leetcode-control-label" for="leetcode-sort-select">排序</label>
+    <select id="leetcode-sort-select" class="leetcode-sort-select">
+      <option value="problem-asc">题号升序</option>
+      <option value="problem-desc">题号降序</option>
+      <option value="recent">最近更新</option>
+      <option value="newest">最新发布</option>
+      <option value="title">标题 A-Z</option>
+    </select>
+  </div>
+
+  {{- if gt (len $allTags) 0 }}
+  <div class="leetcode-control-group">
+    <span class="leetcode-control-label">标签</span>
+    <div class="leetcode-filter-row leetcode-filter-row-tags" data-filter-group="tag">
+      <button type="button" class="leetcode-filter-button is-active" data-tag="all">全部标签</button>
+      {{- range $allTags }}
+      <button type="button" class="leetcode-filter-button" data-tag="{{ . | lower }}">#{{ . }}</button>
+      {{- end }}
+    </div>
+  </div>
+  {{- end }}
+</section>
+
+<div id="leetcode-all-posts" class="leetcode-post-list">
+  {{- range $pages }}
+  {{- $excerpt := .Description | default .Summary }}
+  {{- $tags := .Params.tags | default (slice) }}
+  <article
+    class="post-entry leetcode-entry leetcode-list-entry"
+    data-problem-id="{{ .Params.problem_id | default 0 }}"
+    data-difficulty="{{ .Params.difficulty | default "unknown" | lower }}"
+    data-tags="{{ delimit $tags "," | lower }}"
+    data-title="{{ .Title | lower }}"
+    data-lastmod="{{ .Lastmod.Format "20060102150405" }}"
+    data-date="{{ .Date.Format "20060102150405" }}">
+    <header class="entry-header">
+      <div class="leetcode-entry-badges">
+        {{- with .Params.difficulty }}
+        <span class="leetcode-badge leetcode-badge-difficulty leetcode-badge-{{ . | lower }}">{{ . | title }}</span>
+        {{- end }}
+        {{- with .Params.series }}
+        <span class="leetcode-badge leetcode-badge-series">{{ delimit . " / " }}</span>
+        {{- end }}
+      </div>
+      <h2 class="entry-hint-parent">{{ .Title }}</h2>
+    </header>
+
+    <div class="entry-content">
+      <p>{{ $excerpt | plainify | htmlUnescape }}</p>
+    </div>
+
+    <div class="leetcode-entry-meta">
+      {{- with $tags }}
+      <div class="leetcode-chip-row">
+        {{- range first 6 . }}
+        <span class="leetcode-chip">#{{ . }}</span>
+        {{- end }}
+      </div>
+      {{- end }}
+
+      {{- with .Params.languages }}
+      <div class="leetcode-chip-row leetcode-chip-row-secondary">
+        {{- range . }}
+        <span class="leetcode-chip leetcode-chip-secondary">{{ . }}</span>
+        {{- end }}
+      </div>
+      {{- end }}
+    </div>
+
+    <footer class="entry-footer leetcode-entry-footer">
+      <span>发布于 {{ .Date.Format "2006-01-02" }}</span>
+      {{- if ne .Lastmod .Date }}
+      <span>更新于 {{ .Lastmod.Format "2006-01-02" }}</span>
+      {{- end }}
+      <span>{{ .ReadingTime }} 分钟阅读</span>
+    </footer>
+    <a class="entry-link" aria-label="post link to {{ .Title | plainify }}" href="{{ .Permalink }}"></a>
+  </article>
+  {{- end }}
+</div>
+
+<p id="leetcode-empty-state" class="leetcode-empty-state" hidden>当前筛选条件下还没有匹配的题解，可以尝试切换难度、标签或排序方式。</p>
+
+<script>
+  (() => {
+    const list = document.getElementById('leetcode-all-posts');
+    if (!list) return;
+
+    const cards = Array.from(list.querySelectorAll('.leetcode-list-entry'));
+    const difficultyButtons = Array.from(document.querySelectorAll('.leetcode-filter-button[data-difficulty]'));
+    const tagButtons = Array.from(document.querySelectorAll('.leetcode-filter-button[data-tag]'));
+    const sortSelect = document.getElementById('leetcode-sort-select');
+    const emptyState = document.getElementById('leetcode-empty-state');
+
+    let activeDifficulty = 'all';
+    let activeTag = 'all';
+    let sortMode = sortSelect ? sortSelect.value : 'problem-asc';
+
+    const setActiveButton = (buttons, key, value) => {
+      buttons.forEach((button) => {
+        button.classList.toggle('is-active', button.dataset[key] === value);
+      });
+    };
+
+    const sortCards = (items) => {
+      const sorted = [...items];
+      sorted.sort((left, right) => {
+        const leftProblemId = Number(left.dataset.problemId || 0);
+        const rightProblemId = Number(right.dataset.problemId || 0);
+        const leftLastmod = Number(left.dataset.lastmod || 0);
+        const rightLastmod = Number(right.dataset.lastmod || 0);
+        const leftDate = Number(left.dataset.date || 0);
+        const rightDate = Number(right.dataset.date || 0);
+        const leftTitle = left.dataset.title || '';
+        const rightTitle = right.dataset.title || '';
+
+        switch (sortMode) {
+          case 'problem-desc':
+            return rightProblemId - leftProblemId;
+          case 'recent':
+            return rightLastmod - leftLastmod || leftProblemId - rightProblemId;
+          case 'newest':
+            return rightDate - leftDate || leftProblemId - rightProblemId;
+          case 'title':
+            return leftTitle.localeCompare(rightTitle, 'zh-Hans-CN');
+          case 'problem-asc':
+          default:
+            return leftProblemId - rightProblemId;
+        }
+      });
+
+      sorted.forEach((card) => list.appendChild(card));
+      return sorted;
+    };
+
+    const applyFilters = () => {
+      const sortedCards = sortCards(cards);
+      let visibleCount = 0;
+
+      sortedCards.forEach((card) => {
+        const matchesDifficulty = activeDifficulty === 'all' || card.dataset.difficulty === activeDifficulty;
+        const tags = (card.dataset.tags || '').split(',').filter(Boolean);
+        const matchesTag = activeTag === 'all' || tags.includes(activeTag);
+        const visible = matchesDifficulty && matchesTag;
+        card.hidden = !visible;
+        if (visible) visibleCount += 1;
+      });
+
+      if (emptyState) {
+        emptyState.hidden = visibleCount !== 0;
+      }
+    };
+
+    difficultyButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        activeDifficulty = button.dataset.difficulty || 'all';
+        setActiveButton(difficultyButtons, 'difficulty', activeDifficulty);
+        applyFilters();
+      });
+    });
+
+    tagButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        activeTag = button.dataset.tag || 'all';
+        setActiveButton(tagButtons, 'tag', activeTag);
+        applyFilters();
+      });
+    });
+
+    if (sortSelect) {
+      sortSelect.addEventListener('change', () => {
+        sortMode = sortSelect.value;
+        applyFilters();
+      });
+    }
+
+    applyFilters();
+  })();
+</script>
 
 {{- end }}

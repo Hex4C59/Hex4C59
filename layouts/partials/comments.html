@@ -1,0 +1,115 @@
+{{- $comments := site.Params.comments }}
+{{- if and (reflect.IsMap $comments) ($comments.enabled | default false) }}
+  {{- $provider := lower ($comments.provider | default "") }}
+
+  {{- if eq $provider "giscus" }}
+    {{- $repo := $comments.repo | default "" }}
+    {{- $repoId := $comments.repoId | default "" }}
+    {{- $category := $comments.category | default "" }}
+    {{- $categoryId := $comments.categoryId | default "" }}
+    {{- $mapping := $comments.mapping | default "pathname" }}
+    {{- $strict := $comments.strict | default "0" }}
+    {{- $reactionsEnabled := $comments.reactionsEnabled | default "1" }}
+    {{- $emitMetadata := $comments.emitMetadata | default "0" }}
+    {{- $inputPosition := $comments.inputPosition | default "top" }}
+    {{- $lang := $comments.lang | default "zh-CN" }}
+    {{- $loading := $comments.loading | default "lazy" }}
+    {{- $lightTheme := $comments.themeLight | default "light" }}
+    {{- $darkTheme := $comments.themeDark | default "dark" }}
+
+    <section class="post-comments comments-giscus">
+      <h2 class="post-comments-title">评论</h2>
+      {{- if and $repo $repoId $category $categoryId }}
+        <p class="post-comments-intro">使用 GitHub 账号登录后即可发表评论，评论会同步到仓库 Discussions。</p>
+        <script
+          src="https://giscus.app/client.js"
+          data-repo="{{ $repo }}"
+          data-repo-id="{{ $repoId }}"
+          data-category="{{ $category }}"
+          data-category-id="{{ $categoryId }}"
+          data-mapping="{{ $mapping }}"
+          data-strict="{{ $strict }}"
+          data-reactions-enabled="{{ $reactionsEnabled }}"
+          data-emit-metadata="{{ $emitMetadata }}"
+          data-input-position="{{ $inputPosition }}"
+          data-theme="{{ $lightTheme }}"
+          data-lang="{{ $lang }}"
+          data-loading="{{ $loading }}"
+          crossorigin="anonymous"
+          async>
+        </script>
+        <script>
+          (() => {
+            const lightTheme = {{ $lightTheme | jsonify }};
+            const darkTheme = {{ $darkTheme | jsonify }};
+
+            const updateGiscusTheme = () => {
+              const iframe = document.querySelector('iframe.giscus-frame');
+              if (!iframe) return;
+
+              const theme = document.body.classList.contains('dark') ? darkTheme : lightTheme;
+              iframe.contentWindow.postMessage(
+                { giscus: { setConfig: { theme } } },
+                'https://giscus.app'
+              );
+            };
+
+            document.addEventListener('DOMContentLoaded', updateGiscusTheme);
+            window.addEventListener('load', updateGiscusTheme);
+
+            const observer = new MutationObserver(updateGiscusTheme);
+            observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+          })();
+        </script>
+      {{- else }}
+        <div class="post-comments-setup">
+          <p>评论功能已经预留完成，但还没有填入 Giscus 的仓库配置。</p>
+          <ol>
+            <li>到 GitHub 仓库开启 Discussions</li>
+            <li>前往 <a href="https://giscus.app/zh-CN" target="_blank" rel="noopener noreferrer">giscus.app</a> 生成配置</li>
+            <li>把 `repo`、`repoId`、`category`、`categoryId` 填入 `hugo.toml` 的 `[params.comments]`</li>
+          </ol>
+        </div>
+      {{- end }}
+    </section>
+  {{- else if eq $provider "utterances" }}
+    {{- $repo := $comments.repo | default "" }}
+    {{- $issueTerm := $comments.issueTerm | default "pathname" }}
+    {{- $label := $comments.label | default "comment" }}
+    {{- $themeLight := $comments.themeLight | default "github-light" }}
+    {{- $themeDark := $comments.themeDark | default "github-dark" }}
+
+    <section class="post-comments comments-utterances">
+      <h2 class="post-comments-title">评论</h2>
+      {{- if $repo }}
+        <p class="post-comments-intro">使用 GitHub 账号登录后即可发表评论，评论会同步到指定仓库 Issues。</p>
+        <script>
+          (() => {
+            const lightTheme = {{ $themeLight | jsonify }};
+            const darkTheme = {{ $themeDark | jsonify }};
+            const currentTheme = document.body.classList.contains('dark') ? darkTheme : lightTheme;
+            const script = document.createElement('script');
+            script.src = 'https://utteranc.es/client.js';
+            script.setAttribute('repo', {{ $repo | jsonify }});
+            script.setAttribute('issue-term', {{ $issueTerm | jsonify }});
+            script.setAttribute('label', {{ $label | jsonify }});
+            script.setAttribute('theme', currentTheme);
+            script.setAttribute('crossorigin', 'anonymous');
+            script.async = true;
+            document.currentScript.parentElement.appendChild(script);
+          })();
+        </script>
+        <p class="post-comments-note">如果你切换站点主题后发现评论区域主题没有同步，刷新一次页面即可。</p>
+      {{- else }}
+        <div class="post-comments-setup">
+          <p>评论功能已经预留完成，但还没有填入 Utterances 的仓库配置。</p>
+          <ol>
+            <li>前往 <a href="https://utteranc.es/" target="_blank" rel="noopener noreferrer">utteranc.es</a> 生成配置</li>
+            <li>把 `repo` 填入 `hugo.toml` 的 `[params.comments]`</li>
+            <li>按需要调整 `issueTerm`、`label` 和主题配置</li>
+          </ol>
+        </div>
+      {{- end }}
+    </section>
+  {{- end }}
+{{- end }}
