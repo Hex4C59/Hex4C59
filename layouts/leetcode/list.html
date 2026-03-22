@@ -1,0 +1,73 @@
+{{- define "main" }}
+
+<header class="page-header">
+  {{- partial "breadcrumbs.html" . }}
+  <h1>{{ .Title }}</h1>
+  {{- if .Description }}
+  <div class="post-description">
+    {{ .Description | markdownify }}
+  </div>
+  {{- end }}
+</header>
+
+{{- if .Content }}
+<div class="post-content">
+  {{ .Content }}
+</div>
+{{- end }}
+
+{{- $pages := .RegularPages.ByParam "problem_id" }}
+{{- $easy := where $pages "Params.difficulty" "easy" }}
+{{- $medium := where $pages "Params.difficulty" "medium" }}
+{{- $hard := where $pages "Params.difficulty" "hard" }}
+
+<div class="post-content">
+  <h2>概览</h2>
+  <ul>
+    <li>题解总数：{{ len $pages }}</li>
+    <li>Easy：{{ len $easy }}</li>
+    <li>Medium：{{ len $medium }}</li>
+    <li>Hard：{{ len $hard }}</li>
+  </ul>
+
+  <h2>最近更新</h2>
+</div>
+
+{{- range first 8 (.RegularPages.ByLastmod.Reverse) }}
+<article class="post-entry">
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">{{ .Title }}</h2>
+  </header>
+  <div class="entry-content">
+    <p>{{ .Summary | plainify | htmlUnescape }}</p>
+  </div>
+  <footer class="entry-footer">
+    {{- partial "post_meta.html" . -}}
+  </footer>
+  <a class="entry-link" aria-label="post link to {{ .Title | plainify }}" href="{{ .Permalink }}"></a>
+</article>
+{{- end }}
+
+<div class="post-content">
+  <h2>全部题解</h2>
+</div>
+
+{{- range $pages }}
+<article class="post-entry">
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">
+      {{ .Title }}
+      {{- with .Params.difficulty }}<sup>[{{ . }}]</sup>{{ end }}
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>{{ .Summary | plainify | htmlUnescape }}</p>
+  </div>
+  <footer class="entry-footer">
+    {{- partial "post_meta.html" . -}}
+  </footer>
+  <a class="entry-link" aria-label="post link to {{ .Title | plainify }}" href="{{ .Permalink }}"></a>
+</article>
+{{- end }}
+
+{{- end }}

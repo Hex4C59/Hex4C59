@@ -1,22 +1,15 @@
-{{- /* layouts/partials/post_meta.html (已添加最后修改时间) */ -}}
-
-{{- /* Date */ -}}
 {{- if not .Date.IsZero -}}
 <span class="post-meta">
     Date: {{ .Date.Format "January 2, 2006" }}
 </span>
 {{- end -}}
 
-{{- /* --- 这里是新增的最后修改时间 --- */ -}}
-{{- /* 仅当最后修改日期与发布日期不同时才显示 */ -}}
 {{- if ne .Lastmod .Date -}}
 <span class="post-meta">
     &nbsp;|&nbsp;Last Updated: {{ .Lastmod.Format "January 2, 2006" }}
 </span>
 {{- end -}}
-{{- /* --- 新增部分结束 --- */ -}}
 
-{{- /* Reading Time */ -}}
 {{- if .IsPage -}}
     {{- if .Site.Params.ShowReadingTime -}}
     <span class="post-meta">
@@ -25,7 +18,6 @@
     {{- end -}}
 {{- end -}}
 
-{{- /* Word Count */ -}}
 {{- if .IsPage -}}
     {{- if .Site.Params.ShowWordCount -}}
     <span class="post-meta">
@@ -34,7 +26,24 @@
     {{- end -}}
 {{- end -}}
 
-{{- /* Author */ -}}
+{{- with .Params.problem_id -}}
+<span class="post-meta">
+    &nbsp;|&nbsp;Problem #{{ . }}
+</span>
+{{- end -}}
+
+{{- with .Params.difficulty -}}
+<span class="post-meta">
+    &nbsp;|&nbsp;Difficulty: {{ . | title }}
+</span>
+{{- end -}}
+
+{{- with .Params.series -}}
+<span class="post-meta">
+    &nbsp;|&nbsp;Series: {{ delimit . ", " }}
+</span>
+{{- end -}}
+
 {{- with .Params.author -}}
 <span class="post-meta">
     &nbsp;|&nbsp;Author: {{ . }}
