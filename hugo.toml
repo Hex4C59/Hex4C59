@@ -76,6 +76,31 @@ buildExpired = false
     hiddenInList = true
     hiddenInSingle = true
 
+  # 评论功能配置（推荐使用 giscus，基于 GitHub Discussions）
+  [params.comments]
+    enabled = true
+    provider = "giscus"
+    repo = "Hex4C59/Hex4C59"
+    repoId = ""
+    category = "Comments"
+    categoryId = ""
+    mapping = "pathname"
+    strict = "0"
+    reactionsEnabled = "1"
+    emitMetadata = "0"
+    inputPosition = "top"
+    lang = "zh-CN"
+    loading = "lazy"
+    themeLight = "light"
+    themeDark = "dark"
+
+  # 如果以后想改用 utterances，可改为：
+  # provider = "utterances"
+  # issueTerm = "pathname"
+  # label = "comment"
+  # themeLight = "github-light"
+  # themeDark = "github-dark"
+
   # 搜索功能的配置
   [params.fuseOpts]
     isCaseSensitive = false
