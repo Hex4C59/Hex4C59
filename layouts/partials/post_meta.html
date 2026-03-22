@@ -38,6 +38,24 @@
 </span>
 {{- end -}}
 
+{{- with .Params.article_type -}}
+<span class="post-meta">
+    &nbsp;|&nbsp;Type: {{ . | title }}
+</span>
+{{- end -}}
+
+{{- with .Params.topics -}}
+<span class="post-meta">
+    &nbsp;|&nbsp;Topics: {{ delimit . ", " }}
+</span>
+{{- end -}}
+
+{{- with .Params.frameworks -}}
+<span class="post-meta">
+    &nbsp;|&nbsp;Frameworks: {{ delimit . ", " }}
+</span>
+{{- end -}}
+
 {{- with .Params.series -}}
 <span class="post-meta">
     &nbsp;|&nbsp;Series: {{ delimit . ", " }}
