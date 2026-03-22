@@ -1,91 +1,460 @@
 +++
-title = "主流大语言模型全景指南：比较与实战选型"
+title = "主流大语言模型全景指南：比较与实战选型（2026 更新）"
 date = 2025-09-28T12:21:41+08:00
+lastmod = 2026-03-22T21:10:00+08:00
 draft = false
-Toc = true
 author = "Hex4C59"
-tags = ['LLMs', '工具']
+description = "结合 2026 年最新官方信息，梳理 OpenAI、Anthropic、Google、xAI、DeepSeek、Qwen、豆包、Kimi、GLM 等主流大模型的定位与选型建议。"
+summary = "从官网入口、产品线变化、能力对比到场景化推荐，帮助你在 2026 年重新理解主流大模型该怎么选。"
+tags = ["LLMs", "AI", "模型选型", "OpenAI", "Claude", "Gemini", "DeepSeek"]
+categories = ["Posts"]
+ShowToc = true
 +++
 
-从2022年底ChatGPT发布以来，到现在短短三年时间，大语言模型（LLMs）迅速崛起，市面上各种大模型层出不穷， 国外的如Chatgpt(openai), Gemini(Google), Grok(XAI), Claude(Anthropic)等，国内的有DeepSeek，阿里的通义千问， 字节的豆包，月之暗面的KIMI, 智谱的GLM，美团的LongCat等。虽然我介绍了这么多大模型，但从身边认识的人来看，大家对这些模型的了解仍然有限，很多人只知道DeepSeek、豆包、KIMI这些模型。因此，我写这篇文章的目的是为了全面介绍主流大语言模型的比较及实战选型，帮助读者理解这些模型的优势与不足，从而在实际应用中做出明智选择。
+大模型更新太快了。2025 年还能用一张简单表格概括的东西，到了 2026 年就已经明显不够用了：OpenAI 已经进入 GPT-5.4 时代，Anthropic 把 Claude 的重点继续押在 coding 和 agent 上，Google 的 Gemini 2.5 Pro 在 AI Studio 和开发者场景里越来越重要，xAI 也从 Grok 3 继续推进到了 Grok 4 系列。国内这边，DeepSeek、Qwen、GLM、Kimi、豆包/Seed 的节奏同样很快。
 
-### 1. 大语言模型使用渠道
+所以这篇文章我直接按 **2026 年 3 月** 的信息重新整理一遍，不再只讲“谁强谁弱”，而是重点回答三个更实际的问题：
 
-想要使用国内的大模型，其实非常简单：只需打开搜索引擎，输入你想用的大模型名称，通常搜索结果的第一条就是它的官方网站。
+1. 现在这些主流模型分别适合干什么；
+2. 如果你是普通用户、开发者、学生党，应该怎么选；
+3. 在“聊天产品体验”和“API/Agent 能力”之间，哪些差异最值得注意。
 
-这里想强调一点：**不要用百度！不要用百度！不要用百度！**
+## 1. 先说结论：2026 年的模型格局已经变了
 
-建议优先使用Google(需要科学上网)，其次可以选择Bing。
+如果只看一句话总结，我会这样概括：
 
-这么简单的一件事，为什么还要专门提醒呢？因为真的有人不会操作。比如下图，就是我在某宝上随便找到的一家店铺
+- **OpenAI**：仍然是最均衡、最适合“全能型工作流”的一档，尤其在专业工作、Agent、工具调用和 computer use 方向上很强。
+- **Anthropic Claude**：依然是很多开发者心中的 coding 首选，长任务、代码理解、多文件修改和 agent 协作体验非常突出。
+- **Google Gemini**：在长上下文、多模态和 Google 生态整合方面很有优势，AI Studio 依然是它非常重要的加分项。
+- **xAI Grok**：实时信息、X 生态、搜索联动是它的鲜明特色，近一年的产品迭代速度也很快。
+- **DeepSeek / Qwen / GLM / Kimi / Seed**：国内阵营已经不能再用“只是便宜替代品”来理解了，很多模型在推理、编码、Agent、长上下文和成本控制上都已经各自形成了明确优势。
 
-<div style="max-width:720px;margin:0 auto;text-align:center;">
-  <figure style="margin:0 0 18px;">
-    <img src="image2.jpg" alt="DeepSeek 某宝截图 1" style="width:auto;max-width:480px;height:auto;border:1px solid #eee;border-radius:4px;display:block;margin:0 auto;">
-    <figcaption style="font-size:0.9em;color:#666;margin-top:8px;">某宝截图 1</figcaption>
-  </figure>
+如果你只想要一句最实用的建议：
 
-  <hr style="border:none;border-top:1px solid #f0f0f0;margin:18px 0;">
+- **想要“最省心的综合体验”**：先看 ChatGPT
+- **想要“代码优先”**：先看 Claude
+- **想要“免费 + 长上下文 + Google 工具链”**：先看 Gemini
+- **想要“国内可直接用 + 性价比高”**：先看 DeepSeek / Qwen / GLM / Kimi
+- **想做 Agent / 自动化 / 多工具编排**：不要只看聊天表现，要重点看工具调用、长上下文、结构化输出和 API 生态
 
-  <figure style="margin:0;">
-    <img src="image1.jpg" alt="DeepSeek 某宝截图 2" style="width:auto;max-width:480px;height:auto;border:1px solid #eee;border-radius:4px;display:block;margin:0 auto;">
-    <figcaption style="font-size:0.9em;color:#666;margin-top:8px;">某宝截图 2</figcaption>
-  </figure>
-</div>
+## 2. 现在去哪里用这些模型
+
+### 国外主流产品入口
+
+截至 2026 年 3 月，几个常见入口建议直接记住：
+
+- **ChatGPT**：`https://chatgpt.com`
+- **Claude**：`https://claude.ai`
+- **Gemini**：`https://gemini.google.com`
+- **Google AI Studio**：`https://aistudio.google.com`
+- **Grok**：`https://grok.com`
+
+如果你是普通用户，优先用它们的官方网页或官方 App；如果你是开发者，再看各家的 API、Studio、Console 和 SDK。
+
+### 国内主流使用方式
+
+国内模型通常没有访问门槛那么高，官网、App、开放平台基本都可以直接使用。常见方向大致是：
+
+- **DeepSeek**：网页 / App / API 都比较成熟
+- **通义千问（Qwen）**：既能在线用，也非常适合开源部署与开发者二次集成
+- **豆包 / Seed**：更偏产品化和多模态能力，也更贴近字节自己的平台生态
+- **Kimi**：在长文本阅读、资料整理、中文使用体验上依然很有存在感
+- **GLM**：开放平台节奏快，模型线丰富，适合国内 API 用户
+
+### 一个现实提醒
+
+国外产品的访问策略、地区限制、登录验证方式、订阅方式变化都很快，所以文章里最容易过时的，反而不是模型本身，而是“怎么注册、怎么付费、怎么访问”。
+
+因此更稳妥的做法是：
+
+- 优先认官网域名
+- 遇到登录/付款限制时，以官方帮助文档和产品页为准
+- 不要长期依赖来路不明的代充、共享号或“镜像站”
+
+## 3. 2026 年最值得关注的产品线变化
+
+这一部分不展开讲 benchmark 细节，先看“产品层面的变化”。
+
+### OpenAI：从聊天模型，继续往专业工作与 Agent 平台走
+
+OpenAI 在 2026 年 3 月主推的是 **GPT-5.4**。从官方信息看，它的重点已经不只是“更聪明”，而是更明确地面向：
+
+- 专业知识工作
+- 长流程任务
+- 工具调用
+- computer use
+- 大规模 Agent 工作流
+
+它的几个值得注意的点：
+
+- 在 ChatGPT、API、Codex 三条线同时推进
+- 支持最长 1M context（API / 特定场景）
+- 强调 tool search、computer use、长任务执行
+- 推出 **GPT-5.4 mini / nano** 这种更适合高并发和子任务分发的轻量模型
+
+这说明 OpenAI 的思路已经非常明显：
+**不是只做一个“聊天更强”的模型，而是在做一个可以承接专业工作流和 Agent 系统的主模型家族。**
+
+### Anthropic：Claude 继续强化 coding 与 agent 能力
+
+Anthropic 这条线的核心没有变：依然非常重视 coding、长任务连续性和可控的 Agent 行为。
+
+Claude 4 系列之后，它的关键词一直很明确：
+
+- 更强的代码能力
+- 更稳定的长任务执行
+- 更好的工具调用
+- 更强的文件记忆与上下文连续性
+- 更适合在 IDE、终端、Agent 产品里工作
+
+如果你平时大量场景都和“读代码、改代码、理解工程结构、持续迭代”有关，那么 Claude 仍然是最值得优先试的一档。
+
+### Google：Gemini 不只是聊天工具，更是开发平台的一部分
+
+很多人低估 Gemini，是因为只拿它和 ChatGPT 做网页版聊天对比。但 Google 这条线的真正优势，从来不只是网页对话本身，而是：
+
+- 长上下文
+- 多模态能力
+- Google 生态整合
+- AI Studio / Vertex AI 的开发者入口
+
+Gemini 2.5 Pro 仍然是现在非常值得关注的一条线，尤其适合：
+
+- 看长文档
+- 看长代码仓库
+- 多模态理解
+- 构建带 Google 云生态的应用
+- 做原型验证和开发测试
+
+如果你是开发者，而不是纯聊天用户，Gemini 在 AI Studio 里的价值通常会比它在网页端更大。
+
+### xAI：Grok 从“有实时信息的聊天机器人”变成完整产品线
+
+很多人对 Grok 的印象还停留在早期，但现在它已经不只是 X 里的一个 AI 按钮。
+
+从官方文档看，xAI 当前面向开发者的主力已经到了 **Grok 4.x** 这一代，并且具备：
+
+- reasoning / non-reasoning 区分
+- structured outputs
+- function calling
+- Web Search / X Search / Code Execution 等工具体系
+- 最高 2M token 级别上下文
+
+所以现在看 Grok，不能只看“会不会搜 X 上的信息”，而要把它当成一个带搜索、Agent、长上下文能力的开发平台来看。
+
+### 国内阵营：从“能用”进入“各自有强项”
+
+这两年国内模型最明显的变化，是产品开始分化得更清楚了：
+
+- 有的强调**开源与本地部署**
+- 有的强调**推理与 Agent**
+- 有的强调**中文体验与产品化**
+- 有的强调**视觉、多模态和企业落地**
+
+现在再说“国内模型都差不多”，已经不准确了。
+
+## 4. 2026 年主流模型对比表
+
+下面这张表不是“实验室 benchmark 排名”，而是更偏实战选型视角。
+
+| 产品/模型线 | 当前值得关注的主力 | 更突出的方向 | 更适合谁 |
+| --- | --- | --- | --- |
+| **OpenAI** | GPT-5.4 / GPT-5.4 mini / nano / o3 系列 | 综合能力、专业工作、Agent、computer use、工具生态 | 想要一套通吃工作流的用户和开发者 |
+| **Anthropic Claude** | Claude 4 系列（Sonnet / Opus） | Coding、长任务、代码理解、Agent 持续执行 | 程序员、IDE/终端重度用户 |
+| **Google Gemini** | Gemini 2.5 Pro | 长上下文、多模态、Google 生态、AI Studio | 需要读长资料、做开发实验、用 Google 生态的人 |
+| **xAI Grok** | Grok 4.x / Fast / Multi-agent | 搜索、X 生态、长上下文、实时信息相关任务 | 高频检索、关注实时信息和 X 数据的人 |
+| **DeepSeek** | DeepSeek-V3.2 / R1 | 性价比、推理、代码、Agent 能力持续增强 | 预算敏感的开发者和普通用户 |
+| **Qwen** | Qwen3 / Qwen3-Coder | 开源生态、编码、Agent、可本地部署 | 想做开源方案、自托管和国产替代的团队 |
+| **豆包 / Seed** | Seed 2.0 Pro / Lite / Mini | 多模态、复杂任务执行、产品化能力 | 更看重产品落地和字节生态的用户 |
+| **Kimi** | Kimi K2 / K2 Think | 中文体验、资料阅读、工具调用、Agent 任务 | 长文阅读、中文办公、资料整理用户 |
+| **GLM** | GLM-5 / GLM-5-Turbo | Agent 长任务、200K 上下文、国内 API 友好 | 想要国内可用 API 和 Agent 能力的开发者 |
+
+这张表里有两个很重要的观察：
+
+### 第一，不要把“聊天体验”和“开发能力”混为一谈
+
+比如：
+
+- 一个模型网页聊天体验一般，不代表它 API 不强
+- 一个模型 benchmark 很高，不代表它写前端、改工程、做工具调用就一定最好
+- 一个产品免费，不代表它适合做生产级 Agent
+
+### 第二，现在真正的分水岭已经不是“会不会回答问题”
+
+到 2026 年，大模型之间真正拉开差距的地方更像是：
+
+- 能不能稳定完成长任务
+- 能不能正确调用工具
+- 能不能处理复杂上下文
+- 能不能保持输出结构稳定
+- 能不能和 IDE、终端、浏览器、文档系统协同工作
+
+也就是说，**“Agent 能力”和“工作流能力”正在变成新的分水岭。**
+
+## 5. 分模型具体怎么理解
+
+### 5.1 OpenAI：最像“工作平台”的模型家族
+
+如果你让我只推荐一个最适合大多数人的国外付费产品，我现在依然会优先考虑 ChatGPT / OpenAI 这一条线。
+
+原因不是它在每个单项上都绝对第一，而是它整体太均衡了：
+
+- 写作、问答、总结、翻译都稳
+- 编程能力强
+- 工具生态成熟
+- Agent 方向推进很快
+- 官方产品线清晰：旗舰、推理、轻量、高并发各有定位
+
+尤其如果你同时做这些事情：
+
+- 日常问答
+- 写代码
+- 看文档
+- 做表格 / 方案 / PPT
+- 想把模型接进自己的工作流
+
+那么 OpenAI 通常是最省心的选择。
+
+### 5.2 Claude：如果你是程序员，大概率仍然绕不过它
+
+Claude 最稳定的标签仍然是：**对程序员非常友好。**
+
+它的优势往往不是“第一句话就秒杀别人”，而是：
+
+- 能持续跟着一个大工程走很久
+- 理解多文件、多模块关系更自然
+- 在修改已有代码而不是从零瞎生成这件事上，体验很好
+- 在 Agent / coding assistant 场景里，经常表现得更像一个靠谱搭档
+
+如果你的主要任务是：
+
+- 修 bug
+- 重构
+- 理解仓库
+- 连续改多文件
+- 让 Agent 帮你推进开发任务
+
+Claude 很值得优先放进第一梯队。
+
+### 5.3 Gemini：不要只用聊天界面评价它
+
+Gemini 的一个常见误区是：很多人只试了网页端几轮问答，就下结论说它“不如谁谁谁”。
+
+但如果你真正的需求是：
+
+- 长文理解
+- 视频 / 图像 / 文本一起处理
+- 在 AI Studio 里做模型实验
+- 和 Google 生态工具配合
+- 快速做 demo 或原型
+
+那 Gemini 往往会比很多人印象里更有竞争力。
+
+它不一定总是“最讨喜”的聊天模型，但它经常是一个**非常有开发价值的模型**。
+
+### 5.4 Grok：适合“实时 + 搜索 + 平台生态”这类需求
+
+Grok 的优势不只在于“它能联网”，而在于它和实时信息体系结合得比较自然，尤其是结合 X 平台时，信息感知会更强。
+
+如果你的任务偏这些方向：
+
+- 追新闻
+- 看实时舆情
+- 找社交平台上的一手内容
+- 用搜索驱动研究流程
+
+那 Grok 会比传统“静态回答型模型”更顺手。
+
+但如果你是纯编程用户，它未必一定是首选。
+
+### 5.5 DeepSeek：最不能再用旧眼光看的国内模型之一
+
+DeepSeek 现在最大的价值，已经不只是“便宜”。
+
+它真正厉害的地方在于：
+
+- 推理能力进步很快
+- 编码和 Agent 能力持续补齐
+- API 使用门槛低
+- 性价比非常突出
+- 在国内开发者群体里已经形成了非常高的实际使用率
+
+如果你是学生党、独立开发者、预算敏感用户，DeepSeek 现在几乎是必须试的一档。
+
+### 5.6 Qwen：开源与 Agent 方向都越来越值得重视
+
+Qwen 这条线现在的价值非常清楚：
+
+- 开源生态强
+- 模型规格丰富
+- 编码方向进步大
+- Agent / Tool Use / 长上下文能力越来越完整
+- 对想做本地部署、自托管和二次开发的人非常友好
+
+尤其是 Qwen3-Coder 这种路线，说明它已经不只是“通用聊天模型”，而是在主动抢 coding/agent 这个高价值场景。
+
+### 5.7 Seed / 豆包、Kimi、GLM：更适合按场景挑，不适合一句话概括
+
+这三条线各有特点：
+
+- **Seed / 豆包**：更适合看产品化、多模态和企业落地
+- **Kimi**：中文长文本、资料整理、阅读体验依然有辨识度
+- **GLM**：模型线非常丰富，Agent、长上下文、国内 API 可用性都值得关注
+
+也就是说，它们不是“备选项”，而是需要按场景选的“专项选手”。
+
+## 6. 如果你要订阅或接 API，应该怎么选
+
+这里直接给实用建议。
+
+### 场景一：普通用户，只想选一个最好用的
+
+优先顺序可以这样考虑：
+
+1. **想要最均衡、最省心**：ChatGPT
+2. **主要是写代码**：Claude
+3. **想先免费试、长文本需求多**：Gemini
+4. **国内无障碍使用优先**：DeepSeek / Kimi / GLM / 豆包
+
+### 场景二：程序员 / 独立开发者
+
+如果你是开发者，我建议别只订一个聊天产品，而是把需求拆开：
+
+- **主力 coding assistant**：Claude 或 OpenAI
+- **低成本 API 批处理 / 子任务**：DeepSeek、Qwen、GLM 的高性价比型号
+- **多模态 / 长上下文实验**：Gemini
+- **搜索驱动研究任务**：Grok
+
+### 场景三：想做 Agent、自动化、工作流编排
+
+重点不要只看“模型聪不聪明”，而要看这些能力：
+
+- 工具调用稳定性
+- 结构化输出能力
+- 长上下文成本
+- 多轮执行中的连贯性
+- SDK / API / 文档成熟度
+- 模型家族是否有 mini / fast / turbo 版本方便做任务分层
+
+从这个视角看：
+
+- **OpenAI**：很适合做完整 Agent 系统
+- **Claude**：很适合 coding agent
+- **Gemini**：很适合长上下文与多模态实验
+- **DeepSeek / Qwen / GLM**：很适合成本敏感和国产替代路线
+- **Grok**：适合强搜索、强实时信息流的 Agent
+
+## 7. 2026 年选模型最容易踩的坑
+
+### 坑 1：把排行榜当成最终答案
+
+benchmark 当然重要，但你真正用起来的体验，往往更受这些东西影响：
+
+- 中文是否稳定
+- 代码风格是否合拍
+- 是否爱乱编
+- 工具调用是否稳定
+- 长任务中会不会跑偏
+- 产品是否容易访问
+
+所以排行榜只能帮你缩小范围，不能替你做最终选择。
+
+### 坑 2：把“免费能用”误解成“适合生产环境”
+
+很多免费模型非常适合日常使用，但如果你要把它接进：
+
+- 自动化流程
+- 生产 API
+- Agent 系统
+- 商业产品
+
+那你要看的就不只是“能不能回答”，还包括：
+
+- 限流
+- 稳定性
+- JSON / function calling 表现
+- 上下文成本
+- 服务 SLA
+
+### 坑 3：忽略产品和 API 是两回事
+
+同一家公司的网页端体验、App 体验、API 能力、Studio 能力，常常不是一回事。
+
+比如：
+
+- 某模型在网页端普通，但 API 很强
+- 某模型聊天好用，但不适合工程集成
+- 某模型免费入口不错，但开发接口不一定最划算
+
+所以选型前，先问自己：
+**我到底是在选聊天产品，还是在选开发平台？**
+
+## 8. 我的实际建议
+
+如果你问我，2026 年普通用户和开发者最值得先试什么，我会这样回答：
+
+### 对普通用户
+
+- 国外：**ChatGPT、Claude、Gemini** 至少各试一轮
+- 国内：**DeepSeek、Kimi、豆包、GLM** 至少各试一轮
+
+### 对开发者
+
+- 必试：**OpenAI、Claude、Gemini、DeepSeek、Qwen、GLM**
+- 按需加试：**Grok、Seed / 豆包、Kimi**
+
+### 对预算敏感用户
+
+先从这几条开始：
+
+- DeepSeek
+- Qwen 开源 / API 路线
+- GLM 的免费或高性价比型号
+- Gemini 的免费入口
+
+### 对做 Agent 的人
+
+优先关注的不是“最会聊天”，而是：
+
+- OpenAI 的 GPT-5.4 系列
+- Claude 的 coding / agent 路线
+- Gemini 的长上下文与多模态能力
+- DeepSeek / Qwen / GLM 的成本与可控性
+
+## 9. 总结
+
+2026 年再看大模型，最重要的变化不是“谁又多了几分 benchmark”，而是**模型正在从“对话工具”变成“工作系统组件”**。
+
+真正的选型思路也应该一起升级：
+
+- 不只看聊天体验
+- 不只看排行榜
+- 不只看单轮回答
+- 要看它能不能进入你的长期工作流
+
+如果只给一句最终结论：
+
+- **全能综合**：OpenAI
+- **代码优先**：Claude
+- **长上下文 / Google 生态**：Gemini
+- **实时搜索 / X 生态**：Grok
+- **国内性价比与普及度**：DeepSeek
+- **开源与自部署**：Qwen
+- **国内 Agent / API 路线**：GLM、Kimi、Seed
+
+这篇文章后面我还会继续更新，因为这个领域半年就是一代，很多今天“只是可用”的模型，几个月后就可能已经变成某个细分场景里的最佳选择。
+
+如果你现在正准备订阅某个产品或接入某个 API，最稳妥的方法不是看谁“最强”，而是先确定你的主要任务到底是什么：
+
+- 聊天问答？
+- 写代码？
+- 读长文？
+- 做 Agent？
+- 控制成本？
+- 还是做企业级集成？
+
+把问题问对了，模型就没那么难选。
 
 ---
 
-接下来，说说怎么使用**国外的大模型**（比如 ChatGPT、Claude、Gemini 等）。
-
-和国内模型不同，这些工具通常**无法直接在国内访问**，必须通过科学上网才能连接到它们的官网。比如：
-
-- **ChatGPT**（OpenAI）：访问 https://chat.openai.com  
-- **Claude**（Anthropic）：访问 https://claude.ai  
-- **Gemini**（Google）：访问 https://gemini.google.com  
-- **Grok**（XAI）：访问 https://grok.ai
-
-使用前，你通常需要：
-1. **稳定的梯子**（这是前提）；
-2. 一个**支持国际服务的邮箱**（如 Gmail等）；  
-3. 部分服务可能需要**绑定境外支付方式**（比如 ChatGPT Plus），但一般免费版足够使用；
-
-这里想强调的几个点：首先，梯子挂的要是非香港的节点，否则有些服务依然无法访问。其次，Gmail 现在注册也需要手机号验证，目前只支持国外的手机号。如果Gmail邮箱未经过验证，是无法使用Claude模型的。
-
-除了这些官网渠道外，还有一些第三方平台集成了这些大模型，用户可以通过这些平台间接使用大模型的功能。比如:
-X里就集成了Grok模型。Gemini模型集成在Google的AI studio里。
-
-<div style="max-width:720px;margin:0 auto;text-align:center;">
-  <figure style="margin:0 0 18px;">
-    <img src="image3.png" alt="X 截图" style="width:auto;max-width:480px;height:auto;border:1px solid #eee;border-radius:4px;display:block;margin:0 auto;">
-    <figcaption style="font-size:0.9em;color:#666;margin-top:8px;">X里Grok截图 1</figcaption>
-  </figure>
-
-  <hr style="border:none;border-top:1px solid #f0f0f0;margin:18px 0;">
-
-  <figure style="margin:0;">
-    <img src="image4.png" alt="Google ai studio" style="width:auto;max-width:480px;height:auto;border:1px solid #eee;border-radius:4px;display:block;margin:0 auto;">
-    <figcaption style="font-size:0.9em;color:#666;margin-top:8px;">Google AI Studio截图</figcaption>
-  </figure>
-</div>
-
----
-### 2. 主流大语言模型比较
-
-| 模型名称 | 开发公司 | 主要特点 |
-| --- | --- | --- |
-| ChatGPT | OpenAI | 问答能力强，代码能力稍逊于Claude |
-| Claude | Anthropic | 写代码永远滴神！ |
-| Gemini | Google | 问答能力强，代码能力一般，英文输出内容比中文好 |
-| Grok | XAI | 网络搜索能力强，适合信息检索 |
-| DeepSeek |  | 问答能力和代码能力都不错，但比不上GPT和Claude |
-| 通义千问 | 阿里 | qwen-coder 写代码还不错 |
-| 豆包 | 字节 | 中规中矩，各方面都不突出，可以生成图片 |
-| KIMI | 月之暗面 | 模型更拟人化，适合对话场景，KIMI 做PPT还不错 |
-| GLM | 智谱 | API价格便宜 |
-| LongCat | 美团 | 没怎么用过，待评估 |
-
-总体来说，国内大模型在问答和代码生成能力上，目前还难以完全媲美国外的顶尖模型，但优势在于免费、无需翻墙、访问便捷。
-
-而像 ChatGPT 和 Claude 这类国外模型，整体表现确实非常出色——尤其是 Claude，在代码生成方面尤为亮眼。但它们的高级版本（如 Claude Pro、ChatGPT Plus）订阅费用较高，对学生党来说不太友好。
-
-相比之下，Gemini 显得有些特别：它的综合能力相对均衡，虽然官网上的高级功能需要付费，但在 Google AI Studio 中集成的版本却是完全免费的。我自己日常主力使用的，就是这个免费版的 Gemini。
+*说明：本文本次更新基于 2026-03 前后的官方产品页、模型文档、发布说明与开放平台信息整理，重点关注产品定位与实战选型，而不是单纯追逐跑分。*

@@ -16,6 +16,9 @@ enableRobotsTXT = true
 buildFuture = true
 buildExpired = false
 
+[frontmatter]
+  lastmod = ["lastmod", ":git", "date", "publishDate"]
+
 [pagination]
   pageSize = 5
 
