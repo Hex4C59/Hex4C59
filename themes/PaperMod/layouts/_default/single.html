@@ -57,7 +57,10 @@
     {{- end }}
   </footer>
 
-  {{- if (.Param "comments") }}
+  {{- $commentsSections := site.Params.comments.sections | default (slice "posts" "leetcode") }}
+  {{- $commentsEnabledForSection := in $commentsSections .Section }}
+  {{- $commentsEnabledForPage := ne (.Param "comments") false }}
+  {{- if and $commentsEnabledForSection $commentsEnabledForPage }}
   {{- partial "comments.html" . }}
   {{- end }}
 </article>

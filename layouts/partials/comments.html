@@ -40,8 +40,8 @@
         </script>
         <script>
           (() => {
-            const lightTheme = {{ $lightTheme | jsonify }};
-            const darkTheme = {{ $darkTheme | jsonify }};
+            const lightTheme = {{ printf "%q" $lightTheme | safeJS }};
+            const darkTheme = {{ printf "%q" $darkTheme | safeJS }};
 
             const updateGiscusTheme = () => {
               const iframe = document.querySelector('iframe.giscus-frame');
