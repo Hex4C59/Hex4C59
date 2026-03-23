@@ -1,7 +1,6 @@
 {{- define "main" }}
 
 {{- $pages := .RegularPages.ByLastmod.Reverse }}
-{{- $recentPages := first 3 $pages }}
 {{- $beginner := where $pages "Params.difficulty" "beginner" }}
 {{- $intermediate := where $pages "Params.difficulty" "intermediate" }}
 {{- $advanced := where $pages "Params.difficulty" "advanced" }}
@@ -18,23 +17,11 @@
 {{- with .Params.frameworks }}
 {{- $scratch.Add "frameworks" . }}
 {{- end }}
-{{- with .Params.series }}
-{{- $scratch.Add "series" . }}
-{{- end }}
 {{- end }}
 {{- $topicPool := $scratch.Get "topics" | default (slice) }}
 {{- $frameworkPool := $scratch.Get "frameworks" | default (slice) }}
-{{- $seriesPool := $scratch.Get "series" | default (slice) }}
 {{- $allTopics := sort (uniq $topicPool) }}
 {{- $allFrameworks := sort (uniq $frameworkPool) }}
-{{- $allSeries := sort (uniq $seriesPool) }}
-{{- $latestPage := index $recentPages 0 }}
-{{- $selection := newScratch }}
-{{- $selection.Set "startPage" $latestPage }}
-{{- if gt (len $beginner) 0 }}
-{{- $selection.Set "startPage" (index $beginner 0) }}
-{{- end }}
-{{- $startPage := $selection.Get "startPage" }}
 {{- $showFullFilters := ge (len $pages) 8 }}
 
 <header class="page-header">
@@ -140,9 +127,9 @@
     {{- $difficulty := .Params.difficulty | default "unknown" | lower }}
     {{- $articleType := .Params.article_type | default "unknown" | lower }}
     <article class="post-entry agent-entry agent-list-entry" data-difficulty="{{ $difficulty }}"
-      data-type="{{ $articleType }}" data-topics="{{ delimit $topics " ," | lower }}"
-      data-frameworks="{{ delimit $frameworks " ," | lower }}" data-title="{{ .Title | lower }}"
-      data-lastmod="{{ .Lastmod.Format " 20060102150405" }}" data-date="{{ .Date.Format " 20060102150405" }}">
+      data-type="{{ $articleType }}" data-topics="{{ delimit $topics "," | lower }}"
+      data-frameworks="{{ delimit $frameworks "," | lower }}" data-title="{{ .Title | lower }}"
+      data-lastmod="{{ .Lastmod.Format "20060102150405" }}" data-date="{{ .Date.Format "20060102150405" }}">
       <div class="agent-entry-bg-gradient"></div>
       <header class="entry-header">
         <div class="agent-entry-badges">

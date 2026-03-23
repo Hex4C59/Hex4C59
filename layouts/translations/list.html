@@ -1,0 +1,286 @@
+{{- define "main" }}
+
+{{- $pages := .RegularPages.ByLastmod.Reverse }}
+{{- $scratch := newScratch }}
+{{- range $pages }}
+  {{- with .Params.topics }}
+    {{- $scratch.Add "topics" . }}
+  {{- end }}
+  {{- with .Params.original_site }}
+    {{- $scratch.Add "sites" (slice .) }}
+  {{- end }}
+{{- end }}
+{{- $topicPool := $scratch.Get "topics" | default (slice) }}
+{{- $sitePool := $scratch.Get "sites" | default (slice) }}
+{{- $allTopics := sort (uniq $topicPool) }}
+{{- $allSites := sort (uniq $sitePool) }}
+{{- $showFullFilters := ge (len $pages) 4 }}
+
+<header class="page-header">
+  {{- partial "breadcrumbs.html" . }}
+  <h1>{{ .Title }}</h1>
+  {{- if .Description }}
+  <div class="post-description">
+    {{ .Description | markdownify }}
+  </div>
+  {{- end }}
+</header>
+
+<section id="translations-all-posts" class="translations-section" aria-label="全部翻译文章">
+
+  {{- if $showFullFilters }}
+  <section class="translations-controls" aria-label="翻译文章筛选与排序">
+    <div class="translations-controls-panel">
+
+      {{- if gt (len $allTopics) 0 }}
+      <div class="translations-control-group">
+        <span class="translations-control-label">主题</span>
+        <div class="translations-filter-row" data-filter-group="topic">
+          <button type="button" class="translations-filter-button is-active" data-topic="all">全部</button>
+          {{- range $allTopics }}
+          <button type="button" class="translations-filter-button" data-topic="{{ . | lower }}">#{{ . }}</button>
+          {{- end }}
+        </div>
+      </div>
+      {{- end }}
+
+      {{- if gt (len $allSites) 1 }}
+      <div class="translations-control-group">
+        <span class="translations-control-label">来源</span>
+        <div class="translations-filter-row" data-filter-group="site">
+          <button type="button" class="translations-filter-button is-active" data-site="all">全部</button>
+          {{- range $allSites }}
+          <button type="button" class="translations-filter-button" data-site="{{ . | lower }}">{{ . }}</button>
+          {{- end }}
+        </div>
+      </div>
+      {{- end }}
+
+      <div class="translations-control-group translations-control-sort">
+        <label class="translations-control-label" for="translations-sort-select">排序</label>
+        <div class="translations-select-wrapper">
+          <select id="translations-sort-select" class="translations-sort-select">
+            <option value="recent">最近翻译</option>
+            <option value="newest">最新发布</option>
+            <option value="title">标题 A-Z</option>
+          </select>
+          <svg class="translations-select-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <path d="m6 9 6 6 6-6" />
+          </svg>
+        </div>
+      </div>
+    </div>
+  </section>
+  {{- end }}
+
+  {{- if and (gt (len $pages) 0) (not $showFullFilters) }}
+  <p class="translations-inline-note">更多筛选功能将在文章数量增加后开放。</p>
+  {{- end }}
+
+  <div id="translations-post-list" class="translations-post-list">
+    {{- range $pages }}
+    {{- $excerpt := .Description | default .Summary }}
+    {{- $topics := .Params.topics | default (slice) }}
+    {{- $originalTitle := .Params.original_title | default "" }}
+    {{- $originalUrl := .Params.original_url | default "" }}
+    {{- $originalAuthor := .Params.original_author | default "" }}
+    {{- $originalSite := .Params.original_site | default "" }}
+    <article class="post-entry translations-entry translations-list-entry"
+      data-topics="{{ delimit $topics "," | lower }}"
+      data-site="{{ $originalSite | lower }}"
+      data-title="{{ .Title | lower }}"
+      data-lastmod="{{ .Lastmod.Format "20060102150405" }}"
+      data-date="{{ .Date.Format "20060102150405" }}">
+      <div class="translations-entry-bg-gradient"></div>
+      <header class="entry-header">
+        <div class="translations-entry-badges">
+          <span class="translations-badge translations-badge-source">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M2 12h20" />
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+            </svg>
+            翻译
+          </span>
+          {{- with $originalSite }}
+          <span class="translations-badge translations-badge-site">{{ . }}</span>
+          {{- end }}
+        </div>
+        <h2 class="entry-hint-parent">{{ .Title }}</h2>
+        {{- if $originalTitle }}
+        <p class="translations-original-title">原文：{{ $originalTitle }}</p>
+        {{- end }}
+      </header>
+
+      <div class="entry-content">
+        <p>{{ $excerpt | plainify | htmlUnescape }}</p>
+      </div>
+
+      <div class="translations-entry-meta">
+        {{- if or $originalAuthor $originalUrl }}
+        <div class="translations-source-info">
+          {{- with $originalAuthor }}
+          <span class="translations-source-author">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+            {{ . }}
+          </span>
+          {{- end }}
+          {{- if $originalUrl }}
+          <a href="{{ $originalUrl }}" class="translations-source-link" target="_blank" rel="noopener noreferrer">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+              <polyline points="15 3 21 3 21 9" />
+              <line x1="10" y1="14" x2="21" y2="3" />
+            </svg>
+            原文链接
+          </a>
+          {{- end }}
+        </div>
+        {{- end }}
+
+        {{- with $topics }}
+        <div class="translations-chip-row">
+          {{- range first 6 . }}
+          <span class="translations-chip">#{{ . }}</span>
+          {{- end }}
+        </div>
+        {{- end }}
+      </div>
+
+      <footer class="entry-footer translations-entry-footer">
+        <div class="translations-entry-time">
+          <span>翻译于 {{ .Date.Format "2006-01-02" }}</span>
+          {{- if ne .Lastmod .Date }}
+          <span class="translations-desktop-only"> · </span>
+          <span>更新于 {{ .Lastmod.Format "2006-01-02" }}</span>
+          {{- end }}
+        </div>
+        <span class="translations-entry-readtime">{{ .ReadingTime }} 分钟阅读</span>
+      </footer>
+      <a class="entry-link" aria-label="post link to {{ .Title | plainify }}" href="{{ .Permalink }}"></a>
+    </article>
+    {{- end }}
+  </div>
+
+  <p id="translations-empty-state" class="translations-empty-state" {{ if eq (len $pages) 0 }}{{ else }}hidden{{ end }}>
+    翻译专区正在建设中，后续将陆续搬运优质英文技术博客的中文翻译。</p>
+</section>
+
+{{- if .Content }}
+<section class="translations-section translations-notes-section" aria-label="阅读说明">
+  <div class="post-content translations-notes-content">
+    {{ .Content }}
+  </div>
+</section>
+{{- end }}
+
+<script>
+  (() => {
+    const list = document.getElementById('translations-post-list');
+    if (!list) return;
+
+    const cards = Array.from(list.querySelectorAll('.translations-list-entry'));
+    const topicButtons = Array.from(document.querySelectorAll('.translations-filter-button[data-topic]'));
+    const siteButtons = Array.from(document.querySelectorAll('.translations-filter-button[data-site]'));
+    const sortSelect = document.getElementById('translations-sort-select');
+    const emptyState = document.getElementById('translations-empty-state');
+
+    let activeTopic = 'all';
+    let activeSite = 'all';
+    let sortMode = sortSelect ? sortSelect.value : 'recent';
+
+    const setActiveButton = (buttons, key, value) => {
+      buttons.forEach((button) => {
+        button.classList.toggle('is-active', button.dataset[key] === value);
+      });
+    };
+
+    const sortCards = (items) => {
+      const sorted = [...items];
+      sorted.sort((left, right) => {
+        const leftLastmod = Number(left.dataset.lastmod || 0);
+        const rightLastmod = Number(right.dataset.lastmod || 0);
+        const leftDate = Number(left.dataset.date || 0);
+        const rightDate = Number(right.dataset.date || 0);
+        const leftTitle = left.dataset.title || '';
+        const rightTitle = right.dataset.title || '';
+
+        switch (sortMode) {
+          case 'newest':
+            return rightDate - leftDate || rightLastmod - leftLastmod;
+          case 'title':
+            return leftTitle.localeCompare(rightTitle, 'zh-Hans-CN');
+          case 'recent':
+          default:
+            return rightLastmod - leftLastmod || rightDate - leftDate;
+        }
+      });
+
+      sorted.forEach((card) => list.appendChild(card));
+      return sorted;
+    };
+
+    const applyFilters = () => {
+      const sortedCards = sortCards(cards);
+      let visibleCount = 0;
+
+      sortedCards.forEach((card) => {
+        const topics = (card.dataset.topics || '').split(',').filter(Boolean);
+        const matchesTopic = activeTopic === 'all' || topics.includes(activeTopic);
+        const matchesSite = activeSite === 'all' || card.dataset.site === activeSite;
+        const visible = matchesTopic && matchesSite;
+        card.hidden = !visible;
+        if (visible) visibleCount += 1;
+      });
+
+      if (emptyState) {
+        emptyState.hidden = visibleCount !== 0;
+      }
+
+      setTimeout(() => {
+        sortedCards.forEach(card => {
+          if (!card.hidden) {
+            card.style.animation = 'none';
+            card.offsetHeight;
+            card.style.animation = null;
+          }
+        });
+      }, 10);
+    };
+
+    topicButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        activeTopic = button.dataset.topic || 'all';
+        setActiveButton(topicButtons, 'topic', activeTopic);
+        applyFilters();
+      });
+    });
+
+    siteButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        activeSite = button.dataset.site || 'all';
+        setActiveButton(siteButtons, 'site', activeSite);
+        applyFilters();
+      });
+    });
+
+    if (sortSelect) {
+      sortSelect.addEventListener('change', () => {
+        sortMode = sortSelect.value;
+        applyFilters();
+      });
+    }
+
+    applyFilters();
+  })();
+</script>
+
+{{- end }}

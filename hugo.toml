@@ -32,7 +32,7 @@ buildExpired = false
   description = "在这里记录我的学习与思考"
   authorEmail = "hex4c59@users.noreply.github.com"
   defaultTheme = "auto"
-  mainSections = ["posts", "leetcode", "agent"]
+  mainSections = ["posts", "leetcode", "agent", "translations"]
   ShowReadingTime = true
   ShowRssButtonInSectionTermList = true
   ShowWordCount = true
@@ -60,8 +60,8 @@ buildExpired = false
     name = "twitter"
     url = "https://x.com/Hex4C59/"
   [[params.socialIcons]]
-  name = "leetcode"
-  url = "https://www.leetcode.cn/hex4c59"
+    name = "leetcode"
+    url = "https://www.leetcode.cn/hex4c59"
   [[params.socialIcons]]
     name = "reddit"
     url = "https://www.reddit.com/u/ParticularTwo2653"
@@ -87,7 +87,7 @@ buildExpired = false
     repoId = "R_kgDOPvFwkg"
     category = "Comments"
     categoryId = "DIC_kwDOPvFwks4C5BOF"
-    sections = ["posts", "leetcode"]
+    sections = ["posts", "leetcode", "translations"]
     mapping = "pathname"
     strict = "0"
     reactionsEnabled = "1"
@@ -132,6 +132,11 @@ buildExpired = false
     name = "Agent"
     url = "/agent/"
     weight = 8
+  [[menu.main]]
+    identifier = "translations"
+    name = "Translations"
+    url = "/translations/"
+    weight = 9
   [[menu.main]]
     identifier = "archive"
     name = "Archive"
