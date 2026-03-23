@@ -436,4 +436,4 @@ def get_analysis_status(task_id: str) -> dict:
 
 *参考：字节技术团队《Agentic Coding 实践》[原文](https://mp.weixin.qq.com/s/Zlwn42KyfjgwfX6lp-JthQ)（需微信登录）*
 
-*下一篇：Coding Agent 实战——从零搭建一个能读代码、跑测试、修 bug 的 Agent*
+*下一篇：[多 Agent 协作：当一个 Agent 不够用时，如何让多个 Agent 分工合作](/agent/multi-agent-collaboration/)*
