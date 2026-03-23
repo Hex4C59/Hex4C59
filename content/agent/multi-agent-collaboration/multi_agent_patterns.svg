@@ -1,0 +1,172 @@
+<svg width="100%" viewBox="0 0 720 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">四种多 Agent 编排模式对比</title>
+  <desc id="desc">从控制权分配角度对比 Supervisor、Handoff、Agent-as-Tool、Peer-to-Peer 四种编排模式。</desc>
+
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <style>
+      .label {
+        font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+        text-anchor: middle;
+      }
+      .card-title {
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .card-body {
+        font-size: 11px;
+        font-weight: 400;
+      }
+      .section-title {
+        font-size: 16px;
+        font-weight: 600;
+      }
+      .tag {
+        font-size: 10px;
+        font-weight: 500;
+      }
+      .line {
+        fill: none;
+        stroke-width: 1.5;
+        marker-end: url(#arrow);
+      }
+    </style>
+  </defs>
+
+  <!-- Title -->
+  <text class="label section-title" x="360" y="30" fill="rgb(68, 68, 65)">四种多 Agent 编排模式</text>
+
+  <!-- Axis labels -->
+  <text class="label card-body" x="180" y="52" fill="rgb(95, 94, 90)">集中控制</text>
+  <text class="label card-body" x="540" y="52" fill="rgb(95, 94, 90)">去中心化</text>
+  <line x1="230" y1="48" x2="490" y2="48" stroke="rgb(95, 94, 90)" stroke-width="1" marker-end="url(#arrow)"/>
+
+  <!-- ===== Pattern 1: Supervisor ===== -->
+  <rect x="18" y="68" width="162" height="200" rx="10" fill="rgb(238, 237, 254)" stroke="rgb(83, 74, 183)" stroke-width="0.5"/>
+  <text class="label card-title" x="99" y="92" fill="rgb(60, 52, 137)">Supervisor</text>
+  <text class="label card-body" x="99" y="112" fill="rgb(83, 74, 183)">集中调度</text>
+
+  <!-- Supervisor mini-diagram -->
+  <rect x="66" y="126" width="66" height="24" rx="4" fill="rgb(225, 245, 238)" stroke="rgb(15, 110, 86)" stroke-width="0.5"/>
+  <text class="label tag" x="99" y="142" fill="rgb(8, 80, 65)">Supervisor</text>
+
+  <line x1="80" y1="150" x2="52" y2="170" class="line" stroke="rgb(83, 74, 183)"/>
+  <line x1="99" y1="150" x2="99" y2="170" class="line" stroke="rgb(83, 74, 183)"/>
+  <line x1="118" y1="150" x2="146" y2="170" class="line" stroke="rgb(83, 74, 183)"/>
+
+  <rect x="32" y="170" width="40" height="20" rx="4" fill="rgb(250, 238, 218)" stroke="rgb(133, 79, 11)" stroke-width="0.5"/>
+  <text class="label tag" x="52" y="184" fill="rgb(99, 56, 6)">W1</text>
+  <rect x="79" y="170" width="40" height="20" rx="4" fill="rgb(250, 238, 218)" stroke="rgb(133, 79, 11)" stroke-width="0.5"/>
+  <text class="label tag" x="99" y="184" fill="rgb(99, 56, 6)">W2</text>
+  <rect x="126" y="170" width="40" height="20" rx="4" fill="rgb(250, 238, 218)" stroke="rgb(133, 79, 11)" stroke-width="0.5"/>
+  <text class="label tag" x="146" y="184" fill="rgb(99, 56, 6)">W3</text>
+
+  <text class="label card-body" x="99" y="214" fill="rgb(83, 74, 183)">Worker 只向</text>
+  <text class="label card-body" x="99" y="228" fill="rgb(83, 74, 183)">Supervisor 汇报</text>
+  <text class="label card-body" x="99" y="248" fill="rgb(83, 74, 183)">全局视图集中</text>
+
+  <!-- ===== Pattern 2: Handoff ===== -->
+  <rect x="192" y="68" width="162" height="200" rx="10" fill="rgb(225, 245, 238)" stroke="rgb(15, 110, 86)" stroke-width="0.5"/>
+  <text class="label card-title" x="273" y="92" fill="rgb(8, 80, 65)">Handoff</text>
+  <text class="label card-body" x="273" y="112" fill="rgb(15, 110, 86)">路由交接</text>
+
+  <!-- Handoff mini-diagram -->
+  <rect x="240" y="126" width="66" height="24" rx="4" fill="rgb(241, 239, 232)" stroke="rgb(95, 94, 90)" stroke-width="0.5"/>
+  <text class="label tag" x="273" y="142" fill="rgb(68, 68, 65)">Router</text>
+
+  <line x1="256" y1="150" x2="228" y2="170" class="line" stroke="rgb(15, 110, 86)"/>
+  <line x1="290" y1="150" x2="318" y2="170" class="line" stroke="rgb(15, 110, 86)"/>
+
+  <rect x="206" y="170" width="46" height="20" rx="4" fill="rgb(238, 237, 254)" stroke="rgb(83, 74, 183)" stroke-width="0.5"/>
+  <text class="label tag" x="229" y="184" fill="rgb(60, 52, 137)">专家A</text>
+  <rect x="296" y="170" width="46" height="20" rx="4" fill="rgb(238, 237, 254)" stroke="rgb(83, 74, 183)" stroke-width="0.5"/>
+  <text class="label tag" x="319" y="184" fill="rgb(60, 52, 137)">专家B</text>
+
+  <text class="label card-body" x="273" y="214" fill="rgb(15, 110, 86)">控制权完整移交</text>
+  <text class="label card-body" x="273" y="228" fill="rgb(15, 110, 86)">专家直接产出结果</text>
+  <text class="label card-body" x="273" y="248" fill="rgb(15, 110, 86)">不经路由中转</text>
+
+  <!-- ===== Pattern 3: Agent-as-Tool ===== -->
+  <rect x="366" y="68" width="162" height="200" rx="10" fill="rgb(250, 238, 218)" stroke="rgb(133, 79, 11)" stroke-width="0.5"/>
+  <text class="label card-title" x="447" y="92" fill="rgb(99, 56, 6)">Agent-as-Tool</text>
+  <text class="label card-body" x="447" y="112" fill="rgb(133, 79, 11)">Agent 作为工具</text>
+
+  <!-- Agent-as-Tool mini-diagram -->
+  <rect x="414" y="126" width="66" height="24" rx="4" fill="rgb(238, 237, 254)" stroke="rgb(83, 74, 183)" stroke-width="0.5"/>
+  <text class="label tag" x="447" y="142" fill="rgb(60, 52, 137)">主 Agent</text>
+
+  <line x1="430" y1="150" x2="410" y2="170" class="line" stroke="rgb(133, 79, 11)"/>
+  <line x1="464" y1="150" x2="484" y2="170" class="line" stroke="rgb(133, 79, 11)"/>
+
+  <rect x="388" y="170" width="46" height="20" rx="4" fill="rgb(241, 239, 232)" stroke="rgb(95, 94, 90)" stroke-width="0.5"/>
+  <text class="label tag" x="411" y="184" fill="rgb(68, 68, 65)">子A</text>
+  <rect x="462" y="170" width="46" height="20" rx="4" fill="rgb(241, 239, 232)" stroke="rgb(95, 94, 90)" stroke-width="0.5"/>
+  <text class="label tag" x="485" y="184" fill="rgb(68, 68, 65)">子B</text>
+
+  <!-- return arrows (dashed) -->
+  <line x1="411" y1="190" x2="436" y2="198" stroke="rgb(95, 94, 90)" stroke-width="1" stroke-dasharray="3 2" marker-end="url(#arrow)"/>
+  <line x1="485" y1="190" x2="458" y2="198" stroke="rgb(95, 94, 90)" stroke-width="1" stroke-dasharray="3 2" marker-end="url(#arrow)"/>
+
+  <text class="label card-body" x="447" y="220" fill="rgb(133, 79, 11)">主 Agent 保持控制</text>
+  <text class="label card-body" x="447" y="234" fill="rgb(133, 79, 11)">子 Agent 返回结果</text>
+  <text class="label card-body" x="447" y="248" fill="rgb(133, 79, 11)">独立上下文执行</text>
+
+  <!-- ===== Pattern 4: Peer-to-Peer ===== -->
+  <rect x="540" y="68" width="162" height="200" rx="10" fill="rgb(252, 230, 227)" stroke="rgb(201, 77, 61)" stroke-width="0.5"/>
+  <text class="label card-title" x="621" y="92" fill="rgb(140, 41, 29)">Peer-to-Peer</text>
+  <text class="label card-body" x="621" y="112" fill="rgb(201, 77, 61)">对等协作</text>
+
+  <!-- Peer-to-Peer mini-diagram -->
+  <rect x="562" y="130" width="36" height="20" rx="4" fill="rgb(250, 238, 218)" stroke="rgb(133, 79, 11)" stroke-width="0.5"/>
+  <text class="label tag" x="580" y="144" fill="rgb(99, 56, 6)">A1</text>
+  <rect x="624" y="130" width="36" height="20" rx="4" fill="rgb(250, 238, 218)" stroke="rgb(133, 79, 11)" stroke-width="0.5"/>
+  <text class="label tag" x="642" y="144" fill="rgb(99, 56, 6)">A2</text>
+  <rect x="593" y="168" width="36" height="20" rx="4" fill="rgb(250, 238, 218)" stroke="rgb(133, 79, 11)" stroke-width="0.5"/>
+  <text class="label tag" x="611" y="182" fill="rgb(99, 56, 6)">A3</text>
+
+  <!-- Peer connections (bidirectional dashed) -->
+  <line x1="598" y1="140" x2="624" y2="140" stroke="rgb(201, 77, 61)" stroke-width="1" stroke-dasharray="3 2"/>
+  <line x1="590" y1="150" x2="600" y2="168" stroke="rgb(201, 77, 61)" stroke-width="1" stroke-dasharray="3 2"/>
+  <line x1="636" y1="150" x2="622" y2="168" stroke="rgb(201, 77, 61)" stroke-width="1" stroke-dasharray="3 2"/>
+
+  <text class="label card-body" x="621" y="210" fill="rgb(201, 77, 61)">无中心调度者</text>
+  <text class="label card-body" x="621" y="224" fill="rgb(201, 77, 61)">共享任务板协调</text>
+  <text class="label card-body" x="621" y="238" fill="rgb(201, 77, 61)">直接通信与讨论</text>
+  <text class="label card-body" x="621" y="252" fill="rgb(201, 77, 61)">成本最高</text>
+
+  <!-- Bottom: Tradeoff bar -->
+  <rect x="18" y="290" width="684" height="56" rx="8" fill="rgb(241, 239, 232)" stroke="rgb(95, 94, 90)" stroke-width="0.5"/>
+
+  <text class="label card-body" x="99" y="310" fill="rgb(68, 68, 65)" font-weight="500">可预测性 高</text>
+  <text class="label card-body" x="99" y="328" fill="rgb(68, 68, 65)" font-weight="500">调试难度 低</text>
+
+  <text class="label card-body" x="621" y="310" fill="rgb(68, 68, 65)" font-weight="500">协调灵活性 高</text>
+  <text class="label card-body" x="621" y="328" fill="rgb(68, 68, 65)" font-weight="500">适应性 强</text>
+
+  <!-- Arrow indicating spectrum -->
+  <line x1="200" y1="318" x2="520" y2="318" stroke="rgb(95, 94, 90)" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Bottom recommendation -->
+  <rect x="18" y="366" width="684" height="44" rx="8" fill="rgb(225, 245, 238)" stroke="rgb(15, 110, 86)" stroke-width="0.5"/>
+  <text class="label card-body" x="360" y="384" fill="rgb(8, 80, 65)" font-weight="500">选择原则：从最简单的模式开始，只在确实需要更高协调灵活性时才升级</text>
+  <text class="label card-body" x="360" y="400" fill="rgb(15, 110, 86)">大多数场景 Agent-as-Tool 就够了 → 需要讨论时才考虑 Peer-to-Peer</text>
+
+  <!-- Real product mapping -->
+  <rect x="18" y="428" width="684" height="78" rx="8" fill="white" stroke="rgb(95, 94, 90)" stroke-width="0.5"/>
+  <text class="label card-body" x="360" y="448" fill="rgb(68, 68, 65)" font-weight="600">真实产品映射</text>
+
+  <text class="label card-body" x="99" y="470" fill="rgb(83, 74, 183)">Cursor Task</text>
+  <text class="label card-body" x="99" y="486" fill="rgb(83, 74, 183)">Supervisor +</text>
+  <text class="label card-body" x="99" y="498" fill="rgb(83, 74, 183)">Agent-as-Tool</text>
+
+  <text class="label card-body" x="273" y="470" fill="rgb(15, 110, 86)">OpenAI SDK</text>
+  <text class="label card-body" x="273" y="486" fill="rgb(15, 110, 86)">Handoff</text>
+
+  <text class="label card-body" x="447" y="470" fill="rgb(133, 79, 11)">Claude Code</text>
+  <text class="label card-body" x="447" y="486" fill="rgb(133, 79, 11)">Subagent</text>
+
+  <text class="label card-body" x="621" y="470" fill="rgb(201, 77, 61)">Claude Code</text>
+  <text class="label card-body" x="621" y="486" fill="rgb(201, 77, 61)">Agent Teams</text>
+</svg>
