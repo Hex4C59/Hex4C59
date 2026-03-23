@@ -8,6 +8,7 @@ summary = "系统解释什么是 Agent，为什么它不只是一个会聊天的
 tags = ["Agent", "AI", "LLM"]
 categories = ["Agent"]
 series = ["agent-engineering"]
+series_order = 1
 difficulty = "beginner"
 article_type = "concept"
 topics = ["agent", "workflow", "tools", "planning"]
@@ -242,4 +243,3 @@ Agent 往往意味着多轮推理、多次工具调用和更多状态管理。�
 4. Tool Use 是 Agent 最关键的能力之一，因为它决定系统能不能真正和外部世界发生交互。
 5. 不是所有任务都需要 Agent，只有当任务路径不确定、需要动态调整、并且依赖外部能力时，它的价值才会真正体现出来。
 
-接下来，如果要继续往下读，我觉得最自然的下一步就是：**为什么 Tool Use 是 Agent 的核心能力，以及一个可用 Agent 的最小架构应该怎么设计。**

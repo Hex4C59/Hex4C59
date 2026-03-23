@@ -1,5 +1,65 @@
-{{- $pages := where site.RegularPages "Type" "in" site.Params.mainSections }}
-{{- if and (gt (len $pages) 1) (in $pages . ) }}
+{{- $pageSeries := .Params.series | default (slice) -}}
+{{- $hasOrderedSeries := and .IsPage (gt (len $pageSeries) 0) .Params.series_order -}}
+
+{{- if $hasOrderedSeries -}}
+  {{- $seriesPages := sort (where site.RegularPages "Params.series" "intersect" $pageSeries) "Params.series_order" "asc" -}}
+  {{- $navScratch := newScratch -}}
+  {{- $navScratch.Set "currentIndex" -1 -}}
+
+  {{- range $idx, $item := $seriesPages -}}
+    {{- if eq $item.RelPermalink $.RelPermalink -}}
+      {{- $navScratch.Set "currentIndex" $idx -}}
+    {{- end -}}
+  {{- end -}}
+
+  {{- $currentIndex := $navScratch.Get "currentIndex" -}}
+  {{- if ge $currentIndex 0 -}}
+    {{- if gt $currentIndex 0 -}}
+      {{- $navScratch.Set "prevPage" (index $seriesPages (sub $currentIndex 1)) -}}
+    {{- end -}}
+    {{- if lt (add $currentIndex 1) (len $seriesPages) -}}
+      {{- $navScratch.Set "nextPage" (index $seriesPages (add $currentIndex 1)) -}}
+    {{- end -}}
+
+    {{- $prevPage := $navScratch.Get "prevPage" -}}
+    {{- $nextPage := $navScratch.Get "nextPage" -}}
+    {{- if or $prevPage $nextPage -}}
+<nav class="series-paginav" aria-label="系列文章导航">
+  <div class="series-paginav-header">
+    <span class="series-paginav-kicker">系列导航</span>
+    <span class="series-paginav-progress">第 {{ .Params.series_order }} / {{ len $seriesPages }} 篇</span>
+  </div>
+  <div class="series-paginav-grid">
+    {{- with $prevPage -}}
+    <a class="series-paginav-card" href="{{ .Permalink }}">
+      <span class="series-paginav-direction">← 上一篇</span>
+      <strong class="series-paginav-title">{{ .LinkTitle }}</strong>
+      {{- $summary := .Description | default (.Summary | plainify) -}}
+      {{- with $summary }}
+      <span class="series-paginav-summary">{{ . | plainify | truncate 110 }}</span>
+      {{- end }}
+      <span class="series-paginav-meta">第 {{ .Params.series_order }} 篇</span>
+    </a>
+    {{- end -}}
+
+    {{- with $nextPage -}}
+    <a class="series-paginav-card" href="{{ .Permalink }}">
+      <span class="series-paginav-direction">下一篇 →</span>
+      <strong class="series-paginav-title">{{ .LinkTitle }}</strong>
+      {{- $summary := .Description | default (.Summary | plainify) -}}
+      {{- with $summary }}
+      <span class="series-paginav-summary">{{ . | plainify | truncate 110 }}</span>
+      {{- end }}
+      <span class="series-paginav-meta">第 {{ .Params.series_order }} 篇</span>
+    </a>
+    {{- end -}}
+  </div>
+</nav>
+    {{- end -}}
+  {{- end -}}
+{{- else -}}
+  {{- $pages := where site.RegularPages "Type" "in" site.Params.mainSections }}
+  {{- if and (gt (len $pages) 1) (in $pages . ) }}
 <nav class="paginav">
   {{- with $pages.Next . }}
   <a class="prev" href="{{ .Permalink }}">
@@ -16,4 +76,5 @@
   </a>
   {{- end }}
 </nav>
+  {{- end }}
 {{- end }}

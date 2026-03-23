@@ -8,6 +8,7 @@ summary = "系统分析 ReAct 的来源、执行结构、工程实现、核心�
 tags = ["Agent", "ReAct", "Reasoning", "Tool Use", "LLM"]
 categories = ["Agent"]
 series = ["agent-engineering"]
+series_order = 4
 difficulty = "advanced"
 article_type = "concept"
 topics = ["react", "reasoning", "tool-use", "agent", "planning"]
@@ -398,4 +399,3 @@ ReAct 做的事情其实很简单：**在行动之前，先把想法写出来**�
 
 ---
 
-*下一篇：Planning——当 ReAct 不够用时，Agent 如何提前分解目标、制定执行计划*

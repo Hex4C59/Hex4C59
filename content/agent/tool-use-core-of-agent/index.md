@@ -8,6 +8,7 @@ summary = "系统分析 Tool Use 在 Agent 中的角色，涵盖函数调用协�
 tags = ["Agent", "Tool Use", "Function Calling", "LLM"]
 categories = ["Agent"]
 series = ["agent-engineering"]
+series_order = 2
 difficulty = "advanced"
 article_type = "concept"
 topics = ["tool-use", "function-calling", "architecture", "llm"]
@@ -495,5 +496,3 @@ MCP（Model Context Protocol）想解决的，就是这个问题。
 - 权限边界是不是足够安全
 
 所以 Tool Use 是能力入口，但把这个入口设计好，本身就是一项严肃的工程工作。
-
-下一篇，我打算聊聊 Agent 的上下文管理：**为什么长任务里 Agent 会"失忆"**，如何设计状态管理让它保持方向感。
