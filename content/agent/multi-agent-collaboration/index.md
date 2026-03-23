@@ -587,22 +587,7 @@ Peer-to-Peer 模式的成本增长尤其快：Agent 之间的每次消息交换�
 
 做一个简单的决策检查：
 
-```text
-1. 任务能否自然分解成互相独立的子任务？
-   → 否：用单 Agent + Planning
-   → 是：继续
-
-2. 子任务是否需要并行执行以节省时间？
-   → 否：用单 Agent 串行执行
-   → 是：继续
-
-3. 子任务之间是否需要互相交流和讨论？
-   → 否：用 Agent-as-Tool 或 Supervisor
-   → 是：用 Peer-to-Peer（但要接受高成本）
-
-4. 是否有明确的请求类型需要路由到不同专家？
-   → 是：用 Handoff
-```
+![多 Agent 决策检查](multi_agent_decision_checklist.svg)
 
 **多 Agent 不是"更高级"的 Agent 架构。** 它是一种在特定任务结构下才有优势的设计选择。如果单 Agent 能搞定，单 Agent 永远是更好的选择——更简单、更便宜、更容易调试。
 

@@ -1,0 +1,54 @@
+<svg width="100%" viewBox="0 0 680 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t2 d2">
+  <title id="t2">串行调用与并行调用</title>
+  <desc id="d2">多工具协作的两种编排模式：串行依赖链和并行汇聚。</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <style>
+      .label { font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+      .t { font-size: 14px; font-weight: 500; }
+      .b { font-size: 12px; font-weight: 400; }
+      .s { font-size: 13px; font-weight: 600; }
+      .code { font-size: 11px; font-weight: 500; font-family: "SF Mono", "Fira Code", Menlo, monospace; }
+    </style>
+  </defs>
+
+  <text class="label s" x="160" y="24" text-anchor="middle" fill="rgb(60, 52, 137)">串行调用</text>
+  <rect x="20" y="40" width="120" height="36" rx="6" fill="rgb(238, 237, 254)" stroke="rgb(83, 74, 183)" stroke-width="0.5"/>
+  <text class="label code" x="80" y="62" text-anchor="middle" fill="rgb(60, 52, 137)">search_web</text>
+  <line x1="80" y1="78" x2="80" y2="96" stroke="rgb(115, 114, 108)" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <text class="label b" x="92" y="92" text-anchor="start" fill="rgb(95, 94, 90)">URL</text>
+  <rect x="20" y="100" width="120" height="36" rx="6" fill="rgb(238, 237, 254)" stroke="rgb(83, 74, 183)" stroke-width="0.5"/>
+  <text class="label code" x="80" y="122" text-anchor="middle" fill="rgb(60, 52, 137)">fetch_url</text>
+  <line x1="80" y1="138" x2="80" y2="156" stroke="rgb(115, 114, 108)" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <text class="label b" x="92" y="152" text-anchor="start" fill="rgb(95, 94, 90)">内容</text>
+  <rect x="20" y="160" width="120" height="36" rx="6" fill="rgb(225, 245, 238)" stroke="rgb(15, 110, 86)" stroke-width="0.5"/>
+  <text class="label code" x="80" y="182" text-anchor="middle" fill="rgb(8, 80, 65)">summarize</text>
+  <text class="label b" x="160" y="120" text-anchor="start" fill="rgb(95, 94, 90)">前一步的输出</text>
+  <text class="label b" x="160" y="136" text-anchor="start" fill="rgb(95, 94, 90)">= 下一步的输入</text>
+
+  <line x1="340" y1="10" x2="340" y2="230" stroke="rgb(95, 94, 90)" stroke-width="0.5" stroke-dasharray="4 3" opacity="0.4"/>
+
+  <text class="label s" x="510" y="24" text-anchor="middle" fill="rgb(8, 80, 65)">并行调用</text>
+  <rect x="370" y="40" width="140" height="32" rx="6" fill="rgb(238, 237, 254)" stroke="rgb(83, 74, 183)" stroke-width="0.5"/>
+  <text class="label code" x="440" y="60" text-anchor="middle" fill="rgb(60, 52, 137)">search("topic A")</text>
+  <rect x="370" y="80" width="140" height="32" rx="6" fill="rgb(238, 237, 254)" stroke="rgb(83, 74, 183)" stroke-width="0.5"/>
+  <text class="label code" x="440" y="100" text-anchor="middle" fill="rgb(60, 52, 137)">search("topic B")</text>
+  <rect x="370" y="120" width="140" height="32" rx="6" fill="rgb(238, 237, 254)" stroke="rgb(83, 74, 183)" stroke-width="0.5"/>
+  <text class="label code" x="440" y="140" text-anchor="middle" fill="rgb(60, 52, 137)">fetch_database</text>
+
+  <line x1="512" y1="56" x2="548" y2="96" stroke="rgb(115, 114, 108)" stroke-width="1.2"/>
+  <line x1="512" y1="96" x2="548" y2="96" stroke="rgb(115, 114, 108)" stroke-width="1.2"/>
+  <line x1="512" y1="136" x2="548" y2="96" stroke="rgb(115, 114, 108)" stroke-width="1.2"/>
+
+  <rect x="550" y="78" width="80" height="36" rx="6" fill="rgb(250, 238, 218)" stroke="rgb(133, 79, 11)" stroke-width="0.5"/>
+  <text class="label b" x="590" y="100" text-anchor="middle" fill="rgb(99, 56, 6)">合并</text>
+
+  <line x1="590" y1="116" x2="590" y2="148" stroke="rgb(115, 114, 108)" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <rect x="550" y="152" width="80" height="36" rx="6" fill="rgb(225, 245, 238)" stroke="rgb(15, 110, 86)" stroke-width="0.5"/>
+  <text class="label b" x="590" y="174" text-anchor="middle" fill="rgb(8, 80, 65)">分析</text>
+
+  <text class="label b" x="510" y="216" text-anchor="middle" fill="rgb(95, 94, 90)">独立任务同时执行，结果汇总</text>
+</svg>

@@ -55,17 +55,7 @@ ReAct 把两者结合：**在每次行动之前，先显式写出推理步骤**�
 
 ReAct 的执行轨迹由三种元素交替组成：
 
-```text
-Thought: （模型的内部推理，解释当前的判断和下一步计划）
-Action:  （决定调用什么工具，以及参数）
-Observation: （工具返回的结果）
-
-→ 然后再次 Thought → Action → Observation → ...
-
-→ 直到模型判断任务完成：
-Thought: 我已经拿到足够的信息，可以给出最终答案。
-Answer: （最终回答）
-```
+![ReAct 循环结构](react_element_sequence.svg)
 
 用一个具体例子来看，假设用户问：“LangChain 和 LlamaIndex 目前哪个 GitHub star 更多？”
 
