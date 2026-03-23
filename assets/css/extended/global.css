@@ -1,0 +1,653 @@
+/* =================================================================
+ * Global Visual Enhancements
+ * Layered on top of PaperMod — no theme files modified
+ * ================================================================= */
+
+/* -----------------------------------------------------------------
+ * 1. Refined Color Palette
+ * ----------------------------------------------------------------- */
+:root {
+    --accent: #3b82f6;
+    --accent-alpha: rgba(59, 130, 246, 0.12);
+    --accent-alpha-strong: rgba(59, 130, 246, 0.22);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.06), 0 1px 4px rgba(0, 0, 0, 0.04);
+    --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.04);
+
+    --theme: #fafafa;
+    --entry: #ffffff;
+    --primary: rgb(25, 25, 28);
+    --secondary: rgb(100, 106, 115);
+    --tertiary: rgb(228, 230, 235);
+    --border: rgb(232, 234, 238);
+    --code-bg: rgb(243, 244, 246);
+}
+
+.dark {
+    --accent: #60a5fa;
+    --accent-alpha: rgba(96, 165, 250, 0.12);
+    --accent-alpha-strong: rgba(96, 165, 250, 0.20);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.25);
+    --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.35);
+
+    --theme: #0f0f11;
+    --entry: #18181b;
+    --primary: rgb(240, 240, 242);
+    --secondary: rgb(145, 148, 155);
+    --tertiary: rgb(48, 49, 54);
+    --border: rgb(40, 41, 46);
+    --code-block-bg: rgb(24, 24, 28);
+    --code-bg: rgb(32, 33, 38);
+}
+
+.list {
+    background: var(--theme);
+}
+
+.dark.list {
+    background: var(--theme);
+}
+
+
+/* -----------------------------------------------------------------
+ * 2. Typography
+ * ----------------------------------------------------------------- */
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI",
+                 "PingFang SC", "Hiragino Sans GB", "Noto Sans SC",
+                 "Microsoft YaHei", sans-serif;
+    font-size: 17px;
+    line-height: 1.75;
+    letter-spacing: 0.01em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+}
+
+.post-content {
+    font-size: 17px;
+    line-height: 1.9;
+    letter-spacing: 0.02em;
+}
+
+.post-content p {
+    margin-bottom: 1.4em;
+}
+
+.post-content h1,
+.post-content h2,
+.post-content h3,
+.post-content h4 {
+    letter-spacing: -0.01em;
+    font-feature-settings: "kern" 1;
+}
+
+.post-content h2 {
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+}
+
+.post-title {
+    font-size: 36px;
+    letter-spacing: -0.02em;
+    line-height: 1.3;
+}
+
+
+/* -----------------------------------------------------------------
+ * 3. Smooth Scrolling & Selection
+ * ----------------------------------------------------------------- */
+html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 80px;
+}
+
+::selection {
+    background: var(--accent-alpha-strong);
+    color: var(--primary);
+}
+
+
+/* -----------------------------------------------------------------
+ * 4. Header / Navigation
+ * ----------------------------------------------------------------- */
+.header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: color-mix(in srgb, var(--theme) 85%, transparent);
+    backdrop-filter: saturate(180%) blur(16px);
+    -webkit-backdrop-filter: saturate(180%) blur(16px);
+    border-bottom: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
+    transition: box-shadow 0.3s ease;
+}
+
+#menu a {
+    position: relative;
+    padding: 4px 0;
+    transition: color 0.2s ease;
+}
+
+#menu a::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background: var(--accent);
+    border-radius: 1px;
+    transition: width 0.25s ease, left 0.25s ease;
+}
+
+#menu a:hover {
+    color: var(--accent);
+}
+
+#menu a:hover::after {
+    width: 100%;
+    left: 0;
+}
+
+#menu .active {
+    color: var(--accent);
+    border-bottom: 2px solid var(--accent);
+    font-weight: 600;
+}
+
+.logo a {
+    letter-spacing: -0.01em;
+    transition: color 0.2s ease;
+}
+
+.logo a:hover {
+    color: var(--accent);
+}
+
+
+/* -----------------------------------------------------------------
+ * 5. Home Info Section
+ * ----------------------------------------------------------------- */
+.first-entry {
+    border: none;
+    background: linear-gradient(135deg,
+        color-mix(in srgb, var(--accent) 6%, var(--theme)),
+        var(--theme));
+    border-radius: 16px;
+    padding: 48px 40px;
+    min-height: 280px;
+    box-shadow: var(--shadow-sm);
+}
+
+.dark .first-entry {
+    background: linear-gradient(135deg,
+        color-mix(in srgb, var(--accent) 8%, var(--entry)),
+        var(--entry));
+    border: 1px solid var(--border);
+}
+
+.home-info .entry-content {
+    font-size: 16px;
+    color: var(--secondary);
+    line-height: 1.8;
+}
+
+.social-icons a {
+    color: var(--secondary);
+    transition: color 0.2s ease, transform 0.2s ease;
+    border-radius: 8px;
+}
+
+.social-icons a:hover {
+    color: var(--accent);
+    transform: translateY(-2px);
+}
+
+
+/* -----------------------------------------------------------------
+ * 6. Post Cards (List Pages)
+ * ----------------------------------------------------------------- */
+.post-entry {
+    background: var(--entry);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: var(--gap);
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+                box-shadow 0.3s ease,
+                border-color 0.3s ease;
+}
+
+.post-entry:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+    border-color: color-mix(in srgb, var(--accent) 25%, var(--border) 75%);
+}
+
+.post-entry:active {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.entry-header h2 {
+    font-size: 22px;
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+    transition: color 0.2s ease;
+}
+
+.post-entry:hover .entry-header h2 {
+    color: var(--accent);
+}
+
+.entry-content {
+    font-size: 14px;
+    line-height: 1.7;
+    -webkit-line-clamp: 3;
+}
+
+
+/* -----------------------------------------------------------------
+ * 7. Post Content Enhancements
+ * ----------------------------------------------------------------- */
+.post-content blockquote {
+    margin: 24px 0;
+    padding: 16px 20px;
+    border-inline-start: 3px solid var(--accent);
+    background: var(--accent-alpha);
+    border-radius: 0 8px 8px 0;
+    font-style: italic;
+}
+
+.post-content blockquote p:last-child {
+    margin-bottom: 0;
+}
+
+.post-content code {
+    font-size: 0.85em;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    font-family: "JetBrains Mono", "Fira Code", "SF Mono", Menlo, monospace;
+}
+
+.post-content pre code {
+    border: none;
+    padding: 14px 18px;
+    border-radius: 10px;
+    font-size: 14px;
+    line-height: 1.65;
+}
+
+.post-content .highlight:not(table) {
+    border-radius: 10px;
+    box-shadow: var(--shadow-sm);
+}
+
+.post-content a {
+    color: var(--accent);
+    box-shadow: 0 1px 0 var(--accent);
+    transition: box-shadow 0.2s ease;
+}
+
+.post-content a:hover {
+    box-shadow: 0 2px 0 var(--accent);
+}
+
+.post-content hr {
+    margin: 40px auto;
+    width: 60%;
+    height: 1px;
+    background: var(--border);
+    border: 0;
+}
+
+.post-content img {
+    border-radius: 8px;
+    box-shadow: var(--shadow-md);
+    transition: box-shadow 0.3s ease;
+}
+
+.post-content img:hover {
+    box-shadow: var(--shadow-lg);
+}
+
+.post-content table th,
+.post-content table:not(.highlighttable, .highlight table, .gist .highlight) td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+}
+
+.post-content table th {
+    background: var(--code-bg);
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.post-content table tr:hover td {
+    background: color-mix(in srgb, var(--code-bg) 50%, transparent);
+}
+
+.post-content li {
+    margin-top: 6px;
+}
+
+.post-content ol,
+.post-content ul {
+    padding-inline-start: 24px;
+}
+
+
+/* -----------------------------------------------------------------
+ * 8. Table of Contents
+ * ----------------------------------------------------------------- */
+.toc {
+    margin: 0 0 36px;
+    border: 1px solid var(--border);
+    background: color-mix(in srgb, var(--code-bg) 50%, var(--theme));
+    border-radius: 12px;
+    padding: 8px 12px;
+    box-shadow: var(--shadow-sm);
+}
+
+.dark .toc {
+    background: var(--entry);
+}
+
+.toc details summary {
+    font-weight: 600;
+    padding: 8px 4px;
+    transition: color 0.2s ease;
+}
+
+.toc details summary:hover {
+    color: var(--accent);
+}
+
+.toc a {
+    transition: color 0.15s ease;
+}
+
+.toc a:hover {
+    color: var(--accent) !important;
+    box-shadow: none;
+}
+
+
+/* -----------------------------------------------------------------
+ * 9. Tags
+ * ----------------------------------------------------------------- */
+.post-tags a {
+    border-radius: 99px;
+    padding: 0 14px;
+    font-size: 13px;
+    line-height: 32px;
+    transition: all 0.2s ease;
+    border: 1px solid var(--border);
+    background: var(--code-bg);
+}
+
+.post-tags a:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: var(--accent-alpha);
+}
+
+
+/* -----------------------------------------------------------------
+ * 10. Pagination
+ * ----------------------------------------------------------------- */
+.pagination a {
+    background: var(--accent);
+    color: #fff;
+    font-weight: 500;
+    border-radius: 99px;
+    padding: 0 20px;
+    line-height: 38px;
+    font-size: 13px;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    box-shadow: var(--shadow-sm);
+}
+
+.pagination a:hover {
+    opacity: 0.88;
+    transform: translateY(-1px);
+}
+
+
+/* -----------------------------------------------------------------
+ * 11. Post Navigation (Prev/Next)
+ * ----------------------------------------------------------------- */
+.paginav {
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--entry);
+    overflow: hidden;
+}
+
+.paginav a {
+    padding: 16px 20px;
+    transition: background 0.2s ease;
+}
+
+.paginav a:hover {
+    background: var(--accent-alpha);
+}
+
+.paginav .title {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+
+/* -----------------------------------------------------------------
+ * 12. Footer
+ * ----------------------------------------------------------------- */
+.footer {
+    border-top: 1px solid var(--border);
+    color: var(--secondary);
+}
+
+.footer a {
+    border-bottom: 1px solid transparent;
+    transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.footer a:hover {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+}
+
+
+/* -----------------------------------------------------------------
+ * 13. Back-to-Top Button
+ * ----------------------------------------------------------------- */
+.top-link {
+    background: var(--accent);
+    color: #fff;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    box-shadow: var(--shadow-md);
+    transition: visibility 0.5s, opacity 0.4s ease, transform 0.2s ease;
+}
+
+.top-link:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+}
+
+.top-link svg {
+    color: #fff;
+    filter: brightness(10);
+}
+
+
+/* -----------------------------------------------------------------
+ * 14. Search
+ * ----------------------------------------------------------------- */
+#searchbox input {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 18px;
+    background: var(--entry);
+    font-size: 16px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+#searchbox input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-alpha);
+    outline: none;
+}
+
+#searchResults li {
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    margin-bottom: 12px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+#searchResults li:hover,
+#searchResults .focus {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+
+/* -----------------------------------------------------------------
+ * 15. Comments Section
+ * ----------------------------------------------------------------- */
+.post-comments {
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+}
+
+.post-comments-title {
+    font-size: 24px;
+    letter-spacing: -0.01em;
+}
+
+
+/* -----------------------------------------------------------------
+ * 16. Archive Page
+ * ----------------------------------------------------------------- */
+.archive-entry .entry-hint {
+    transition: color 0.2s ease;
+}
+
+.archive-entry:hover .entry-hint {
+    color: var(--accent);
+}
+
+
+/* -----------------------------------------------------------------
+ * 17. Breadcrumbs
+ * ----------------------------------------------------------------- */
+.breadcrumbs {
+    font-size: 14px;
+}
+
+.breadcrumbs a {
+    color: var(--secondary);
+    font-size: 14px;
+    transition: color 0.15s ease;
+}
+
+.breadcrumbs a:hover {
+    color: var(--accent);
+}
+
+
+/* -----------------------------------------------------------------
+ * 18. Page-level Animations
+ * ----------------------------------------------------------------- */
+.main {
+    animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+/* -----------------------------------------------------------------
+ * 19. Custom Scrollbar
+ * ----------------------------------------------------------------- */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--tertiary);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--secondary);
+}
+
+html {
+    scrollbar-width: thin;
+    scrollbar-color: var(--tertiary) transparent;
+}
+
+
+/* -----------------------------------------------------------------
+ * 20. Responsive Adjustments
+ * ----------------------------------------------------------------- */
+@media (max-width: 768px) {
+    .post-title {
+        font-size: 28px;
+    }
+
+    .first-entry {
+        padding: 32px 24px;
+        min-height: 220px;
+        border-radius: 12px;
+    }
+
+    .post-entry {
+        border-radius: 10px;
+    }
+
+    .post-content blockquote {
+        padding: 12px 16px;
+    }
+
+    .toc {
+        border-radius: 10px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .main {
+        animation: none;
+    }
+
+    html {
+        scroll-behavior: auto;
+    }
+
+    .post-entry:hover {
+        transform: none;
+    }
+
+    .social-icons a:hover {
+        transform: none;
+    }
+}
