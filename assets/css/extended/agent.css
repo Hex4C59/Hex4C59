@@ -327,6 +327,78 @@
     text-align: center;
 }
 
+.series-paginav {
+    display: grid;
+    gap: 16px;
+    padding: 20px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--entry) 94%, var(--theme) 6%), var(--entry));
+}
+
+.series-paginav-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.series-paginav-kicker,
+.series-paginav-progress,
+.series-paginav-direction,
+.series-paginav-meta,
+.series-paginav-summary {
+    color: var(--secondary);
+}
+
+.series-paginav-kicker {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.series-paginav-progress,
+.series-paginav-direction,
+.series-paginav-meta {
+    font-size: 13px;
+}
+
+.series-paginav-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 14px;
+}
+
+.series-paginav-card {
+    display: grid;
+    gap: 8px;
+    padding: 18px;
+    border: 1px solid var(--border);
+    border-radius: calc(var(--radius) - 2px);
+    background: color-mix(in srgb, var(--entry) 88%, var(--theme) 12%);
+    text-decoration: none;
+    transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.series-paginav-card:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--primary) 30%, var(--border) 70%);
+    background: color-mix(in srgb, var(--primary) 8%, var(--entry) 92%);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.05);
+}
+
+.series-paginav-title {
+    font-size: 18px;
+    line-height: 1.5;
+    color: var(--primary);
+}
+
+.series-paginav-summary {
+    line-height: 1.75;
+}
+
 @media (max-width: 768px) {
     .agent-hero-card {
         padding: 18px;
@@ -358,5 +430,13 @@
 
     .agent-filter-row-tags {
         max-height: 160px;
+    }
+
+    .series-paginav {
+        padding: 16px;
+    }
+
+    .series-paginav-card {
+        padding: 16px;
     }
 }

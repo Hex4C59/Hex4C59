@@ -8,6 +8,7 @@ summary = "系统分析 ReAct 在长任务中的局限，说明 Planning 的核�
 tags = ["Agent", "Planning", "ReAct", "Task Decomposition", "LLM"]
 categories = ["Agent"]
 series = ["agent-engineering"]
+series_order = 5
 difficulty = "intermediate"
 article_type = "concept"
 topics = ["planning", "plan-and-execute", "agent", "task-decomposition", "reflection"]
@@ -572,4 +573,3 @@ Planning 不是来取代 ReAct 的，而是在它上面加了一层全局视图�
 
 ---
 
-*下一篇：如何评测一个 Agent——不只是看它“回答得好不好”，而是看它能不能稳定地把任务做完*

@@ -1,0 +1,29 @@
+<svg width="100%" viewBox="0 0 680 320" xmlns="http://www.w3.org/2000/svg">
+  <g>
+    <rect x="44" y="44" width="272" height="100" rx="8" fill="rgb(238, 237, 254)" stroke="rgb(83, 74, 183)" stroke-width="0.5"/>
+    <text x="180" y="82" text-anchor="middle" dominant-baseline="central" fill="rgb(60, 52, 137)" font-family="-apple-system, system-ui, Segoe UI, sans-serif" font-size="16" font-weight="600">&#20219;&#21153;&#23436;&#25104;&#29575;</text>
+    <text x="180" y="106" text-anchor="middle" dominant-baseline="central" fill="rgb(83, 74, 183)" font-family="-apple-system, system-ui, Segoe UI, sans-serif" font-size="13">&#20219;&#21153;&#26368;&#32456;&#26159;&#21542;&#23436;&#25104;</text>
+    <text x="180" y="124" text-anchor="middle" dominant-baseline="central" fill="rgb(83, 74, 183)" font-family="-apple-system, system-ui, Segoe UI, sans-serif" font-size="13">&#23436;&#25104;&#36136;&#37327;&#26159;&#21542;&#36798;&#26631;</text>
+  </g>
+
+  <g>
+    <rect x="364" y="44" width="272" height="100" rx="8" fill="rgb(225, 245, 238)" stroke="rgb(15, 110, 86)" stroke-width="0.5"/>
+    <text x="500" y="82" text-anchor="middle" dominant-baseline="central" fill="rgb(8, 80, 65)" font-family="-apple-system, system-ui, Segoe UI, sans-serif" font-size="16" font-weight="600">&#36807;&#31243;&#21512;&#29702;&#24615;</text>
+    <text x="500" y="106" text-anchor="middle" dominant-baseline="central" fill="rgb(15, 110, 86)" font-family="-apple-system, system-ui, Segoe UI, sans-serif" font-size="13">&#24037;&#20855;&#35843;&#29992;&#26159;&#21542;&#24517;&#35201;</text>
+    <text x="500" y="124" text-anchor="middle" dominant-baseline="central" fill="rgb(15, 110, 86)" font-family="-apple-system, system-ui, Segoe UI, sans-serif" font-size="13">&#25512;&#29702;&#27493;&#39588;&#26159;&#21542;&#36830;&#36143;</text>
+  </g>
+
+  <g>
+    <rect x="44" y="188" width="272" height="100" rx="8" fill="rgb(250, 238, 218)" stroke="rgb(133, 79, 11)" stroke-width="0.5"/>
+    <text x="180" y="226" text-anchor="middle" dominant-baseline="central" fill="rgb(99, 56, 6)" font-family="-apple-system, system-ui, Segoe UI, sans-serif" font-size="16" font-weight="600">&#38169;&#35823;&#24674;&#22797;&#33021;&#21147;</text>
+    <text x="180" y="250" text-anchor="middle" dominant-baseline="central" fill="rgb(133, 79, 11)" font-family="-apple-system, system-ui, Segoe UI, sans-serif" font-size="13">&#24037;&#20855;&#22833;&#36133;&#26102;&#33021;&#21542;&#35843;&#25972;</text>
+    <text x="180" y="268" text-anchor="middle" dominant-baseline="central" fill="rgb(133, 79, 11)" font-family="-apple-system, system-ui, Segoe UI, sans-serif" font-size="13">&#24322;&#24120;&#32467;&#26524;&#33021;&#21542;&#35782;&#21035;</text>
+  </g>
+
+  <g>
+    <rect x="364" y="188" width="272" height="100" rx="8" fill="rgb(252, 230, 227)" stroke="rgb(201, 77, 61)" stroke-width="0.5"/>
+    <text x="500" y="226" text-anchor="middle" dominant-baseline="central" fill="rgb(140, 41, 29)" font-family="-apple-system, system-ui, Segoe UI, sans-serif" font-size="16" font-weight="600">&#31283;&#23450;&#24615;</text>
+    <text x="500" y="250" text-anchor="middle" dominant-baseline="central" fill="rgb(201, 77, 61)" font-family="-apple-system, system-ui, Segoe UI, sans-serif" font-size="13">&#37325;&#22797;&#36816;&#34892;&#32467;&#26524;&#19968;&#33268;</text>
+    <text x="500" y="268" text-anchor="middle" dominant-baseline="central" fill="rgb(201, 77, 61)" font-family="-apple-system, system-ui, Segoe UI, sans-serif" font-size="13">&#36328;&#20219;&#21153;&#34920;&#29616;&#22343;&#21248;</text>
+  </g>
+</svg>

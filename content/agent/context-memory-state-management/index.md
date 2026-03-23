@@ -8,6 +8,7 @@ summary = "从 context window、工作/情节/语义记忆分层出发，系统�
 tags = ["Agent", "Memory", "Context Window", "State Management", "LLM"]
 categories = ["Agent"]
 series = ["agent-engineering"]
+series_order = 3
 difficulty = "advanced"
 article_type = "concept"
 topics = ["context-window", "memory", "state-management", "agent", "long-horizon-tasks"]
@@ -494,4 +495,3 @@ Agent 在长任务里失忆，根本原因是：它赖以推理的工作记忆�
 
 ---
 
-*下一篇：多 Agent 协作——当一个 Agent 不够用时，如何设计任务分解和协调机制*
