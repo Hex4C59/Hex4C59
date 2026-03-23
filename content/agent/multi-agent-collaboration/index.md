@@ -620,4 +620,4 @@ Peer-to-Peer 模式的成本增长尤其快：Agent 之间的每次消息交换�
 
 ---
 
-*下一篇：Coding Agent 实战——从零搭建一个能读代码、跑测试、修 bug 的 Agent*
+*下一篇：[MCP：让 Agent 的工具生态不再各自为战](/agent/mcp-model-context-protocol/)*
