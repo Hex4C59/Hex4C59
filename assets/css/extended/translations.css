@@ -1,0 +1,365 @@
+/* -------------------------------------------------------------
+ * Translations Page Layout
+ * Extends the design language from Agent page
+ * ------------------------------------------------------------- */
+
+/* -------------------------------------------------------------
+ * Controls & Filters
+ * ------------------------------------------------------------- */
+.translations-controls-panel {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    padding: 20px 24px;
+    margin: 0 0 32px;
+    border: 1px solid var(--agent-border, color-mix(in srgb, var(--border) 60%, transparent));
+    border-radius: calc(var(--radius) * 1.5);
+    background: var(--agent-glass-bg, color-mix(in srgb, var(--entry) 90%, transparent));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: var(--agent-shadow, 0 4px 12px rgba(0, 0, 0, 0.03));
+    align-items: flex-start;
+    justify-content: space-between;
+}
+
+.translations-control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1 1 auto;
+    min-width: 140px;
+}
+
+.translations-control-sort {
+    flex: 0 0 auto;
+}
+
+.translations-control-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.translations-filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.translations-filter-button,
+.translations-sort-select {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid var(--border);
+    background: var(--entry);
+    color: var(--secondary);
+    cursor: pointer;
+    border-radius: 99px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.translations-filter-button:hover {
+    color: var(--primary);
+    border-color: color-mix(in srgb, var(--primary) 30%, var(--border) 70%);
+    background: color-mix(in srgb, var(--primary) 5%, var(--entry) 95%);
+    transform: translateY(-1px);
+}
+
+.translations-filter-button.is-active {
+    color: var(--theme);
+    border-color: var(--primary);
+    background: var(--primary);
+}
+
+.translations-select-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.translations-sort-select {
+    width: 100%;
+    min-width: 160px;
+    appearance: none;
+    padding-right: 36px;
+}
+
+.translations-select-icon {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: var(--secondary);
+}
+
+.translations-inline-note {
+    text-align: center;
+    color: var(--secondary);
+    font-size: 14px;
+    margin-bottom: 24px;
+}
+
+
+/* -------------------------------------------------------------
+ * Post Entries
+ * ------------------------------------------------------------- */
+.translations-post-list {
+    display: grid;
+    gap: 24px;
+}
+
+.translations-list-entry {
+    position: relative;
+    padding: 24px;
+    border: 1px solid var(--agent-border, color-mix(in srgb, var(--border) 60%, transparent));
+    border-radius: calc(var(--radius) * 1.5);
+    background: var(--entry);
+    box-shadow: var(--agent-shadow, 0 4px 12px rgba(0, 0, 0, 0.03));
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+    overflow: hidden;
+    animation: translationsFadeInUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+.translations-list-entry[hidden] {
+    display: none !important;
+}
+
+/* Subtle background gradient on hover */
+.translations-entry-bg-gradient {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at left top, color-mix(in srgb, #3b82f6 5%, transparent), transparent 60%);
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.translations-list-entry:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--agent-shadow-hover, 0 12px 32px rgba(0, 0, 0, 0.08));
+    border-color: color-mix(in srgb, #3b82f6 30%, var(--border) 70%);
+}
+
+.translations-list-entry:hover .translations-entry-bg-gradient {
+    opacity: 1;
+}
+
+.translations-entry .entry-header,
+.translations-list-entry .entry-header {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.translations-entry .entry-header h2,
+.translations-list-entry .entry-header h2 {
+    margin: 0;
+    font-size: 22px;
+    line-height: 1.4;
+    transition: color 0.2s;
+}
+
+.translations-list-entry:hover .entry-header h2 {
+    color: #3b82f6;
+}
+
+.translations-original-title {
+    margin: 0;
+    font-size: 13px;
+    color: var(--secondary);
+    font-style: italic;
+    opacity: 0.8;
+}
+
+.translations-entry .entry-content,
+.translations-list-entry .entry-content {
+    position: relative;
+    z-index: 1;
+    margin: 14px 0 0;
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--secondary);
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+}
+
+
+/* -------------------------------------------------------------
+ * Badges — Translation-specific accent
+ * ------------------------------------------------------------- */
+.translations-entry-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.translations-badge {
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0.02em;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.translations-badge-source {
+    color: #3b82f6;
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.translations-badge-source svg {
+    flex-shrink: 0;
+}
+
+.translations-badge-site {
+    color: var(--secondary);
+    background: color-mix(in srgb, var(--secondary) 12%, transparent);
+}
+
+
+/* -------------------------------------------------------------
+ * Source Info & Meta
+ * ------------------------------------------------------------- */
+.translations-entry-meta {
+    position: relative;
+    z-index: 1;
+    margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.translations-source-info {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+    font-size: 13px;
+    color: var(--secondary);
+}
+
+.translations-source-author {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.translations-source-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: #3b82f6;
+    text-decoration: none;
+    font-weight: 500;
+    transition: opacity 0.2s;
+}
+
+.translations-source-link:hover {
+    opacity: 0.75;
+}
+
+.translations-chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.translations-chip {
+    font-size: 13px;
+    color: var(--secondary);
+}
+
+
+/* -------------------------------------------------------------
+ * Entry Footer
+ * ------------------------------------------------------------- */
+.translations-entry-footer {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--border);
+    margin-top: 20px;
+    padding-top: 16px;
+    font-size: 13px;
+    color: var(--secondary);
+}
+
+.translations-entry-time {
+    display: flex;
+    gap: 8px;
+}
+
+.translations-empty-state {
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--secondary);
+    background: var(--entry);
+    border: 1px dashed var(--border);
+    border-radius: calc(var(--radius) * 1.5);
+    margin-top: 20px;
+}
+
+
+/* -------------------------------------------------------------
+ * Animations
+ * ------------------------------------------------------------- */
+@keyframes translationsFadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+/* -------------------------------------------------------------
+ * Responsive
+ * ------------------------------------------------------------- */
+@media (max-width: 768px) {
+    .translations-controls-panel {
+        flex-direction: column;
+        padding: 16px;
+    }
+
+    .translations-control-group {
+        width: 100%;
+    }
+
+    .translations-list-entry .entry-header h2 {
+        font-size: 18px;
+    }
+
+    .translations-entry-footer {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .translations-desktop-only {
+        display: none;
+    }
+
+    .translations-entry-time {
+        flex-direction: column;
+        gap: 4px;
+    }
+}
