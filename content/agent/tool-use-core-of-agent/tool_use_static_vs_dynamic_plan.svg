@@ -1,0 +1,55 @@
+<svg width="100%" viewBox="0 0 680 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t1 d1">
+  <title id="t1">静态规划 vs 动态规划</title>
+  <desc id="d1">静态规划按固定步骤执行，动态规划根据工具结果实时调整。</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <style>
+      .label { font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+      .t { font-size: 14px; font-weight: 500; }
+      .b { font-size: 12px; font-weight: 400; }
+      .s { font-size: 13px; font-weight: 600; }
+    </style>
+  </defs>
+
+  <text class="label s" x="170" y="24" text-anchor="middle" fill="rgb(140, 41, 29)">静态规划</text>
+  <rect x="30" y="40" width="80" height="36" rx="6" fill="rgb(252, 230, 227)" stroke="rgb(201, 77, 61)" stroke-width="0.5"/>
+  <text class="label b" x="70" y="62" text-anchor="middle" fill="rgb(140, 41, 29)">步骤 1</text>
+  <line x1="112" y1="58" x2="138" y2="58" stroke="rgb(201, 77, 61)" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <rect x="140" y="40" width="80" height="36" rx="6" fill="rgb(252, 230, 227)" stroke="rgb(201, 77, 61)" stroke-width="0.5"/>
+  <text class="label b" x="180" y="62" text-anchor="middle" fill="rgb(140, 41, 29)">步骤 2</text>
+  <line x1="222" y1="58" x2="248" y2="58" stroke="rgb(201, 77, 61)" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <rect x="250" y="40" width="80" height="36" rx="6" fill="rgb(252, 230, 227)" stroke="rgb(201, 77, 61)" stroke-width="0.5"/>
+  <text class="label b" x="290" y="62" text-anchor="middle" fill="rgb(140, 41, 29)">步骤 3</text>
+  <text class="label b" x="170" y="100" text-anchor="middle" fill="rgb(95, 94, 90)">不管结果如何，按计划走完</text>
+
+  <line x1="340" y1="10" x2="340" y2="270" stroke="rgb(95, 94, 90)" stroke-width="0.5" stroke-dasharray="4 3" opacity="0.4"/>
+
+  <text class="label s" x="510" y="24" text-anchor="middle" fill="rgb(8, 80, 65)">动态规划</text>
+  <rect x="370" y="40" width="80" height="36" rx="6" fill="rgb(225, 245, 238)" stroke="rgb(15, 110, 86)" stroke-width="0.5"/>
+  <text class="label b" x="410" y="62" text-anchor="middle" fill="rgb(8, 80, 65)">步骤 1</text>
+
+  <line x1="452" y1="50" x2="498" y2="50" stroke="rgb(15, 110, 86)" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="500" y="32" width="80" height="36" rx="6" fill="rgb(241, 239, 232)" stroke="rgb(95, 94, 90)" stroke-width="0.5"/>
+  <text class="label b" x="540" y="54" text-anchor="middle" fill="rgb(68, 68, 65)">观察结果</text>
+
+  <line x1="540" y1="70" x2="540" y2="100" stroke="rgb(115, 114, 108)" stroke-width="1" stroke-dasharray="4 3"/>
+
+  <line x1="540" y1="102" x2="472" y2="132" stroke="rgb(15, 110, 86)" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <text class="label b" x="520" y="112" text-anchor="start" fill="rgb(8, 80, 65)">结果 A</text>
+  <rect x="390" y="120" width="80" height="36" rx="6" fill="rgb(225, 245, 238)" stroke="rgb(15, 110, 86)" stroke-width="0.5"/>
+  <text class="label b" x="430" y="142" text-anchor="middle" fill="rgb(8, 80, 65)">步骤 2a</text>
+
+  <line x1="540" y1="102" x2="612" y2="132" stroke="rgb(133, 79, 11)" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <text class="label b" x="560" y="128" text-anchor="start" fill="rgb(99, 56, 6)">结果 B</text>
+  <rect x="530" y="120" width="80" height="36" rx="6" fill="rgb(250, 238, 218)" stroke="rgb(133, 79, 11)" stroke-width="0.5"/>
+  <text class="label b" x="570" y="142" text-anchor="middle" fill="rgb(99, 56, 6)">步骤 2b</text>
+
+  <line x1="540" y1="102" x2="472" y2="192" stroke="rgb(201, 77, 61)" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+  <text class="label b" x="488" y="168" text-anchor="start" fill="rgb(140, 41, 29)">失败</text>
+  <rect x="390" y="180" width="80" height="36" rx="6" fill="rgb(252, 230, 227)" stroke="rgb(201, 77, 61)" stroke-width="0.5"/>
+  <text class="label b" x="430" y="202" text-anchor="middle" fill="rgb(140, 41, 29)">重新规划</text>
+
+  <text class="label b" x="510" y="244" text-anchor="middle" fill="rgb(95, 94, 90)">根据工具返回结果动态调整路径</text>
+</svg>

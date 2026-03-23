@@ -1,6 +1,6 @@
 +++
 title = "MCP：让 Agent 的工具生态不再各自为战"
-date = 2026-03-23T20:00:00+08:00
+date = 2026-03-23T17:00:00+08:00
 draft = false
 author = "Hex4C59"
 description = "从工具集成的 N×M 问题出发，系统解析 MCP 的架构设计、核心原语、传输机制与安全模型，说明它为什么可能成为 Agent 工具层的基础协议。"
@@ -42,30 +42,13 @@ MCP（Model Context Protocol）要解决的，就是这个问题。
 
 假设有 N 个 Agent 应用（Cursor、Claude Desktop、自研 Agent、其他 IDE 插件……），M 个工具提供方（GitHub、Slack、PostgreSQL、文件系统、搜索引擎……），那么需要的集成工作量是 N×M。
 
-```text
-Agent A ──┬── GitHub 适配层
-          ├── Slack 适配层
-          ├── PostgreSQL 适配层
-          └── 文件系统适配层
-
-Agent B ──┬── GitHub 适配层（重新写一遍）
-          ├── Slack 适配层（重新写一遍）
-          ├── PostgreSQL 适配层（重新写一遍）
-          └── 文件系统适配层（重新写一遍）
-
-Agent C ──┬── ...
-```
+![工具集成的 N×M 问题](mcp_nm_problem.svg)
 
 这不仅浪费开发资源，还导致了一个更严重的问题：**工具的质量取决于谁来写适配层。** 同一个 GitHub API，不同 Agent 框架包装出来的工具描述、错误处理、返回格式可能完全不同。在[工具接口设计](/agent/tool-interface-design/)里讨论过的那些设计原则——粒度、返回值去噪、结构化错误——每个集成方都需要独立实现一遍，质量参差不齐。
 
 MCP 的解法是在中间插入一层标准协议：
 
-```text
-Agent A ─┐                ┌── GitHub MCP Server
-Agent B ─┤── MCP 协议 ──├── Slack MCP Server
-Agent C ─┘                ├── PostgreSQL MCP Server
-                          └── 文件系统 MCP Server
-```
+![MCP 协议解法](mcp_nm_solution.svg)
 
 工具提供方只需要实现一个 MCP Server，所有兼容 MCP 的 Agent 客户端就能直接接入。集成工作量从 N×M 降到 N+M。
 
@@ -77,23 +60,7 @@ Agent C ─┘                ├── PostgreSQL MCP Server
 
 MCP 把整个系统分成三个角色：Host、Client 和 Server。
 
-```text
-┌─────────────────────────────────────────┐
-│  Host（宿主应用）                         │
-│  例如：Cursor、Claude Desktop            │
-│                                         │
-│  ┌─────────┐ ┌─────────┐ ┌─────────┐   │
-│  │ Client A│ │ Client B│ │ Client C│   │
-│  └────┬────┘ └────┬────┘ └────┬────┘   │
-└───────┼───────────┼───────────┼─────────┘
-        │           │           │
-   MCP 协议     MCP 协议     MCP 协议
-        │           │           │
-   ┌────┴────┐ ┌────┴────┐ ┌────┴────┐
-   │ Server A│ │ Server B│ │ Server C│
-   │ (GitHub)│ │ (Slack) │ │  (DB)   │
-   └─────────┘ └─────────┘ └─────────┘
-```
+![MCP 三层架构](mcp_three_layer_architecture.svg)
 
 ### Host
 
@@ -242,12 +209,7 @@ MCP 是一个基于 JSON-RPC 2.0 的协议，支持两种主要的传输方式�
 
 Client 以子进程方式启动 Server，通过 stdin/stdout 通信。
 
-```text
-Host 进程
-  └── 启动子进程: python server.py
-        ├── stdin  ← Client 发请求
-        └── stdout → Client 收响应
-```
+![stdio 传输方式](mcp_stdio_transport.svg)
 
 这是本地场景下最常见的方式。Cursor、Claude Desktop 接入本地 MCP Server 时默认用 stdio。优势是简单、无需网络配置、进程隔离天然提供了安全边界。
 
@@ -275,10 +237,7 @@ Host 进程
 
 远程场景下使用 HTTP 传输。Client 通过 HTTP POST 发送 JSON-RPC 请求，Server 可以返回普通 JSON 响应，也可以升级为 SSE（Server-Sent Events）流式推送进度。
 
-```text
-Client ──HTTP POST──→ Server
-Client ←──SSE 流────── Server（可选，用于流式进度）
-```
+![Streamable HTTP 传输](mcp_http_transport.svg)
 
 Streamable HTTP 适合 Server 运行在远程服务器上的场景——比如企业内部的数据库 MCP Server 部署在内网，多个开发者的 Agent 客户端远程接入。
 
@@ -339,14 +298,7 @@ Server 返回自己的能力声明：
 
 初始化完成后，双方进入正常通信阶段。典型的调用流程：
 
-```text
-Client → tools/list          获取可用工具列表
-Client ← [工具描述数组]
-
-Client → tools/call           调用某个工具
-         { name: "create_issue", arguments: {...} }
-Client ← { content: [...] }  工具执行结果
-```
+![工具调用流程](mcp_tool_call_flow.svg)
 
 这个阶段 Server 也可以主动发送通知，比如工具列表发生了变化（`notifications/tools/list_changed`），Client 收到后重新拉取工具列表。
 
@@ -478,15 +430,7 @@ Agent 在运行时不一定知道有哪些工具可用。MCP 的 `tools/list` �
 
 这是最大的区别。当越来越多的工具提供方实现 MCP Server，越来越多的 Agent 框架支持 MCP Client，整个生态的网络效应就形成了。你今天为 Cursor 开发的 MCP Server，明天 Claude Desktop 的用户也能直接用。
 
-```text
-直接 Function Calling：
-  Agent 代码 ←紧耦合→ 工具实现
-  每换一个 Agent 框架就要重新适配
-
-MCP：
-  Agent (MCP Client) ←标准协议→ MCP Server ←→ 工具实现
-  Server 写一次，所有 MCP 兼容的 Agent 都能用
-```
+![直接 Function Calling 与 MCP 对比](mcp_vs_function_calling.svg)
 
 当然，MCP 也引入了额外的复杂度：协议层的 overhead、Server 进程管理、连接状态维护。如果你的 Agent 是一个封闭的单体系统，不需要工具复用，直接 function calling 仍然是更简单的选择。
 
@@ -528,11 +472,7 @@ MCP 的开源生态正在快速增长。官方维护了一批参考实现（GitH
 
 MCP 的三层架构天然定义了两道信任边界：
 
-```text
-用户 ──信任──→ Host ──有限信任──→ Server
-                │
-                └── Host 负责执行授权策略
-```
+![MCP 信任边界](mcp_trust_boundaries.svg)
 
 - **用户信任 Host**：用户选择使用 Cursor 或 Claude Desktop，就意味着信任这个应用
 - **Host 有限信任 Server**：Host 知道 Server 能做什么（通过能力协商），但不假设 Server 的行为一定安全
