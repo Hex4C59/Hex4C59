@@ -12,7 +12,7 @@ series_order = 13
 difficulty = "advanced"
 article_type = "tutorial"
 topics = ["coding-agent", "cli", "tool-use", "react", "state-management"]
-frameworks = ["Anthropic"]
+frameworks = ["OpenAI"]
 ShowToc = true
 +++
 
@@ -199,7 +199,7 @@ def is_dangerous(command: str) -> bool:
     return any(p in command for p in DANGEROUS_PATTERNS)
 
 
-# 工具注册表：name → callable，格式直接对应 Anthropic tool_use API
+# 工具注册表：name → callable
 TOOL_REGISTRY = {
     "read_file": read_file,
     "write_file": write_file,
@@ -207,49 +207,62 @@ TOOL_REGISTRY = {
     "list_dir": list_dir,
 }
 
+# OpenAI function calling 格式：每个工具包裹在 {"type": "function", "function": {...}} 中
 TOOL_SCHEMAS = [
     {
-        "name": "read_file",
-        "description": "读取指定路径的文件内容。返回文件内容和行数。",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "path": {"type": "string", "description": "相对于工作区根目录的文件路径"}
+        "type": "function",
+        "function": {
+            "name": "read_file",
+            "description": "读取指定路径的文件内容。返回文件内容和行数。",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string", "description": "相对于工作区根目录的文件路径"}
+                },
+                "required": ["path"],
             },
-            "required": ["path"],
         },
     },
     {
-        "name": "write_file",
-        "description": "将内容写入指定路径的文件。如果目录不存在，会自动创建。",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "path": {"type": "string", "description": "目标文件路径"},
-                "content": {"type": "string", "description": "要写入的内容"},
+        "type": "function",
+        "function": {
+            "name": "write_file",
+            "description": "将内容写入指定路径的文件。如果目录不存在，会自动创建。",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string", "description": "目标文件路径"},
+                    "content": {"type": "string", "description": "要写入的内容"},
+                },
+                "required": ["path", "content"],
             },
-            "required": ["path", "content"],
         },
     },
     {
-        "name": "run_command",
-        "description": "在工作区目录执行 Shell 命令。返回 stdout、stderr 和退出码。",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "command": {"type": "string", "description": "要执行的 Shell 命令"},
-                "timeout": {"type": "integer", "description": "超时秒数，默认 30", "default": 30},
+        "type": "function",
+        "function": {
+            "name": "run_command",
+            "description": "在工作区目录执行 Shell 命令。返回 stdout、stderr 和退出码。",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "command": {"type": "string", "description": "要执行的 Shell 命令"},
+                    "timeout": {"type": "integer", "description": "超时秒数，默认 30"},
+                },
+                "required": ["command"],
             },
-            "required": ["command"],
         },
     },
     {
-        "name": "list_dir",
-        "description": "列出目录下的文件和子目录。",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "path": {"type": "string", "description": "目录路径，默认为工作区根目录", "default": "."}
+        "type": "function",
+        "function": {
+            "name": "list_dir",
+            "description": "列出目录下的文件和子目录。",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string", "description": "目录路径，默认为工作区根目录"}
+                },
             },
         },
     },
@@ -286,7 +299,7 @@ SYSTEM_PROMPT = """你是一个运行在命令行的 Coding Agent，帮助用户
 **保守修改。** 只修改任务要求修改的文件。不要"顺便"优化无关代码。
 
 ## 工具使用规范
-- 每次 tool_use 只调用一个工具
+- 每次只调用一个工具，等待结果后再决定下一步
 - run_command 执行的命令必须是幂等的，或者你已经理解它的副作用
 - write_file 会完全覆盖目标文件，写入前确认内容正确
 - 路径使用相对路径，相对于工作区根目录
@@ -312,18 +325,22 @@ SYSTEM_PROMPT = """你是一个运行在命令行的 Coding Agent，帮助用户
 
 ![ReAct 循环流程](react_loop.svg)
 
-*图 2：Coding Agent 的 ReAct 执行循环。每轮循环从 LLM 调用开始；如果停止原因是 `tool_use`，执行工具并将结果注入对话历史；如果是 `end_turn`，任务完成退出。硬上限 MAX_ITERATIONS 保证循环不会无限进行。*
+*图 2：Coding Agent 的 ReAct 执行循环。每轮循环从 LLM 调用开始；如果 `finish_reason` 是 `tool_calls`，执行工具并将结果注入对话历史；如果是 `stop`，任务完成退出。硬上限 MAX_ITERATIONS 保证循环不会无限进行。*
 
 ```python
 # agent/core.py
 import json
-import anthropic
+import openai
 from typing import Iterator
 from .tools import TOOL_REGISTRY, TOOL_SCHEMAS
 from .prompts import SYSTEM_PROMPT
 
-client = anthropic.Anthropic()
-MODEL = "claude-opus-4-5"
+# 兼容任意 OpenAI 格式的接口：修改 base_url 即可切换到 DeepSeek、Qwen 等模型
+client = openai.OpenAI(
+    base_url="https://api.openai.com/v1",  # 替换为你的 API 地址
+    api_key="your-api-key",                # 或从环境变量读取
+)
+MODEL = "gpt-4o"
 MAX_ITERATIONS = 30
 
 
@@ -355,36 +372,45 @@ def run_agent(
     for iteration in range(MAX_ITERATIONS):
         yield f"\n[思考中... 第 {iteration + 1} 轮]\n"
 
-        response = client.messages.create(
+        # system prompt 以第一条消息的形式传入，符合 OpenAI 格式
+        messages = [{"role": "system", "content": SYSTEM_PROMPT}] + trim_history(conversation_history)
+
+        response = client.chat.completions.create(
             model=MODEL,
             max_tokens=8096,
-            system=SYSTEM_PROMPT,
             tools=TOOL_SCHEMAS,
-            messages=trim_history(conversation_history),
+            messages=messages,
         )
 
-        stop_reason = response.stop_reason
-        assistant_content = response.content
-        conversation_history.append({"role": "assistant", "content": assistant_content})
+        choice = response.choices[0]
+        finish_reason = choice.finish_reason
+        message = choice.message
 
-        for block in assistant_content:
-            if block.type == "text" and block.text:
-                yield block.text
+        # 将 assistant 消息（含可能的 tool_calls）追加进历史
+        assistant_msg: dict = {"role": "assistant", "content": message.content}
+        if message.tool_calls:
+            assistant_msg["tool_calls"] = [
+                {
+                    "id": tc.id,
+                    "type": "function",
+                    "function": {"name": tc.function.name, "arguments": tc.function.arguments},
+                }
+                for tc in message.tool_calls
+            ]
+        conversation_history.append(assistant_msg)
 
-        if stop_reason == "end_turn":
+        if message.content:
+            yield message.content
+
+        if finish_reason == "stop":
             yield "\n[✓ 任务完成]\n"
             break
 
-        if stop_reason == "tool_use":
-            tool_results = []
-
-            for block in assistant_content:
-                if block.type != "tool_use":
-                    continue
-
-                tool_name = block.name
-                tool_input = block.input
-                tool_use_id = block.id
+        if finish_reason == "tool_calls":
+            for tc in message.tool_calls:
+                tool_name = tc.function.name
+                tool_input = json.loads(tc.function.arguments)
+                tool_call_id = tc.id
 
                 yield f"\n[调用工具] {tool_name}({json.dumps(tool_input, ensure_ascii=False)})\n"
 
@@ -399,17 +425,15 @@ def run_agent(
                 result_str = json.dumps(result, ensure_ascii=False, indent=2)
                 yield f"[工具结果] {result_str[:200]}{'...' if len(result_str) > 200 else ''}\n"
 
-                tool_results.append({
-                    "type": "tool_result",
-                    "tool_use_id": tool_use_id,
+                # OpenAI 格式：每个工具结果是一条独立的 tool 消息
+                conversation_history.append({
+                    "role": "tool",
+                    "tool_call_id": tool_call_id,
                     "content": result_str,
                 })
 
-            # 将工具结果注入对话历史，驱动下一轮推理
-            conversation_history.append({"role": "user", "content": tool_results})
-
         else:
-            yield f"\n[停止原因：{stop_reason}]\n"
+            yield f"\n[停止原因：{finish_reason}]\n"
             break
 
     else:
@@ -418,11 +442,13 @@ def run_agent(
 
 这里有几个工程细节值得展开：
 
-**`conversation_history` 是整个 Agent 的"记忆"。** 每一轮循环都把 assistant 的输出（包括工具调用）和工具结果追加进去，下一轮 LLM 调用时完整传入。这就是 ReAct 的状态管理机制——**上下文即状态**。这与 [上下文与记忆那篇](/agent/context-memory-state-management/)里讨论的"过程记忆"是同一件事，只是用在了 Coding Agent 的具体场景里。
+**OpenAI 格式与 Anthropic 格式的核心差异在于工具结果的传递方式。** Anthropic 把所有工具结果打包成一条 `user` 消息；OpenAI 则要求每个工具结果是一条独立的 `role: "tool"` 消息，并通过 `tool_call_id` 与对应的工具调用绑定。这个细节如果搞错，模型会拒绝响应或产生幻觉。
+
+**`conversation_history` 是整个 Agent 的"记忆"。** 每一轮循环都把 assistant 的输出（含 `tool_calls` 字段）和工具结果追加进去，下一轮 LLM 调用时完整传入。这就是 ReAct 的状态管理机制——**上下文即状态**。这与 [上下文与记忆那篇](/agent/context-memory-state-management/)里讨论的"过程记忆"是同一件事。
 
 **`MAX_ITERATIONS = 30` 是一个硬上限。** 没有它，一个陷入推理循环的 Agent 会不停调用 API。这个值不是随意选的——30 轮对应的是一个中等复杂任务（读文件 → 写代码 → 运行测试 → 修复 → 验证）的上限，超过这个通常意味着 Agent 陷入了循环。
 
-**工具执行用 `try/except` 包裹，异常作为 `tool_result` 返回。** 这让 Agent 有机会在遇到错误时自我恢复——比如发现路径不存在后，先调用 `list_dir` 探索目录结构，再重试。
+**工具执行用 `try/except` 包裹，异常作为 `tool` 消息返回。** 这让 Agent 有机会在遇到错误时自我恢复——比如发现路径不存在后，先调用 `list_dir` 探索目录结构，再重试。
 
 ---
 
@@ -539,20 +565,23 @@ if __name__ == "__main__":
 
 ### 流式输出
 
-当前实现用 generator yield 状态信息，但没有真正的流式 LLM 输出。如果你想要像 Claude Code 那样的流式体验，可以把 `client.messages.create` 换成流式 API：
+当前实现用 generator yield 状态信息，但没有真正的流式 LLM 输出。如果你想要像 Claude Code 那样的流式体验，可以开启 `stream=True`：
 
 ```python
-with client.messages.stream(
+stream = client.chat.completions.create(
     model=MODEL,
     max_tokens=8096,
-    system=SYSTEM_PROMPT,
     tools=TOOL_SCHEMAS,
-    messages=trim_history(conversation_history),
-) as stream:
-    for text in stream.text_stream:
-        print(text, end="", flush=True)
-    full_response = stream.get_final_message()
+    messages=messages,
+    stream=True,
+)
+for chunk in stream:
+    delta = chunk.choices[0].delta
+    if delta.content:
+        print(delta.content, end="", flush=True)
 ```
+
+注意：开启流式后需要自行拼接完整的 `tool_calls`，因为工具调用参数会被分块传输（`delta.tool_calls`）。如果不需要流式推理文本，只要流式感知工具调用进度，保持非流式更简单。
 
 ### 安全边界
 
@@ -579,11 +608,21 @@ with client.messages.stream(
 ## 安装与运行
 
 ```bash
-pip install anthropic
+pip install openai
 
-export ANTHROPIC_API_KEY=sk-ant-...
+export OPENAI_API_KEY=sk-...
 
 python cli/main.py
+```
+
+如果使用其他 OpenAI 兼容接口（DeepSeek、Qwen、本地 Ollama 等），只需修改 `core.py` 里的 `base_url` 和 `api_key`，其余代码完全不变：
+
+```python
+# DeepSeek
+client = openai.OpenAI(base_url="https://api.deepseek.com/v1", api_key="sk-...")
+
+# 本地 Ollama
+client = openai.OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
 ```
 
 ---
