@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 0 680 200">
+  <defs>
+    <style>
+      .node rect { stroke-width: 0.5; }
+      .c-gray rect { fill: #f1efec; stroke: #5f5e5a; }
+      .c-teal rect { fill: #e8f6f2; stroke: #1d9e75; }
+      .c-purple rect { fill: #eeedfe; stroke: #534ab7; }
+      .c-amber rect { fill: #faeeda; stroke: #854f0b; }
+      .th { fill: #444541; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 14px; font-weight: 500; }
+      .ts { fill: #3d3d3a; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 12px; }
+      .arr { stroke: #73736c; fill: none; stroke-width: 1.5; }
+    </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="#73736c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+
+  <g class="node c-gray">
+    <rect x="28" y="78" width="100" height="44" rx="8"/>
+    <text class="th" x="78" y="100" text-anchor="middle" dominant-baseline="central">(7��</text>
+  </g>
+
+  <line x1="128" y1="100" x2="158" y2="100" class="arr" marker-end="url(#arrow)"/>
+
+  <g class="node c-teal">
+    <rect x="158" y="56" width="120" height="88" rx="8"/>
+    <text class="th" x="218" y="88" text-anchor="middle" dominant-baseline="central">�"h</text>
+    <text class="ts" x="218" y="108" text-anchor="middle" dominant-baseline="central">(�Ɠ-</text>
+    <text class="ts" x="218" y="124" text-anchor="middle" dominant-baseline="central">"�s��</text>
+  </g>
+
+  <line x1="278" y1="100" x2="308" y2="100" class="arr" marker-end="url(#arrow)"/>
+
+  <g class="node c-purple">
+    <rect x="308" y="56" width="120" height="88" rx="8"/>
+    <text class="th" x="368" y="88" text-anchor="middle" dominant-baseline="central">�:�:�</text>
+    <text class="ts" x="368" y="108" text-anchor="middle" dominant-baseline="central">��� +</text>
+    <text class="ts" x="368" y="124" text-anchor="middle" dominant-baseline="central">�"0���</text>
+  </g>
+
+  <line x1="428" y1="100" x2="458" y2="100" class="arr" marker-end="url(#arrow)"/>
+
+  <g class="node c-amber">
+    <rect x="458" y="56" width="100" height="88" rx="8"/>
+    <text class="th" x="508" y="88" text-anchor="middle" dominant-baseline="central">'!�</text>
+    <text class="ts" x="508" y="108" text-anchor="middle" dominant-baseline="central">��D�</text>
+    <text class="ts" x="508" y="124" text-anchor="middle" dominant-baseline="central">�T</text>
+  </g>
+
+  <line x1="558" y1="100" x2="588" y2="100" class="arr" marker-end="url(#arrow)"/>
+
+  <g class="node c-gray">
+    <rect x="588" y="78" width="68" height="44" rx="8"/>
+    <text class="th" x="622" y="100" text-anchor="middle" dominant-baseline="central">�T</text>
+  </g>
+
+  <g class="c-teal">
+    <rect x="158" y="164" width="120" height="28" rx="6" fill="#e8f6f2" stroke="#1d9e75" stroke-width="0.5"/>
+    <text class="ts" x="218" y="178" text-anchor="middle" dominant-baseline="central">�Ɠ�pn�	</text>
+  </g>
+  <line x1="218" y1="144" x2="218" y2="162" stroke="#1d9e75" stroke-width="0.5" stroke-dasharray="3 2"/>
+</svg>
