@@ -44,6 +44,12 @@
 </span>
 {{- end -}}
 
+{{- with .Params.translation_category -}}
+<span class="post-meta">
+    &nbsp;|&nbsp;Category: {{ . }}
+</span>
+{{- end -}}
+
 {{- with .Params.topics -}}
 <span class="post-meta">
     &nbsp;|&nbsp;Topics: {{ delimit . ", " }}

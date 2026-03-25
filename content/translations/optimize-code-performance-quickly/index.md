@@ -9,6 +9,7 @@ summary = "从被动 profiling 到主动优化，在上线前发现并修复瓶�
 tags = []
 categories = ["Translations"]
 topics = ["claude-code", "performance", "optimization"]
+translation_category = "性能优化"
 original_title = "Optimize code performance quickly"
 original_url = "https://claude.com/blog/optimize-code-performance-quickly"
 original_author = "Anthropic"

@@ -3,6 +3,9 @@
 {{- $pages := .RegularPages.ByLastmod.Reverse }}
 {{- $scratch := newScratch }}
 {{- range $pages }}
+  {{- with .Params.translation_category }}
+    {{- $scratch.Add "categories" (slice .) }}
+  {{- end }}
   {{- with .Params.topics }}
     {{- $scratch.Add "topics" . }}
   {{- end }}
@@ -10,11 +13,13 @@
     {{- $scratch.Add "sites" (slice .) }}
   {{- end }}
 {{- end }}
+{{- $categoryPool := $scratch.Get "categories" | default (slice) }}
 {{- $topicPool := $scratch.Get "topics" | default (slice) }}
 {{- $sitePool := $scratch.Get "sites" | default (slice) }}
+{{- $allCategories := sort (uniq $categoryPool) }}
 {{- $allTopics := sort (uniq $topicPool) }}
 {{- $allSites := sort (uniq $sitePool) }}
-{{- $showFullFilters := ge (len $pages) 4 }}
+{{- $showFullFilters := ge (len $pages) 2 }}
 
 <header class="page-header">
   {{- partial "breadcrumbs.html" . }}
@@ -31,6 +36,18 @@
   {{- if $showFullFilters }}
   <section class="translations-controls" aria-label="翻译文章筛选与排序">
     <div class="translations-controls-panel">
+
+      {{- if gt (len $allCategories) 0 }}
+      <div class="translations-control-group translations-control-group-full">
+        <span class="translations-control-label">分类</span>
+        <div class="translations-filter-row" data-filter-group="category">
+          <button type="button" class="translations-filter-button is-active" data-category="all">全部</button>
+          {{- range $allCategories }}
+          <button type="button" class="translations-filter-button" data-category="{{ . }}">{{ . }}</button>
+          {{- end }}
+        </div>
+      </div>
+      {{- end }}
 
       {{- if gt (len $allTopics) 0 }}
       <div class="translations-control-group">
@@ -87,7 +104,9 @@
     {{- $originalUrl := .Params.original_url | default "" }}
     {{- $originalAuthor := .Params.original_author | default "" }}
     {{- $originalSite := .Params.original_site | default "" }}
+    {{- $category := .Params.translation_category | default "" }}
     <article class="post-entry translations-entry translations-list-entry"
+      data-category="{{ $category }}"
       data-topics="{{ delimit $topics "," | lower }}"
       data-site="{{ $originalSite | lower }}"
       data-title="{{ .Title | lower }}"
@@ -105,6 +124,9 @@
             </svg>
             翻译
           </span>
+          {{- with $category }}
+          <span class="translations-badge translations-badge-category" data-category="{{ . }}">{{ . }}</span>
+          {{- end }}
           {{- with $originalSite }}
           <span class="translations-badge translations-badge-site">{{ . }}</span>
           {{- end }}
@@ -188,11 +210,13 @@
     if (!list) return;
 
     const cards = Array.from(list.querySelectorAll('.translations-list-entry'));
+    const categoryButtons = Array.from(document.querySelectorAll('.translations-filter-button[data-category]'));
     const topicButtons = Array.from(document.querySelectorAll('.translations-filter-button[data-topic]'));
     const siteButtons = Array.from(document.querySelectorAll('.translations-filter-button[data-site]'));
     const sortSelect = document.getElementById('translations-sort-select');
     const emptyState = document.getElementById('translations-empty-state');
 
+    let activeCategory = 'all';
     let activeTopic = 'all';
     let activeSite = 'all';
     let sortMode = sortSelect ? sortSelect.value : 'recent';
@@ -233,10 +257,11 @@
       let visibleCount = 0;
 
       sortedCards.forEach((card) => {
+        const matchesCategory = activeCategory === 'all' || card.dataset.category === activeCategory;
         const topics = (card.dataset.topics || '').split(',').filter(Boolean);
         const matchesTopic = activeTopic === 'all' || topics.includes(activeTopic);
         const matchesSite = activeSite === 'all' || card.dataset.site === activeSite;
-        const visible = matchesTopic && matchesSite;
+        const visible = matchesCategory && matchesTopic && matchesSite;
         card.hidden = !visible;
         if (visible) visibleCount += 1;
       });
@@ -255,6 +280,14 @@
         });
       }, 10);
     };
+
+    categoryButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        activeCategory = button.dataset.category || 'all';
+        setActiveButton(categoryButtons, 'category', activeCategory);
+        applyFilters();
+      });
+    });
 
     topicButtons.forEach((button) => {
       button.addEventListener('click', () => {
