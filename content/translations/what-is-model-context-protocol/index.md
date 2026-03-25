@@ -2,7 +2,7 @@
 title = "什么是 Model Context Protocol？让 AI 连接你的世界"
 date = 2026-03-25T12:00:00+08:00
 lastmod = 2026-03-25T12:00:00+08:00
-draft = true
+draft = false
 author = "Hex4C59"
 description = "介绍 Model Context Protocol（MCP）：开放标准如何统一 LLM 与外部系统的连接方式，以及 Connectors、开发者与企业场景的适用性。"
 summary = "把 MCP 比作 LLM 的 USB-C：一端 MCP Client、一端 MCP Server，减少重复集成，让 agent 能读写真实工具与数据。"
