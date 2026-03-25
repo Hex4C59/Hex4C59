@@ -8,6 +8,7 @@ summary = ""
 tags = []
 categories = ["Translations"]
 topics = []
+translation_category = ""
 original_title = ""
 original_url = ""
 original_author = ""

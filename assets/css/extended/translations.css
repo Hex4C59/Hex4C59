@@ -30,6 +30,10 @@
     min-width: 140px;
 }
 
+.translations-control-group-full {
+    flex: 1 1 100%;
+}
+
 .translations-control-sort {
     flex: 0 0 auto;
 }
@@ -222,6 +226,72 @@
 
 .translations-badge-source svg {
     flex-shrink: 0;
+}
+
+.translations-badge-category {
+    font-weight: 600;
+    color: var(--secondary);
+    background: color-mix(in srgb, var(--secondary) 12%, transparent);
+}
+
+.translations-badge-category[data-category="AI 与工具"] {
+    color: #3b82f6;
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.translations-badge-category[data-category="前端开发"] {
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.translations-badge-category[data-category="后端开发"] {
+    color: #8b5cf6;
+    background: rgba(139, 92, 246, 0.1);
+}
+
+.translations-badge-category[data-category="安全"] {
+    color: #f59e0b;
+    background: rgba(245, 158, 11, 0.1);
+}
+
+.translations-badge-category[data-category="性能优化"] {
+    color: #ec4899;
+    background: rgba(236, 72, 153, 0.1);
+}
+
+.translations-badge-category[data-category="工程实践"] {
+    color: #6366f1;
+    background: rgba(99, 102, 241, 0.1);
+}
+
+.translations-badge-category[data-category="数据与 AI"] {
+    color: #0ea5e9;
+    background: rgba(14, 165, 233, 0.1);
+}
+
+.translations-badge-category[data-category="DevOps"] {
+    color: #14b8a6;
+    background: rgba(20, 184, 166, 0.1);
+}
+
+.translations-badge-category[data-category="移动开发"] {
+    color: #f97316;
+    background: rgba(249, 115, 22, 0.1);
+}
+
+.translations-badge-category[data-category="系统与底层"] {
+    color: #78716c;
+    background: rgba(120, 113, 108, 0.1);
+}
+
+.translations-badge-category[data-category="设计与产品"] {
+    color: #a855f7;
+    background: rgba(168, 85, 247, 0.1);
+}
+
+.translations-badge-category[data-category="开源与社区"] {
+    color: #22c55e;
+    background: rgba(34, 197, 94, 0.1);
 }
 
 .translations-badge-site {
