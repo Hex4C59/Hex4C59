@@ -2,7 +2,7 @@
 title = "构建 AI Agent 的开源工具栈指南"
 date = 2026-03-27T12:00:00+08:00
 lastmod = 2026-03-27T12:00:00+08:00
-draft = true
+draft = false
 author = "Hex4C59"
 description = "一份实战者的 AI Agent 开源工具精选——覆盖框架编排、浏览器控制、语音、文档理解、记忆、测试、监控、仿真与垂直 Agent 九大类别，聚焦真正好用、可落地的工具。"
 summary = ""

@@ -2,7 +2,7 @@
 title = "如何在工程组织中规模化推广 agentic coding"
 date = 2026-03-25T12:00:00+08:00
 lastmod = 2026-03-25T12:00:00+08:00
-draft = true
+draft = false
 author = "Hex4C59"
 description = "从试点、黑客松到内部专家与 CLAUDE.md，说明如何在组织内系统化落地 agentic coding，并衡量影响、规避常见采纳障碍。"
 summary = "成功与失败往往取决于执行：工作流、技能、团队动态与衡量方式，而非单一工具选型。"
