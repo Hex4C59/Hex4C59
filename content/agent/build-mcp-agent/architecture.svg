@@ -1,0 +1,73 @@
+<svg width="100%" viewBox="0 0 680 420" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">MCP Agent 整体架构</title>
+  <desc id="desc">展示 Agent 作为 MCP Host/Client 连接多个 MCP Server 的架构。</desc>
+
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <style>
+      .label { font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; text-anchor: middle; }
+      .title-text { font-size: 14px; font-weight: 500; }
+      .body-text { font-size: 12px; font-weight: 400; }
+      .heading { font-size: 14px; font-weight: 500; }
+      .small-text { font-size: 11px; font-weight: 400; }
+    </style>
+  </defs>
+
+  <text x="340" y="28" class="label heading" fill="rgb(20, 20, 19)">MCP Agent：动态连接多个服务</text>
+
+  <!-- User Task -->
+  <rect x="220" y="46" width="240" height="38" rx="8" fill="rgb(241, 239, 232)" stroke="rgb(95, 94, 90)" stroke-width="0.5"/>
+  <text x="340" y="70" class="label body-text" fill="rgb(68, 68, 65)">用户任务</text>
+
+  <line x1="340" y1="84" x2="340" y2="104" marker-end="url(#arrow)" stroke="rgb(115, 114, 108)" stroke-width="1.5" fill="none"/>
+
+  <!-- Agent Core (Host) -->
+  <rect x="130" y="106" width="420" height="120" rx="12" fill="rgb(238, 237, 254)" stroke="rgb(83, 74, 183)" stroke-width="0.5"/>
+  <text x="340" y="130" class="label title-text" fill="rgb(60, 52, 137)">Agent（MCP Host + Client）</text>
+
+  <rect x="150" y="142" width="120" height="36" rx="6" fill="rgb(238, 237, 254)" stroke="rgb(83, 74, 183)" stroke-width="0.5"/>
+  <text x="210" y="164" class="label small-text" fill="rgb(83, 74, 183)">ReAct 循环</text>
+
+  <rect x="280" y="142" width="120" height="36" rx="6" fill="rgb(250, 238, 218)" stroke="rgb(133, 79, 11)" stroke-width="0.5"/>
+  <text x="340" y="164" class="label small-text" fill="rgb(133, 79, 11)">MCP 客户端管理</text>
+
+  <rect x="410" y="142" width="120" height="36" rx="6" fill="rgb(225, 245, 238)" stroke="rgb(15, 110, 86)" stroke-width="0.5"/>
+  <text x="470" y="164" class="label small-text" fill="rgb(15, 110, 86)">动态工具注册</text>
+
+  <text x="340" y="210" class="label body-text" fill="rgb(83, 74, 183)">启动时连接 MCP Server → 发现工具 → 注册到 LLM 上下文</text>
+
+  <!-- MCP Protocol line -->
+  <line x1="130" y1="250" x2="550" y2="250" stroke="rgb(83, 74, 183)" stroke-width="1.5" stroke-dasharray="6 3"/>
+  <text x="340" y="245" class="label small-text" fill="rgb(83, 74, 183)">MCP 协议（JSON-RPC over stdio / SSE）</text>
+
+  <!-- Three arrows down to servers -->
+  <line x1="140" y1="256" x2="140" y2="278" marker-end="url(#arrow)" stroke="rgb(115, 114, 108)" stroke-width="1.2" fill="none"/>
+  <line x1="340" y1="256" x2="340" y2="278" marker-end="url(#arrow)" stroke="rgb(115, 114, 108)" stroke-width="1.2" fill="none"/>
+  <line x1="540" y1="256" x2="540" y2="278" marker-end="url(#arrow)" stroke="rgb(115, 114, 108)" stroke-width="1.2" fill="none"/>
+
+  <!-- Server 1: Filesystem -->
+  <rect x="50" y="280" width="180" height="90" rx="10" fill="rgb(225, 245, 238)" stroke="rgb(15, 110, 86)" stroke-width="0.5"/>
+  <text x="140" y="304" class="label title-text" fill="rgb(8, 80, 65)">文件系统 Server</text>
+  <text x="140" y="324" class="label small-text" fill="rgb(15, 110, 86)">read_file, write_file</text>
+  <text x="140" y="340" class="label small-text" fill="rgb(15, 110, 86)">list_directory, search</text>
+  <text x="140" y="358" class="label small-text" fill="rgb(95, 94, 90)">stdio 传输</text>
+
+  <!-- Server 2: GitHub -->
+  <rect x="250" y="280" width="180" height="90" rx="10" fill="rgb(250, 238, 218)" stroke="rgb(133, 79, 11)" stroke-width="0.5"/>
+  <text x="340" y="304" class="label title-text" fill="rgb(99, 56, 6)">GitHub Server</text>
+  <text x="340" y="324" class="label small-text" fill="rgb(133, 79, 11)">list_repos, get_issues</text>
+  <text x="340" y="340" class="label small-text" fill="rgb(133, 79, 11)">create_pr, search_code</text>
+  <text x="340" y="358" class="label small-text" fill="rgb(95, 94, 90)">stdio 传输</text>
+
+  <!-- Server 3: Database -->
+  <rect x="450" y="280" width="180" height="90" rx="10" fill="rgb(238, 237, 254)" stroke="rgb(83, 74, 183)" stroke-width="0.5"/>
+  <text x="540" y="304" class="label title-text" fill="rgb(60, 52, 137)">数据库 Server</text>
+  <text x="540" y="324" class="label small-text" fill="rgb(83, 74, 183)">query, list_tables</text>
+  <text x="540" y="340" class="label small-text" fill="rgb(83, 74, 183)">describe_table</text>
+  <text x="540" y="358" class="label small-text" fill="rgb(95, 94, 90)">stdio 传输</text>
+
+  <!-- Bottom note -->
+  <text x="340" y="404" class="label body-text" fill="rgb(95, 94, 90)">Agent 启动时不知道有哪些工具——通过 MCP 协议动态发现、注册、调用</text>
+</svg>
