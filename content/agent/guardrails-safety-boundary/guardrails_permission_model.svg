@@ -1,0 +1,75 @@
+<svg width="100%" viewBox="0 0 680 460" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">工具调用权限分级模型</title>
+  <desc id="desc">展示 Agent 工具调用中从自动执行到完全禁止的四级权限模型。</desc>
+
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <style>
+      .label {
+        font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+        text-anchor: middle;
+      }
+      .title-text {
+        font-size: 14px;
+        font-weight: 500;
+      }
+      .body-text {
+        font-size: 12px;
+        font-weight: 400;
+      }
+      .heading {
+        font-size: 14px;
+        font-weight: 500;
+      }
+      .small-text {
+        font-size: 11px;
+        font-weight: 400;
+      }
+    </style>
+  </defs>
+
+  <!-- Title -->
+  <text x="340" y="28" class="label heading" fill="rgb(20, 20, 19)">工具调用权限分级模型</text>
+
+  <!-- Risk Arrow on the left -->
+  <line x1="32" y1="65" x2="32" y2="410" stroke="rgb(201, 77, 61)" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+  <text x="32" y="55" class="label small-text" fill="rgb(140, 41, 29)">低风险</text>
+  <text x="32" y="430" class="label small-text" fill="rgb(140, 41, 29)">高风险</text>
+
+  <!-- Level 1: Auto-execute (Green) -->
+  <rect x="60" y="50" width="580" height="76" rx="10" fill="rgb(225, 245, 238)" stroke="rgb(15, 110, 86)" stroke-width="0.5"/>
+  <text x="130" y="76" class="label title-text" fill="rgb(8, 80, 65)">Level 1：自动执行</text>
+  <text x="130" y="96" class="label body-text" fill="rgb(15, 110, 86)">Auto-Execute</text>
+  <text x="420" y="76" class="label body-text" fill="rgb(15, 110, 86)">只读操作，不产生副作用</text>
+  <text x="420" y="96" class="label small-text" fill="rgb(15, 110, 86)">搜索、读文件、查数据库、调用只读 API</text>
+  <text x="420" y="114" class="label small-text" fill="rgb(15, 110, 86)">→ 无需确认，直接执行</text>
+
+  <!-- Level 2: Notify-then-execute (Orange) -->
+  <rect x="60" y="142" width="580" height="76" rx="10" fill="rgb(250, 238, 218)" stroke="rgb(133, 79, 11)" stroke-width="0.5"/>
+  <text x="130" y="168" class="label title-text" fill="rgb(99, 56, 6)">Level 2：通知后执行</text>
+  <text x="130" y="188" class="label body-text" fill="rgb(133, 79, 11)">Notify-then-Execute</text>
+  <text x="420" y="168" class="label body-text" fill="rgb(133, 79, 11)">可逆写操作，影响有界</text>
+  <text x="420" y="188" class="label small-text" fill="rgb(133, 79, 11)">创建临时文件、写日志、修改草稿</text>
+  <text x="420" y="206" class="label small-text" fill="rgb(133, 79, 11)">→ 记录操作日志，异步通知用户</text>
+
+  <!-- Level 3: Confirm-before-execute (Red light) -->
+  <rect x="60" y="234" width="580" height="76" rx="10" fill="rgb(252, 230, 227)" stroke="rgb(201, 77, 61)" stroke-width="0.5"/>
+  <text x="130" y="260" class="label title-text" fill="rgb(140, 41, 29)">Level 3：确认后执行</text>
+  <text x="130" y="280" class="label body-text" fill="rgb(201, 77, 61)">Confirm-before-Execute</text>
+  <text x="420" y="260" class="label body-text" fill="rgb(201, 77, 61)">不可逆操作或涉及外部影响</text>
+  <text x="420" y="280" class="label small-text" fill="rgb(201, 77, 61)">删除文件、发送邮件、修改生产配置</text>
+  <text x="420" y="298" class="label small-text" fill="rgb(201, 77, 61)">→ 暂停执行，等待人类明确确认</text>
+
+  <!-- Level 4: Forbidden (Dark red) -->
+  <rect x="60" y="326" width="580" height="76" rx="10" fill="rgb(252, 230, 227)" stroke="rgb(153, 40, 27)" stroke-width="1"/>
+  <text x="130" y="352" class="label title-text" fill="rgb(113, 30, 18)">Level 4：完全禁止</text>
+  <text x="130" y="372" class="label body-text" fill="rgb(153, 40, 27)">Forbidden</text>
+  <text x="420" y="352" class="label body-text" fill="rgb(153, 40, 27)">涉及安全、隐私或高危系统</text>
+  <text x="420" y="372" class="label small-text" fill="rgb(153, 40, 27)">访问密钥/凭证、操作支付系统、修改权限</text>
+  <text x="420" y="390" class="label small-text" fill="rgb(153, 40, 27)">→ 硬性拦截，任何路径都不允许执行</text>
+
+  <!-- Bottom note -->
+  <text x="340" y="446" class="label body-text" fill="rgb(95, 94, 90)">权限分级不只是 prompt 约束，必须在代码层面硬性执行</text>
+</svg>
