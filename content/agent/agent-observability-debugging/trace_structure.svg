@@ -1,0 +1,73 @@
+<svg width="100%" viewBox="0 0 680 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Agent Trace 结构示例</title>
+  <desc id="desc">展示一次 Agent 执行的 Trace 结构——根 Span 包含多个子 Span，每个子 Span 对应一轮推理或工具调用。</desc>
+
+  <defs>
+    <style>
+      .label { font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; text-anchor: start; }
+      .label-center { font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; text-anchor: middle; }
+      .title-text { font-size: 14px; font-weight: 500; }
+      .body-text { font-size: 12px; font-weight: 400; }
+      .heading { font-size: 14px; font-weight: 500; }
+      .small-text { font-size: 11px; font-weight: 400; }
+      .mono { font-family: "SF Mono", "Fira Code", monospace; font-size: 11px; }
+    </style>
+  </defs>
+
+  <text x="340" y="28" class="label-center heading" fill="rgb(20, 20, 19)">一次 Agent 执行的 Trace 结构</text>
+
+  <!-- Root span -->
+  <rect x="30" y="46" width="620" height="460" rx="10" fill="rgb(241, 239, 232)" stroke="rgb(95, 94, 90)" stroke-width="0.5"/>
+  <text x="50" y="68" class="label title-text" fill="rgb(68, 68, 65)">Trace: agent_run_a3f2</text>
+  <text x="400" y="68" class="label small-text" fill="rgb(95, 94, 90)">总耗时: 12.3s | 总 Token: 4,521 | 成本: $0.038</text>
+
+  <!-- Turn 1 -->
+  <rect x="50" y="82" width="580" height="86" rx="8" fill="rgb(238, 237, 254)" stroke="rgb(83, 74, 183)" stroke-width="0.5"/>
+  <text x="70" y="102" class="label body-text" fill="rgb(60, 52, 137)">Span: llm_call_1</text>
+  <text x="350" y="102" class="label small-text" fill="rgb(83, 74, 183)">1.8s | input: 820 tokens | output: 156 tokens</text>
+  <text x="70" y="122" class="label mono" fill="rgb(83, 74, 183)">Thought: "先看看目录结构"</text>
+  <text x="70" y="138" class="label mono" fill="rgb(83, 74, 183)">Action: list_directory(path="./src")</text>
+
+  <!-- Arrow -->
+  <rect x="70" y="148" width="540" height="4" rx="2" fill="rgb(83, 74, 183)" opacity="0.2"/>
+
+  <!-- Tool span inside turn 1 -->
+  <rect x="80" y="156" width="200" height="4" rx="2" fill="rgb(133, 79, 11)"/>
+  <text x="290" y="164" class="label small-text" fill="rgb(133, 79, 11)">tool: list_directory | 0.02s</text>
+
+  <!-- Turn 2 -->
+  <rect x="50" y="180" width="580" height="86" rx="8" fill="rgb(238, 237, 254)" stroke="rgb(83, 74, 183)" stroke-width="0.5"/>
+  <text x="70" y="200" class="label body-text" fill="rgb(60, 52, 137)">Span: llm_call_2</text>
+  <text x="350" y="200" class="label small-text" fill="rgb(83, 74, 183)">2.1s | input: 1,240 tokens | output: 203 tokens</text>
+  <text x="70" y="220" class="label mono" fill="rgb(83, 74, 183)">Thought: "需要读取 config.py 了解配置结构"</text>
+  <text x="70" y="236" class="label mono" fill="rgb(83, 74, 183)">Action: read_file(path="./src/config.py")</text>
+
+  <rect x="70" y="246" width="540" height="4" rx="2" fill="rgb(83, 74, 183)" opacity="0.2"/>
+  <rect x="80" y="254" width="60" height="4" rx="2" fill="rgb(133, 79, 11)"/>
+  <text x="150" y="262" class="label small-text" fill="rgb(133, 79, 11)">tool: read_file | 0.01s</text>
+
+  <!-- Turn 3: Error -->
+  <rect x="50" y="278" width="580" height="86" rx="8" fill="rgb(252, 230, 227)" stroke="rgb(201, 77, 61)" stroke-width="0.5"/>
+  <text x="70" y="298" class="label body-text" fill="rgb(140, 41, 29)">Span: llm_call_3 ⚠️</text>
+  <text x="350" y="298" class="label small-text" fill="rgb(201, 77, 61)">3.4s | input: 1,890 tokens | output: 312 tokens</text>
+  <text x="70" y="318" class="label mono" fill="rgb(201, 77, 61)">Thought: "写入修改后的代码"</text>
+  <text x="70" y="334" class="label mono" fill="rgb(201, 77, 61)">Action: write_file(path="./src/config.py", ...)</text>
+
+  <rect x="70" y="344" width="540" height="4" rx="2" fill="rgb(201, 77, 61)" opacity="0.2"/>
+  <rect x="80" y="352" width="100" height="4" rx="2" fill="rgb(201, 77, 61)"/>
+  <text x="190" y="360" class="label small-text" fill="rgb(201, 77, 61)">tool: write_file | 0.03s | ERROR: permission denied</text>
+
+  <!-- Turn 4: Recovery -->
+  <rect x="50" y="376" width="580" height="86" rx="8" fill="rgb(225, 245, 238)" stroke="rgb(15, 110, 86)" stroke-width="0.5"/>
+  <text x="70" y="396" class="label body-text" fill="rgb(8, 80, 65)">Span: llm_call_4 ✓</text>
+  <text x="350" y="396" class="label small-text" fill="rgb(15, 110, 86)">2.6s | input: 2,340 tokens | output: 189 tokens</text>
+  <text x="70" y="416" class="label mono" fill="rgb(15, 110, 86)">Thought: "权限不足，尝试写到临时目录再移动"</text>
+  <text x="70" y="432" class="label mono" fill="rgb(15, 110, 86)">Action: write_file(path="/tmp/config.py", ...)</text>
+
+  <rect x="70" y="442" width="540" height="4" rx="2" fill="rgb(15, 110, 86)" opacity="0.2"/>
+  <rect x="80" y="450" width="80" height="4" rx="2" fill="rgb(15, 110, 86)"/>
+  <text x="170" y="458" class="label small-text" fill="rgb(15, 110, 86)">tool: write_file | 0.02s | SUCCESS</text>
+
+  <!-- Bottom note -->
+  <text x="340" y="510" class="label-center body-text" fill="rgb(95, 94, 90)">每个 Span 记录推理文本、工具调用、耗时和 Token 用量——错误和恢复过程一目了然</text>
+</svg>
