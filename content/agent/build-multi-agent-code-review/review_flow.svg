@@ -1,0 +1,69 @@
+<svg width="100%" viewBox="0 0 680 460" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Multi-Agent 执行流程</title>
+  <desc id="desc">展示代码审查 Multi-Agent 系统的完整执行流程——从 PR 读取到综合报告输出。</desc>
+
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <style>
+      .label { font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; text-anchor: middle; }
+      .title-text { font-size: 14px; font-weight: 500; }
+      .body-text { font-size: 12px; font-weight: 400; }
+      .heading { font-size: 14px; font-weight: 500; }
+      .small-text { font-size: 11px; font-weight: 400; }
+      .step-num { font-size: 12px; font-weight: 600; }
+    </style>
+  </defs>
+
+  <text x="340" y="28" class="label heading" fill="rgb(20, 20, 19)">执行流程：从 PR 到审查报告</text>
+
+  <!-- Step 1 -->
+  <rect x="160" y="48" width="360" height="44" rx="8" fill="rgb(241, 239, 232)" stroke="rgb(95, 94, 90)" stroke-width="0.5"/>
+  <text x="182" y="74" class="label step-num" fill="rgb(68, 68, 65)" text-anchor="start">①</text>
+  <text x="350" y="74" class="label body-text" fill="rgb(68, 68, 65)">读取 PR：获取 diff、变更文件列表、commit message</text>
+
+  <line x1="340" y1="92" x2="340" y2="110" marker-end="url(#arrow)" stroke="rgb(115, 114, 108)" stroke-width="1.5" fill="none"/>
+
+  <!-- Step 2 -->
+  <rect x="160" y="112" width="360" height="44" rx="8" fill="rgb(238, 237, 254)" stroke="rgb(83, 74, 183)" stroke-width="0.5"/>
+  <text x="182" y="138" class="label step-num" fill="rgb(60, 52, 137)" text-anchor="start">②</text>
+  <text x="350" y="138" class="label body-text" fill="rgb(60, 52, 137)">Supervisor 分析 diff → 决定需要哪些审查维度</text>
+
+  <line x1="340" y1="156" x2="340" y2="174" marker-end="url(#arrow)" stroke="rgb(115, 114, 108)" stroke-width="1.5" fill="none"/>
+
+  <!-- Step 3: Parallel block -->
+  <rect x="60" y="176" width="560" height="100" rx="10" fill="rgb(241, 239, 232)" stroke="rgb(95, 94, 90)" stroke-width="0.5" stroke-dasharray="4 3"/>
+  <text x="82" y="198" class="label step-num" fill="rgb(68, 68, 65)" text-anchor="start">③</text>
+  <text x="340" y="198" class="label title-text" fill="rgb(68, 68, 65)">并行执行（asyncio.gather）</text>
+
+  <rect x="80" y="210" width="160" height="52" rx="6" fill="rgb(225, 245, 238)" stroke="rgb(15, 110, 86)" stroke-width="0.5"/>
+  <text x="160" y="232" class="label small-text" fill="rgb(8, 80, 65)">逻辑审查 Agent</text>
+  <text x="160" y="250" class="label small-text" fill="rgb(15, 110, 86)">独立上下文 | 独立工具</text>
+
+  <rect x="260" y="210" width="160" height="52" rx="6" fill="rgb(252, 230, 227)" stroke="rgb(201, 77, 61)" stroke-width="0.5"/>
+  <text x="340" y="232" class="label small-text" fill="rgb(140, 41, 29)">安全审查 Agent</text>
+  <text x="340" y="250" class="label small-text" fill="rgb(201, 77, 61)">独立上下文 | 独立工具</text>
+
+  <rect x="440" y="210" width="160" height="52" rx="6" fill="rgb(250, 238, 218)" stroke="rgb(133, 79, 11)" stroke-width="0.5"/>
+  <text x="520" y="232" class="label small-text" fill="rgb(99, 56, 6)">性能审查 Agent</text>
+  <text x="520" y="250" class="label small-text" fill="rgb(133, 79, 11)">独立上下文 | 独立工具</text>
+
+  <line x1="340" y1="276" x2="340" y2="296" marker-end="url(#arrow)" stroke="rgb(115, 114, 108)" stroke-width="1.5" fill="none"/>
+
+  <!-- Step 4 -->
+  <rect x="160" y="298" width="360" height="44" rx="8" fill="rgb(250, 238, 218)" stroke="rgb(133, 79, 11)" stroke-width="0.5"/>
+  <text x="182" y="324" class="label step-num" fill="rgb(99, 56, 6)" text-anchor="start">④</text>
+  <text x="350" y="324" class="label body-text" fill="rgb(99, 56, 6)">交叉审查：检测矛盾意见 + 发现遗漏</text>
+
+  <line x1="340" y1="342" x2="340" y2="360" marker-end="url(#arrow)" stroke="rgb(115, 114, 108)" stroke-width="1.5" fill="none"/>
+
+  <!-- Step 5 -->
+  <rect x="160" y="362" width="360" height="44" rx="8" fill="rgb(238, 237, 254)" stroke="rgb(83, 74, 183)" stroke-width="0.5"/>
+  <text x="182" y="388" class="label step-num" fill="rgb(60, 52, 137)" text-anchor="start">⑤</text>
+  <text x="350" y="388" class="label body-text" fill="rgb(60, 52, 137)">Supervisor 综合意见 → 生成结构化审查报告</text>
+
+  <line x1="340" y1="406" x2="340" y2="424" marker-end="url(#arrow)" stroke="rgb(115, 114, 108)" stroke-width="1.5" fill="none"/>
+
+  <text x="340" y="444" class="label body-text" fill="rgb(95, 94, 90)">输出：按严重等级排序的问题列表 + 每个问题的文件位置和修复建议</text>
+</svg>
