@@ -1,0 +1,73 @@
+<svg width="100%" viewBox="0 0 680 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">传统 RAG vs Agentic RAG</title>
+  <desc id="desc">对比传统 RAG 的单轮检索流程和 Agentic RAG 的多轮自主检索策略。</desc>
+
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <style>
+      .label {
+        font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+        text-anchor: middle;
+      }
+      .title-text { font-size: 14px; font-weight: 500; }
+      .body-text { font-size: 12px; font-weight: 400; }
+      .heading { font-size: 14px; font-weight: 500; }
+      .small-text { font-size: 11px; font-weight: 400; }
+    </style>
+  </defs>
+
+  <text x="340" y="28" class="label heading" fill="rgb(20, 20, 19)">传统 RAG vs Agentic RAG</text>
+
+  <!-- Left: Traditional RAG -->
+  <rect x="30" y="48" width="290" height="244" rx="12" fill="rgb(241, 239, 232)" stroke="rgb(95, 94, 90)" stroke-width="0.5"/>
+  <text x="175" y="74" class="label title-text" fill="rgb(68, 68, 65)">传统 RAG</text>
+  <text x="175" y="94" class="label body-text" fill="rgb(95, 94, 90)">单轮检索，被动回答</text>
+
+  <!-- Traditional flow -->
+  <rect x="100" y="112" width="150" height="30" rx="6" fill="rgb(241, 239, 232)" stroke="rgb(95, 94, 90)" stroke-width="0.5"/>
+  <text x="175" y="131" class="label body-text" fill="rgb(95, 94, 90)">用户提问</text>
+
+  <line x1="175" y1="142" x2="175" y2="158" marker-end="url(#arrow)" stroke="rgb(115, 114, 108)" stroke-width="1.2" fill="none"/>
+
+  <rect x="100" y="160" width="150" height="30" rx="6" fill="#e6f1fb" stroke="#185fa5" stroke-width="0.5"/>
+  <text x="175" y="179" class="label body-text" fill="#185fa5">向量检索（1 次）</text>
+
+  <line x1="175" y1="190" x2="175" y2="206" marker-end="url(#arrow)" stroke="rgb(115, 114, 108)" stroke-width="1.2" fill="none"/>
+
+  <rect x="100" y="208" width="150" height="30" rx="6" fill="rgb(238, 237, 254)" stroke="rgb(83, 74, 183)" stroke-width="0.5"/>
+  <text x="175" y="227" class="label body-text" fill="rgb(83, 74, 183)">模型生成答案</text>
+
+  <text x="175" y="268" class="label small-text" fill="rgb(95, 94, 90)">问题：检索词不好 → 结果不好</text>
+  <text x="175" y="284" class="label small-text" fill="rgb(95, 94, 90)">一次机会，没有纠正能力</text>
+
+  <!-- Right: Agentic RAG -->
+  <rect x="360" y="48" width="290" height="244" rx="12" fill="rgb(225, 245, 238)" stroke="rgb(15, 110, 86)" stroke-width="0.5"/>
+  <text x="505" y="74" class="label title-text" fill="rgb(8, 80, 65)">Agentic RAG</text>
+  <text x="505" y="94" class="label body-text" fill="rgb(15, 110, 86)">多轮检索，自主决策</text>
+
+  <!-- Agentic flow -->
+  <rect x="400" y="112" width="220" height="30" rx="6" fill="rgb(225, 245, 238)" stroke="rgb(15, 110, 86)" stroke-width="0.5"/>
+  <text x="510" y="131" class="label body-text" fill="rgb(15, 110, 86)">Agent 分析 → 制定检索策略</text>
+
+  <line x1="510" y1="142" x2="510" y2="158" marker-end="url(#arrow)" stroke="rgb(115, 114, 108)" stroke-width="1.2" fill="none"/>
+
+  <rect x="400" y="160" width="220" height="30" rx="6" fill="#e6f1fb" stroke="#185fa5" stroke-width="0.5"/>
+  <text x="510" y="179" class="label body-text" fill="#185fa5">多源检索（搜索 + 知识库）</text>
+
+  <line x1="510" y1="190" x2="510" y2="206" marker-end="url(#arrow)" stroke="rgb(115, 114, 108)" stroke-width="1.2" fill="none"/>
+
+  <rect x="400" y="208" width="220" height="30" rx="6" fill="rgb(250, 238, 218)" stroke="rgb(133, 79, 11)" stroke-width="0.5"/>
+  <text x="510" y="227" class="label body-text" fill="rgb(133, 79, 11)">评估结果 → 决定是否追问</text>
+
+  <!-- Loop arrow -->
+  <path d="M 620 223 L 640 223 L 640 175 L 620 175" fill="none" stroke="rgb(133, 79, 11)" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+  <text x="656" y="202" class="label small-text" fill="rgb(133, 79, 11)" text-anchor="start" transform="rotate(90 656 202)" dx="-14">追问</text>
+
+  <text x="505" y="268" class="label small-text" fill="rgb(15, 110, 86)">优势：Agent 自主调整检索策略</text>
+  <text x="505" y="284" class="label small-text" fill="rgb(15, 110, 86)">每轮检索都基于已有信息优化</text>
+
+  <!-- Bottom note -->
+  <text x="340" y="314" class="label body-text" fill="rgb(95, 94, 90)">Agentic RAG 的核心："检索什么"和"检索够不够"由 Agent 自己判断</text>
+</svg>
