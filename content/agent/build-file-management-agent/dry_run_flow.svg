@@ -1,0 +1,75 @@
+<svg width="100%" viewBox="0 0 680 500" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Dry-run 执行流程</title>
+  <desc id="desc">展示文件管理 Agent 的 Dry-run 机制：先预览所有变更，用户确认后才真正执行。</desc>
+
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <style>
+      .label { font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; text-anchor: middle; }
+      .title-text { font-size: 14px; font-weight: 500; }
+      .body-text { font-size: 12px; font-weight: 400; }
+      .heading { font-size: 14px; font-weight: 500; }
+      .small-text { font-size: 11px; font-weight: 400; }
+    </style>
+  </defs>
+
+  <text x="340" y="28" class="label heading" fill="rgb(20, 20, 19)">Dry-run → Confirm → Execute 流程</text>
+
+  <!-- Step 1: Agent generates plan -->
+  <rect x="180" y="48" width="320" height="44" rx="8" fill="rgb(238, 237, 254)" stroke="rgb(83, 74, 183)" stroke-width="0.5"/>
+  <text x="340" y="66" class="label title-text" fill="rgb(60, 52, 137)">① Agent 制定操作计划</text>
+  <text x="340" y="82" class="label body-text" fill="rgb(83, 74, 183)">分析任务 → 生成操作列表</text>
+
+  <line x1="340" y1="92" x2="340" y2="112" marker-end="url(#arrow)" stroke="rgb(115, 114, 108)" stroke-width="1.5" fill="none"/>
+
+  <!-- Step 2: Dry-run -->
+  <rect x="120" y="114" width="440" height="100" rx="10" fill="rgb(250, 238, 218)" stroke="rgb(133, 79, 11)" stroke-width="0.5"/>
+  <text x="340" y="138" class="label title-text" fill="rgb(99, 56, 6)">② Dry-run 预览</text>
+
+  <rect x="140" y="150" width="400" height="52" rx="6" fill="rgb(241, 239, 232)" stroke="rgb(95, 94, 90)" stroke-width="0.5"/>
+  <text x="340" y="168" class="label small-text" fill="rgb(68, 68, 65)">即将执行的操作：</text>
+  <text x="340" y="184" class="label small-text" fill="rgb(95, 94, 90)">MOVE report.pdf → Documents/  |  DELETE temp_*.log (3 个文件)  |  ...</text>
+  <text x="340" y="200" class="label small-text" fill="rgb(133, 79, 11)">显示每个操作的类型、目标、影响范围</text>
+
+  <line x1="340" y1="214" x2="340" y2="234" marker-end="url(#arrow)" stroke="rgb(115, 114, 108)" stroke-width="1.5" fill="none"/>
+
+  <!-- Step 3: User decision -->
+  <!-- Diamond shape for decision -->
+  <polygon points="340,236 430,272 340,308 250,272" fill="rgb(241, 239, 232)" stroke="rgb(95, 94, 90)" stroke-width="0.5"/>
+  <text x="340" y="268" class="label title-text" fill="rgb(68, 68, 65)">③ 用户确认</text>
+  <text x="340" y="284" class="label body-text" fill="rgb(95, 94, 90)">全部/部分/拒绝</text>
+
+  <!-- Reject branch -->
+  <line x1="250" y1="272" x2="130" y2="272" marker-end="url(#arrow)" stroke="rgb(201, 77, 61)" stroke-width="1.2" fill="none"/>
+  <rect x="40" y="256" width="88" height="32" rx="6" fill="rgb(252, 230, 227)" stroke="rgb(201, 77, 61)" stroke-width="0.5"/>
+  <text x="84" y="276" class="label body-text" fill="rgb(201, 77, 61)">取消操作</text>
+
+  <!-- Partial branch -->
+  <line x1="430" y1="272" x2="540" y2="272" marker-end="url(#arrow)" stroke="rgb(133, 79, 11)" stroke-width="1.2" fill="none"/>
+  <rect x="542" y="256" width="104" height="32" rx="6" fill="rgb(250, 238, 218)" stroke="rgb(133, 79, 11)" stroke-width="0.5"/>
+  <text x="594" y="276" class="label body-text" fill="rgb(133, 79, 11)">部分执行</text>
+
+  <!-- Approve branch -->
+  <line x1="340" y1="308" x2="340" y2="336" marker-end="url(#arrow)" stroke="rgb(115, 114, 108)" stroke-width="1.5" fill="none"/>
+
+  <!-- Step 4: Execute -->
+  <rect x="180" y="338" width="320" height="44" rx="8" fill="rgb(225, 245, 238)" stroke="rgb(15, 110, 86)" stroke-width="0.5"/>
+  <text x="340" y="356" class="label title-text" fill="rgb(8, 80, 65)">④ 逐条执行 + 记录 Undo 日志</text>
+  <text x="340" y="372" class="label body-text" fill="rgb(15, 110, 86)">每一步操作记录回滚信息</text>
+
+  <line x1="340" y1="382" x2="340" y2="404" marker-end="url(#arrow)" stroke="rgb(115, 114, 108)" stroke-width="1.5" fill="none"/>
+
+  <!-- Step 5: Report -->
+  <rect x="180" y="406" width="320" height="44" rx="8" fill="rgb(241, 239, 232)" stroke="rgb(95, 94, 90)" stroke-width="0.5"/>
+  <text x="340" y="424" class="label title-text" fill="rgb(68, 68, 65)">⑤ 执行报告 + 回滚入口</text>
+  <text x="340" y="440" class="label body-text" fill="rgb(95, 94, 90)">如发现问题，可执行 undo 回滚</text>
+
+  <!-- Undo arrow from report back to step 4 -->
+  <path d="M 500 428 L 530 428 L 530 360 L 500 360" fill="none" stroke="rgb(201, 77, 61)" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+  <text x="546" y="398" class="label small-text" fill="rgb(201, 77, 61)">undo</text>
+
+  <!-- Bottom note -->
+  <text x="340" y="488" class="label body-text" fill="rgb(95, 94, 90)">核心原则：任何不可逆操作，用户都应该在执行前看到会发生什么</text>
+</svg>
