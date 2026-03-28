@@ -1,0 +1,75 @@
+<svg width="100%" viewBox="0 0 680 460" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">持久记忆 Agent 架构</title>
+  <desc id="desc">展示 Agent 在会话开始时检索记忆、会话结束时提取记忆的完整架构。</desc>
+
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <style>
+      .label { font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; text-anchor: middle; }
+      .title-text { font-size: 14px; font-weight: 500; }
+      .body-text { font-size: 12px; font-weight: 400; }
+      .heading { font-size: 14px; font-weight: 500; }
+      .small-text { font-size: 11px; font-weight: 400; }
+    </style>
+  </defs>
+
+  <text x="340" y="28" class="label heading" fill="rgb(20, 20, 19)">持久记忆 Agent：跨会话记住用户</text>
+
+  <!-- User -->
+  <rect x="250" y="46" width="180" height="38" rx="8" fill="rgb(241, 239, 232)" stroke="rgb(95, 94, 90)" stroke-width="0.5"/>
+  <text x="340" y="70" class="label body-text" fill="rgb(68, 68, 65)">用户</text>
+
+  <line x1="340" y1="84" x2="340" y2="110" marker-end="url(#arrow)" stroke="rgb(115, 114, 108)" stroke-width="1.5" fill="none"/>
+
+  <!-- Agent Core -->
+  <rect x="100" y="112" width="480" height="130" rx="12" fill="rgb(238, 237, 254)" stroke="rgb(83, 74, 183)" stroke-width="0.5"/>
+  <text x="340" y="136" class="label title-text" fill="rgb(60, 52, 137)">Agent 核心</text>
+
+  <rect x="120" y="148" width="130" height="36" rx="6" fill="rgb(238, 237, 254)" stroke="rgb(83, 74, 183)" stroke-width="0.5"/>
+  <text x="185" y="170" class="label small-text" fill="rgb(83, 74, 183)">ReAct 循环</text>
+
+  <rect x="260" y="148" width="150" height="36" rx="6" fill="rgb(225, 245, 238)" stroke="rgb(15, 110, 86)" stroke-width="0.5"/>
+  <text x="335" y="170" class="label small-text" fill="rgb(15, 110, 86)">记忆管理器</text>
+
+  <rect x="420" y="148" width="140" height="36" rx="6" fill="rgb(250, 238, 218)" stroke="rgb(133, 79, 11)" stroke-width="0.5"/>
+  <text x="490" y="170" class="label small-text" fill="rgb(133, 79, 11)">工具集</text>
+
+  <text x="340" y="206" class="label body-text" fill="rgb(83, 74, 183)">System Prompt + 记忆上下文 + 对话历史</text>
+  <text x="340" y="224" class="label small-text" fill="rgb(83, 74, 183)">记忆注入位置：System Prompt 之后，User Message 之前</text>
+
+  <!-- Bidirectional arrows to memory stores -->
+  <!-- Left arrow: retrieve at session start -->
+  <line x1="200" y1="242" x2="200" y2="278" marker-end="url(#arrow)" stroke="rgb(15, 110, 86)" stroke-width="1.5" fill="none"/>
+  <text x="178" y="266" class="label small-text" fill="rgb(15, 110, 86)" text-anchor="end">检索</text>
+
+  <!-- Right arrow: save at session end -->
+  <line x1="480" y1="242" x2="480" y2="278" marker-end="url(#arrow)" stroke="rgb(133, 79, 11)" stroke-width="1.5" fill="none"/>
+  <text x="502" y="266" class="label small-text" fill="rgb(133, 79, 11)" text-anchor="start">提取</text>
+
+  <!-- Session timing labels -->
+  <text x="200" y="258" class="label small-text" fill="rgb(15, 110, 86)">会话开始</text>
+  <text x="480" y="258" class="label small-text" fill="rgb(133, 79, 11)">会话结束</text>
+
+  <!-- Memory Stores Container -->
+  <rect x="60" y="280" width="560" height="140" rx="12" fill="rgb(241, 239, 232)" stroke="rgb(95, 94, 90)" stroke-width="0.5" stroke-dasharray="6 3"/>
+  <text x="340" y="302" class="label title-text" fill="rgb(68, 68, 65)">持久化存储</text>
+
+  <!-- Episodic Memory -->
+  <rect x="80" y="312" width="240" height="90" rx="10" fill="rgb(225, 245, 238)" stroke="rgb(15, 110, 86)" stroke-width="0.5"/>
+  <text x="200" y="336" class="label title-text" fill="rgb(8, 80, 65)">情景记忆</text>
+  <text x="200" y="356" class="label small-text" fill="rgb(15, 110, 86)">SQLite + 嵌入向量</text>
+  <text x="200" y="374" class="label small-text" fill="rgb(15, 110, 86)">事件、结果、错误、反馈</text>
+  <text x="200" y="390" class="label small-text" fill="rgb(95, 94, 90)">语义相似度 + 时间衰减检索</text>
+
+  <!-- Semantic Memory -->
+  <rect x="360" y="312" width="240" height="90" rx="10" fill="rgb(250, 238, 218)" stroke="rgb(133, 79, 11)" stroke-width="0.5"/>
+  <text x="480" y="336" class="label title-text" fill="rgb(99, 56, 6)">语义记忆</text>
+  <text x="480" y="356" class="label small-text" fill="rgb(133, 79, 11)">JSON 文件（用户画像）</text>
+  <text x="480" y="374" class="label small-text" fill="rgb(133, 79, 11)">事实、偏好、技术栈</text>
+  <text x="480" y="390" class="label small-text" fill="rgb(95, 94, 90)">同 key 覆盖 + LLM 合并</text>
+
+  <!-- Bottom note -->
+  <text x="340" y="446" class="label body-text" fill="rgb(95, 94, 90)">关掉程序，记忆不丢——下次启动时自动检索相关记忆注入上下文</text>
+</svg>

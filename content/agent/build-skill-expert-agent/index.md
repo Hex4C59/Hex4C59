@@ -829,4 +829,4 @@ Skill 机制的核心思想很简单：**把 Agent 需要的领域知识从代�
 
 *上一篇：[MCP 集成实战：让 Agent 连接真实服务](/agent/build-mcp-agent/)*
 
-*下一篇预告：带持久记忆的对话 Agent——跨会话记住用户*
+*下一篇：[持久记忆实战：让 Agent 跨会话记住用户](/agent/build-persistent-memory-agent/)*
