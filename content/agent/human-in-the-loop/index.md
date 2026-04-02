@@ -1,6 +1,6 @@
 +++
 title = "Human-in-the-Loop：Agent 什么时候应该停下来问你"
-date = 2026-05-10T10:00:00+08:00
+date = 2026-04-02T10:00:00+08:00
 draft = false
 author = "Hex4C59"
 description = "从全自动 Agent 的真实风险出发，系统讲解 HITL 的三种介入模式、触发时机设计、暂停与恢复的工程实现，以及如何避免 Alert Fatigue 让 HITL 形同虚设。"
