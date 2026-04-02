@@ -1,0 +1,127 @@
+<svg width="100%" viewBox="0 0 680 590" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">HITL 执行流程：暂停与恢复</title>
+  <desc id="desc">Agent 遇到 HITL 触发条件时的完整执行流程：检测触发 → 暂停保存状态 → 异步等待人类审核 → 批准恢复或拒绝放弃。</desc>
+
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <marker id="arrow-red" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="rgb(201,77,61)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="rgb(15,110,86)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <style>
+      .label {
+        font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+        text-anchor: middle;
+      }
+      .card-title  { font-size: 14px; font-weight: 600; }
+      .card-body   { font-size: 12px; font-weight: 400; }
+      .note        { font-size: 11px; font-weight: 400; }
+      .branch-tag  { font-size: 11px; font-weight: 600; }
+    </style>
+  </defs>
+
+  <!-- ===== 1. Agent 执行中 (purple) ===== -->
+  <rect x="220" y="22" width="240" height="44" rx="8"
+        fill="rgb(238,237,254)" stroke="rgb(83,74,183)" stroke-width="0.8"/>
+  <text class="label card-title" x="340" y="49" fill="rgb(60,52,137)">Agent 执行中</text>
+
+  <!-- Arrow 1 → diamond -->
+  <line x1="340" y1="66" x2="340" y2="92"
+        stroke="rgb(115,114,108)" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- ===== 2. Diamond: 触发条件检测 (neutral) ===== -->
+  <!-- center(340,116), half-w=62, half-h=24 -->
+  <!-- top(340,92) right(402,116) bottom(340,140) left(278,116) -->
+  <polygon points="340,92 402,116 340,140 278,116"
+           fill="rgb(241,239,232)" stroke="rgb(95,94,90)" stroke-width="1"/>
+  <text class="label note" x="340" y="112" fill="rgb(68,68,65)" font-weight="600">触发条件</text>
+  <text class="label note" x="340" y="127" fill="rgb(68,68,65)" font-weight="600">检测</text>
+
+  <!-- "否" branch → right → 自动继续 (green) -->
+  <line x1="402" y1="116" x2="418" y2="116"
+        stroke="rgb(15,110,86)" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+  <rect x="418" y="96" width="172" height="40" rx="8"
+        fill="rgb(225,245,238)" stroke="rgb(15,110,86)" stroke-width="0.8"/>
+  <text class="label card-body" x="504" y="121" fill="rgb(8,80,65)">自动继续执行</text>
+  <!-- "否" label -->
+  <text class="label branch-tag" x="410" y="108" fill="rgb(8,80,65)" text-anchor="start">否</text>
+
+  <!-- "是" label + arrow down (red) -->
+  <text class="label branch-tag" x="350" y="155" fill="rgb(140,41,29)" text-anchor="start">是</text>
+  <line x1="340" y1="140" x2="340" y2="168"
+        stroke="rgb(201,77,61)" stroke-width="1.5" marker-end="url(#arrow-red)"/>
+
+  <!-- ===== 3. 暂停执行，序列化状态 (orange) ===== -->
+  <rect x="196" y="168" width="288" height="52" rx="8"
+        fill="rgb(250,238,218)" stroke="rgb(133,79,11)" stroke-width="0.8"/>
+  <text class="label card-title" x="340" y="196" fill="rgb(99,56,6)">暂停执行，序列化状态</text>
+  <text class="label card-body" x="340" y="213" fill="rgb(133,79,11)">保存消息历史 · 记录已完成步骤</text>
+
+  <!-- Dashed arrow 3 → 4 (async) -->
+  <line x1="340" y1="220" x2="340" y2="252"
+        stroke="rgb(115,114,108)" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#arrow)"/>
+  <!-- Side annotation: async -->
+  <text class="label note" x="424" y="238" fill="rgb(95,94,90)" text-anchor="start">异步等待</text>
+  <text class="label note" x="424" y="251" fill="rgb(95,94,90)" text-anchor="start">释放线程</text>
+
+  <!-- ===== 4. 发出审核请求 (blue) ===== -->
+  <rect x="156" y="252" width="368" height="56" rx="8"
+        fill="#e6f1fb" stroke="#185fa5" stroke-width="0.8"/>
+  <text class="label card-title" x="340" y="278" fill="#0c447c">发出审核请求</text>
+  <text class="label card-body" x="340" y="297" fill="#185fa5">推送至前端 · 记录 request_id · 设置超时</text>
+
+  <!-- Dashed arrow 4 → 5 (async wait) -->
+  <line x1="340" y1="308" x2="340" y2="340"
+        stroke="rgb(115,114,108)" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#arrow)"/>
+
+  <!-- ===== 5. 人类审核节点 (neutral, special border) ===== -->
+  <rect x="176" y="340" width="328" height="60" rx="8"
+        fill="rgb(241,239,232)" stroke="rgb(95,94,90)" stroke-width="1.2" stroke-dasharray="6 3"/>
+  <text class="label card-title" x="340" y="366" fill="rgb(68,68,65)">人类审核</text>
+  <text class="label card-body" x="340" y="385" fill="rgb(95,94,90)">查看操作描述 · 参数 · 影响范围 · 可逆性</text>
+
+  <!-- Arrow 5 → diamond -->
+  <line x1="340" y1="400" x2="340" y2="422"
+        stroke="rgb(115,114,108)" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- ===== 6. Diamond: 用户决定 (neutral) ===== -->
+  <!-- center(340,446), half-w=66, half-h=24 -->
+  <!-- top(340,422) right(406,446) bottom(340,470) left(274,446) -->
+  <polygon points="340,422 406,446 340,470 274,446"
+           fill="rgb(241,239,232)" stroke="rgb(95,94,90)" stroke-width="1"/>
+  <text class="label note" x="340" y="442" fill="rgb(68,68,65)" font-weight="600">用户</text>
+  <text class="label note" x="340" y="457" fill="rgb(68,68,65)" font-weight="600">决定</text>
+
+  <!-- Left branch: 拒绝 (274,446) → (64,446) → (64,498) -->
+  <line x1="274" y1="446" x2="64" y2="446"
+        stroke="rgb(201,77,61)" stroke-width="1.5"/>
+  <line x1="64" y1="446" x2="64" y2="498"
+        stroke="rgb(201,77,61)" stroke-width="1.5" marker-end="url(#arrow-red)"/>
+  <text class="label branch-tag" x="169" y="440" fill="rgb(140,41,29)">拒绝</text>
+
+  <!-- Right branch: 批准/修改 (406,446) → (616,446) → (616,498) -->
+  <line x1="406" y1="446" x2="616" y2="446"
+        stroke="rgb(15,110,86)" stroke-width="1.5"/>
+  <line x1="616" y1="446" x2="616" y2="498"
+        stroke="rgb(15,110,86)" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+  <text class="label branch-tag" x="511" y="440" fill="rgb(8,80,65)">批准 / 修改参数</text>
+
+  <!-- ===== 7a. 操作取消 (red) ===== -->
+  <rect x="16" y="498" width="200" height="72" rx="8"
+        fill="rgb(252,230,227)" stroke="rgb(201,77,61)" stroke-width="0.8"/>
+  <text class="label card-title" x="116" y="524" fill="rgb(140,41,29)">操作取消</text>
+  <text class="label card-body" x="116" y="542" fill="rgb(201,77,61)">写入拒绝原因</text>
+  <text class="label card-body" x="116" y="558" fill="rgb(201,77,61)">Agent 调整执行计划</text>
+
+  <!-- ===== 7b. 恢复执行 (green) ===== -->
+  <rect x="464" y="498" width="200" height="72" rx="8"
+        fill="rgb(225,245,238)" stroke="rgb(15,110,86)" stroke-width="0.8"/>
+  <text class="label card-title" x="564" y="524" fill="rgb(8,80,65)">恢复执行</text>
+  <text class="label card-body" x="564" y="542" fill="rgb(15,110,86)">还原序列化状态</text>
+  <text class="label card-body" x="564" y="558" fill="rgb(15,110,86)">以确认参数继续运行</text>
+
+</svg>

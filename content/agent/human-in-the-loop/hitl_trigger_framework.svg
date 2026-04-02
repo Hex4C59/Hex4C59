@@ -1,0 +1,133 @@
+<svg width="100%" viewBox="0 0 680 480" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">HITL 触发决策框架</title>
+  <desc id="desc">触发 Human-in-the-Loop 的三条判断路径：操作不可逆程度、模型置信度、授权边界，任一触发则进入人工介入流程。</desc>
+
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <style>
+      .label {
+        font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+        text-anchor: middle;
+      }
+      .card-title { font-size: 14px; font-weight: 600; }
+      .card-sub   { font-size: 11px; font-weight: 400; }
+      .sec-label  { font-size: 12px; font-weight: 600; }
+      .item       { font-size: 12px; font-weight: 400; }
+      .note       { font-size: 11px; font-weight: 400; }
+      .arrow-label{ font-size: 11px; font-weight: 500; }
+    </style>
+  </defs>
+
+  <!-- ======= TOP NODE ======= -->
+  <rect x="180" y="20" width="320" height="50" rx="8" fill="rgb(238,237,254)" stroke="rgb(83,74,183)" stroke-width="0.8"/>
+  <text class="label card-title" x="340" y="51" fill="rgb(60,52,137)">Agent 即将执行操作</text>
+
+  <!-- Arrow from top node down to fan -->
+  <line x1="340" y1="70" x2="340" y2="97" stroke="rgb(115,114,108)" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Horizontal fan line at y=97 -->
+  <line x1="118" y1="97" x2="562" y2="97" stroke="rgb(190,188,182)" stroke-width="1"/>
+  <!-- Short drops to box tops -->
+  <line x1="118" y1="97" x2="118" y2="101" stroke="rgb(190,188,182)" stroke-width="1"/>
+  <line x1="562" y1="97" x2="562" y2="101" stroke="rgb(190,188,182)" stroke-width="1"/>
+
+
+  <!-- ======= BOX 1: 不可逆程度 ======= -->
+  <rect x="28" y="101" width="180" height="179" rx="8" fill="rgb(250,238,218)" stroke="rgb(133,79,11)" stroke-width="0.8"/>
+  <rect x="28" y="101" width="180" height="40" rx="8" fill="rgb(133,79,11)"/>
+  <rect x="28" y="121" width="180" height="20" fill="rgb(133,79,11)"/>
+  <text class="label card-title" x="118" y="126" fill="white">不可逆程度</text>
+  <text class="label card-sub"   x="118" y="140" fill="rgba(255,255,255,0.82)">Irreversibility</text>
+
+  <text class="label sec-label" x="118" y="160" fill="rgb(99,56,6)">触发条件</text>
+  <text class="label item" x="118" y="177" fill="rgb(133,79,11)">• 删除 / 清空操作</text>
+  <text class="label item" x="118" y="193" fill="rgb(133,79,11)">• 发送邮件或消息</text>
+  <text class="label item" x="118" y="209" fill="rgb(133,79,11)">• 部署发布上线</text>
+  <text class="label item" x="118" y="225" fill="rgb(133,79,11)">• 外部系统写入</text>
+
+  <line x1="42" y1="235" x2="194" y2="235" stroke="rgb(133,79,11)" stroke-width="0.4" opacity="0.5"/>
+  <text class="label note" x="118" y="252" fill="rgb(99,56,6)">不可逆 → 事前确认</text>
+  <text class="label note" x="118" y="267" fill="rgb(99,56,6)">高风险默认触发</text>
+
+
+  <!-- ======= BOX 2: 模型置信度 ======= -->
+  <rect x="250" y="101" width="180" height="179" rx="8" fill="rgb(250,238,218)" stroke="rgb(133,79,11)" stroke-width="0.8"/>
+  <rect x="250" y="101" width="180" height="40" rx="8" fill="rgb(133,79,11)"/>
+  <rect x="250" y="121" width="180" height="20" fill="rgb(133,79,11)"/>
+  <text class="label card-title" x="340" y="126" fill="white">模型置信度</text>
+  <text class="label card-sub"   x="340" y="140" fill="rgba(255,255,255,0.82)">Confidence</text>
+
+  <text class="label sec-label" x="340" y="160" fill="rgb(99,56,6)">触发条件</text>
+  <text class="label item" x="340" y="177" fill="rgb(133,79,11)">• 任务描述有歧义</text>
+  <text class="label item" x="340" y="193" fill="rgb(133,79,11)">• 多方案差异显著</text>
+  <text class="label item" x="340" y="209" fill="rgb(133,79,11)">• 依赖信息不确定</text>
+  <text class="label item" x="340" y="225" fill="rgb(133,79,11)">• 首次执行该操作</text>
+
+  <line x1="264" y1="235" x2="416" y2="235" stroke="rgb(133,79,11)" stroke-width="0.4" opacity="0.5"/>
+  <text class="label note" x="340" y="252" fill="rgb(99,56,6)">低置信度 → 异常暂停</text>
+  <text class="label note" x="340" y="267" fill="rgb(99,56,6)">启发式规则判断</text>
+
+
+  <!-- ======= BOX 3: 授权边界 ======= -->
+  <rect x="472" y="101" width="180" height="179" rx="8" fill="rgb(250,238,218)" stroke="rgb(133,79,11)" stroke-width="0.8"/>
+  <rect x="472" y="101" width="180" height="40" rx="8" fill="rgb(133,79,11)"/>
+  <rect x="472" y="121" width="180" height="20" fill="rgb(133,79,11)"/>
+  <text class="label card-title" x="562" y="126" fill="white">授权边界</text>
+  <text class="label card-sub"   x="562" y="140" fill="rgba(255,255,255,0.82)">Authorization</text>
+
+  <text class="label sec-label" x="562" y="160" fill="rgb(99,56,6)">触发条件</text>
+  <text class="label item" x="562" y="177" fill="rgb(133,79,11)">• 超出资源访问范围</text>
+  <text class="label item" x="562" y="193" fill="rgb(133,79,11)">• 超过金额或配额</text>
+  <text class="label item" x="562" y="209" fill="rgb(133,79,11)">• 调用未授权服务</text>
+  <text class="label item" x="562" y="225" fill="rgb(133,79,11)">• 跨用户数据操作</text>
+
+  <line x1="486" y1="235" x2="638" y2="235" stroke="rgb(133,79,11)" stroke-width="0.4" opacity="0.5"/>
+  <text class="label note" x="562" y="252" fill="rgb(99,56,6)">越权 → 硬性阻断</text>
+  <text class="label note" x="562" y="267" fill="rgb(99,56,6)">写在代码里，不可绕过</text>
+
+
+  <!-- ======= COLLECTOR ======= -->
+  <!-- Three drops from box bottoms (y=280) to collector (y=300) -->
+  <line x1="118" y1="280" x2="118" y2="300" stroke="rgb(115,114,108)" stroke-width="1.2"/>
+  <line x1="340" y1="280" x2="340" y2="300" stroke="rgb(115,114,108)" stroke-width="1.2"/>
+  <line x1="562" y1="280" x2="562" y2="300" stroke="rgb(115,114,108)" stroke-width="1.2"/>
+  <!-- Horizontal collector at y=300 -->
+  <line x1="118" y1="300" x2="562" y2="300" stroke="rgb(115,114,108)" stroke-width="1.2"/>
+  <!-- Arrow down from collector center to diamond -->
+  <line x1="340" y1="300" x2="340" y2="319" stroke="rgb(115,114,108)" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+
+  <!-- ======= DIAMOND ======= -->
+  <!-- Center (340, 341), half-w=32, half-h=21 -->
+  <!-- Points: top(340,320), right(372,341), bottom(340,362), left(308,341) -->
+  <polygon points="340,320 372,341 340,362 308,341" fill="rgb(241,239,232)" stroke="rgb(95,94,90)" stroke-width="1"/>
+  <text class="label note" x="340" y="338" fill="rgb(68,68,65)" font-weight="600">任一</text>
+  <text class="label note" x="340" y="353" fill="rgb(68,68,65)" font-weight="600">触发？</text>
+
+
+  <!-- ======= OUTCOME ARROWS ======= -->
+  <!-- Left: diamond left (308,341) → HITL top-center (160,393) -->
+  <line x1="308" y1="341" x2="163" y2="391" stroke="rgb(201,77,61)" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <!-- Right: diamond right (372,341) → 自动执行 top-center (520,393) -->
+  <line x1="372" y1="341" x2="517" y2="391" stroke="rgb(15,110,86)" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Arrow labels -->
+  <text class="label arrow-label" x="206" y="372" fill="rgb(140,41,29)">是 · 任一触发</text>
+  <text class="label arrow-label" x="476" y="372" fill="rgb(8,80,65)">否 · 全部通过</text>
+
+
+  <!-- ======= OUTCOME: 触发 HITL ======= -->
+  <rect x="40" y="393" width="240" height="72" rx="8" fill="rgb(252,230,227)" stroke="rgb(201,77,61)" stroke-width="0.8"/>
+  <text class="label card-title" x="160" y="422" fill="rgb(140,41,29)">触发 HITL</text>
+  <text class="label item"       x="160" y="440" fill="rgb(201,77,61)">暂停执行，等待人类确认</text>
+  <text class="label note"       x="160" y="456" fill="rgb(201,77,61)">Approve · Modify · Reject</text>
+
+  <!-- ======= OUTCOME: 自动执行 ======= -->
+  <rect x="400" y="393" width="240" height="72" rx="8" fill="rgb(225,245,238)" stroke="rgb(15,110,86)" stroke-width="0.8"/>
+  <text class="label card-title" x="520" y="422" fill="rgb(8,80,65)">自动执行</text>
+  <text class="label item"       x="520" y="440" fill="rgb(15,110,86)">无需人类介入</text>
+  <text class="label note"       x="520" y="456" fill="rgb(15,110,86)">Agent 继续推理与工具调用</text>
+
+</svg>
