@@ -1,0 +1,168 @@
+<svg width="100%" viewBox="0 0 680 460" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">HITL 三种介入模式对比</title>
+  <desc id="desc">三种 Human-in-the-Loop 介入模式在自主性与控制权之间的位置：事前确认、异常暂停、事后审核。</desc>
+
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <style>
+      .label {
+        font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+        text-anchor: middle;
+      }
+      .card-title {
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .card-body {
+        font-size: 12px;
+        font-weight: 400;
+      }
+      .tag {
+        font-size: 11px;
+        font-weight: 400;
+      }
+      .axis-label {
+        font-size: 12px;
+        font-weight: 500;
+      }
+      .spectrum-title {
+        font-size: 12px;
+        font-weight: 400;
+      }
+    </style>
+  </defs>
+
+  <!-- 顶部轴标题 -->
+  <text class="label axis-label" x="340" y="30" fill="rgb(68, 68, 65)">自主性 与 控制权 的权衡</text>
+
+  <!-- 控制权 →  自主性 轴 -->
+  <line x1="60" y1="56" x2="620" y2="56" stroke="rgb(190, 188, 182)" stroke-width="1.2"/>
+  <!-- 左箭头（控制权方向）-->
+  <polygon points="60,51 60,61 48,56" fill="rgb(190,188,182)"/>
+  <!-- 右箭头（自主性方向）-->
+  <polygon points="620,51 620,61 632,56" fill="rgb(190,188,182)"/>
+
+  <text class="label spectrum-title" x="90" y="50" fill="rgb(140, 41, 29)" font-size="11">← 控制权最强</text>
+  <text class="label spectrum-title" x="590" y="50" fill="rgb(8, 80, 65)" font-size="11">自主性最高 →</text>
+
+  <!-- 三个轴标记点 -->
+  <!-- 事前确认 marker -->
+  <circle cx="165" cy="56" r="5" fill="rgb(201, 77, 61)" stroke="white" stroke-width="1.5"/>
+  <line x1="165" y1="61" x2="165" y2="76" stroke="rgb(201, 77, 61)" stroke-width="1" stroke-dasharray="3 2"/>
+
+  <!-- 异常暂停 marker -->
+  <circle cx="340" cy="56" r="5" fill="rgb(133, 79, 11)" stroke="white" stroke-width="1.5"/>
+  <line x1="340" y1="61" x2="340" y2="76" stroke="rgb(133, 79, 11)" stroke-width="1" stroke-dasharray="3 2"/>
+
+  <!-- 事后审核 marker -->
+  <circle cx="515" cy="56" r="5" fill="rgb(15, 110, 86)" stroke="white" stroke-width="1.5"/>
+  <line x1="515" y1="61" x2="515" y2="76" stroke="rgb(15, 110, 86)" stroke-width="1" stroke-dasharray="3 2"/>
+
+
+  <!-- ========== 卡片一：事前确认 ========== -->
+  <rect x="28" y="80" width="194" height="348" rx="10" fill="rgb(252, 230, 227)" stroke="rgb(201, 77, 61)" stroke-width="0.8"/>
+  <!-- 顶部色块 -->
+  <rect x="28" y="80" width="194" height="44" rx="10" fill="rgb(201, 77, 61)"/>
+  <rect x="28" y="104" width="194" height="20" fill="rgb(201, 77, 61)"/>
+  <text class="label card-title" x="125" y="107" fill="white">事前确认</text>
+  <text class="label tag" x="125" y="122" fill="rgba(255,255,255,0.85)">Approve Before Action</text>
+
+  <!-- 触发时机 -->
+  <text class="label card-body" x="125" y="153" fill="rgb(140, 41, 29)" font-weight="600" font-size="12">触发时机</text>
+  <text class="label card-body" x="125" y="172" fill="rgb(140, 41, 29)">执行操作之前</text>
+
+  <line x1="48" y1="183" x2="202" y2="183" stroke="rgb(201,77,61)" stroke-width="0.4" opacity="0.4"/>
+
+  <!-- 操作可逆性 -->
+  <text class="label card-body" x="125" y="200" fill="rgb(140, 41, 29)" font-weight="600" font-size="12">操作可逆性</text>
+  <text class="label card-body" x="125" y="219" fill="rgb(140, 41, 29)">不可逆 / 高风险</text>
+
+  <line x1="48" y1="230" x2="202" y2="230" stroke="rgb(201,77,61)" stroke-width="0.4" opacity="0.4"/>
+
+  <!-- 典型场景 -->
+  <text class="label card-body" x="125" y="248" fill="rgb(140, 41, 29)" font-weight="600" font-size="12">典型场景</text>
+  <text class="label card-body" x="125" y="268" fill="rgb(140, 41, 29)">删除文件</text>
+  <text class="label card-body" x="125" y="286" fill="rgb(140, 41, 29)">发送邮件 / 消息</text>
+  <text class="label card-body" x="125" y="304" fill="rgb(140, 41, 29)">部署到生产环境</text>
+  <text class="label card-body" x="125" y="322" fill="rgb(140, 41, 29)">调用付费 API</text>
+
+  <line x1="48" y1="334" x2="202" y2="334" stroke="rgb(201,77,61)" stroke-width="0.4" opacity="0.4"/>
+
+  <!-- 核心价值 -->
+  <text class="label card-body" x="125" y="354" fill="rgb(140, 41, 29)" font-weight="600" font-size="12">核心价值</text>
+  <text class="label card-body" x="125" y="374" fill="rgb(140, 41, 29)">错误零容忍</text>
+  <text class="label card-body" x="125" y="392" fill="rgb(140, 41, 29)">执行前最后屏障</text>
+
+
+  <!-- ========== 卡片二：异常暂停 ========== -->
+  <rect x="243" y="80" width="194" height="348" rx="10" fill="rgb(250, 238, 218)" stroke="rgb(133, 79, 11)" stroke-width="0.8"/>
+  <!-- 顶部色块 -->
+  <rect x="243" y="80" width="194" height="44" rx="10" fill="rgb(133, 79, 11)"/>
+  <rect x="243" y="104" width="194" height="20" fill="rgb(133, 79, 11)"/>
+  <text class="label card-title" x="340" y="107" fill="white">异常暂停</text>
+  <text class="label tag" x="340" y="122" fill="rgba(255,255,255,0.85)">Interrupt on Uncertainty</text>
+
+  <!-- 触发时机 -->
+  <text class="label card-body" x="340" y="153" fill="rgb(99, 56, 6)" font-weight="600" font-size="12">触发时机</text>
+  <text class="label card-body" x="340" y="172" fill="rgb(99, 56, 6)">遇到不确定情况时</text>
+
+  <line x1="263" y1="183" x2="417" y2="183" stroke="rgb(133,79,11)" stroke-width="0.4" opacity="0.4"/>
+
+  <!-- 操作可逆性 -->
+  <text class="label card-body" x="340" y="200" fill="rgb(99, 56, 6)" font-weight="600" font-size="12">操作可逆性</text>
+  <text class="label card-body" x="340" y="219" fill="rgb(99, 56, 6)">部分可逆</text>
+
+  <line x1="263" y1="230" x2="417" y2="230" stroke="rgb(133,79,11)" stroke-width="0.4" opacity="0.4"/>
+
+  <!-- 典型场景 -->
+  <text class="label card-body" x="340" y="248" fill="rgb(99, 56, 6)" font-weight="600" font-size="12">典型场景</text>
+  <text class="label card-body" x="340" y="268" fill="rgb(99, 56, 6)">任务描述有歧义</text>
+  <text class="label card-body" x="340" y="286" fill="rgb(99, 56, 6)">遇到预期外情况</text>
+  <text class="label card-body" x="340" y="304" fill="rgb(99, 56, 6)">多方案差异显著</text>
+  <text class="label card-body" x="340" y="322" fill="rgb(99, 56, 6)">依赖信息缺失</text>
+
+  <line x1="263" y1="334" x2="417" y2="334" stroke="rgb(133,79,11)" stroke-width="0.4" opacity="0.4"/>
+
+  <!-- 核心价值 -->
+  <text class="label card-body" x="340" y="354" fill="rgb(99, 56, 6)" font-weight="600" font-size="12">核心价值</text>
+  <text class="label card-body" x="340" y="374" fill="rgb(99, 56, 6)">及时发现执行偏差</text>
+  <text class="label card-body" x="340" y="392" fill="rgb(99, 56, 6)">避免错误积累扩大</text>
+
+
+  <!-- ========== 卡片三：事后审核 ========== -->
+  <rect x="458" y="80" width="194" height="348" rx="10" fill="rgb(225, 245, 238)" stroke="rgb(15, 110, 86)" stroke-width="0.8"/>
+  <!-- 顶部色块 -->
+  <rect x="458" y="80" width="194" height="44" rx="10" fill="rgb(15, 110, 86)"/>
+  <rect x="458" y="104" width="194" height="20" fill="rgb(15, 110, 86)"/>
+  <text class="label card-title" x="555" y="107" fill="white">事后审核</text>
+  <text class="label tag" x="555" y="122" fill="rgba(255,255,255,0.85)">Review After Action</text>
+
+  <!-- 触发时机 -->
+  <text class="label card-body" x="555" y="153" fill="rgb(8, 80, 65)" font-weight="600" font-size="12">触发时机</text>
+  <text class="label card-body" x="555" y="172" fill="rgb(8, 80, 65)">任务完成之后</text>
+
+  <line x1="478" y1="183" x2="632" y2="183" stroke="rgb(15,110,86)" stroke-width="0.4" opacity="0.4"/>
+
+  <!-- 操作可逆性 -->
+  <text class="label card-body" x="555" y="200" fill="rgb(8, 80, 65)" font-weight="600" font-size="12">操作可逆性</text>
+  <text class="label card-body" x="555" y="219" fill="rgb(8, 80, 65)">可逆 / 低风险</text>
+
+  <line x1="478" y1="230" x2="632" y2="230" stroke="rgb(15,110,86)" stroke-width="0.4" opacity="0.4"/>
+
+  <!-- 典型场景 -->
+  <text class="label card-body" x="555" y="248" fill="rgb(8, 80, 65)" font-weight="600" font-size="12">典型场景</text>
+  <text class="label card-body" x="555" y="268" fill="rgb(8, 80, 65)">生成文本草稿</text>
+  <text class="label card-body" x="555" y="286" fill="rgb(8, 80, 65)">代码修改 diff 预览</text>
+  <text class="label card-body" x="555" y="304" fill="rgb(8, 80, 65)">批量数据分析报告</text>
+  <text class="label card-body" x="555" y="322" fill="rgb(8, 80, 65)">暂存 / 草稿状态写入</text>
+
+  <line x1="478" y1="334" x2="632" y2="334" stroke="rgb(15,110,86)" stroke-width="0.4" opacity="0.4"/>
+
+  <!-- 核心价值 -->
+  <text class="label card-body" x="555" y="354" fill="rgb(8, 80, 65)" font-weight="600" font-size="12">核心价值</text>
+  <text class="label card-body" x="555" y="374" fill="rgb(8, 80, 65)">最大化 Agent 吞吐量</text>
+  <text class="label card-body" x="555" y="392" fill="rgb(8, 80, 65)">人工审核聚焦结果</text>
+
+</svg>
