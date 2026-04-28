@@ -1,6 +1,6 @@
 # 文件名: hugo.toml (已修正语法)
 
-baseURL = "https://www.hex4c59.fun/"
+baseURL = "https://hex4c59.cc/"
 languageCode = "zh-cn"
 title = "Hex4C59's Blog"
 theme = "PaperMod"
