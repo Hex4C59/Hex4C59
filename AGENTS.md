@@ -14,7 +14,7 @@
 
 - `type` 必填，使用英文小写。允许使用 `feat`（新增能力或内容）、`fix`（修复错误）、`docs`（文章或文档）、`style`（不改变语义的格式或样式）、`refactor`（不改变行为的结构调整）、`perf`（性能）、`test`（测试）、`build`（构建或依赖）、`ci`（CI 配置）、`chore`（其他维护）和 `revert`（回退提交）。
 - `scope` 可选，使用受影响的栏目或系统边界，例如 `agent`、`leetcode`、`translations`、`nav`、`hugo`、`theme` 和 `ci`。跨多个边界且没有一个主要归属时可以省略。
-- `description` 使用简洁、具体、可行动的描述。中文内容默认使用中文描述，技术名词、命令和产品名保留官方写法；英文描述使用祈使式或现在时。描述首字不要无理由大写，末尾不要加句号。
+- `description` 必须使用简洁、具体、可行动的英文描述。英文描述使用祈使式或现在时；技术名词、命令和产品名保留官方写法。描述首字使用小写（专有名词除外），末尾不要加句号。
 - 主题行尽量控制在 72 个字符以内；简单变更优先压缩到 50 个字符左右。不要使用 `update`、`fix stuff`、`修改一下` 等无法说明结果的描述。
 - 一个提交只表达一个可以独立理解的逻辑变更。不要把文章正文、导航配置、主题样式和无关格式化放进同一个提交；小型拼写或样式修复应在提交前合并成清晰的单一变更。
 - 非平凡变更在主题行后空一行，用正文说明动机、影响范围、关键取舍和验证方式。正文不要逐行复述 diff；它要回答“为什么改”和“如何确认改对了”。纯粹的小型 `docs` 或 `style` 变更可以省略正文。
@@ -23,17 +23,17 @@
 推荐示例：
 
 ```text
-docs(agent): 新增 DeepSeek Harness 工程分析文章
-fix(nav): 统一顶部导航栏目名称
-docs(translations): 发布 Agent Skills 译文
-fix(leetcode): 修正滑动窗口题解的复杂度说明
-chore(hugo): 更新站点构建配置
-ci: 调整 Hugo Pages 部署参数
+docs(agent): add DeepSeek Harness engineering article
+fix(nav): unify top navigation labels
+docs(translations): publish Agent Skills translation
+fix(leetcode): correct sliding-window complexity explanation
+chore(hugo): update site build configuration
+ci: adjust Hugo Pages deployment parameters
 ```
 
-提交前检查暂存区而不是只看工作区：确认 `git diff --cached` 只包含本次逻辑变更，并根据变更运行相关的 Hugo 构建、测试或 `git diff --check`。已有历史提交不要求为了迁就本约定而重写；新提交遵循本节规则即可。
+提交前检查暂存区而不是只看工作区：确认 `git diff --cached` 只包含本次逻辑变更，并根据变更运行相关的 Hugo 构建、测试或 `git diff --check`。新提交以及本次历史重写范围内的提交，冒号后的 `description` 都必须遵循本节的英文规则。
 
-这套约定参考了截至 2026-08-16 调研到的公开项目规则：[Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/) 规定了类型、可选作用域、正文、footer 和破坏性变更的结构；[Angular 的提交消息指南](https://github.com/angular/angular/blob/main/contributing-docs/commit-message-guidelines.md)要求祈使式摘要、无句号并用类型和作用域支持 changelog；[Git 的 SubmittingPatches](https://github.com/git/git/blob/master/Documentation/SubmittingPatches)强调短主题、`area: subject`、祈使式和在正文记录动机；[Kubernetes 贡献指南](https://github.com/kubernetes/community/blob/master/contributors/guide/contributing.md)强调清晰有意义的提交、单一逻辑变更和小变更合并提交。本仓库近期历史已经使用 `feat`、`fix` 和 `chore`，但作用域、语言和主题长度不完全一致；本节用于统一后续提交，不追溯修改已有历史。
+这套约定参考了截至 2026-08-16 调研到的公开项目规则：[Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/) 规定了类型、可选作用域、正文、footer 和破坏性变更的结构；[Angular 的提交消息指南](https://github.com/angular/angular/blob/main/contributing-docs/commit-message-guidelines.md)要求祈使式摘要、无句号并用类型和作用域支持 changelog；[Git 的 SubmittingPatches](https://github.com/git/git/blob/master/Documentation/SubmittingPatches)强调短主题、`area: subject`、祈使式和在正文记录动机；[Kubernetes 贡献指南](https://github.com/kubernetes/community/blob/master/contributors/guide/contributing.md)强调清晰有意义的提交、单一逻辑变更和小变更合并提交。本仓库近期历史已经使用 `feat`、`fix` 和 `chore`，但作用域、语言和主题长度不完全一致；本节用于统一后续提交，并作为本次历史重写的目标。
 
 ## DeepSeek Harness 专栏
 
