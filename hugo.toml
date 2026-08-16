@@ -118,40 +118,35 @@ buildExpired = false
 # ----------------- 这是修正后的 menu 部分 -----------------
 [menu]
   [[menu.main]]
-    identifier = "posts"
-    name = "Posts"
-    url = "/posts/"
+    identifier = "agent"
+    name = "Agent"
+    url = "/agent/"
     weight = 1
+  [[menu.main]]
+    identifier = "posts"
+    name = "文章"
+    url = "/posts/"
+    weight = 5
   [[menu.main]]
     identifier = "leetcode"
     name = "LeetCode"
     url = "/leetcode/"
-    weight = 5
-  [[menu.main]]
-    identifier = "agent"
-    name = "Agent"
-    url = "/agent/"
     weight = 8
   [[menu.main]]
     identifier = "translations"
-    name = "Translations"
+    name = "译文"
     url = "/translations/"
     weight = 9
   [[menu.main]]
     identifier = "archive"
-    name = "Archive"
+    name = "归档"
     url = "/archives/"
     weight = 10
   [[menu.main]]
     identifier = "search"
-    name = "Search"
+    name = "搜索"
     url = "/search/"
     weight = 15
-  [[menu.main]]
-    identifier = "tags"
-    name = "Tags"
-    url = "/tags/"
-    weight = 20
 
 [markup]
   [markup.goldmark]
