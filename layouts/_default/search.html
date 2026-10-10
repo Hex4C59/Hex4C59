@@ -1,0 +1,13 @@
+{{ define "main" }}
+{{ $options := dict "isCaseSensitive" site.Params.fuseOpts.iscasesensitive "shouldSort" site.Params.fuseOpts.shouldsort "threshold" site.Params.fuseOpts.threshold "ignoreLocation" site.Params.fuseOpts.ignorelocation "minMatchCharLength" site.Params.fuseOpts.minmatchcharlength "keys" site.Params.fuseOpts.keys }}
+{{ partial "breadcrumbs.html" . }}
+<h1>{{ .Title }}</h1>
+<p class="page-description">在文章、Agent、题解与译文中搜索。</p>
+<section id="site-search" data-index="{{ "index.json" | relURL }}" data-options="{{ $options | jsonify }}" aria-label="全站搜索">
+  <label class="sr-only" for="search-input">搜索关键词</label>
+  <input id="search-input" class="search-input" type="search" placeholder="输入关键词，例如 MCP、记忆、滑动窗口…" autocomplete="off" enterkeyhint="search">
+  <p id="search-status" class="muted" role="status" aria-live="polite">输入关键词开始搜索。</p>
+  <div id="search-results"></div>
+  <noscript><p>搜索需要启用 JavaScript，也可以通过<a href="{{ "archives/" | relURL }}">归档</a>浏览全部文章。</p></noscript>
+</section>
+{{ end }}

@@ -1,0 +1,17 @@
+<div class="header">
+  {{ if .IsHome }}<h1 class="header-title">{{ else }}<p class="header-title">{{ end }}
+    <a href="{{ site.Home.RelPermalink }}">{{ site.Title }}</a>
+  {{ if .IsHome }}</h1>{{ else }}</p>{{ end }}
+  <nav class="header-menu" aria-label="内容栏目">
+    {{ range site.Params.menu }}
+    {{ $active := hasPrefix $.RelPermalink .url }}
+    <a href="{{ .url | relURL }}"{{ if $active }} aria-current="page"{{ end }}>/{{ .name }}</a>
+    {{ end }}
+  </nav>
+  <nav class="header-tools" aria-label="浏览工具">
+    {{ range site.Params.utilityMenu }}
+    <a href="{{ .url | relURL }}"{{ if hasPrefix $.RelPermalink .url }} aria-current="page"{{ end }}>{{ .name }}</a>
+    {{ end }}
+    <button id="theme-toggle" type="button" aria-label="切换深浅主题">主题</button>
+  </nav>
+</div>

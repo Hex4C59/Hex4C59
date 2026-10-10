@@ -1,0 +1,15 @@
+{{ define "main" }}
+{{ partial "breadcrumbs.html" . }}
+<div class="list-container">
+  <h1>{{ .Title }}</h1>
+  {{ with .Description }}<p class="page-description">{{ . }}</p>{{ end }}
+  {{ .Content }}
+  {{ if eq .Kind "taxonomy" }}
+    <div class="term-list">{{ range .Data.Terms.Alphabetical }}<a href="{{ .Page.RelPermalink }}">{{ .Page.LinkTitle }} <span>{{ .Count }}</span></a>{{ end }}</div>
+  {{ else }}
+    {{ $paginator := .Paginate .RegularPages.ByDate.Reverse site.Params.paginationSize }}
+    {{ range $paginator.Pages }}{{ partial "post-entry.html" . }}{{ end }}
+    {{ partial "pagination-controls.html" $paginator }}
+  {{ end }}
+</div>
+{{ end }}

@@ -2,5 +2,5 @@
 title: "搜索"
 layout: "search"
 url: "/search/"
-summary: "搜索文章"
+summary: "全站文章搜索"
 ---

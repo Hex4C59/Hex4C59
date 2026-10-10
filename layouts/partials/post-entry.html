@@ -1,0 +1,8 @@
+<article class="post-line">
+  <time class="line-date" datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "2006-01-02" }}</time>
+  <div class="line-body">
+    <h3 class="line-title"><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
+    {{ if site.Params.listSummaries }}<p class="line-summary">{{ .Description | default .Summary | plainify | htmlUnescape | truncate 110 }}</p>{{ end }}
+    <p class="line-meta">{{ with site.GetPage .Section }}<a href="{{ .RelPermalink }}">{{ .Title }}</a>{{ end }}<span>·</span>{{ .ReadingTime }} 分钟阅读</p>
+  </div>
+</article>

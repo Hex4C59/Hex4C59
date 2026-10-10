@@ -1,0 +1,25 @@
+{{ define "main" }}
+{{ partial "breadcrumbs.html" . }}
+<article>
+  <header class="single-intro-container">
+    <h1 class="single-title">{{ .Title }}</h1>
+    {{ with .Description | default .Params.summary }}<p class="single-summary">{{ . | markdownify }}</p>{{ end }}
+    <p class="single-date">
+      <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "2006-01-02" }}</time>
+      · {{ .ReadingTime }} 分钟阅读 · {{ .Params.author | default site.Params.author }}
+      {{ if ne (.Lastmod.Format "2006-01-02") (.Date.Format "2006-01-02") }}<span class="last-updated"> · 更新于 {{ .Lastmod.Format "2006-01-02" }}</span>{{ end }}
+    </p>
+    {{ if .Param "showTags" }}{{ with .GetTerms "tags" }}<div class="single-tags">{{ range . }}<a href="{{ .RelPermalink }}">#{{ .LinkTitle }}</a>{{ end }}</div>{{ end }}{{ end }}
+  </header>
+  {{ if and (.Param "toc") (ne .Params.showtoc false) }}
+    {{ if gt (len .Fragments.Headings) 0 }}<details class="toc"><summary>文章目录</summary>{{ .TableOfContents }}</details>{{ end }}
+  {{ end }}
+  <div class="single-content">{{ .Content }}</div>
+</article>
+{{ if .Store.Get "hasMermaid" }}
+<script defer type="module" id="mermaid_script" data-light-theme="default" data-dark-theme="dark" src="{{ "js/mermaid.js" | relURL }}"></script>
+{{ end }}
+{{ if and (in site.Params.comments.sections .Section) (ne .Params.comments false) (not .Params.disableComment) }}{{ partial "comments.html" . }}{{ end }}
+{{ if not (.Param "hidePagination") }}{{ partial "pagination-single.html" . }}{{ end }}
+<div class="back-to-top"><a href="#top">回到顶部 ↑</a></div>
+{{ end }}

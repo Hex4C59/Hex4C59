@@ -1,0 +1,62 @@
+{{ partial "breadcrumbs.html" . }}
+<h1>{{ .Title }}</h1>
+{{ with .Description }}<p class="page-description">{{ . }}</p>{{ end }}
+{{ $pages := .RegularPages.ByLastmod.Reverse }}
+{{ $filters := slice }}
+{{ if eq .Section "agent" }}
+  {{ $filters = slice (dict "key" "difficulty" "label" "难度") (dict "key" "article_type" "label" "类型") (dict "key" "topics" "label" "主题") (dict "key" "frameworks" "label" "框架") }}
+{{ else if eq .Section "leetcode" }}
+  {{ $filters = slice (dict "key" "difficulty" "label" "难度") (dict "key" "tags" "label" "标签") (dict "key" "languages" "label" "语言") }}
+{{ else }}
+  {{ $filters = slice (dict "key" "translation_category" "label" "分类") (dict "key" "topics" "label" "主题") (dict "key" "original_site" "label" "来源") }}
+{{ end }}
+<section class="collection" data-collection>
+  {{ if eq .Section "agent" }}
+  <div class="collection-shortcuts" role="group" aria-label="Agent 阅读类型">
+    <span class="shortcut-label">阅读类型</span>
+    <button type="button" class="is-active" data-filter-shortcut="article_type" data-value="" aria-pressed="true">全部</button>
+    {{ $types := slice (dict "value" "concept" "label" "概念与设计") (dict "value" "tutorial" "label" "实战教程") }}
+    {{ range $types }}
+      {{ $count := len (where $pages "Params.article_type" .value) }}
+      {{ if gt $count 0 }}<button type="button" data-filter-shortcut="article_type" data-value="{{ .value }}" aria-pressed="false">{{ .label }} <span>{{ $count }}</span></button>{{ end }}
+    {{ end }}
+  </div>
+  {{ end }}
+  <details class="collection-filters">
+    <summary>筛选与排序 <span class="muted">/ {{ len $pages }} 篇</span></summary>
+    <div class="filter-grid">
+      {{ range $filters }}
+        {{ $key := .key }}{{ $values := slice }}
+        {{ range $pages }}{{ with index .Params $key }}{{ if reflect.IsSlice . }}{{ $values = $values | append . }}{{ else }}{{ $values = $values | append (slice .) }}{{ end }}{{ end }}{{ end }}
+        {{ if gt (len $values) 0 }}<label class="filter-label">{{ .label }}<select data-filter="{{ $key }}"><option value="">全部</option>{{ range sort (uniq $values) }}<option value="{{ . | lower }}">{{ . }}</option>{{ end }}</select></label>{{ end }}
+      {{ end }}
+      <label class="filter-label">排序<select data-sort><option value="recent">最近更新</option><option value="newest">最新发布</option>{{ if eq .Section "leetcode" }}<option value="number">题号从小到大</option>{{ end }}<option value="title">标题 A–Z</option>{{ if ne .Section "translations" }}<option value="difficulty">难度从低到高</option>{{ end }}</select></label>
+      <label class="filter-label filter-search">{{ if eq .Section "leetcode" }}题号或标题{{ else }}标题关键词{{ end }}<input type="search" data-title-search placeholder="{{ if eq .Section "leetcode" }}例如 0001、两数之和{{ else }}输入关键词{{ end }}"></label>
+    </div>
+    <div class="filter-footer"><button type="button" data-reset>重置筛选</button></div>
+  </details>
+  <p class="collection-count muted" data-count role="status" aria-live="polite">共 {{ len $pages }} 篇文章</p>
+  <div data-post-list>
+    {{ range $pages }}
+    {{ $attributes := dict }}
+    {{ $page := . }}
+    {{ range $filters }}
+      {{ $value := index $page.Params .key | default slice }}
+      {{ if not (reflect.IsSlice $value) }}{{ $value = slice $value }}{{ end }}
+      {{ $normalized := slice }}{{ range $value }}{{ $normalized = $normalized | append (lower (printf "%v" .)) }}{{ end }}
+      {{ $attributes = merge $attributes (dict .key $normalized) }}
+    {{ end }}
+    <article class="post-line collection-entry" data-filters="{{ $attributes | jsonify }}" data-title="{{ .Title | lower }}" data-date="{{ .Date.Unix }}" data-lastmod="{{ .Lastmod.Unix }}" data-number="{{ .Params.problem_id | default 0 }}" data-difficulty="{{ .Params.difficulty | default "unknown" | lower }}">
+      <time class="line-date" datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "2006-01-02" }}</time>
+      <div class="line-body">
+        <h2 class="line-title"><a href="{{ .RelPermalink }}">{{ .Title }}</a></h2>
+        <p class="line-summary">{{ .Description | default .Summary | plainify | htmlUnescape | truncate 110 }}</p>
+        <p class="line-meta">{{ with .Params.difficulty }}{{ . | title }}<span>·</span>{{ end }}{{ with .Params.original_site }}{{ . }}<span>·</span>{{ end }}{{ .ReadingTime }} 分钟阅读{{ if ne (.Date.Format "2006-01-02") (.Lastmod.Format "2006-01-02") }}<span>·</span>更新于 {{ .Lastmod.Format "2006-01-02" }}{{ end }}</p>
+      </div>
+    </article>
+    {{ end }}
+  </div>
+  <p class="empty-state" data-empty hidden>没有符合条件的文章，试试调整或重置筛选。</p>
+  <noscript><p class="muted">筛选需要启用 JavaScript，下面仍可浏览全部文章。</p></noscript>
+</section>
+{{ with .Content }}<details class="reading-notes"><summary>阅读说明</summary><div class="single-content">{{ . }}</div></details>{{ end }}

@@ -32,7 +32,7 @@
           data-reactions-enabled="{{ $reactionsEnabled }}"
           data-emit-metadata="{{ $emitMetadata }}"
           data-input-position="{{ $inputPosition }}"
-          data-theme="{{ $lightTheme }}"
+          data-theme="preferred_color_scheme"
           data-lang="{{ $lang }}"
           data-loading="{{ $loading }}"
           crossorigin="anonymous"
@@ -42,6 +42,9 @@
           (() => {
             const lightTheme = {{ printf "%q" $lightTheme | safeJS }};
             const darkTheme = {{ printf "%q" $darkTheme | safeJS }};
+
+            const client = document.querySelector('.comments-giscus script[data-repo]');
+            client.dataset.theme = document.body.classList.contains('dark') ? darkTheme : lightTheme;
 
             const updateGiscusTheme = () => {
               const iframe = document.querySelector('iframe.giscus-frame');
@@ -55,7 +58,9 @@
             };
 
             document.addEventListener('DOMContentLoaded', updateGiscusTheme);
-            window.addEventListener('load', updateGiscusTheme);
+            window.addEventListener('load', updateGiscusTheme, true);
+            const containerObserver = new MutationObserver(updateGiscusTheme);
+            containerObserver.observe(document.querySelector('.comments-giscus'), { childList: true, subtree: true });
 
             const observer = new MutationObserver(updateGiscusTheme);
             observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });

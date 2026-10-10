@@ -1,11 +1,11 @@
 # AGENTS.md
 
-本仓库是基于 Hugo 和 PaperMod 的中文技术博客。根文件只记录所有任务都适用的约束和任务路由；专项规则放在 `.agents/`，命中任务范围后再按需读取。
+本仓库是基于 Hugo 和 Typo 的中文技术博客。根文件只记录所有任务都适用的约束和任务路由；专项规则放在 `.agents/`，命中任务范围后再按需读取。
 
 ## Always apply
 
 - 保留用户已有的未提交修改，不使用 `reset --hard`、`checkout` 或其他方式覆盖无关工作。
-- 修改前先检查相关文件、现有实现和工作区状态；遵循仓库已有的 Hugo、PaperMod、Markdown 和 front matter 约定。
+- 修改前先检查相关文件、现有实现和工作区状态；遵循仓库已有的 Hugo、Typo、Markdown 和 front matter 约定。
 - 一个提交只表达一个可独立理解的逻辑变更；不要把无关内容、生成物、凭据、token、个人信息或私有路径加入仓库。
 - Agent 操作规则放在 `.agents/`，不要把内部指令文档放进 `content/`；`content/` 是 Hugo 发布内容树。
 

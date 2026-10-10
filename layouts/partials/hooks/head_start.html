@@ -1,0 +1,9 @@
+<script>
+(() => {
+  let preferred = {{ site.Params.theme | default "auto" }};
+  try { preferred = localStorage.getItem('pref-theme') || preferred; } catch (_) {}
+  const theme = preferred === 'dark' || (preferred !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+  document.documentElement.dataset.theme = theme;
+  document.documentElement.style.colorScheme = theme;
+})();
+</script>

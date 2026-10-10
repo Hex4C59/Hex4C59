@@ -1,0 +1,25 @@
+{{ define "main" }}
+{{ .Content }}
+<section class="intro" aria-labelledby="intro-title">
+  <h2 id="intro-title">{{ site.Params.homeIntroTitle }}</h2>
+  <p>{{ site.Params.homeIntroContent }}</p>
+</section>
+<section class="home-collections" aria-labelledby="collections-title">
+  <h2 id="collections-title">阅读方向</h2>
+  <div class="collection-directions">
+    {{ range site.Params.menu }}
+    <a class="collection-direction" href="{{ .url | relURL }}">
+      <h3>{{ .name }} <span aria-hidden="true">↗</span></h3>
+      <p>{{ .description }}</p>
+    </a>
+    {{ end }}
+  </div>
+</section>
+<section class="list-container" aria-labelledby="recent-title">
+  <div class="section-heading"><h2 id="recent-title">最新文章</h2><a href="{{ "archives/" | relURL }}">全部文章 ↗</a></div>
+  {{ $pages := where site.RegularPages "Section" "in" site.Params.mainSections }}
+  {{ $paginator := .Paginate $pages.ByDate.Reverse site.Params.paginationSize }}
+  {{ range $paginator.Pages }}{{ partial "post-entry.html" . }}{{ end }}
+  {{ partial "pagination-controls.html" $paginator }}
+</section>
+{{ end }}

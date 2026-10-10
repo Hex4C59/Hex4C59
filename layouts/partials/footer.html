@@ -1,0 +1,5 @@
+<div class="footer-links">
+  {{ range site.Params.social }}<a href="{{ .url }}" target="_blank" rel="noopener noreferrer me">{{ .name }}</a>{{ end }}
+  {{ with site.Home.OutputFormats.Get "RSS" }}<a href="{{ .RelPermalink }}">RSS</a>{{ end }}
+</div>
+<p class="footer-credit">© {{ now.Year }} {{ site.Params.author }} · 由 <a href="https://gohugo.io/">Hugo</a> 与 <a href="https://github.com/tomfran/typo">Typo</a> 构建</p>

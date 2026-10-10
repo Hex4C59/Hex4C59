@@ -1,17 +1,10 @@
-# 文件名: hugo.toml (已修正语法)
-
 baseURL = "https://hex4c59.cc/"
 languageCode = "zh-cn"
+defaultContentLanguage = "zh-cn"
 title = "Hex4C59's Blog"
-theme = "PaperMod"
+theme = "typo"
 hasCJKLanguage = true
-enableGitInfo = true  
-
-[author]
-  name = "Hex4C59"
-  email = "hex4c59@users.noreply.github.com"
-
-# Hugo 会为 "archives", "search", "tags" 等页面自动生成列表，无需手动创建 .md 文件
+enableGitInfo = true
 enableRobotsTXT = true
 buildFuture = true
 buildExpired = false
@@ -22,64 +15,75 @@ buildExpired = false
 [pagination]
   pageSize = 5
 
-# 这是正确的输出配置
 [outputs]
   home = ["HTML", "RSS", "JSON"]
 
-# ----------------- 这是修正后的 params 部分 -----------------
 [params]
   author = "Hex4C59"
-  description = "在这里记录我的学习与思考"
   authorEmail = "hex4c59@users.noreply.github.com"
-  defaultTheme = "auto"
+  description = "在这里记录我的学习与思考"
   mainSections = ["posts", "leetcode", "agent", "translations"]
-  ShowReadingTime = true
-  ShowRssButtonInSectionTermList = true
-  ShowWordCount = true
-  ShowBreadCrumbs = true
-  ShowPostNavLinks = true
-  ShowLastmode = true
-  ShowToc = true
+  theme = "auto"
+  colorPalette = "default"
+  homeIntroTitle = "好的想法需要地方降落，否则它们只会飘走!"
+  homeIntroContent = "欢迎来到我的博客。在这里分享技术学习、AI Agent 实践，以及生活中的思考。"
+  paginationSize = 5
+  listDateFormat = "2006-01-02"
+  singleDateFormat = "2006-01-02"
+  listSummaries = true
+  readTime = true
+  showTags = true
+  toc = true
   math = true
-  katex = "/katex/"
 
-  # 归档页面的配置
-  [params.archives]
+  [params.breadcrumbs]
     enabled = true
+    showCurrentPage = false
+    home = "首页"
 
-  # 主页的配置
-  [params.homeInfoParams]
-    Title = "好的想法需要地方降落，否则它们只会飘走!"
-    Content = "👋欢迎来到我的博客。在这里我会分享一些关于技术和生活的思考。"
+  [[params.menu]]
+    name = "Agent"
+    url = "/agent/"
+    section = "agent"
+    description = "概念、系统设计与实战教程"
+  [[params.menu]]
+    name = "随笔"
+    url = "/posts/"
+    section = "posts"
+    description = "技术学习、工具选型与个人思考"
+  [[params.menu]]
+    name = "LeetCode"
+    url = "/leetcode/"
+    section = "leetcode"
+    description = "算法题解与解题方法"
+  [[params.menu]]
+    name = "译文"
+    url = "/translations/"
+    section = "translations"
+    description = "英文技术文章的中文翻译"
+  [[params.utilityMenu]]
+    name = "归档"
+    url = "/archives/"
+  [[params.utilityMenu]]
+    name = "搜索"
+    url = "/search/"
+  [[params.utilityMenu]]
+    name = "标签"
+    url = "/tags/"
 
-  # 社交图标的配置
-  [[params.socialIcons]]
-    name = "github"
+  [[params.social]]
+    name = "GitHub"
     url = "https://github.com/Hex4C59"
-  [[params.socialIcons]]
-    name = "twitter"
+  [[params.social]]
+    name = "X"
     url = "https://x.com/Hex4C59/"
-  [[params.socialIcons]]
-    name = "leetcode"
+  [[params.social]]
+    name = "LeetCode"
     url = "https://www.leetcode.cn/hex4c59"
-  [[params.socialIcons]]
-    name = "reddit"
+  [[params.social]]
+    name = "Reddit"
     url = "https://www.reddit.com/u/ParticularTwo2653"
 
-  # 资源文件的配置
-  [params.assets]
-    favicon = "favicon.ico"
-    favicon16x16 = "favicon.png"
-    favicon32x32 = "favicon.png" 
-    apple_touch_icon = "favicon.png"
-
-  # 文章封面的配置
-  [params.cover]
-    hidden = true
-    hiddenInList = true
-    hiddenInSingle = true
-
-  # 评论功能配置（推荐使用 giscus，基于 GitHub Discussions）
   [params.comments]
     enabled = true
     provider = "giscus"
@@ -98,57 +102,19 @@ buildExpired = false
     themeLight = "light"
     themeDark = "dark"
 
-  # 如果以后想改用 utterances，可改为：
-  # provider = "utterances"
-  # issueTerm = "pathname"
-  # label = "comment"
-  # themeLight = "github-light"
-  # themeDark = "github-dark"
-
-  # 搜索功能的配置
   [params.fuseOpts]
     isCaseSensitive = false
     shouldSort = true
-    location = 0
-    distance = 1000
     threshold = 0.4
-    minMatchCharLength = 0
-    keys = ["title", "permalink", "summary", "content", "tags", "series"]
-
-# ----------------- 这是修正后的 menu 部分 -----------------
-[menu]
-  [[menu.main]]
-    identifier = "agent"
-    name = "Agent"
-    url = "/agent/"
-    weight = 1
-  [[menu.main]]
-    identifier = "posts"
-    name = "文章"
-    url = "/posts/"
-    weight = 5
-  [[menu.main]]
-    identifier = "leetcode"
-    name = "LeetCode"
-    url = "/leetcode/"
-    weight = 8
-  [[menu.main]]
-    identifier = "translations"
-    name = "译文"
-    url = "/translations/"
-    weight = 9
-  [[menu.main]]
-    identifier = "archive"
-    name = "归档"
-    url = "/archives/"
-    weight = 10
-  [[menu.main]]
-    identifier = "search"
-    name = "搜索"
-    url = "/search/"
-    weight = 15
+    ignoreLocation = true
+    minMatchCharLength = 2
+    keys = ["title", "summary", "content", "tags", "series"]
 
 [markup]
-  [markup.goldmark]
-    [markup.goldmark.renderer]
-      unsafe = true
+  [markup.goldmark.renderer]
+    unsafe = true
+  [markup.highlight]
+    noClasses = false
+  [markup.tableOfContents]
+    startLevel = 2
+    endLevel = 3

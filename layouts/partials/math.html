@@ -1,0 +1,12 @@
+<link rel="stylesheet" href="{{ "katex/katex.min.css" | relURL }}">
+<script defer src="{{ "katex/katex.min.js" | relURL }}"></script>
+<script defer src="{{ "katex/auto-render.min.js" | relURL }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  if (typeof renderMathInElement !== 'function') return;
+  renderMathInElement(document.querySelector('.single-content') || document.querySelector('main'), {
+    delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}],
+    throwOnError: false
+  });
+});
+</script>

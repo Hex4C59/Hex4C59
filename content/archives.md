@@ -2,5 +2,5 @@
 title: "归档"
 layout: "archives"
 url: "/archives/"
-summary: "文章归档"
+summary: "按年份浏览全部文章"
 ---

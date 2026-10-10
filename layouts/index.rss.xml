@@ -12,7 +12,9 @@
     {{ with .OutputFormats.Get "RSS" }}
         {{ printf "<atom:link href=%q rel=\"self\" type=%q />" .Permalink .MediaType | safeHTML }}
     {{ end }}
-    {{ range first 10 .Pages }}
+    {{ $pages := .RegularPages.ByDate.Reverse }}
+    {{ if .IsHome }}{{ $pages = (where site.RegularPages "Section" "in" site.Params.mainSections).ByDate.Reverse }}{{ end }}
+    {{ range first 10 $pages }}
     <item>
       <title>{{ .Title }}</title>
       <link>{{ .Permalink }}</link>
