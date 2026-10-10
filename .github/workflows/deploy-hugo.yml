@@ -79,6 +79,8 @@ jobs:
           restore-keys:
             hugo-
       - name: Build the site
+        env:
+          HUGO_CLOUDFLARE_WEB_ANALYTICS_TOKEN: ${{ vars.CLOUDFLARE_WEB_ANALYTICS_TOKEN }}
         run: |
           hugo \
             --gc \

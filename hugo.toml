@@ -102,6 +102,10 @@ buildExpired = false
     themeLight = "light"
     themeDark = "dark"
 
+  [params.analytics.cloudflare]
+    enabled = true
+    # Read the site beacon token from HUGO_CLOUDFLARE_WEB_ANALYTICS_TOKEN at build time.
+
   [params.fuseOpts]
     isCaseSensitive = false
     shouldSort = true

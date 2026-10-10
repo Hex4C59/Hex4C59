@@ -1,0 +1,10 @@
+{{- if and hugo.IsProduction (not hugo.IsServer) site.Params.analytics.cloudflare.enabled -}}
+  {{- $token := strings.TrimSpace (os.Getenv "HUGO_CLOUDFLARE_WEB_ANALYTICS_TOKEN") -}}
+  {{- with $token -}}
+    {{- if not (findRE `^[a-fA-F0-9]{32}$` .) -}}
+      {{- errorf "CLOUDFLARE_WEB_ANALYTICS_TOKEN must be the 32-character site token from the Web Analytics snippet, not an API token." -}}
+    {{- else -}}
+      <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon="{{ dict "token" . | jsonify }}"></script>
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
