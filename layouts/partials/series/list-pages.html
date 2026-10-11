@@ -1,0 +1,9 @@
+{{- /* Only series with an explicit index are grouped; other series remain articles. */ -}}
+{{- $pages := . -}}
+{{- $hidden := slice -}}
+{{- range where $pages "Params.series_index" true -}}
+  {{- range where $pages "Params.series" "intersect" .Params.series -}}
+    {{- if not .Params.series_index -}}{{- $hidden = $hidden | append . -}}{{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- return ($pages | complement $hidden) -}}

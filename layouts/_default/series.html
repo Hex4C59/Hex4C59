@@ -1,0 +1,21 @@
+{{ define "main" }}
+{{ partial "breadcrumbs.html" . }}
+{{ $series := partial "series/data.html" . }}
+{{ with $series }}
+<article class="series-landing">
+  <header class="series-intro">
+    <p class="series-eyebrow">中文译文系列 · {{ .Hub.Params.series_status }}</p>
+    <h1>{{ .Title }}</h1>
+    <p class="series-original">{{ .Hub.Params.original_title }} / {{ .Hub.Params.original_author }}</p>
+    <p class="page-description">{{ .Hub.Params.series_intro | default .Hub.Description }}</p>
+    <p class="series-facts"><span>序言 + {{ len .Chapters }} 篇</span><span>约 {{ .Minutes }} 分钟阅读</span><span>整理于 {{ .Hub.Date.Format "2006-01-02" }}</span></p>
+    <div class="series-actions">{{ with index .Pages 0 }}<a class="series-start" href="{{ .RelPermalink }}">从序言开始阅读 →</a>{{ end }}<a href="#series-directory">浏览完整目录 ↓</a></div>
+  </header>
+  <section id="series-directory" class="series-directory" aria-labelledby="series-directory-title">
+    <div class="section-heading"><h2 id="series-directory-title">阅读目录</h2><span class="muted">按章节顺序</span></div>
+    {{ partial "series/contents.html" (dict "Series" . "Current" .Hub "Compact" false) }}
+  </section>
+  <details class="reading-notes"><summary>原指南目录与译文说明</summary><div class="single-content">{{ .Hub.Content }}</div></details>
+</article>
+{{ end }}
+{{ end }}

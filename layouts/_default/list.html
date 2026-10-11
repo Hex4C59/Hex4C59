@@ -7,7 +7,8 @@
   {{ if eq .Kind "taxonomy" }}
     <div class="term-list">{{ range .Data.Terms.Alphabetical }}<a href="{{ .Page.RelPermalink }}">{{ .Page.LinkTitle }} <span>{{ .Count }}</span></a>{{ end }}</div>
   {{ else }}
-    {{ $paginator := .Paginate .RegularPages.ByDate.Reverse site.Params.paginationSize }}
+    {{ $pages := partial "series/list-pages.html" .RegularPages }}
+    {{ $paginator := .Paginate $pages.ByDate.Reverse site.Params.paginationSize }}
     {{ range $paginator.Pages }}{{ partial "post-entry.html" . }}{{ end }}
     {{ partial "pagination-controls.html" $paginator }}
   {{ end }}

@@ -11,6 +11,9 @@ topics = ["agents", "agentic-engineering", "prompting", "accessibility", "proofr
 translation_category = "工程实践"
 series = ["智能体工程模式"]
 series_order = 17
+series_label = "我使用的提示词"
+series_part = "附录"
+series_number = 16
 original_title = "Prompts I use"
 original_url = "https://simonwillison.net/guides/agentic-engineering-patterns/prompts/"
 original_author = "Simon Willison"
@@ -94,7 +97,3 @@ ShowToc = true
 > 你会收到一期播客的转录稿。找出其中最有意思的引文：最能体现整体主题的片段，以及提出出人意料的想法，或表达得特别清楚、引人入胜、有火花的片段。回答只包含这些引文，较长的引文也可以。
 
 这里是我粘贴与 Lenny Rachitsky 对谈的[《AI 现状综述：我们已跨过拐点，无人化工厂即将到来，以及自动化的时间表》](https://www.lennysnewsletter.com/p/an-ai-state-of-the-union)转录稿后，得到的[示例输出](https://claude.ai/share/713e7c9a-66cb-4c24-a9e2-028ad96ec23b)。
-
----
-
-[上一篇：为博客转邮件简报工具添加新的内容类型]({{< relref "/translations/agentic-engineering-patterns-adding-a-new-content-type/" >}}) · [系列目录]({{< relref "/translations/agentic-engineering-patterns/" >}})

@@ -11,6 +11,9 @@ topics = ["agents", "agentic-engineering", "coding-agents", "git"]
 translation_category = "工程实践"
 series = ["智能体工程模式"]
 series_order = 8
+series_label = "与编程智能体协作时如何使用 Git"
+series_part = "与编程智能体协作"
+series_number = 7
 original_title = "Using Git with coding agents"
 original_url = "https://simonwillison.net/guides/agentic-engineering-patterns/using-git-with-coding-agents/"
 original_author = "Simon Willison"
@@ -135,7 +138,3 @@ Git 仓库的提交历史并非不可更改。毕竟，这些数据只是藏在�
 > 在 `/tmp/distance-functions` 新建一个仓库，把这里的 `lib/distance_functions.py` 模块做成一个 Python 库。为新仓库构建相似的提交历史，并复制原有的作者和提交日期。
 
 过去，这类操作复杂到大多数开发者宁可新建一个副本，与原来的提交历史脱离。现在，我们不必再满足于这种做法了！
-
----
-
-[上一篇：编程智能体如何工作]({{< relref "/translations/agentic-engineering-patterns-how-coding-agents-work/" >}}) · [系列目录]({{< relref "/translations/agentic-engineering-patterns/" >}}) · [下一篇：子智能体]({{< relref "/translations/agentic-engineering-patterns-subagents/" >}})

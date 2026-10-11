@@ -11,6 +11,9 @@ topics = ["agents", "agentic-engineering", "coding-agents", "code-reuse", "ocr"]
 translation_category = "工程实践"
 series = ["智能体工程模式"]
 series_order = 4
+series_label = "积累你已经掌握的实现方法"
+series_part = "基本原则"
+series_number = 3
 original_title = "Hoard things you know how to do"
 original_url = "https://simonwillison.net/guides/agentic-engineering-patterns/hoard-things-you-know-how-to-do/"
 original_author = "Simon Willison"
@@ -222,5 +225,3 @@ async function ocrMissingAltText() {
 ---
 
 [上一篇原文：如今，编写代码的成本已经很低](https://simonwillison.net/guides/agentic-engineering-patterns/code-is-cheap/) · [下一篇原文：AI 应该帮助我们写出更好的代码](https://simonwillison.net/guides/agentic-engineering-patterns/better-code/)
-
-[上一篇中文译文]({{< relref "/translations/agentic-engineering-patterns-code-is-cheap/" >}}) · [系列目录]({{< relref "/translations/agentic-engineering-patterns/" >}}) · [下一篇：AI 应该帮助我们写出更好的代码]({{< relref "/translations/agentic-engineering-patterns-better-code/" >}})

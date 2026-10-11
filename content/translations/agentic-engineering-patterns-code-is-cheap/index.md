@@ -11,6 +11,9 @@ topics = ["agents", "agentic-engineering", "coding-agents", "code-quality"]
 translation_category = "工程实践"
 series = ["智能体工程模式"]
 series_order = 3
+series_label = "如今，编写代码的成本已经很低"
+series_part = "基本原则"
+series_number = 2
 original_title = "Writing code is cheap now"
 original_url = "https://simonwillison.net/guides/agentic-engineering-patterns/code-is-cheap/"
 original_author = "Simon Willison"
@@ -65,7 +68,3 @@ ShowToc = true
 整个行业仍在摸索这些最佳实践，我自己也还在摸索。
 
 目前，我认为我们能做的最好尝试，就是重新审视自己的直觉：每当本能告诉我们「别做这个，不值得花时间」时，不妨还是在一个异步智能体会话中发出提示词。最坏的结果，也不过是十分钟后回来查看，发现这次尝试不值得花那些 Token。
-
----
-
-[上一篇：什么是智能体工程？]({{< relref "/translations/agentic-engineering-patterns-what-is-agentic-engineering/" >}}) · [系列目录]({{< relref "/translations/agentic-engineering-patterns/" >}}) · [下一篇：积累你已经掌握的实现方法]({{< relref "/translations/agentic-engineering-patterns-hoard-things-you-know-how-to-do/" >}})

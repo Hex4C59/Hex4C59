@@ -11,6 +11,9 @@ topics = ["agents", "agentic-engineering", "coding-agents", "testing", "browser-
 translation_category = "工程实践"
 series = ["智能体工程模式"]
 series_order = 12
+series_label = "让智能体执行手动测试"
+series_part = "测试与质量保证"
+series_number = 11
 original_title = "Agentic manual testing"
 original_url = "https://simonwillison.net/guides/agentic-engineering-patterns/agentic-manual-testing/"
 original_author = "Simon Willison"
@@ -127,5 +130,3 @@ Showboat 的三个关键命令是 `note`、`exec` 和 `image`。
 ---
 
 [上一篇原文：先运行测试](https://simonwillison.net/guides/agentic-engineering-patterns/first-run-the-tests/) · [下一篇原文：按顺序讲解代码](https://simonwillison.net/guides/agentic-engineering-patterns/linear-walkthroughs/)
-
-[上一篇中文译文]({{< relref "/translations/agentic-engineering-patterns-first-run-the-tests/" >}}) · [系列目录]({{< relref "/translations/agentic-engineering-patterns/" >}}) · [下一篇：按顺序讲解代码]({{< relref "/translations/agentic-engineering-patterns-linear-walkthroughs/" >}})

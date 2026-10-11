@@ -11,6 +11,9 @@ topics = ["agents", "agentic-engineering", "coding-agents", "subagents", "contex
 translation_category = "工程实践"
 series = ["智能体工程模式"]
 series_order = 9
+series_label = "子智能体"
+series_part = "与编程智能体协作"
+series_number = 8
 original_title = "Subagents"
 original_url = "https://simonwillison.net/guides/agentic-engineering-patterns/subagents/"
 original_author = "Simon Willison"
@@ -117,5 +120,3 @@ Use subagents to find and update all of the templates that are affected by this 
 ---
 
 [上一篇原文：与编程智能体协作时如何使用 Git](https://simonwillison.net/guides/agentic-engineering-patterns/using-git-with-coding-agents/) · [下一篇原文：红灯／绿灯测试驱动开发](https://simonwillison.net/guides/agentic-engineering-patterns/red-green-tdd/)
-
-[上一篇中文译文]({{< relref "/translations/agentic-engineering-patterns-using-git-with-coding-agents/" >}}) · [系列目录]({{< relref "/translations/agentic-engineering-patterns/" >}}) · [下一篇：红灯／绿灯测试驱动开发]({{< relref "/translations/agentic-engineering-patterns-red-green-tdd/" >}})

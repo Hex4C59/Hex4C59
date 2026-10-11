@@ -11,6 +11,9 @@ topics = ["agents", "agentic-engineering", "coding-agents", "testing", "pytest"]
 translation_category = "工程实践"
 series = ["智能体工程模式"]
 series_order = 11
+series_label = "先运行测试"
+series_part = "测试与质量保证"
+series_number = 10
 original_title = "First run the tests"
 original_url = "https://simonwillison.net/guides/agentic-engineering-patterns/first-run-the-tests/"
 original_author = "Simon Willison"
@@ -57,5 +60,3 @@ ShowToc = false
 ---
 
 [上一篇原文：红灯／绿灯测试驱动开发](https://simonwillison.net/guides/agentic-engineering-patterns/red-green-tdd/) · [下一篇原文：让智能体执行手动测试](https://simonwillison.net/guides/agentic-engineering-patterns/agentic-manual-testing/)
-
-[上一篇中文译文]({{< relref "/translations/agentic-engineering-patterns-red-green-tdd/" >}}) · [系列目录]({{< relref "/translations/agentic-engineering-patterns/" >}}) · [下一篇：让智能体执行手动测试]({{< relref "/translations/agentic-engineering-patterns-agentic-manual-testing/" >}})

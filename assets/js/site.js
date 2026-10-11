@@ -57,7 +57,7 @@
         fragment.appendChild(node);
       });
       list.appendChild(fragment);
-      collection.querySelector('[data-count]').textContent = count === entries.length ? `共 ${count} 篇文章` : `显示 ${count} / ${entries.length} 篇`;
+      collection.querySelector('[data-count]').textContent = count === entries.length ? `共 ${count} 个阅读入口` : `显示 ${count} / ${entries.length} 个阅读入口`;
       shortcuts.forEach((button) => {
         const filter = filters.find((item) => item.dataset.filter === button.dataset.filterShortcut);
         const active = filter?.value === button.dataset.value;

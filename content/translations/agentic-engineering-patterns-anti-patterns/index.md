@@ -11,6 +11,9 @@ topics = ["agents", "agentic-engineering", "coding-agents", "code-review"]
 translation_category = "工程实践"
 series = ["智能体工程模式"]
 series_order = 6
+series_label = "反模式——应该避免的做法"
+series_part = "基本原则"
+series_number = 5
 original_title = "Anti-patterns: things to avoid"
 original_url = "https://simonwillison.net/guides/agentic-engineering-patterns/anti-patterns/"
 original_author = "Simon Willison"
@@ -50,7 +53,3 @@ ShowToc = true
 - 智能体会写出看起来很有说服力的 PR 说明，你也需要审查这些文字！让别人阅读你自己都没读过、没核实过的文字，是不尊重人的做法。
 
 把未经审查的代码丢给别人实在太容易了，因此我建议附上一些证据，证明你自己已经做过这些额外的工作。手动测试的记录、对具体实现选择的说明，甚至功能运行时的截图和视频，都能*很有效地*让审查者相信：花时间深入了解这些细节，不会是白费功夫。
-
----
-
-[上一篇：AI 应该帮助我们写出更好的代码]({{< relref "/translations/agentic-engineering-patterns-better-code/" >}}) · [系列目录]({{< relref "/translations/agentic-engineering-patterns/" >}}) · [下一篇：编程智能体如何工作]({{< relref "/translations/agentic-engineering-patterns-how-coding-agents-work/" >}})

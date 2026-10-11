@@ -11,6 +11,9 @@ topics = ["agents", "agentic-engineering", "coding-agents", "prompting", "code-r
 translation_category = "工程实践"
 series = ["智能体工程模式"]
 series_order = 16
+series_label = "为博客转邮件简报工具添加新的内容类型"
+series_part = "提示词详解"
+series_number = 15
 original_title = "Adding a new content type to my blog-to-newsletter tool"
 original_url = "https://simonwillison.net/guides/agentic-engineering-patterns/adding-a-new-content-type/"
 original_author = "Simon Willison"
@@ -123,5 +126,3 @@ const beatTypeDisplay = {
 ---
 
 [上一篇原文：使用 WebAssembly 和 Gifsicle 构建 GIF 优化工具](https://simonwillison.net/guides/agentic-engineering-patterns/gif-optimization/) · [下一篇原文：我使用的提示词](https://simonwillison.net/guides/agentic-engineering-patterns/prompts/)
-
-[上一篇中文译文]({{< relref "/translations/agentic-engineering-patterns-gif-optimization/" >}}) · [系列目录]({{< relref "/translations/agentic-engineering-patterns/" >}}) · [下一篇：我使用的提示词]({{< relref "/translations/agentic-engineering-patterns-prompts/" >}})

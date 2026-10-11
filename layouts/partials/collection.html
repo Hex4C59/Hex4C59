@@ -1,7 +1,8 @@
 {{ partial "breadcrumbs.html" . }}
 <h1>{{ .Title }}</h1>
 {{ with .Description }}<p class="page-description">{{ . }}</p>{{ end }}
-{{ $pages := .RegularPages.ByLastmod.Reverse }}
+{{ $allPages := .RegularPages.ByLastmod.Reverse }}
+{{ $pages := partial "series/list-pages.html" $allPages }}
 {{ $filters := slice }}
 {{ if eq .Section "agent" }}
   {{ $filters = slice (dict "key" "difficulty" "label" "难度") (dict "key" "article_type" "label" "类型") (dict "key" "topics" "label" "主题") (dict "key" "frameworks" "label" "框架") }}
@@ -21,11 +22,11 @@
   </div>
   {{ end }}
   <details class="collection-filters">
-    <summary>筛选与排序 <span class="muted">/ {{ len $pages }} 篇</span></summary>
+    <summary>筛选与排序 <span class="muted">/ {{ len $pages }} 个阅读入口</span></summary>
     <div class="filter-grid">
       {{ range $filters }}
         {{ $key := .key }}{{ $values := slice }}
-        {{ range $pages }}{{ with index .Params $key }}{{ if reflect.IsSlice . }}{{ $values = $values | append . }}{{ else }}{{ $values = $values | append (slice .) }}{{ end }}{{ end }}{{ end }}
+        {{ range $allPages }}{{ with index .Params $key }}{{ if reflect.IsSlice . }}{{ $values = $values | append . }}{{ else }}{{ $values = $values | append (slice .) }}{{ end }}{{ end }}{{ end }}
         {{ if gt (len $values) 0 }}<label class="filter-label">{{ .label }}<select data-filter="{{ $key }}"><option value="">全部</option>{{ range sort (uniq $values) }}<option value="{{ . | lower }}">{{ . }}</option>{{ end }}</select></label>{{ end }}
       {{ end }}
       <label class="filter-label">排序<select data-sort><option value="recent">最近更新</option><option value="newest">最新发布</option><option value="title">标题 A–Z</option>{{ if ne .Section "translations" }}<option value="difficulty">难度从低到高</option>{{ end }}</select></label>
@@ -33,23 +34,23 @@
     </div>
     <div class="filter-footer"><button type="button" data-reset>重置筛选</button></div>
   </details>
-  <p class="collection-count muted" data-count role="status" aria-live="polite">共 {{ len $pages }} 篇文章</p>
+  <p class="collection-count muted" data-count role="status" aria-live="polite">共 {{ len $pages }} 个阅读入口</p>
   <div data-post-list>
     {{ range $pages }}
+    {{ $series := false }}{{ if .Params.series_index }}{{ $series = partial "series/data.html" . }}{{ end }}
     {{ $attributes := dict }}
     {{ $page := . }}
     {{ range $filters }}
-      {{ $value := index $page.Params .key | default slice }}
-      {{ if not (reflect.IsSlice $value) }}{{ $value = slice $value }}{{ end }}
-      {{ $normalized := slice }}{{ range $value }}{{ $normalized = $normalized | append (lower (printf "%v" .)) }}{{ end }}
+      {{ $normalized := partial "series/filter-values.html" (dict "Page" $page "Series" $series "Key" .key) }}
       {{ $attributes = merge $attributes (dict .key $normalized) }}
     {{ end }}
-    <article class="post-line collection-entry" data-filters="{{ $attributes | jsonify }}" data-title="{{ .Title | lower }}" data-date="{{ .Date.Unix }}" data-lastmod="{{ .Lastmod.Unix }}" data-difficulty="{{ .Params.difficulty | default "unknown" | lower }}">
+    <article class="post-line collection-entry{{ if $series }} post-line-series{{ end }}" data-filters="{{ $attributes | jsonify }}" data-title="{{ .Title | lower }}{{ with $series }}{{ range .Pages }} {{ .Title | lower }}{{ end }}{{ end }}" data-date="{{ .Date.Unix }}" data-lastmod="{{ .Lastmod.Unix }}" data-difficulty="{{ .Params.difficulty | default "unknown" | lower }}">
       <time class="line-date" datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "2006-01-02" }}</time>
       <div class="line-body">
-        <h2 class="line-title"><a href="{{ .RelPermalink }}">{{ .Title }}</a></h2>
+        {{ with $series }}<p class="series-entry-label">系列 · 序言 + {{ len .Chapters }} 篇</p>{{ end }}
+        <h2 class="line-title"><a href="{{ .RelPermalink }}">{{ with $series }}{{ .Title }}{{ else }}{{ $page.Title }}{{ end }}</a></h2>
         <p class="line-summary">{{ .Description | default .Summary | plainify | htmlUnescape | truncate 110 }}</p>
-        <p class="line-meta">{{ with .Params.difficulty }}{{ . | title }}<span>·</span>{{ end }}{{ with .Params.original_site }}{{ . }}<span>·</span>{{ end }}{{ .ReadingTime }} 分钟阅读{{ if ne (.Date.Format "2006-01-02") (.Lastmod.Format "2006-01-02") }}<span>·</span>更新于 {{ .Lastmod.Format "2006-01-02" }}{{ end }}</p>
+        <p class="line-meta">{{ with .Params.difficulty }}{{ . | title }}<span>·</span>{{ end }}{{ with .Params.original_site }}{{ . }}<span>·</span>{{ end }}{{ with $series }}约 {{ .Minutes }} 分钟 · <a href="{{ .Hub.RelPermalink }}">阅读完整系列 →</a>{{ else }}{{ $page.ReadingTime }} 分钟阅读{{ end }}{{ if ne (.Date.Format "2006-01-02") (.Lastmod.Format "2006-01-02") }}<span>·</span>更新于 {{ .Lastmod.Format "2006-01-02" }}{{ end }}</p>
       </div>
     </article>
     {{ end }}

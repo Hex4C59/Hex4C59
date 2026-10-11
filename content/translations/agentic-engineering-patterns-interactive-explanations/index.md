@@ -11,6 +11,9 @@ topics = ["agents", "agentic-engineering", "coding-agents", "code-understanding"
 translation_category = "工程实践"
 series = ["智能体工程模式"]
 series_order = 14
+series_label = "交互式讲解"
+series_part = "理解代码"
+series_number = 13
 original_title = "Interactive explanations"
 original_url = "https://simonwillison.net/guides/agentic-engineering-patterns/interactive-explanations/"
 original_author = "Simon Willison"
@@ -81,5 +84,3 @@ Claude 的报告说，它使用「**阿基米德螺线布局**，并为每个单
 ---
 
 [上一篇原文：按顺序讲解代码](https://simonwillison.net/guides/agentic-engineering-patterns/linear-walkthroughs/) · [下一篇原文：使用 WebAssembly 和 Gifsicle 构建 GIF 优化工具](https://simonwillison.net/guides/agentic-engineering-patterns/gif-optimization/)
-
-[上一篇中文译文]({{< relref "/translations/agentic-engineering-patterns-linear-walkthroughs/" >}}) · [系列目录]({{< relref "/translations/agentic-engineering-patterns/" >}}) · [下一篇：使用 WebAssembly 和 Gifsicle 构建 GIF 优化工具]({{< relref "/translations/agentic-engineering-patterns-gif-optimization/" >}})

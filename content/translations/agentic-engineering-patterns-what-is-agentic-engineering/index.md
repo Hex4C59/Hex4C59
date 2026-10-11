@@ -11,6 +11,9 @@ topics = ["agents", "agentic-engineering", "coding-agents", "vibe-coding"]
 translation_category = "工程实践"
 series = ["智能体工程模式"]
 series_order = 2
+series_label = "什么是智能体工程？"
+series_part = "基本原则"
+series_number = 1
 original_title = "What is agentic engineering?"
 original_url = "https://simonwillison.net/guides/agentic-engineering-patterns/what-is-agentic-engineering/"
 original_author = "Simon Willison"
@@ -71,7 +74,3 @@ LLM 不会从过去的错误中学习，但编程智能体可以做到，前提�
 正如它试图介绍的这个领域一样，《智能体工程模式》仍在持续建设之中。我的目标是识别并描述与这些工具协作的模式：这些模式能够切实取得成效，也不容易随着工具的进步而过时。
 
 随着新技术和方法不断出现，我会继续增加章节。任何一章都不应被视为已经定稿。随着我们对这些模式的理解不断深入，我也会持续更新已有章节。
-
----
-
-[上一篇：序言——写作计划]({{< relref "/translations/agentic-engineering-patterns-introduction/" >}}) · [系列目录]({{< relref "/translations/agentic-engineering-patterns/" >}}) · [下一篇：如今，编写代码的成本已经很低]({{< relref "/translations/agentic-engineering-patterns-code-is-cheap/" >}})

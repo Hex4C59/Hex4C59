@@ -11,6 +11,9 @@ topics = ["agents", "agentic-engineering", "coding-agents", "testing", "tdd"]
 translation_category = "工程实践"
 series = ["智能体工程模式"]
 series_order = 10
+series_label = "红灯／绿灯测试驱动开发"
+series_part = "测试与质量保证"
+series_number = 9
 original_title = "Red/green TDD"
 original_url = "https://simonwillison.net/guides/agentic-engineering-patterns/red-green-tdd/"
 original_author = "Simon Willison"
@@ -51,5 +54,3 @@ TDD 是 Test Driven Development 的缩写，意为测试驱动开发。这是一
 ---
 
 [上一篇原文：子智能体](https://simonwillison.net/guides/agentic-engineering-patterns/subagents/) · [下一篇原文：先运行测试](https://simonwillison.net/guides/agentic-engineering-patterns/first-run-the-tests/)
-
-[上一篇中文译文]({{< relref "/translations/agentic-engineering-patterns-subagents/" >}}) · [系列目录]({{< relref "/translations/agentic-engineering-patterns/" >}}) · [下一篇：先运行测试]({{< relref "/translations/agentic-engineering-patterns-first-run-the-tests/" >}})

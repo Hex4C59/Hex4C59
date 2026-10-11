@@ -11,6 +11,9 @@ topics = ["agents", "agentic-engineering", "coding-agents", "webassembly", "prom
 translation_category = "工程实践"
 series = ["智能体工程模式"]
 series_order = 15
+series_label = "使用 WebAssembly 和 Gifsicle 构建 GIF 优化工具"
+series_part = "提示词详解"
+series_number = 14
 original_title = "GIF optimization tool using WebAssembly and Gifsicle"
 original_url = "https://simonwillison.net/guides/agentic-engineering-patterns/gif-optimization/"
 original_author = "Simon Willison"
@@ -147,5 +150,3 @@ Claude 在工具页脚添加了这段文字：
 ---
 
 [上一篇原文：交互式讲解](https://simonwillison.net/guides/agentic-engineering-patterns/interactive-explanations/) · [下一篇原文：为博客转邮件简报工具添加新的内容类型](https://simonwillison.net/guides/agentic-engineering-patterns/adding-a-new-content-type/)
-
-[上一篇中文译文]({{< relref "/translations/agentic-engineering-patterns-interactive-explanations/" >}}) · [系列目录]({{< relref "/translations/agentic-engineering-patterns/" >}}) · [下一篇：为博客转邮件简报工具添加新的内容类型]({{< relref "/translations/agentic-engineering-patterns-adding-a-new-content-type/" >}})

@@ -11,6 +11,9 @@ topics = ["agents", "agentic-engineering", "coding-agents", "code-quality", "ref
 translation_category = "工程实践"
 series = ["智能体工程模式"]
 series_order = 5
+series_label = "AI 应该帮助我们写出更好的代码"
+series_part = "基本原则"
+series_number = 4
 original_title = "AI should help us produce better code"
 original_url = "https://simonwillison.net/guides/agentic-engineering-patterns/better-code/"
 original_author = "Simon Willison"
@@ -88,5 +91,3 @@ Every 公司的 Dan Shipper 和 Kieran Klaassen，把公司与编程智能体协
 ---
 
 [上一篇原文：积累你已经掌握的实现方法](https://simonwillison.net/guides/agentic-engineering-patterns/hoard-things-you-know-how-to-do/) · [下一篇原文：反模式——应该避免的做法](https://simonwillison.net/guides/agentic-engineering-patterns/anti-patterns/)
-
-[上一篇中文译文]({{< relref "/translations/agentic-engineering-patterns-hoard-things-you-know-how-to-do/" >}}) · [系列目录]({{< relref "/translations/agentic-engineering-patterns/" >}}) · [下一篇：反模式——应该避免的做法]({{< relref "/translations/agentic-engineering-patterns-anti-patterns/" >}})

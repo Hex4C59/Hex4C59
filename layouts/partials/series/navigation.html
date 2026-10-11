@@ -1,0 +1,12 @@
+{{ $page := .Page }}{{ $series := .Series }}
+{{ $previous := $series.Hub }}{{ $next := false }}
+{{ range $index, $chapter := $series.Pages }}
+  {{ if eq $chapter $page }}
+    {{ if gt $index 0 }}{{ $previous = index $series.Pages (sub $index 1) }}{{ end }}
+    {{ if lt (add $index 1) (len $series.Pages) }}{{ $next = index $series.Pages (add $index 1) }}{{ end }}
+  {{ end }}
+{{ end }}
+<nav class="series-pagination" aria-label="系列章节导航">
+  <a href="{{ $previous.RelPermalink }}"><span class="muted">← {{ if eq $previous $series.Hub }}返回系列{{ else }}上一篇{{ end }}</span><span>{{ $previous.Params.series_label | default $series.Title }}</span></a>
+  {{ with $next }}<a class="series-next" href="{{ .RelPermalink }}"><span class="muted">下一篇 →</span><span>{{ .Params.series_label | default .Title }}</span></a>{{ else }}<a class="series-next" href="{{ $series.Hub.RelPermalink }}"><span class="muted">已读到本系列末篇</span><span>返回完整目录 →</span></a>{{ end }}
+</nav>

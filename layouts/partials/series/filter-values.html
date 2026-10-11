@@ -1,0 +1,10 @@
+{{- $members := slice .Page -}}
+{{- with .Series -}}{{- range .Pages -}}{{- $members = $members | append . -}}{{- end -}}{{- end -}}
+{{- $key := .Key -}}
+{{- $values := slice -}}
+{{- range $members -}}
+  {{- $value := index .Params $key | default slice -}}
+  {{- if not (reflect.IsSlice $value) -}}{{- $value = slice $value -}}{{- end -}}
+  {{- range $value -}}{{- $values = $values | append (lower (printf "%v" .)) -}}{{- end -}}
+{{- end -}}
+{{- return (uniq $values) -}}

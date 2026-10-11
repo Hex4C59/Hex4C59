@@ -11,6 +11,9 @@ topics = ["agents", "agentic-engineering", "coding-agents", "code-understanding"
 translation_category = "工程实践"
 series = ["智能体工程模式"]
 series_order = 13
+series_label = "按顺序讲解代码"
+series_part = "理解代码"
+series_number = 12
 original_title = "Linear walkthroughs"
 original_url = "https://simonwillison.net/guides/agentic-engineering-patterns/linear-walkthroughs/"
 original_author = "Simon Willison"
@@ -65,5 +68,3 @@ ShowToc = true
 ---
 
 [上一篇原文：让智能体执行手动测试](https://simonwillison.net/guides/agentic-engineering-patterns/agentic-manual-testing/) · [下一篇原文：交互式讲解](https://simonwillison.net/guides/agentic-engineering-patterns/interactive-explanations/)
-
-[上一篇中文译文]({{< relref "/translations/agentic-engineering-patterns-agentic-manual-testing/" >}}) · [系列目录]({{< relref "/translations/agentic-engineering-patterns/" >}}) · [下一篇：交互式讲解]({{< relref "/translations/agentic-engineering-patterns-interactive-explanations/" >}})

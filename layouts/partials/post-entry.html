@@ -1,8 +1,10 @@
-<article class="post-line">
+{{ $series := false }}{{ if .Params.series_index }}{{ $series = partial "series/data.html" . }}{{ end }}
+<article class="post-line{{ if $series }} post-line-series{{ end }}">
   <time class="line-date" datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "2006-01-02" }}</time>
   <div class="line-body">
-    <h3 class="line-title"><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
+    {{ with $series }}<p class="series-entry-label">系列 · 序言 + {{ len .Chapters }} 篇</p>{{ end }}
+    <h3 class="line-title"><a href="{{ .RelPermalink }}">{{ with $series }}{{ .Title }}{{ else }}{{ $.Title }}{{ end }}</a></h3>
     {{ if site.Params.listSummaries }}<p class="line-summary">{{ .Description | default .Summary | plainify | htmlUnescape | truncate 110 }}</p>{{ end }}
-    <p class="line-meta">{{ with site.GetPage .Section }}<a href="{{ .RelPermalink }}">{{ .Title }}</a>{{ end }}<span>·</span>{{ .ReadingTime }} 分钟阅读</p>
+    <p class="line-meta">{{ with site.GetPage .Section }}<a href="{{ .RelPermalink }}">{{ .Title }}</a>{{ end }}<span>·</span>{{ with $series }}约 {{ .Minutes }} 分钟 · 阅读完整系列 →{{ else }}{{ $.ReadingTime }} 分钟阅读{{ end }}</p>
   </div>
 </article>

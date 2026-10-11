@@ -11,6 +11,9 @@ topics = ["agents", "agentic-engineering", "coding-agents", "tool-use", "prompti
 translation_category = "工程实践"
 series = ["智能体工程模式"]
 series_order = 7
+series_label = "编程智能体如何工作"
+series_part = "与编程智能体协作"
+series_number = 6
 original_title = "How coding agents work"
 original_url = "https://simonwillison.net/guides/agentic-engineering-patterns/how-coding-agents-work/"
 original_author = "Simon Willison"
@@ -155,5 +158,3 @@ assistant:
 ---
 
 [上一篇原文：反模式——应该避免的做法](https://simonwillison.net/guides/agentic-engineering-patterns/anti-patterns/) · [下一篇原文：与编程智能体协作时如何使用 Git](https://simonwillison.net/guides/agentic-engineering-patterns/using-git-with-coding-agents/)
-
-[上一篇中文译文]({{< relref "/translations/agentic-engineering-patterns-anti-patterns/" >}}) · [系列目录]({{< relref "/translations/agentic-engineering-patterns/" >}}) · [下一篇：与编程智能体协作时如何使用 Git]({{< relref "/translations/agentic-engineering-patterns-using-git-with-coding-agents/" >}})

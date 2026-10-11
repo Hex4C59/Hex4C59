@@ -18,6 +18,7 @@
 <section class="list-container" aria-labelledby="recent-title">
   <div class="section-heading"><h2 id="recent-title">最新文章</h2><a href="{{ "archives/" | relURL }}">全部文章 ↗</a></div>
   {{ $pages := where site.RegularPages "Section" "in" site.Params.mainSections }}
+  {{ $pages = partial "series/list-pages.html" $pages }}
   {{ $paginator := .Paginate $pages.ByDate.Reverse site.Params.paginationSize }}
   {{ range $paginator.Pages }}{{ partial "post-entry.html" . }}{{ end }}
   {{ partial "pagination-controls.html" $paginator }}

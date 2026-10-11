@@ -11,6 +11,8 @@ topics = ["agents", "agentic-engineering", "coding-agents", "vibe-coding"]
 translation_category = "工程实践"
 series = ["智能体工程模式"]
 series_order = 1
+series_label = "写作计划"
+series_part = "序言"
 original_title = "Writing about Agentic Engineering Patterns"
 original_url = "https://simonwillison.net/2026/Feb/23/agentic-engineering-patterns/"
 original_author = "Simon Willison"
@@ -72,7 +74,3 @@ ShowToc = true
 - [Claude Haiku 5.5](https://simonwillison.net/2026/Oct/7/claude-haiku-5-5/)——2026 年 10 月 7 日
 - [我们几乎需要为所有东西默认设置不可突破的预算上限](https://simonwillison.net/2026/Oct/3/default-hard-budget-caps/)——2026 年 10 月 3 日
 - [OpenAI DevDay 2026 实时记录](https://simonwillison.net/2026/Sep/29/openai-devday-2026-live-blog/)——2026 年 9 月 29 日
-
----
-
-[返回《智能体工程模式》系列目录]({{< relref "/translations/agentic-engineering-patterns/" >}})
