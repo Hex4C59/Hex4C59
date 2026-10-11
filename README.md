@@ -4,7 +4,7 @@
 
 ## 我关注的方向
 
-关注 **AI Agent**、**音视频开发**与 **Rewriting existing software in Rust**。
+AI Agent、音视频开发和 rewriting existing software in Rust
 
 ## 我的博客
 
