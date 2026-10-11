@@ -8,17 +8,17 @@
 
 ## 我的项目
 
-### [pipi](https://github.com/Hex4C59/pipi)
+### pipi
 
 基于 Pi 的桌面与 VS Code 编程客户端。开发中，仓库暂未公开。
 
-### [remote-desktop](https://github.com/Hex4C59/remote-desktop)
+### remote-desktop
 
-基于 C++ 与 WebRTC 的 Android → Windows 局域网远程桌面原型。仓库暂未公开。
+基于 C++ 与 WebRTC 的 Android → Windows 局域网远程桌面原型。开发中，仓库暂未公开。
 
 ### [caption-meet](https://github.com/Hex4C59/caption-meet)
 
-带中文实时字幕的局域网音视频会议项目，开发中。
+基于 RTCPilot 的局域网音视频会议项目，计划提供中文实时字幕，目前开发中。
 
 ### [pi.nvim](https://github.com/Hex4C59/pi.nvim)
 
