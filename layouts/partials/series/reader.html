@@ -1,0 +1,20 @@
+{{ $series := .Series }}{{ $article := .Article }}
+<div class="series-workspace">
+  <aside class="series-sidebar" data-series-sidebar="{{ $series.Hub.RelPermalink }}" aria-label="系列导航">
+    <p class="series-sidebar-label">系列目录</p>
+    <h2 class="series-sidebar-title"><a href="{{ $series.Hub.RelPermalink }}">{{ $series.Title }}</a></h2>
+    <p class="series-sidebar-count">序言 + {{ len $series.Chapters }} 篇</p>
+    <details class="series-sidebar-menu">
+      <summary>章节目录 <span class="muted">· {{ with $article.Params.series_number }}当前第 {{ printf "%02d" (int .) }} 篇{{ else }}当前序言{{ end }}</span></summary>
+      <nav class="series-sidebar-nav" aria-label="系列章节目录" tabindex="0">
+        {{ partial "series/contents.html" (dict "Series" $series "Current" $article) }}
+      </nav>
+    </details>
+  </aside>
+  <div class="series-article" id="series-article-content" tabindex="-1">
+    {{ partial "breadcrumbs.html" $article }}
+    {{ partial "article.html" (dict "Page" $article "Series" $series) }}
+    <div class="back-to-top"><a href="#top">回到顶部 ↑</a></div>
+    {{ if .IsIndex }}<details class="reading-notes"><summary>原指南目录与译文说明</summary><div class="single-content">{{ $series.Hub.Content }}</div></details>{{ end }}
+  </div>
+</div>

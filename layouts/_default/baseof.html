@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="{{ site.Language.LanguageCode }}" dir="ltr">
 <head>{{ partial "head.html" . }}</head>
-<body id="top">
+{{ $series := partial "series/data.html" . }}
+<body id="top"{{ if $series }} class="series-page"{{ end }}>
   <script>document.body.classList.add(document.documentElement.dataset.theme);</script>
-  <a class="skip-link" href="#main-content">跳到正文</a>
+  <a class="skip-link" href="{{ if $series }}#series-article-content{{ else }}#main-content{{ end }}">跳到正文</a>
   <div class="content">
     <header>{{ partial "header.html" . }}</header>
     <main class="main" id="main-content">{{ block "main" . }}{{ end }}</main>

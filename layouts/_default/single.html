@@ -1,33 +1,11 @@
 {{ define "main" }}
-{{ partial "breadcrumbs.html" . }}
 {{ $series := partial "series/data.html" . }}
-<article>
-  <header class="single-intro-container">
-    <h1 class="single-title">{{ .Title }}</h1>
-    {{ with .Description | default .Params.summary }}<p class="single-summary">{{ . | markdownify }}</p>{{ end }}
-    <p class="single-date">
-      <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "2006-01-02" }}</time>
-      · {{ .ReadingTime }} 分钟阅读 · {{ .Params.author | default site.Params.author }}
-      {{ if ne (.Lastmod.Format "2006-01-02") (.Date.Format "2006-01-02") }}<span class="last-updated"> · 更新于 {{ .Lastmod.Format "2006-01-02" }}</span>{{ end }}
-    </p>
-    {{ if .Param "showTags" }}{{ with .GetTerms "tags" }}<div class="single-tags">{{ range . }}<a href="{{ .RelPermalink }}">#{{ .LinkTitle }}</a>{{ end }}</div>{{ end }}{{ end }}
-  </header>
-  {{ with $series }}
-  <aside class="series-reader" aria-label="所属系列">
-    <div class="series-reader-heading"><a href="{{ .Hub.RelPermalink }}">{{ .Title }}</a><span>{{ with $.Params.series_number }}第 {{ printf "%02d" (int .) }} / {{ len $series.Chapters }} 篇{{ else }}序言{{ end }} · {{ $.Params.series_part }}</span></div>
-    <details class="series-reader-directory"><summary>展开系列目录 · 序言 + {{ len .Chapters }} 篇</summary>{{ partial "series/contents.html" (dict "Series" . "Current" $ "Compact" true) }}</details>
-  </aside>
-  {{ end }}
-  {{ if and (.Param "toc") (ne .Params.showtoc false) }}
-    {{ if gt (len .Fragments.Headings) 0 }}<details class="toc"><summary>文章目录</summary>{{ .TableOfContents }}</details>{{ end }}
-  {{ end }}
-  <div class="single-content">{{ .Content }}</div>
-{{ with $series }}{{ partial "series/navigation.html" (dict "Page" $ "Series" .) }}{{ end }}
-</article>
-{{ if .Store.Get "hasMermaid" }}
-<script defer type="module" id="mermaid_script" data-light-theme="default" data-dark-theme="dark" src="{{ "js/mermaid.js" | relURL }}"></script>
+{{ if $series }}
+  {{ partial "series/reader.html" (dict "Series" $series "Article" . "IsIndex" false) }}
+{{ else }}
+  {{ partial "breadcrumbs.html" . }}
+  {{ partial "article.html" (dict "Page" . "Series" false) }}
+  {{ if not (.Param "hidePagination") }}{{ partial "pagination-single.html" . }}{{ end }}
+  <div class="back-to-top"><a href="#top">回到顶部 ↑</a></div>
 {{ end }}
-{{ if and (in site.Params.comments.sections .Section) (ne .Params.comments false) (not .Params.disableComment) }}{{ partial "comments.html" . }}{{ end }}
-{{ if and (not $series) (not (.Param "hidePagination")) }}{{ partial "pagination-single.html" . }}{{ end }}
-<div class="back-to-top"><a href="#top">回到顶部 ↑</a></div>
 {{ end }}

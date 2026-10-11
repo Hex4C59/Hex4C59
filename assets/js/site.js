@@ -25,6 +25,34 @@
     if (!preferred || preferred === 'auto') updateTheme(event.matches ? 'dark' : 'light');
   });
 
+  document.querySelectorAll('[data-series-sidebar]').forEach((sidebar) => {
+    const menu = sidebar.querySelector('.series-sidebar-menu');
+    const nav = sidebar.querySelector('.series-sidebar-nav');
+    const desktop = window.matchMedia('(min-width: 720px)');
+    const storageKey = `series-nav:${sidebar.dataset.seriesSidebar}`;
+    const revealCurrent = () => {
+      if (!menu.open) return;
+      const current = nav.querySelector('[aria-current="page"]');
+      if (!current) return;
+      const bounds = nav.getBoundingClientRect();
+      const active = current.getBoundingClientRect();
+      if (active.top < bounds.top || active.bottom > bounds.bottom) {
+        nav.scrollTop += active.top - bounds.top - nav.clientHeight / 2 + active.height / 2;
+      }
+    };
+    const syncMenu = () => {
+      menu.open = desktop.matches;
+      requestAnimationFrame(revealCurrent);
+    };
+    syncMenu();
+    try { nav.scrollTop = Number(sessionStorage.getItem(storageKey)) || 0; } catch (_) {}
+    menu.addEventListener('toggle', revealCurrent);
+    desktop.addEventListener('change', syncMenu);
+    nav.addEventListener('scroll', () => {
+      try { sessionStorage.setItem(storageKey, String(nav.scrollTop)); } catch (_) {}
+    }, { passive: true });
+  });
+
   document.querySelectorAll('[data-collection]').forEach((collection) => {
     const list = collection.querySelector('[data-post-list]');
     const entries = Array.from(list.querySelectorAll('.collection-entry')).map((node) => ({

@@ -1,15 +1,14 @@
-{{ $series := .Series }}{{ $current := .Current }}{{ $compact := .Compact }}
-<div class="series-contents{{ if $compact }} series-contents-compact{{ end }}">
-  {{ range $index, $group := $series.Groups }}
-  <section class="series-part"{{ if not $compact }} aria-labelledby="series-part-{{ $index }}"{{ end }}>
-    {{ if $compact }}<h3>{{ .Title }}</h3>{{ else }}<h2 id="series-part-{{ $index }}">{{ .Title }}</h2>{{ end }}
+{{ $series := .Series }}{{ $current := .Current }}
+<div class="series-contents">
+  {{ range $series.Groups }}
+  <section class="series-part">
+    <h3>{{ .Title }}</h3>
     <ol class="series-chapters">
       {{ range .Pages }}
       <li>
         <a href="{{ .RelPermalink }}"{{ if eq . $current }} aria-current="page"{{ end }}>
-          <span class="chapter-number">{{ with .Params.series_number }}{{ printf "%02d" (int .) }}{{ else }}序{{ end }}</span>
-          <span class="chapter-body"><span class="chapter-title">{{ .Params.series_label | default .Title }}</span>{{ if not $compact }}<span class="chapter-summary">{{ .Description }}</span>{{ end }}</span>
-          {{ if not $compact }}<span class="chapter-time">{{ .ReadingTime }} 分钟</span>{{ end }}
+          <span class="chapter-number">{{ with .Params.series_number }}{{ printf "%02d" (int .) }}{{ else }}序言{{ end }}</span>
+          <span class="chapter-body"><span class="chapter-title">{{ .Params.series_label | default .Title }}</span></span>
         </a>
       </li>
       {{ end }}
