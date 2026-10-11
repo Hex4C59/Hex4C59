@@ -31,7 +31,7 @@ ShowToc = true
 >
 > 本文为非官方中文译文，依据提供的原文正文翻译。正文中的「我」及相关定义、判断和计划均指原作者；工具和模型名称保留原文记录。
 
-我用**智能体工程（Agentic Engineering）**这个术语，来描述借助编程智能体开发软件的实践。
+我用 **智能体工程（Agentic Engineering）** 这个术语，来描述借助编程智能体开发软件的实践。
 
 什么是**编程智能体（Coding Agents）**？它们是既能编写代码，也能执行代码的智能体。常见的例子包括 [Claude Code](https://code.claude.com/)、[OpenAI Codex](https://openai.com/codex/) 和 [Gemini CLI](https://geminicli.com/)。
 

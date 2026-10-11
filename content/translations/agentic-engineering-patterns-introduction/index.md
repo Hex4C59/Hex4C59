@@ -33,7 +33,7 @@ ShowToc = true
 
 我启动了一个新项目，用来收集和记录[**智能体工程模式（Agentic Engineering Patterns）**](https://simonwillison.net/guides/agentic-engineering-patterns/)——我们正在进入一个由编程智能体参与开发的新时代，这些编程实践与模式旨在帮助我们在这个时代取得更好的结果。
 
-我用**智能体工程（Agentic Engineering）**来指借助编程智能体构建软件。这类工具包括 Claude Code 和 OpenAI Codex，其决定性特征是既能生成代码，也能*执行*代码。因此，它们能够测试代码并持续迭代，而不必每一步都等待人类监督者的指导。
+我用 **智能体工程（Agentic Engineering）** 来指借助编程智能体构建软件。这类工具包括 Claude Code 和 OpenAI Codex，其决定性特征是既能生成代码，也能*执行*代码。因此，它们能够测试代码并持续迭代，而不必每一步都等待人类监督者的指导。
 
 我对 **Vibe Coding** 的理解沿用它的[原始定义](https://simonwillison.net/2025/Mar/19/vibe-coding/)：在编程过程中完全不关注代码本身。如今，这通常与非程序员使用大语言模型（Large Language Model，LLM）编写代码联系在一起。
 
