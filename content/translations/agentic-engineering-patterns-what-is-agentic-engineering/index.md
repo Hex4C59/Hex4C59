@@ -1,7 +1,7 @@
 +++
 title = "智能体工程模式 01：什么是智能体工程？"
 date = 2026-10-11T00:00:00+08:00
-draft = true
+draft = false
 author = "Hex4C59"
 description = "Simon Willison 解释智能体工程、编程智能体和工具循环，讨论软件工程师的职责，以及智能体工程与 Vibe Coding 的区别。"
 summary = "编程智能体既能编写代码，也能执行代码。智能体工程利用这一能力开展迭代，同时由工程师明确问题、权衡方案、提供工具并验证结果。"
@@ -74,4 +74,4 @@ LLM 不会从过去的错误中学习，但编程智能体可以做到，前提�
 
 ---
 
-[上一篇：序言——写作计划]({{< relref "/translations/agentic-engineering-patterns-introduction/" >}}) · [系列目录]({{< relref "/translations/agentic-engineering-patterns/" >}})
+[上一篇：序言——写作计划]({{< relref "/translations/agentic-engineering-patterns-introduction/" >}}) · [系列目录]({{< relref "/translations/agentic-engineering-patterns/" >}}) · [下一篇：如今，编写代码的成本已经很低]({{< relref "/translations/agentic-engineering-patterns-code-is-cheap/" >}})

@@ -1,7 +1,7 @@
 +++
 title = "智能体工程模式·序言：写作计划"
 date = 2026-10-11T00:00:00+08:00
-draft = true
+draft = false
 author = "Hex4C59"
 description = "Simon Willison 介绍《Agentic Engineering Patterns》的写作计划，解释智能体工程与 Vibe Coding 的区别，以及持续更新的指南与章节形式。"
 summary = "作为《智能体工程模式》的序言，本文介绍项目缘起、最初两篇文章、作者的写作原则，以及适合持续修订的指南与章节组织方式。"
