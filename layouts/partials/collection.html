@@ -5,8 +5,6 @@
 {{ $filters := slice }}
 {{ if eq .Section "agent" }}
   {{ $filters = slice (dict "key" "difficulty" "label" "难度") (dict "key" "article_type" "label" "类型") (dict "key" "topics" "label" "主题") (dict "key" "frameworks" "label" "框架") }}
-{{ else if eq .Section "leetcode" }}
-  {{ $filters = slice (dict "key" "difficulty" "label" "难度") (dict "key" "tags" "label" "标签") (dict "key" "languages" "label" "语言") }}
 {{ else }}
   {{ $filters = slice (dict "key" "translation_category" "label" "分类") (dict "key" "topics" "label" "主题") (dict "key" "original_site" "label" "来源") }}
 {{ end }}
@@ -30,8 +28,8 @@
         {{ range $pages }}{{ with index .Params $key }}{{ if reflect.IsSlice . }}{{ $values = $values | append . }}{{ else }}{{ $values = $values | append (slice .) }}{{ end }}{{ end }}{{ end }}
         {{ if gt (len $values) 0 }}<label class="filter-label">{{ .label }}<select data-filter="{{ $key }}"><option value="">全部</option>{{ range sort (uniq $values) }}<option value="{{ . | lower }}">{{ . }}</option>{{ end }}</select></label>{{ end }}
       {{ end }}
-      <label class="filter-label">排序<select data-sort><option value="recent">最近更新</option><option value="newest">最新发布</option>{{ if eq .Section "leetcode" }}<option value="number">题号从小到大</option>{{ end }}<option value="title">标题 A–Z</option>{{ if ne .Section "translations" }}<option value="difficulty">难度从低到高</option>{{ end }}</select></label>
-      <label class="filter-label filter-search">{{ if eq .Section "leetcode" }}题号或标题{{ else }}标题关键词{{ end }}<input type="search" data-title-search placeholder="{{ if eq .Section "leetcode" }}例如 0001、两数之和{{ else }}输入关键词{{ end }}"></label>
+      <label class="filter-label">排序<select data-sort><option value="recent">最近更新</option><option value="newest">最新发布</option><option value="title">标题 A–Z</option>{{ if ne .Section "translations" }}<option value="difficulty">难度从低到高</option>{{ end }}</select></label>
+      <label class="filter-label filter-search">标题关键词<input type="search" data-title-search placeholder="输入关键词"></label>
     </div>
     <div class="filter-footer"><button type="button" data-reset>重置筛选</button></div>
   </details>
@@ -46,7 +44,7 @@
       {{ $normalized := slice }}{{ range $value }}{{ $normalized = $normalized | append (lower (printf "%v" .)) }}{{ end }}
       {{ $attributes = merge $attributes (dict .key $normalized) }}
     {{ end }}
-    <article class="post-line collection-entry" data-filters="{{ $attributes | jsonify }}" data-title="{{ .Title | lower }}" data-date="{{ .Date.Unix }}" data-lastmod="{{ .Lastmod.Unix }}" data-number="{{ .Params.problem_id | default 0 }}" data-difficulty="{{ .Params.difficulty | default "unknown" | lower }}">
+    <article class="post-line collection-entry" data-filters="{{ $attributes | jsonify }}" data-title="{{ .Title | lower }}" data-date="{{ .Date.Unix }}" data-lastmod="{{ .Lastmod.Unix }}" data-difficulty="{{ .Params.difficulty | default "unknown" | lower }}">
       <time class="line-date" datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "2006-01-02" }}</time>
       <div class="line-body">
         <h2 class="line-title"><a href="{{ .RelPermalink }}">{{ .Title }}</a></h2>

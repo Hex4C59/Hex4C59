@@ -41,7 +41,6 @@
         const left = a.node.dataset;
         const right = b.node.dataset;
         switch (sorter.value) {
-          case 'number': return Number(left.number) - Number(right.number);
           case 'title': return left.title.localeCompare(right.title, 'zh-CN');
           case 'difficulty': return (rank[left.difficulty] || 99) - (rank[right.difficulty] || 99) || Number(right.lastmod) - Number(left.lastmod);
           case 'newest': return Number(right.date) - Number(left.date);
@@ -52,9 +51,7 @@
       const fragment = document.createDocumentFragment();
       sorted.forEach(({ node, filters: values }) => {
         const matches = filters.every((filter) => !filter.value || (values[filter.dataset.filter] || []).includes(filter.value));
-        const numericQuery = /^\d+$/.test(query) ? Number(query) : null;
-        const matchesNumber = numericQuery !== null && Number(node.dataset.number) > 0 && Number(node.dataset.number) === numericQuery;
-        const matchesTitle = !query || node.dataset.title.includes(query) || matchesNumber;
+        const matchesTitle = !query || node.dataset.title.includes(query);
         node.hidden = !(matches && matchesTitle);
         if (!node.hidden) count++;
         fragment.appendChild(node);
