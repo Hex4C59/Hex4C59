@@ -1,9 +1,3 @@
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/profile/header-dark.svg">
-  <source media="(prefers-color-scheme: light)" srcset="assets/profile/header.svg">
-  <img src="assets/profile/header.svg" alt="Hex4C59 的个人主页横幅" width="1000">
-</picture>
-
 在这里记录我的学习与思考，也把实践中的问题、解法和收获写进博客。
 
 > 好的想法需要地方降落，否则它们只会飘走！
