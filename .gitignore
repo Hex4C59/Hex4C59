@@ -32,3 +32,6 @@ venv/
 .env
 .env.*
 !.env.example
+
+# 本地 Agent 文件
+/.agents/
