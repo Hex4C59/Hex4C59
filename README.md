@@ -11,3 +11,11 @@
 [Hex4C59's Blog](https://hex4c59.cc/) 这是我的博客：
 
 欢迎阅读，也欢迎评论交流想法。
+
+## 我的贡献
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Hex4C59/Hex4C59/profile-assets/github-contribution-grid-snake-dark.svg" />
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Hex4C59/Hex4C59/profile-assets/github-contribution-grid-snake.svg" />
+  <img alt="贪吃蛇沿着 Hex4C59 的 GitHub 贡献记录移动的动画" src="https://raw.githubusercontent.com/Hex4C59/Hex4C59/profile-assets/github-contribution-grid-snake.svg" />
+</picture>
