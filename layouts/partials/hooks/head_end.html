@@ -1,4 +1,5 @@
-{{ with resources.Get "css/site.css" | minify | fingerprint }}
+{{ $styles := slice (resources.Get "css/fonts.css") (resources.Get "css/site.css") }}
+{{ with $styles | resources.Concat "css/site-bundle.css" | minify | fingerprint }}
 <link rel="stylesheet" href="{{ .RelPermalink }}" integrity="{{ .Data.Integrity }}">
 {{ end }}
 {{ $scripts := slice (resources.Get "js/vendor/fuse.basic.min.js") (resources.Get "js/site.js") }}
