@@ -1,4 +1,4 @@
-# Chinese display names; option values continue to use article metadata.
+# Filter display names; source and framework names use the original metadata.
 
 [difficulty]
 "advanced" = "高级"
@@ -16,24 +16,6 @@
 [translation_category]
 "ai 与工具" = "人工智能与工具"
 
-[frameworks]
-"anthropic" = "克劳德平台"
-"cordis" = "科迪斯"
-"crewai" = "智能体团队框架"
-"cursor" = "光标编程助手"
-"deepseek harness" = "深度求索工程实践"
-"langchain" = "语言链框架"
-"langgraph" = "语言图框架"
-"openai" = "开放人工智能平台"
-"typescript" = "类型化脚本语言"
-
-[original_site]
-"anthropic engineering" = "克劳德工程博客"
-"claude blog" = "克劳德官方博客"
-"claude developer blog" = "克劳德开发者博客"
-"medium" = "米迪厄姆博客社区"
-"simon willison’s weblog" = "西蒙·威利森的博客"
-
 [topics]
 "accessibility" = "无障碍访问"
 "adoption" = "应用推广"
@@ -50,9 +32,9 @@
 "autonomy" = "自主性"
 "benchmarking" = "基准测试"
 "browser-automation" = "浏览器自动化"
-"claude" = "克劳德助手"
-"claude-agent-sdk" = "克劳德智能体开发包"
-"claude-code" = "克劳德编程助手"
+"claude" = "Claude"
+"claude-agent-sdk" = "Claude Agent SDK"
+"claude-code" = "Claude Code"
 "cli" = "命令行"
 "code-quality" = "代码质量"
 "code-reuse" = "代码复用"
@@ -80,8 +62,8 @@
 "file-management" = "文件管理"
 "frontend" = "前端开发"
 "function-calling" = "函数调用"
-"git" = "版本控制"
-"github" = "代码托管"
+"git" = "Git"
+"github" = "GitHub"
 "guardrails" = "安全护栏"
 "handoff" = "任务交接"
 "harness" = "智能体运行框架"
@@ -120,7 +102,7 @@
 "prompting" = "提示方法"
 "proofreading" = "校对"
 "protocol" = "协议"
-"pytest" = "自动化测试框架"
+"pytest" = "pytest"
 "quality-control" = "质量控制"
 "rag" = "检索增强生成"
 "react" = "推理与行动"
@@ -132,7 +114,7 @@
 "research-agent" = "研究智能体"
 "responsive-design" = "响应式设计"
 "retrieval" = "检索"
-"rust" = "系统编程语言"
+"rust" = "Rust"
 "safety" = "安全防护"
 "sandbox" = "沙箱"
 "sandboxing" = "沙箱隔离"
@@ -140,12 +122,12 @@
 "self-critique" = "自我评判"
 "semantic-memory" = "语义记忆"
 "skill" = "技能"
-"slack" = "团队协作"
+"slack" = "Slack"
 "software-engineering" = "软件工程"
 "state-management" = "状态管理"
 "subagents" = "子智能体"
 "supervisor" = "监督智能体"
-"swiftui" = "苹果声明式界面"
+"swiftui" = "SwiftUI"
 "system-prompt" = "系统提示词"
 "task-completion" = "任务完成"
 "task-decomposition" = "任务分解"
@@ -161,7 +143,7 @@
 "vibe-coding" = "氛围编程"
 "visualization" = "可视化"
 "voice" = "语音"
-"webassembly" = "网页字节码"
+"webassembly" = "WebAssembly"
 "workflow" = "工作流"
 "workflows" = "工作流"
 "writing-agent" = "写作智能体"
