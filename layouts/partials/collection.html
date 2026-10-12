@@ -15,7 +15,7 @@
 {{ $pages := partial "series/list-pages.html" $allPages }}
 {{ $filters := slice }}
 {{ if eq .Section "agent" }}
-  {{ $filters = slice (dict "key" "difficulty" "label" "难度") (dict "key" "article_type" "label" "类型") (dict "key" "topics" "label" "主题") (dict "key" "frameworks" "label" "框架") }}
+  {{ $filters = slice (dict "key" "difficulty" "label" "难度") (dict "key" "article_type" "label" "类型") (dict "key" "topics" "label" "主题") (dict "key" "frameworks" "label" "相关技术") }}
 {{ else }}
   {{ $filters = slice (dict "key" "translation_category" "label" "分类") (dict "key" "topics" "label" "主题") (dict "key" "original_site" "label" "来源") }}
 {{ end }}
