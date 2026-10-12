@@ -1,0 +1,5 @@
+{{- $label := printf "%v" .Value -}}
+{{- with index site.Data.collection_labels .Key -}}
+  {{- with index . (lower $label) -}}{{- $label = . -}}{{- end -}}
+{{- end -}}
+{{- return $label -}}

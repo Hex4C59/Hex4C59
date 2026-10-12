@@ -37,9 +37,9 @@
       {{ range $filters }}
         {{ $key := .key }}{{ $values := slice }}
         {{ range $allPages }}{{ with index .Params $key }}{{ if reflect.IsSlice . }}{{ $values = $values | append . }}{{ else }}{{ $values = $values | append (slice .) }}{{ end }}{{ end }}{{ end }}
-        {{ if gt (len $values) 0 }}<label class="filter-label">{{ .label }}<select data-filter="{{ $key }}"><option value="">全部</option>{{ range sort (uniq $values) }}<option value="{{ . | lower }}">{{ . }}</option>{{ end }}</select></label>{{ end }}
+        {{ if gt (len $values) 0 }}<label class="filter-label">{{ .label }}<select data-filter="{{ $key }}"><option value="">全部</option>{{ range sort (uniq $values) }}<option value="{{ . | lower }}">{{ partial "collection/filter-label.html" (dict "Key" $key "Value" .) }}</option>{{ end }}</select></label>{{ end }}
       {{ end }}
-      <label class="filter-label">排序<select data-sort><option value="recent">最近更新</option><option value="newest">最新发布</option><option value="title">标题 A–Z</option>{{ if ne .Section "translations" }}<option value="difficulty">难度从低到高</option>{{ end }}</select></label>
+      <label class="filter-label">排序<select data-sort><option value="recent">最近更新</option><option value="newest">最新发布</option><option value="title">标题升序</option>{{ if ne .Section "translations" }}<option value="difficulty">难度从低到高</option>{{ end }}</select></label>
       <label class="filter-label filter-search">标题关键词<input type="search" data-title-search placeholder="输入关键词"></label>
     </div>
     <div class="filter-footer"><button type="button" data-reset>重置筛选</button></div>
