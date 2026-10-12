@@ -1,0 +1,11 @@
+{{- $updated := .Date -}}
+{{- if .Lastmod.After $updated -}}{{- $updated = .Lastmod -}}{{- end -}}
+{{- if .Params.series_index -}}
+  {{- with partial "series/data.html" . -}}
+    {{- range .Pages -}}
+      {{- if .Date.After $updated -}}{{- $updated = .Date -}}{{- end -}}
+      {{- if .Lastmod.After $updated -}}{{- $updated = .Lastmod -}}{{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- return (time.In "Asia/Shanghai" $updated) -}}

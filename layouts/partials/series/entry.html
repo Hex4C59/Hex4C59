@@ -1,0 +1,12 @@
+{{ $series := .Series }}{{ $heading := .Heading | default "h3" }}
+<article class="series-feature">
+  <div class="series-feature-heading">
+    <p class="series-feature-kind">{{ $series.Kind }}{{ range $series.Sections }}{{ with site.GetPage . }}<span>·</span><a href="{{ .RelPermalink }}">{{ .Title }}</a>{{ end }}{{ end }}</p>
+    {{ printf "<%s class='series-feature-title'>" $heading | safeHTML }}<a href="{{ $series.Page.RelPermalink }}">{{ $series.Title }}</a>{{ printf "</%s>" $heading | safeHTML }}
+    <p class="series-feature-meta">{{ $series.CountLabel }}{{ with $series.Status }}<span>·</span>{{ . }}{{ end }}<span>·</span>更新于 <time datetime="{{ $series.Updated.Format "2006-01-02" }}">{{ $series.Updated.Format "2006-01-02" }}</time></p>
+  </div>
+  <div class="series-feature-body">
+    {{ with $series.Description }}<p class="series-feature-description">{{ . }}</p>{{ end }}
+    <div class="series-feature-links"><a href="{{ $series.Start.RelPermalink }}">{{ if $series.Reader }}开始阅读{{ else }}推荐起点{{ end }} <span aria-hidden="true">→</span><span class="sr-only">：{{ $series.Start.Title }}</span></a><a href="{{ $series.Page.RelPermalink }}">查看目录 <span aria-hidden="true">↗</span><span class="sr-only">：{{ $series.Title }}</span></a></div>
+  </div>
+</article>

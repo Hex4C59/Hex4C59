@@ -4,6 +4,7 @@
     <p class="series-sidebar-label">系列目录</p>
     <h2 class="series-sidebar-title"><a href="{{ $series.Hub.RelPermalink }}">{{ $series.Title }}</a></h2>
     <p class="series-sidebar-count">序言 + {{ len $series.Chapters }} 篇</p>
+    {{ range where (partialCached "series/catalog.html" site) "Key" (index $series.Hub.Params.series 0) }}<a class="series-sidebar-overview" href="{{ .Page.RelPermalink }}">查看系列总览 <span aria-hidden="true">↗</span></a>{{ end }}
     <details class="series-sidebar-menu">
       <summary>章节目录 <span class="muted">· {{ with $article.Params.series_number }}当前第 {{ printf "%02d" (int .) }} 篇{{ else }}当前序言{{ end }}</span></summary>
       <nav class="series-sidebar-nav" aria-label="系列章节目录" tabindex="0">

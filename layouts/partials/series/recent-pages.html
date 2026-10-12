@@ -1,0 +1,7 @@
+{{- $entries := slice -}}
+{{- range partial "series/list-pages.html" . -}}
+  {{- $entries = $entries | append (dict "Page" . "Updated" (partial "series/updated.html" .)) -}}
+{{- end -}}
+{{- $pages := slice -}}
+{{- range sort $entries "Updated" "desc" -}}{{- $pages = $pages | append .Page -}}{{- end -}}
+{{- return $pages -}}

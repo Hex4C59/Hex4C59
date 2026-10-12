@@ -1,0 +1,65 @@
+{{- $catalog := slice -}}
+{{- range site.Taxonomies.series -}}
+  {{- $term := .Page -}}
+  {{- $members := where .Pages "Params.series_index" "ne" true -}}
+  {{- if gt (len $members) 0 -}}
+    {{- $reader := false -}}
+    {{- range where .Pages "Params.series_index" true -}}
+      {{- $reader = partial "series/data.html" . -}}
+    {{- end -}}
+    {{- $ordered := $members.ByLastmod.Reverse -}}
+    {{- if $reader -}}
+      {{- $ordered = $reader.Pages -}}
+    {{- else if eq (len (where $members "Params.series_order" "ne" nil)) (len $members) -}}
+      {{- $ordered = sort $members "Params.series_order" -}}
+    {{- end -}}
+    {{- $start := index $ordered 0 -}}
+    {{- with $term.Params.series_start -}}
+      {{- with site.GetPage . -}}
+        {{- if in $members . -}}{{- $start = . -}}{{- end -}}
+      {{- end -}}
+    {{- end -}}
+    {{- $updated := (index $members 0).Date -}}
+    {{- range .Pages -}}
+      {{- $pageUpdated := partial "series/updated.html" . -}}
+      {{- if $pageUpdated.After $updated -}}{{- $updated = $pageUpdated -}}{{- end -}}
+    {{- end -}}
+    {{- $minutes := 0 -}}
+    {{- $sections := slice -}}
+    {{- range $members -}}
+      {{- $minutes = add $minutes .ReadingTime -}}
+      {{- $sections = $sections | append .Section -}}
+    {{- end -}}
+    {{- $groups := slice -}}
+    {{- if $reader -}}
+      {{- $groups = $reader.Groups -}}
+    {{- else -}}
+      {{- $grouped := slice -}}
+      {{- range $term.Params.series_groups -}}
+        {{- $pages := where $ordered (printf "Params.%s" .param) .value -}}
+        {{- if gt (len $pages) 0 -}}
+          {{- $groups = $groups | append (dict "Title" .title "Pages" $pages) -}}
+          {{- range $pages -}}{{- $grouped = $grouped | append . -}}{{- end -}}
+        {{- end -}}
+      {{- end -}}
+      {{- $remaining := $ordered | complement $grouped -}}
+      {{- if gt (len $remaining) 0 -}}
+        {{- $title := "全部文章" -}}
+        {{- if gt (len $groups) 0 -}}{{- $title = "其他文章" -}}{{- end -}}
+        {{- $groups = $groups | append (dict "Title" $title "Pages" $remaining) -}}
+      {{- end -}}
+    {{- end -}}
+    {{- $kind := "专题合集" -}}
+    {{- if $reader -}}{{- $kind = "章节系列" -}}{{- end -}}
+    {{- $status := $term.Params.series_status | default "" -}}
+    {{- if not $status -}}{{- with $reader -}}{{- $status = .Hub.Params.series_status | default "" -}}{{- end -}}{{- end -}}
+    {{- $countLabel := printf "%d 篇" (len $members) -}}
+    {{- with $reader -}}{{- $countLabel = printf "序言 + %d 篇" (len .Chapters) -}}{{- end -}}
+    {{- $description := $term.Description -}}
+    {{- if not $description -}}
+      {{- with $reader -}}{{- $description = .Hub.Description -}}{{- end -}}
+    {{- end -}}
+    {{- $catalog = $catalog | append (dict "Key" $term.Data.Term "Page" $term "Title" $term.Title "Description" $description "Pages" $ordered "Start" $start "Updated" $updated "Minutes" $minutes "Sections" (uniq $sections) "Groups" $groups "Reader" $reader "Kind" $kind "Status" $status "CountLabel" $countLabel) -}}
+  {{- end -}}
+{{- end -}}
+{{- return (sort $catalog "Updated" "desc") -}}

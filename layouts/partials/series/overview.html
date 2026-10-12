@@ -1,0 +1,40 @@
+{{ partial "breadcrumbs.html" . }}
+<h1>{{ .Title }}</h1>
+{{ with .Description }}<p class="page-description">{{ . }}</p>{{ end }}
+{{ $catalog := partialCached "series/catalog.html" site }}
+{{ if eq .Kind "taxonomy" }}
+  {{ with $catalog }}
+    <p class="series-directory-count muted">{{ len . }} 个系列 · 按最近更新排列</p>
+    <div class="series-directory">{{ range . }}{{ partial "series/entry.html" (dict "Series" . "Heading" "h2") }}{{ end }}</div>
+  {{ else }}
+    <p class="empty-state">系列文章正在整理中。</p>
+  {{ end }}
+{{ else }}
+  {{ $page := . }}
+  {{ range where $catalog "Key" .Data.Term }}
+    {{ $series := . }}
+    <div class="series-overview-meta"><span>{{ .Kind }}</span><span>{{ .CountLabel }}</span><span>约 {{ .Minutes }} 分钟</span><span>更新于 <time datetime="{{ .Updated.Format "2006-01-02" }}">{{ .Updated.Format "2006-01-02" }}</time></span>{{ with .Status }}<span>{{ . }}</span>{{ end }}</div>
+    <div class="series-start">
+      <span class="series-start-label">{{ if .Reader }}从序言开始{{ else }}推荐起点{{ end }}</span>
+      <a href="{{ .Start.RelPermalink }}">{{ .Start.Params.series_label | default .Start.Title }} <span aria-hidden="true">→</span></a>
+      <p>{{ if .Reader }}可以按章节顺序阅读，也可以从下面的目录选读。{{ else }}各篇可以独立阅读；初次了解这个主题，可以先从这里开始。{{ end }}</p>
+    </div>
+    {{ with $page.Content }}<div class="single-content">{{ . }}</div>{{ end }}
+    <nav class="series-overview-toc" aria-label="系列分组"><span>目录</span>{{ range $index, $group := .Groups }}<a href="#series-group-{{ $index }}">{{ .Title }} <span>{{ len .Pages }}</span></a>{{ end }}</nav>
+    {{ range $index, $group := .Groups }}
+      <section class="series-overview-group" aria-labelledby="series-group-{{ $index }}">
+        <div class="section-heading"><h2 id="series-group-{{ $index }}">{{ .Title }}</h2><span class="muted">{{ len .Pages }} 篇</span></div>
+        {{ if $series.Reader }}
+          <ol class="series-overview-chapters">
+          {{ range .Pages }}
+            <li><a href="{{ .RelPermalink }}"><span class="chapter-number">{{ with .Params.series_number }}{{ printf "%02d" (int .) }}{{ else }}序言{{ end }}</span><span>{{ .Params.series_label | default .Title }}</span></a><p>{{ .Description }}</p></li>
+          {{ end }}
+          </ol>
+        {{ else }}
+          {{ range .Pages }}{{ partial "post-entry.html" . }}{{ end }}
+        {{ end }}
+      </section>
+    {{ end }}
+    <div class="series-overview-back"><a href="{{ "series/" | relURL }}">← 全部系列</a></div>
+  {{ end }}
+{{ end }}

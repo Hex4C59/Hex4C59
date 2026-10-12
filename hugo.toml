@@ -15,6 +15,11 @@ buildExpired = false
 [pagination]
   pageSize = 5
 
+[taxonomies]
+  category = "categories"
+  tag = "tags"
+  series = "series"
+
 [outputs]
   home = ["HTML", "RSS", "JSON"]
 
@@ -28,6 +33,7 @@ buildExpired = false
   homeIntroTitle = "好的想法需要地方降落，否则它们只会飘走!"
   homeIntroContent = "欢迎来到我的博客。在这里分享技术学习、AI Agent 实践，以及生活中的思考。"
   paginationSize = 5
+  featuredSeries = ["agent-engineering", "智能体工程模式", "DeepSeek Harness"]
   listDateFormat = "2006-01-02"
   singleDateFormat = "2006-01-02"
   listSummaries = true
@@ -46,6 +52,11 @@ buildExpired = false
     url = "/agent/"
     section = "agent"
     description = "概念、系统设计与实战教程"
+  [[params.menu]]
+    name = "系列"
+    url = "/series/"
+    section = "series"
+    description = "按主题整理的系列文章与阅读路线"
   [[params.menu]]
     name = "随笔"
     url = "/posts/"
