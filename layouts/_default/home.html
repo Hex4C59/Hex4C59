@@ -18,7 +18,7 @@
 <section class="home-series" aria-labelledby="featured-series-title">
   <div class="section-heading"><h2 id="featured-series-title">重点系列</h2><a href="{{ "series/" | relURL }}">全部系列 <span aria-hidden="true">↗</span></a></div>
   <p class="section-description">沿着一个主题读下去，从概念到实践。</p>
-  <div class="series-shelf">{{ range . }}{{ partial "series/entry.html" (dict "Series" .) }}{{ end }}</div>
+  <div class="series-directory">{{ range . }}{{ partial "series/entry.html" (dict "Series" .) }}{{ end }}</div>
 </section>
 {{ end }}
 {{ end }}

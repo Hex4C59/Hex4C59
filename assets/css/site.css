@@ -240,7 +240,6 @@ footer { display: block; max-height: none; padding-top: 3rem; padding-bottom: 2r
 .home-page .intro { margin-bottom: 2.25rem; }
 .home-series { margin-bottom: 3rem; }
 .section-description { margin: -.25rem 0 1.3rem; color: var(--content-secondary); font-size: .8rem; line-height: 1.8; }
-.series-shelf { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 2rem; }
 .series-feature { min-width: 0; border-top: 1px solid var(--code-border); padding: 1.3rem 0; }
 .series-feature-heading, .series-feature-body { min-width: 0; }
 .series-feature-kind { display: flex; flex-wrap: wrap; gap: .35rem .5rem; margin: 0 0 .5rem; color: var(--content-secondary); font-size: .7rem; line-height: 1.7; }
@@ -255,9 +254,6 @@ footer { display: block; max-height: none; padding-top: 3rem; padding-bottom: 2r
 .series-feature-links a { min-height: 32px; display: inline-flex; align-items: center; gap: .4rem; text-decoration: none; }
 .series-feature-links a:last-child { color: var(--content-secondary); }
 .series-feature-links a:hover { text-decoration: underline; text-underline-offset: 4px; }
-.series-shelf .series-feature:first-child { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 1.5rem; padding: 1.5rem 0; }
-.series-shelf .series-feature:first-child .series-feature-title { font-size: 1.65rem; }
-.series-shelf .series-feature:first-child .series-feature-description { margin-top: 0; }
 .series-directory-count { font-size: .75rem; margin-bottom: 1.25rem; }
 .series-directory .series-feature { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 2rem; padding: 1.6rem 0; }
 .series-directory .series-feature-description { margin-top: 0; }
@@ -290,10 +286,8 @@ footer { display: block; max-height: none; padding-top: 3rem; padding-bottom: 2r
 .series-sidebar-overview:hover { text-decoration: underline; text-underline-offset: 4px; }
 @media (max-width: 640px) {
   .home-page { --header-top-gap: 2rem; --header-bottom-gap: 2rem; }
-  .series-shelf { grid-template-columns: minmax(0, 1fr); }
-  .series-shelf .series-feature:first-child, .series-directory .series-feature { display: block; }
-  .series-shelf .series-feature:first-child .series-feature-title { font-size: 1.4rem; }
-  .series-shelf .series-feature:first-child .series-feature-description, .series-directory .series-feature-description { margin-top: .8rem; }
+  .series-directory .series-feature { display: block; }
+  .series-directory .series-feature-description { margin-top: .8rem; }
   .home-series { margin-bottom: 2rem; }
   .series-feature-links a { min-height: 44px; }
   .series-overview-toc { gap: .75rem 1rem; }
