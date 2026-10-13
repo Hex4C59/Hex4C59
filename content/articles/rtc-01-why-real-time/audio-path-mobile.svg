@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="480" viewBox="0 0 360 480" role="img" aria-labelledby="title desc">
+  <title id="title">声音从电脑到手机的路径</title>
+  <desc id="desc">声音从电脑麦克风采集后，经过编码、等待发送和网络传输，到手机接收缓冲、解码，最后由扬声器播放。发送前声音还在电脑，接收缓冲中的数据已经到达手机。箭头仅表示处理顺序，不表示耗时长短。</desc>
+  <style>
+    text { font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; fill: #373733; }
+    .group { font-size: 20px; font-weight: 600; }
+    .step { font-size: 18px; }
+    .note { font-size: 14px; fill: #656560; }
+    .wait { fill: #8f455d; }
+    .rule { stroke: #d7d7d0; stroke-width: 1; }
+    .route { fill: none; stroke: #71716b; stroke-width: 1.5; marker-end: url(#arrow); }
+    .point { fill: #373733; }
+    .wait-point { fill: #8f455d; }
+    .leader { fill: none; stroke: #8f455d; stroke-width: 1; }
+  </style>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="#71716b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect width="360" height="480" fill="#fff"/>
+  <text class="group" x="20" y="48">电脑</text>
+  <text class="note" x="20" y="71">发送端</text>
+  <text class="group" x="20" y="236">网络</text>
+  <text class="group" x="20" y="316">手机</text>
+  <text class="note" x="20" y="339">接收端</text>
+  <path class="rule" d="M20 196H112 M20 272H112"/>
+
+  <path class="route" d="M140 55V88"/>
+  <path class="route" d="M140 107V140"/>
+  <path class="route" d="M140 163V220"/>
+  <path class="route" d="M140 239V300"/>
+  <path class="route" d="M140 319V362"/>
+  <path class="route" d="M140 381V424"/>
+  <g class="point">
+    <circle cx="140" cy="48" r="3"/>
+    <circle cx="140" cy="100" r="3"/>
+    <circle cx="140" cy="232" r="3"/>
+    <circle cx="140" cy="374" r="3"/>
+    <circle cx="140" cy="436" r="3"/>
+  </g>
+  <g class="wait-point">
+    <circle cx="140" cy="152" r="5"/>
+    <circle cx="140" cy="312" r="5"/>
+  </g>
+  <g class="step">
+    <text x="166" y="54">麦克风采集</text>
+    <text x="166" y="106">编码</text>
+    <text class="wait" x="166" y="158">等待发送</text>
+    <text x="166" y="238">传输</text>
+    <text class="wait" x="166" y="318">接收缓冲</text>
+    <text x="166" y="380">解码</text>
+    <text x="166" y="442">扬声器播放</text>
+  </g>
+  <g class="note wait">
+    <text class="wait" x="166" y="180">声音还在电脑里</text>
+    <text class="wait" x="166" y="340">数据已经到达手机</text>
+  </g>
+</svg>
