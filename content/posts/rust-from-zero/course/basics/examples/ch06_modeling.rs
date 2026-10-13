@@ -54,4 +54,10 @@ fn main() {
     describe(&Command::Add(String::from("写练习")));
     describe(&Command::Done(1));
     describe(&Command::List);
+
+    let empty: Vec<Task> = Vec::new();
+    match first_task(&empty) {
+        Some(task) => println!("空列表第一项：{}", task.label()),
+        None => println!("空列表：还没有任务"),
+    }
 }
