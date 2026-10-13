@@ -1,6 +1,6 @@
 # Rust 从零开始：配套源码
 
-这份源码配合《Rust 从零开始》中文教材使用。先安装 Rust 工具链，再在终端进入本文件所在的 `rust-course` 目录。所有运行示例都只依赖 Rust 标准库。
+这份源码配合《Rust 从零开始》中文教材使用。先安装 Rust 工具链，再在终端进入本文件所在的 `rust-course` 目录。第 1～14 章的业务示例只使用标准库和本地库，第 15 章使用 Serde 与 serde_json。基础工作区和 `practice` 练习工作区分别运行。
 
 项目采用 2024 edition，声明最低 Rust 版本为 1.85。本次于 2026-10-12 在 macOS arm64、rustc 1.99.0、cargo 1.99.0 上验证；没有实际验证最低版本或其他操作系统。
 
@@ -34,6 +34,9 @@ cargo run -p rust-basics --example ch01_hello
 | 10 闭包与迭代器 | `ch10_iterators`、`answer10` |
 | 11 项目核心逻辑 | `taskbook/src/lib.rs`、`taskbook/examples/memory.rs` |
 | 12 文件与命令行 | `taskbook/src/storage.rs`、`taskbook/src/main.rs`、`taskbook/tests/cli.rs` |
+| 13 筛选、搜索与删除 | `practice/taskbook-plus/`、`selection` 示例 |
+| 14 自定义错误 | `practice/error-lab/`、`inspect` 示例 |
+| 15 Serde 与 JSON | `practice/taskbook-json/`、`serde_basics`、`answer15` 示例 |
 
 运行基础示例和答案时，替换命令末尾的名称：
 
@@ -46,6 +49,37 @@ cargo run -p rust-basics --example ch07_errors
 第 7～12 章展开后的辅助程序在文章中给出，可按标注单独复制运行。其中 `examples/parse.rs` 和 `examples/format.rs` 需要在自己的跟写项目中新建；下载包保留教材主示例和完整项目入口。
 
 第 7 章示例需要你输入一行并回车。`30` 是有效输入；`abc`、`0`、`-1` 是失败条件。第 1 章答案、第 8 章新增测试、第 11 章新增统计函数和第 12 章损坏文件练习在教材正文中给出。
+
+## 第 13～15 章练习工作区
+
+从本文件所在的 `rust-course` 目录进入 `practice`：
+
+```sh
+cd practice
+cargo fetch --locked
+cargo run -p taskbook-plus --example selection
+cargo run -p error-lab --example inspect
+cargo run -p taskbook-json --example serde_basics
+cargo run -p taskbook-json --example answer15
+```
+
+本轮固定 Serde 1.0.229 和 serde_json 1.0.154；`practice/Cargo.lock` 记录具体依赖选择。首次获取需要网络，完成后可以使用 `--offline`。这不是对最低工具链或其他系统的实测证明。
+
+`taskbook-plus` 沿用 TSV 文件与 `TASKBOOK_FILE`；JSON 工具使用 `TASKBOOK_JSON_FILE`，默认文件为 `tasks.json`。筛选、搜索和列出不保存文件。删除最高编号后，新增可能复用该编号。
+
+迁移使用 `cargo run -p taskbook-json -- migrate <TSV源文件> <JSON新文件>`，尖括号部分需换成实际路径。源文件只读，目标已存在时拒绝写入；缺失或损坏源文件不创建目标。新目标写入中断可能留下不完整文件，未实现事务、恢复或并发写入协调。
+
+在 `practice` 目录复查：
+
+```sh
+cargo fmt --all -- --check
+cargo clippy --workspace --all-targets --offline -- -D warnings
+cargo test --workspace --offline
+cargo test --workspace --all-targets --offline
+cargo build --workspace --release --offline
+```
+
+第十三章的批量清除和第十四章的分钟数上限练习在正文给出，不预先修改主版本。第十五章的默认字段练习保存为 `answer15`。
 
 ## 故意失败的例子
 
@@ -114,6 +148,8 @@ cargo build -p taskbook --release --offline
 2026-10-12 逐个运行了 19 个正常示例与独立答案，确认 7 个编译失败案例按预期失败，并直接从教材正文重建了第 11～12 章项目，检查读者跟写时的构建、测试和保存结果。文章中的安装步骤未在全新机器上重新执行。
 
 2026-10-13 展开了第 1～3 节，并同步调整 `ch03_flow` 与 `answer03`，使第三节只使用数字、布尔值与固定长度数组。直接从三节正文提取并运行了 32 个完整程序，确认 2 个故意编译失败的例子符合预期，检查了 3 组修改输入，并在新建 Cargo 项目中运行首个程序。
+
+2026-10-13 新增第 13～15 章，在 macOS arm64、rustc 1.99.0、cargo 1.99.0 上运行了练习工作区的 20 项测试和基础工作区的 15 项测试，并通过格式检查、Clippy 与练习工作区 release 构建。另按正文重建三个项目，核对 4 个示例的输出、命令行演示、2 个预期编译错误和 2 道修改练习。基础工作区还在空 Cargo 缓存下离线运行；最低 Rust 1.85 和其他系统仍未实测。
 
 ## 继续练习
 

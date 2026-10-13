@@ -1,0 +1,3 @@
+[workspace]
+members = ["taskbook-plus", "error-lab", "taskbook-json"]
+resolver = "3"

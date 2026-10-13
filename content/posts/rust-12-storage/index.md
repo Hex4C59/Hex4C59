@@ -467,4 +467,4 @@ cat practice-corrupt.tsv
 
 ---
 
-[教材目录与源码下载](/posts/rust-from-zero/) · [上一章：实战：任务与命令](/posts/rust-11-taskbook/)
+[教材目录与源码下载](/posts/rust-from-zero/) · [上一章：实战：任务与命令](/posts/rust-11-taskbook/) · [下一章：筛选、搜索与删除](/posts/rust-13-taskbook-plus/)

@@ -1,11 +1,11 @@
 +++
 title = "Rust 从零开始：教材目录与配套源码"
 date = 2026-10-12T09:00:00+08:00
-lastmod = 2026-10-12T09:00:00+08:00
+lastmod = 2026-10-13T09:00:00+08:00
 draft = false
 author = "Hex4C59"
-description = "面向第一次学习 Rust 的中文教材。12 章讲解、完整代码、练习和参考答案，最后实现一个能够保存数据的命令行待办工具。"
-summary = "从安装和基础语法开始，学习所有权、集合、错误处理、测试、泛型和迭代器，再完成文件存储项目。"
+description = "面向第一次学习 Rust 的中文教材。15 章讲解、完整代码、练习和参考答案，从基础语法到待办工具，再学习功能扩展、自定义错误与 JSON 数据迁移。"
+summary = "从安装和基础语法开始，学习所有权、集合、错误处理、测试、泛型和迭代器，再完成文件存储、功能扩展和 JSON 迁移项目。"
 tags = ["Rust", "编程入门", "教程"]
 categories = ["Programming"]
 series = ["rust-from-zero"]
@@ -13,8 +13,8 @@ series_order = 0
 layout = "series"
 series_index = true
 series_title = "Rust 从零开始"
-series_status = "12 章教材与配套项目已完成"
-series_intro = "从第一个能运行的程序开始，通过练习学会使用 Rust，最后做出能保存数据的命令行工具。"
+series_status = "15 章教材与配套项目已完成"
+series_intro = "从第一个能运行的程序开始，通过练习学会使用 Rust，做出能保存数据的命令行工具，再学习依赖管理和数据迁移。"
 ShowToc = true
 +++
 
@@ -35,6 +35,9 @@ ShowToc = true
 - [Rust 入门 10：闭包和迭代器](/posts/rust-10-iterators/)
 - [Rust 入门 11：实现待办工具的核心逻辑](/posts/rust-11-taskbook/)
 - [Rust 入门 12：保存数据，完成命令行工具](/posts/rust-12-storage/)
+- [Rust 入门 13：给待办工具增加筛选、搜索和删除](/posts/rust-13-taskbook-plus/)
+- [Rust 入门 14：用自定义错误类型保留失败原因](/posts/rust-14-typed-errors/)
+- [Rust 入门 15：用 Serde 保存 JSON，并迁移旧任务](/posts/rust-15-serde-json/)
 
 ## 源码与运行方式
 
@@ -47,4 +50,12 @@ cargo run -p taskbook -- list
 cargo test --workspace
 ```
 
-示例只使用标准库；更多命令、目录说明和验证范围见下载包中的 `README.md`。
+第 1～12 章使用基础工作区；第 13～15 章在 `practice` 工作区运行，第十五章使用 Serde 和 serde_json。更多命令、目录说明和验证范围见下载包中的 `README.md`。
+
+```sh
+cd practice
+cargo fetch --locked
+cargo run -p taskbook-plus -- pending
+cargo run -p error-lab -- 30
+cargo run -p taskbook-json --example serde_basics
+```
