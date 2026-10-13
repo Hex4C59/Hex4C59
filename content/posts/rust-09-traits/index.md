@@ -4,8 +4,8 @@ date = 2026-10-12T09:00:00+08:00
 lastmod = 2026-10-13T09:00:00+08:00
 draft = false
 author = "Hex4C59"
-description = "通过 Pair、笔记摘要和字符串比较，学习类型参数、trait 约束和引用之间的生命周期关系。"
-summary = "通过 Pair、笔记摘要和字符串比较，学习类型参数、trait 约束和引用之间的生命周期关系。"
+description = "学习泛型、trait 和生命周期，解释类型参数关系、impl Trait、Sized、常量泛型及引用约束。"
+summary = "学习泛型、trait 和生命周期，解释类型参数关系、impl Trait、Sized、常量泛型及引用约束。"
 tags = ["Rust", "编程入门", "教程"]
 categories = ["Programming"]
 series = ["rust-from-zero"]
@@ -392,6 +392,180 @@ fn main() {
 
 若改成在函数里创建 `String`，再返回对它的引用，增加 `'a` 或 `'static` 都不能解决“局部值将在返回时销毁”的问题。应该返回拥有的数据，或让调用方提供仍然存活的数据供你借用。
 
+## 语法细读：泛型参数、impl Trait 与约束 {#syntax-depth}
+
+
+本章语法细读里的每个 Rust 程序可以分别替换自己项目的 `src/main.rs`：正常例子运行 `cargo run`，故意失败的例子运行 `cargo check`。下载包另保存为独立文件，直接编译的方法见下载包里的 `syntax/README.md`。各个程序相互独立。
+
+泛型签名既声明参数，也声明它们之间的关系。两个参数各自能打印，不代表它们一定是同一个类型；两个引用都有效，也不代表返回引用必须和两者绑定在一起。
+
+### 同一个 T 必须在一次调用中保持同一种类型
+
+完整程序，下载包中为 `syntax/syntax09-type-parameters.rs`：
+
+```rust
+use std::fmt::Display;
+fn same<T: Display>(left: T, right: T) {
+    println!("同一个 T：{left} / {right}");
+}
+fn separate(left: impl Display, right: impl Display) {
+    println!("独立类型：{left} / {right}");
+}
+fn with_where<T, U>(left: T, right: U)
+where
+    T: Display,
+    U: Display,
+{
+    println!("where 写法：{left} / {right}");
+}
+fn main() {
+    same(1, 2);
+    separate(1, "two");
+    with_where(1, "two");
+}
+```
+
+预期输出：
+
+```text
+同一个 T：1 / 2
+独立类型：1 / two
+where 写法：1 / two
+```
+
+`same` 的两个位置重复使用同一个 `T`，因此本次调用必须选择同一种类型。参数位置的两个 `impl Display` 各自引入独立的类型选择，更接近 `with_where<T, U>`，不是缩写为重复使用一个 `T`。
+
+`T: Display` 与 `where T: Display` 把约束放在不同位置。多种约束用 `+` 组合；`where` 便于书写较长或涉及复杂类型的约束，但它本身不会新增运行时检查。
+
+以下完整程序故意无法编译，下载包中为 `compile-fail/syntax09-same-type.rs`：
+
+```rust
+use std::fmt::Display;
+fn same<T: Display>(left: T, right: T) {
+    println!("{left} / {right}");
+}
+fn main() {
+    same(1, "two");
+}
+```
+
+预期诊断包含 `E0308`。
+
+两个实参分别可以打印，仍不满足“同一个 `T`”这个关系。若需求允许不同类型，应改签名；若需求本来就要求同一类型，就要改传入的值。
+
+### 返回位置的 impl Trait 仍代表一种具体类型
+
+以下完整程序故意无法编译，下载包中为 `compile-fail/syntax09-return-impl.rs`：
+
+```rust
+use std::fmt::Display;
+fn choose(first: bool) -> impl Display {
+    if first { 1 } else { "two" }
+}
+fn main() {
+    println!("{}", choose(true));
+}
+```
+
+预期诊断包含 `E0308`。
+
+返回位置的 `impl Display` 允许函数隐藏一种具体返回类型，调用方只依赖承诺的能力。它不表示每次运行可以在任意实现 `Display` 的类型之间切换，所以两个分支仍不能分别返回整数和文本。可以让两边都返回 `String`；需要多种变体时，先考虑本教程已经学过的枚举。
+
+### 生命周期名字写进签名，就建立了检查关系
+
+完整程序，下载包中为 `syntax/syntax09-independent-lifetimes.rs`：
+
+```rust
+fn left<'a, 'b>(first: &'a str, _second: &'b str) -> &'a str {
+    first
+}
+fn main() {
+    let outer = String::from("外层");
+    let result;
+    {
+        let inner = String::from("内层");
+        result = left(&outer, &inner);
+    }
+    println!("{result}");
+}
+```
+
+预期输出：
+
+```text
+外层
+```
+
+签名分别用 `'a`、`'b` 表示两个输入引用的有效范围，返回引用只和第一个输入建立关系。第二个输入对应的局部字符串销毁后，返回值仍可使用，因为它借用外层字符串。
+
+以下完整程序故意无法编译，下载包中为 `compile-fail/syntax09-shared-lifetime.rs`：
+
+```rust
+fn left<'a>(first: &'a str, _second: &'a str) -> &'a str {
+    first
+}
+fn main() {
+    let outer = String::from("外层");
+    let result;
+    {
+        let inner = String::from("内层");
+        result = left(&outer, &inner);
+    }
+    println!("{result}");
+}
+```
+
+预期诊断包含 `E0597`。
+
+函数体仍返回第一个输入，但签名把两个输入与返回引用都约束在同一个 `'a` 上。调用方要按这个签名检查，不能因为恰好看到函数体返回 `first` 就自行删掉约束；内层输入的可用范围在这里限制了结果的使用。
+
+同名的 `'a` 不要求两个原始字符串同时创建或同时销毁。它表达这一组引用需要共享一个足以满足使用要求的有效范围。标注既不分配内存，也不延长字符串寿命，过强的关系反而会拒绝原本可以安全实现的用法。
+
+### T 与 const N 分别表示类型和常量值
+
+完整程序，下载包中为 `syntax/syntax09-sized.rs`：
+
+```rust
+use std::fmt::Display;
+fn show<T: Display + ?Sized>(value: &T) {
+    println!("{value}");
+}
+fn length<const N: usize>(_values: &[u32; N]) -> usize {
+    N
+}
+fn main() {
+    show::<str>("Rust");
+    println!("{} / {}", length(&[1, 2]), length(&[1, 2, 3]));
+}
+```
+
+预期输出：
+
+```text
+Rust
+2 / 3
+```
+
+普通类型参数默认要求 `Sized`，即类型的大小能在编译时确定。`str` 的大小不能仅由类型名确定，`&str` 这个引用值本身则有确定大小。`T: Display + ?Sized` 放宽 `T` 的默认大小要求，因此可以让 `T` 直接取 `str`，同时通过 `&T` 访问它。
+
+以下完整程序故意无法编译，下载包中为 `compile-fail/syntax09-implicit-sized.rs`：
+
+```rust
+use std::fmt::Display;
+fn show<T: Display>(value: &T) {
+    println!("{value}");
+}
+fn main() {
+    show::<str>("Rust");
+}
+```
+
+预期诊断包含 `E0277`。
+
+参数写着 `&T`，也不会自动删除 `T` 默认的 `Sized` 约束。这里的 `?Sized` 不是第七章的错误传播运算符，而是 trait 约束位置的专门语法。
+
+`const N: usize` 声明常量泛型参数；`N` 在 `[u32; N]` 的类型里表示数组长度。长度为 2 和 3 的数组是不同类型，但分别可以用于实例化同一个泛型函数。`N` 也不是从普通运行时参数中临时读到的任意整数。
+
 ## 练习：让书签提供标题
 
 定义 `Label` trait，方法为 `label(&self) -> &str`。定义带 `String` 标题的 `Bookmark`，实现 `Label`，再写一个接受 `&impl Label` 的打印函数。这里不需要显式生命周期标注。
@@ -438,6 +612,10 @@ fn main() {
 比较两个函数：一个在调用时借用标题，一个返回新的字符串。尝试在书签离开作用域后使用返回值，观察哪种写法能通过检查，并解释原因。这道练习不需要增加生命周期标注。
 
 ## 官方延伸阅读
+
+- [Rust Reference：泛型参数](https://doc.rust-lang.org/reference/items/generics.html)
+- [Rust Reference：impl Trait](https://doc.rust-lang.org/reference/types/impl-trait.html)
+- [Rust Reference：trait 与生命周期约束](https://doc.rust-lang.org/reference/trait-bounds.html)
 
 - [泛型数据类型](https://doc.rust-lang.org/book/ch10-01-syntax.html)
 - [trait 与约束](https://doc.rust-lang.org/book/ch10-02-traits.html)

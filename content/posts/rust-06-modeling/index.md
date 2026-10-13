@@ -4,8 +4,8 @@ date = 2026-10-12T09:00:00+08:00
 lastmod = 2026-10-13T09:00:00+08:00
 draft = false
 author = "Hex4C59"
-description = "为任务定义数据和方法，用枚举表示命令，用 Option 和 match 处理可能缺失的值。"
-summary = "为任务定义数据和方法，用枚举表示命令，用 Option 和 match 处理可能缺失的值。"
+description = "学习结构体、枚举和 Option，解释模式绑定、引用匹配、守卫、通配符与 let ... else。"
+summary = "学习结构体、枚举和 Option，解释模式绑定、引用匹配、守卫、通配符与 let ... else。"
 tags = ["Rust", "编程入门", "教程"]
 categories = ["Programming"]
 series = ["rust-from-zero"]
@@ -525,6 +525,222 @@ fn main() {
 
 你可能在别的代码里见到 `unwrap()`。它在 `Some` 时取出值，在 `None` 时会 panic。列表为空和索引不存在都是本章需要正常处理的输入，使用 `match` 或 `if let` 更符合这些例子的需求。
 
+## 语法细读：模式是在绑定名字，还是检查条件 {#syntax-depth}
+
+
+本章语法细读里的每个 Rust 程序可以分别替换自己项目的 `src/main.rs`：正常例子运行 `cargo run`，故意失败的例子运行 `cargo check`。下载包另保存为独立文件，直接编译的方法见下载包里的 `syntax/README.md`。各个程序相互独立。
+
+模式（pattern）描述一个值应该怎样被拆开，并决定名字怎样绑定。它出现在 `let`、函数参数、`match`、`if let` 和 `let ... else` 等位置，不能一律当成普通表达式阅读。
+
+### 模式里的新名字，不会自动比较外层同名变量
+
+完整程序，下载包中为 `syntax/syntax06-pattern-binding.rs`：
+
+```rust
+fn main() {
+    let wanted = 5;
+    let item = Some(7);
+    if let Some(wanted) = item {
+        println!("新绑定：{wanted}");
+    }
+    println!("外层：{wanted}");
+    match item {
+        Some(number) if number == wanted => println!("相等"),
+        Some(number) => println!("不同：{number}"),
+        None => println!("没有值"),
+    }
+}
+```
+
+预期输出：
+
+```text
+新绑定：7
+外层：5
+不同：7
+```
+
+`Some(wanted)` 匹配 `Some` 形状，并建立一个新的局部名字 `wanted`；它没有要求内部值等于外层的 5。新绑定在 `if let` 的分支中遮蔽外层名字，出了分支仍看到原来的 5。
+
+需要比较外层变量时，先把值绑定到新名字，再用 `if number == wanted` 这个匹配守卫检查。守卫是布尔表达式，不是模式的一部分。带守卫的分支不能单凭守卫就证明覆盖了所有输入，因此后面仍要处理其他 `Some` 和 `None`。
+
+整数文字 `Some(5)` 可以在模式中匹配具体数值；小写普通变量名通常会建立绑定。路径指向常量或枚举变体时又有自己的规则，不要凭名字看起来相似就判断语义。
+
+### let 要求必然匹配，if let 允许不匹配
+
+以下完整程序故意无法编译，下载包中为 `compile-fail/syntax06-let-refutable.rs`：
+
+```rust
+fn main() {
+    let item = Some(7);
+    let Some(number) = item;
+    println!("{number}");
+}
+```
+
+预期诊断包含 `E0005`。
+
+虽然这个例子的初始化写着 `Some(7)`，变量的类型仍是 `Option<i32>`，也允许 `None`。普通 `let` 的模式需要对该类型的每种值都能匹配，这种模式叫不可反驳模式（irrefutable pattern）。`Some(number)` 没覆盖 `None`，属于可反驳模式。
+
+元组解构 `let (left, right) = (1, 2);` 可以覆盖这个二元组类型；只匹配某种枚举变体则需要 `if let`、`match` 或下面的 `let ... else`。
+
+### 匹配拥有的值与匹配引用，会改变绑定的类型
+
+完整程序，下载包中为 `syntax/syntax06-borrow-pattern.rs`：
+
+```rust
+fn main() {
+    let mut item = Some(String::from("Rust"));
+    match &mut item {
+        Some(text) => text.push('!'),
+        None => {}
+    }
+    if let Some(text) = &item {
+        let _: &String = text;
+        println!("借用：{text}");
+    }
+    let owned = match item {
+        Some(text) => text,
+        None => String::new(),
+    };
+    println!("取得所有权：{owned}");
+}
+```
+
+预期输出：
+
+```text
+借用：Rust!
+取得所有权：Rust!
+```
+
+第一次匹配的是 `&mut Option<String>`，因此 `Some(text)` 中的 `text` 是可变引用 `&mut String`。第二次匹配 `&Option<String>`，`text` 是共享引用 `&String`。最后直接匹配拥有的 `item`，才把其中的 `String` 移到 `owned`。
+
+模式检查会在这些引用输入上自动调整绑定方式，这组规则常称为 match ergonomics，也就是匹配引用时自动调整绑定方式。不是 `Some(text)` 永远意味着借用：要同时看被匹配表达式的类型。
+
+完整程序，下载包中为 `syntax/syntax06-ref-and-reference.rs`：
+
+```rust
+fn main() {
+    let item = Some(String::from("Rust"));
+    if let Some(ref text) = item {
+        let _: &String = text;
+        println!("ref 绑定：{text}");
+    }
+    let &number = &42_i32;
+    println!("去掉引用这一层：{number}");
+    println!("原值：{item:?}");
+}
+```
+
+预期输出：
+
+```text
+ref 绑定：Rust
+去掉引用这一层：42
+原值：Some("Rust")
+```
+
+`ref text` 表示把这一部分绑定为引用；模式里的 `&number` 则匹配一个引用形状，并拆掉引用这一层。这里所指的 `i32` 可以复制，所以 `number` 得到整数。表达式位置的 `&number` 又是创建借用：同一个符号必须连同所在位置一起阅读。
+
+本教材采用 Rust 2024 edition。当输入引用已经使默认绑定方式变成按引用绑定时，不应再重复写 `ref`：
+
+以下完整程序故意无法编译，下载包中为 `compile-fail/syntax06-ref-2024.rs`：
+
+```rust
+fn main() {
+    let item = Some(String::from("Rust"));
+    if let Some(ref text) = &item {
+        println!("{text}");
+    }
+}
+```
+
+预期诊断包含 `cannot explicitly borrow within an implicitly-borrowing pattern`。
+
+这份例子改成 `Some(text)` 就能编译。这里引用诊断文字，是因为这类模式限制的诊断没有单独的 `E` 编号；具体措辞仍可能随编译器变化。
+
+### _ 不绑定，_text 仍是一个名字
+
+完整程序，下载包中为 `syntax/syntax06-wildcard.rs`：
+
+```rust
+fn main() {
+    let item = Some(String::from("Rust"));
+    if let Some(_) = item {
+        println!("存在");
+    }
+    println!("{item:?}");
+}
+```
+
+预期输出：
+
+```text
+存在
+Some("Rust")
+```
+以下完整程序故意无法编译，下载包中为 `compile-fail/syntax06-underscore-name.rs`：
+
+```rust
+fn main() {
+    let item = Some(String::from("Rust"));
+    if let Some(_text) = item {
+        println!("存在");
+    }
+    println!("{item:?}");
+}
+```
+
+预期诊断包含 `E0382`。
+
+`_` 忽略这个位置，不建立名字，也不会仅因这里的匹配把内部字符串移动出去。`_text` 仍然绑定了一个 `String`，只是名字以下划线开头通常抑制未使用变量的警告；它照样参与所有权检查，所以之后再借用整个 `item` 会失败。
+
+### let ... else 把成功路径留在后面
+
+完整程序，下载包中为 `syntax/syntax06-let-else.rs`：
+
+```rust
+fn print_number(item: Option<i32>) {
+    let Some(number) = item else {
+        println!("没有值");
+        return;
+    };
+    println!("数字：{number}");
+}
+fn main() {
+    print_number(Some(7));
+    print_number(None);
+}
+```
+
+预期输出：
+
+```text
+数字：7
+没有值
+```
+
+匹配成功后，`number` 在后续作用域可用。匹配失败时，`else` 必须结束当前路径，例如 `return`、跳出外围循环，或调用不返回的函数；结束这条声明的分号仍写在 `else` 块之后。
+
+以下完整程序故意无法编译，下载包中为 `compile-fail/syntax06-else-diverge.rs`：
+
+```rust
+fn main() {
+    let item = Some(7);
+    let Some(number) = item else {
+        println!("没有值");
+    };
+    println!("{number}");
+}
+```
+
+预期诊断包含 `E0308`。
+
+仅打印“没有值”还会继续执行，后面却没有可以使用的 `number`，因此不满足 `let ... else` 对失败分支的要求。
+
+自查：依次把 `Some(text)` 的输入换成拥有的值、共享引用和可变引用，先写出 `text` 的类型，再判断原变量还能否使用。不要只靠反复增加 `&` 或 `ref` 试到能编译。
+
 ## 把任务、命令和查询组合起来
 
 下面的完整程序对应下载包的 `basics/examples/ch06_modeling.rs`：
@@ -745,6 +961,9 @@ fn main() {
 下一章开始读取终端输入。输入可能不是数字，读文件或读终端也可能失败，我们会用 `Result` 和分支报告这些错误。
 
 ## 官方延伸阅读
+
+- [Rust Reference：模式与默认绑定方式](https://doc.rust-lang.org/reference/patterns.html)
+- [Rust Reference：let ... else](https://doc.rust-lang.org/reference/statements.html#let-statements)
 
 - [结构体与方法](https://doc.rust-lang.org/book/ch05-03-method-syntax.html)
 - [枚举与 Option](https://doc.rust-lang.org/book/ch06-01-defining-an-enum.html)

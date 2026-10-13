@@ -4,8 +4,8 @@ date = 2026-10-12T09:00:00+08:00
 lastmod = 2026-10-13T09:00:00+08:00
 draft = false
 author = "Hex4C59"
-description = "区分 package、crate 和 module，把代码拆到 lib.rs 与模块文件，编写单元测试、集成测试和文档测试。"
-summary = "区分 package、crate 和 module，把代码拆到 lib.rs 与模块文件，编写单元测试、集成测试和文档测试。"
+description = "拆分模块并写测试，解释 crate、self、super 路径、可见性、use 别名、宏和属性。"
+summary = "拆分模块并写测试，解释 crate、self、super 路径、可见性、use 别名、宏和属性。"
 tags = ["Rust", "编程入门", "教程"]
 categories = ["Programming"]
 series = ["rust-from-zero"]
@@ -242,6 +242,90 @@ cargo test --workspace --all-targets
 
 本教材项目只使用标准库。能完成基础项目后，再按照需要引入命令行解析、序列化和网络库，并查阅对应版本的官方文档。可执行程序通常应保留 `Cargo.lock`，让依赖选择更容易复现。
 
+## 语法细读：路径、可见性、宏和属性 {#syntax-depth}
+
+
+本章语法细读里的每个 Rust 程序可以分别替换自己项目的 `src/main.rs`：正常例子运行 `cargo run`，故意失败的例子运行 `cargo check`。下载包另保存为独立文件，直接编译的方法见下载包里的 `syntax/README.md`。各个程序相互独立。
+
+模块本身也是语言规则。文件放在哪个目录、名字通过哪条路径可见、以及哪段代码会参与编译，需要分别判断。
+
+### use 引入名字，不复制代码也不放宽访问限制
+
+完整程序，下载包中为 `syntax/syntax08-paths.rs`：
+
+```rust
+mod tools {
+    pub(super) fn twice(value: i32) -> i32 {
+        self::inner::add(value, value)
+    }
+    mod inner {
+        pub(super) fn add(left: i32, right: i32) -> i32 {
+            left + right
+        }
+    }
+}
+use crate::tools::twice as double;
+fn main() {
+    println!("{}", double(6));
+}
+```
+
+预期输出：
+
+```text
+12
+```
+
+`crate::` 从当前 crate 根开始，`self::` 从当前模块开始，`super::` 从父模块开始。根部的 `use ... as double` 把一个可访问的函数用别名引入当前作用域；它不执行函数，也不把实现复制到这里。
+
+`pub(super)` 表示向父模块范围开放。因此 `tools` 的父模块能调用 `twice`，`tools` 也能调用其子模块的 `add`。`pub(crate)` 把可见范围限制在当前 crate，普通 `pub` 则允许按所在模块路径继续向外公开。
+
+以下完整程序故意无法编译，下载包中为 `compile-fail/syntax08-private-child.rs`：
+
+```rust
+mod tools {
+    pub mod inner {
+        fn hidden() {}
+    }
+}
+fn main() {
+    tools::inner::hidden();
+}
+```
+
+预期诊断包含 `E0603`。
+
+子模块公开，不会使里面的所有函数自动公开。路径的各层与目标项都要允许这次访问；`use` 别名也不能让这次私有调用变合法。前面用文件组织模块的写法与这里的内联 `mod { ... }` 遵守同一套规则。
+
+### 感叹号调用宏，属性作用在后面的项上
+
+完整程序，下载包中为 `syntax/syntax08-attributes-macros.rs`：
+
+```rust
+#[derive(Debug)]
+struct Point {
+    x: i32,
+}
+fn main() {
+    let point = Point { x: 3 };
+    let numbers = vec![point.x, 4];
+    assert_eq!(numbers.len(), 2);
+    println!("{point:?} / {numbers:?}");
+}
+```
+
+预期输出：
+
+```text
+Point { x: 3 } / [3, 4]
+```
+
+`println!`、`vec!`、`assert_eq!` 是宏调用；括号或方括号中的内容会按该宏的规则处理，不能仅因为写法像调用就认为它是普通函数。宏可以展开成表达式或其他代码结构，也不是“程序运行时再拼接一段源代码”。
+
+`#[derive(Debug)]` 是外层属性，作用于后面的结构体定义，要求生成相应的 trait 实现。`#[cfg(test)]` 用条件控制后面的项是否参与编译，`#[test]` 标记测试函数；它们不是放在函数前的一行注释，也不是每次调用函数都会执行的普通表达式。
+
+阅读一个陌生片段时，先区分路径 `::`、方法访问 `.`、宏调用 `!` 和属性 `#[...]`，再去找名字的定义和作用范围。
+
 ## 练习：增加一个测试
 
 在 `math.rs` 的测试模块里，检查 25 摄氏度等于 77 华氏度。先写测试，再把公式改错，确认测试能发现问题，最后恢复正确公式。
@@ -272,6 +356,10 @@ fn room_temperature() {
 试着不看答案重建四个文件。能从库外调用函数、能让错误公式触发测试失败、恢复后测试通过，本章的组织方式就已经用起来了。
 
 ## 官方延伸阅读
+
+- [Rust Reference：模块路径](https://doc.rust-lang.org/reference/paths.html)
+- [Rust Reference：可见性](https://doc.rust-lang.org/reference/visibility-and-privacy.html)
+- [Rust Reference：属性](https://doc.rust-lang.org/reference/attributes.html)
 
 - [包与 crate](https://doc.rust-lang.org/book/ch07-01-packages-and-crates.html)
 - [测试的组织](https://doc.rust-lang.org/book/ch11-03-test-organization.html)

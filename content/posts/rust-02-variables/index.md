@@ -4,8 +4,8 @@ date = 2026-10-12T09:00:00+08:00
 lastmod = 2026-10-13T09:00:00+08:00
 draft = false
 author = "Hex4C59"
-description = "从学习时长统计出发，掌握变量、可变性、数字、布尔值、元组、数组和格式化输出。"
-summary = "从学习时长统计出发，掌握变量、可变性、数字、布尔值、元组、数组和格式化输出。"
+description = "学习变量、可变性和常用数据类型，拆解 let 绑定、类型推断、数字后缀和显式转换的规则。"
+summary = "学习变量、可变性和常用数据类型，拆解 let 绑定、类型推断、数字后缀和显式转换的规则。"
 tags = ["Rust", "编程入门", "教程"]
 categories = ["Programming"]
 series = ["rust-from-zero"]
@@ -292,6 +292,120 @@ fn main() {
 
 访问索引前要确认范围。运行时越界索引会 panic，停止正常执行；编译器能直接确定越界时，也可能提前拒绝编译。第五节会学习用 `get` 处理“不存在这一项”的情况。
 
+## 语法细读：绑定、推断和数值转换 {#syntax-depth}
+
+
+本章语法细读里的每个 Rust 程序可以分别替换自己项目的 `src/main.rs`：正常例子运行 `cargo run`，故意失败的例子运行 `cargo check`。下载包另保存为独立文件，直接编译的方法见下载包里的 `syntax/README.md`。各个程序相互独立。
+
+前面的例子能运行，还需要解释每个位置为什么能这样写。下面按绑定的结构、类型约束和数值转换继续拆开。
+
+### let 的左边是模式，不一定只有一个名字
+
+这是语法示意，方括号表示可以省略的部分，不是要输入的 Rust 字符：
+
+```text
+let 模式 [: 类型] [= 初始化表达式];
+```
+
+`let minutes: u32 = 20;` 中，`minutes` 是最简单的名字模式，冒号后约束整个绑定的类型，等号右边产生初始值，分号结束这条声明。`let (hours, minutes) = (2, 5);` 的左边是元组模式，一次建立两个名字；模式的详细规则放到第六章。
+
+初始化表达式可以省略，但变量在每一条实际会读取它的路径上都必须已经初始化。`let`、初始化和之后的赋值不是一回事：首次初始化不可变绑定不需要 `mut`，重新赋值才需要。暂时优先在声明处初始化，避免把“某个分支没有赋值”带进简单程序。
+
+`const NAME: Type = expression;` 声明常量，需要显式类型和可以在编译期求值的初始化表达式。常量不能加 `mut`，也不是省略 `mut` 的普通局部变量。本章只用整数常量；`static` 涉及固定存储位置，是另一个概念。
+
+### 类型推断会看使用位置，不能只盯住等号右边
+
+完整程序，下载包中为 `syntax/syntax02-inference.rs`：
+
+```rust
+const DEFAULT_MINUTES: u8 = 30;
+fn accept(value: u8) {
+    println!("参数：{value}");
+}
+fn main() {
+    let inferred = 12;
+    let annotated: u8 = 12;
+    let suffixed = 12_u8;
+    accept(inferred);
+    let _: u8 = inferred;
+    println!("三种写法：{inferred} / {annotated} / {suffixed}");
+    println!("常量：{DEFAULT_MINUTES}");
+}
+```
+
+预期输出：
+
+```text
+参数：12
+三种写法：12 / 12 / 12
+常量：30
+```
+
+`inferred` 后来传给接收 `u8` 的函数，因此整数文字 `12` 在这里被约束为 `u8`。推断不是先把它永久定成 `i32`，再在调用处偷偷转换。第二种写法把约束写在变量上，第三种把类型后缀写在数字文字上；这三个绑定最终都是 `u8`。
+
+编译器会一起检查声明、运算、函数参数和返回值等位置的约束。如果其他位置没有给出足够的约束，整数和浮点文字通常分别回退到 `i32` 和 `f64`；如果约束互相冲突，就报告错误。
+
+以下完整程序故意无法编译，下载包中为 `compile-fail/syntax02-reassign.rs`：
+
+```rust
+fn main() {
+    let mut value = 20_u32;
+    value = "二十";
+    println!("{value}");
+}
+```
+
+预期诊断包含 `E0308`。
+
+这里 `mut` 只允许重新赋值，不能取消已经确定的 `u32` 类型。遮蔽则会建立新绑定，所以 `let value = "二十";` 可以采用新类型。
+
+### 类型标注、类型后缀和 as 各做什么
+
+| 写法 | 作用 |
+| --- | --- |
+| `let n: u8 = 12;` | 约束绑定的类型 |
+| `let n = 12_u8;` | 约束这个数字文字的类型 |
+| `value as u8` | 对已有表达式执行允许的显式转换 |
+| `u32::from(value)` | 使用这个类型提供的 `From` 转换 |
+
+以下完整程序故意无法编译，下载包中为 `compile-fail/syntax02-mixed.rs`：
+
+```rust
+fn main() {
+    let small = 10_u8;
+    let wide = 20_u16;
+    let total = small + wide;
+    println!("{total}");
+}
+```
+
+预期诊断包含 `E0308`。
+
+编译器不会在这次加法里自行选择把哪一边转换成另一种类型。可以先把 `small` 扩宽为 `u16`，再和 `wide` 相加；选择转换方向时也要考虑结果范围。
+
+完整程序，下载包中为 `syntax/syntax02-conversion.rs`：
+
+```rust
+fn main() {
+    let wide = 300_u16;
+    let narrow = wide as u8;
+    let extended = u32::from(wide);
+    assert_eq!(narrow, 44);
+    assert_eq!(extended, 300);
+    println!("窄化：{narrow}，扩宽：{extended}");
+}
+```
+
+预期输出：
+
+```text
+窄化：44，扩宽：300
+```
+
+整数从 `u16` 窄化为 `u8` 时会截掉高位，所以 300 得到 44，不能把 `as` 当成范围校验。这里的 `u32::from(wide)` 是扩宽转换，保留原数值。需要“范围超出就报错”的转换时，应在学过第七章的 `Result` 后使用相应的 `TryFrom`，而不是先截断再检查。
+
+自查：不运行程序，解释 `let n = 12; accept(n);` 中的类型如何确定，再说明把 `let` 改成赋值为什么不能改变类型。若要把 300 存进 `u8`，先写清需求是拒绝输入还是允许截断。
+
 ## 2.10 把本节内容组合起来
 
 把姓名、学习时长、进度计算和数组记录放进同一个程序，就得到下面的例子。用它替换自己的整个 `main.rs`：
@@ -404,6 +518,10 @@ fn main() {
 下一节将根据这些真假条件选择不同操作，再把重复的计算写成函数。
 
 ## 官方延伸阅读与验证
+
+- [Rust Reference：let 声明与模式](https://doc.rust-lang.org/reference/statements.html#let-statements)
+- [Rust Reference：数字文字与类型后缀](https://doc.rust-lang.org/reference/expressions/literal-expr.html#integer-literal-expressions)
+- [Rust Reference：数值转换](https://doc.rust-lang.org/reference/expressions/operator-expr.html#numeric-cast)
 
 - [变量与可变性](https://doc.rust-lang.org/book/ch03-01-variables-and-mutability.html)
 - [Rust 数据类型](https://doc.rust-lang.org/book/ch03-02-data-types.html)

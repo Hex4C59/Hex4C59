@@ -4,8 +4,8 @@ date = 2026-10-12T09:00:00+08:00
 lastmod = 2026-10-13T09:00:00+08:00
 draft = false
 author = "Hex4C59"
-description = "把重复计算写成函数，用 if、for、while 和 loop 表达程序的执行顺序。"
-summary = "把重复计算写成函数，用 if、for、while 和 loop 表达程序的执行顺序。"
+description = "学习函数、分支和循环，解释块与分号的结果类型、单元值、提前返回、循环标签和短路求值。"
+summary = "学习函数、分支和循环，解释块与分号的结果类型、单元值、提前返回、循环标签和短路求值。"
 tags = ["Rust", "编程入门", "教程"]
 categories = ["Programming"]
 series = ["rust-from-zero"]
@@ -411,6 +411,180 @@ cargo run -p rust-basics --example ch03_flow
 
 本例的固定长度整数数组可以复制，因此传给 `total_minutes` 后，`main` 仍能遍历原来的 `days`。第四节会解释这类值的复制规则，以及为什么不能把它套用到所有类型。
 
+## 语法细读：表达式、分号与控制流的类型 {#syntax-depth}
+
+
+本章语法细读里的每个 Rust 程序可以分别替换自己项目的 `src/main.rs`：正常例子运行 `cargo run`，故意失败的例子运行 `cargo check`。下载包另保存为独立文件，直接编译的方法见下载包里的 `syntax/README.md`。各个程序相互独立。
+
+读这一节时，把两个问题分开：一段代码会执行什么，以及它作为表达式会产生什么类型的值。能运行的语句，不一定能放进需要整数的返回位置。
+
+### 块有类型，空结果也有类型
+
+完整程序，下载包中为 `syntax/syntax03-unit.rs`：
+
+```rust
+fn plus_one(base: i32) -> i32 {
+    base + 1
+}
+
+fn procedure() {
+    println!("函数体已执行");
+}
+fn main() {
+    let value = {
+        let base = 4;
+        base + 1
+    };
+    let no_value = {
+        plus_one(4);
+    };
+    let result: () = procedure();
+    assert_eq!(no_value, ());
+    assert_eq!(result, ());
+    println!("块的值：{value}，丢弃后：{no_value:?}");
+}
+```
+
+预期输出：
+
+```text
+函数体已执行
+块的值：5，丢弃后：()
+```
+
+`{ let base = 4; base + 1 }` 是块表达式。`let` 声明没有提供末尾结果，最后的 `base + 1` 提供整数 5。`{ plus_one(4); }` 中的分号把函数调用的结果丢弃；没有尾表达式的普通块产生单元值 `()`。
+
+`()` 是只包含一个值的单元类型，并不是“编译器不知道是什么”。省略函数的返回类型相当于返回 `()`。因此没有返回结果的函数也能被赋给 `let result: ()`，只是在普通代码里通常直接调用即可。
+
+不要把“所有分号都产生 `()`”当成规则。`let` 声明、表达式语句和函数体的尾表达式要分别辨认；带 `return` 的路径还可能根本不会走到块的结尾。
+
+### 分支要提供同一结果类型，return 会结束当前函数
+
+完整程序，下载包中为 `syntax/syntax03-branches.rs`：
+
+```rust
+fn choose(valid: bool) -> i32 {
+    if valid {
+        10
+    } else {
+        return 0;
+    }
+}
+fn main() {
+    println!("{} / {}", choose(true), choose(false));
+    let mut count = 0;
+    assert_eq!(count, 0);
+    let assignment = count = 3;
+    assert_eq!(assignment, ());
+    println!("赋值后的数：{count}，赋值表达式：{assignment:?}");
+}
+```
+
+预期输出：
+
+```text
+10 / 0
+赋值后的数：3，赋值表达式：()
+```
+
+`if valid` 的正常分支产生 `i32`。另一分支执行 `return 0`，直接结束函数，不会继续向外层 `if` 提供一个普通值。`return` 这类不正常返回到下一步的表达式，其类型称为 never，写作 `!`；这里能与整数结果的分支配合。
+
+赋值表达式 `count = 3` 的结果是 `()`，不是被赋进去的 3。`let assignment = count = 3;` 只是用来观察这条规则；日常写法把赋值单独放一行更清楚。
+
+以下完整程序故意无法编译，下载包中为 `compile-fail/syntax03-branch-types.rs`：
+
+```rust
+fn main() {
+    let value = if true { 10 } else { "十" };
+    println!("{value}");
+}
+```
+
+预期诊断包含 `E0308`。
+
+即使条件文字写成 `true`，编译器也要检查另一个分支的类型。整数和文本不能在这里作为同一个 `if` 的结果。
+
+以下完整程序故意无法编译，下载包中为 `compile-fail/syntax03-condition.rs`：
+
+```rust
+fn main() {
+    if 1 {
+        println!("进入分支");
+    }
+}
+```
+
+预期诊断包含 `E0308`。
+
+`if` 的条件要求 `bool`。Rust 没有把整数 0 自动当成假、非零自动当成真的这条隐式转换；需要明确写 `number != 0` 等比较。
+
+### loop 可以带结果，标签决定退出哪一层
+
+完整程序，下载包中为 `syntax/syntax03-loop-value.rs`：
+
+```rust
+fn main() {
+    let found = 'search: loop {
+        for number in 1..=3 {
+            if number == 2 {
+                break 'search number;
+            }
+        }
+    };
+    println!("找到：{found}");
+}
+```
+
+预期输出：
+
+```text
+找到：2
+```
+
+`'search` 是循环标签，名字前有单引号；它指定 `break` 的目标，不是生命周期标注。`break 'search number` 从外层 `loop` 退出并交出 `number`，所以整个 `loop` 表达式可以初始化 `found`。若有多个带值的退出分支，它们也需要提供兼容的结果类型。
+
+以下完整程序故意无法编译，下载包中为 `compile-fail/syntax03-while-value.rs`：
+
+```rust
+fn main() {
+    while true {
+        break 2;
+    }
+}
+```
+
+预期诊断包含 `E0571`。
+
+`while` 和 `for` 循环不能像这个 `loop` 一样通过 `break value` 返回结果。先区分三种循环，再判断 `break` 后能不能带值。
+
+### && 和 || 不保证左右两侧都会执行
+
+完整程序，下载包中为 `syntax/syntax03-short-circuit.rs`：
+
+```rust
+fn right() -> bool {
+    println!("计算右侧");
+    true
+}
+fn main() {
+    let a = false && right();
+    let b = true || right();
+    let c = true && right();
+    println!("{a} / {b} / {c}");
+}
+```
+
+预期输出：
+
+```text
+计算右侧
+false / true / true
+```
+
+`false && ...` 已经能确定结果是假，`true || ...` 已经能确定结果是真，因此前两处没有调用 `right`。第三处需要右侧，才打印一次“计算右侧”。这种按需要计算的方式称为短路；把检查、打印或修改放到右侧之前，要确认是否允许跳过它。
+
+自查：把第一个例子的 `base + 1` 后加分号，预测 `value` 的类型，再解释为什么原来的格式化输出也会报错。再把 `choose` 的 `return 0` 改成 `println!("无效")`，解释为什么原来的返回类型不能继续成立。
+
 ## 3.13 练习一：温度转换函数
 
 写 `celsius_to_fahrenheit(celsius: f64) -> f64`，公式是 `华氏温度 = 摄氏温度 × 1.8 + 32.0`。在 `main` 中调用三次，输入 0、100、-40，分别输出 32、212、-40。
@@ -477,6 +651,11 @@ fn main() {
 第四节将用可以增长的字符串和列表，说明函数之间怎样传递和借用数据。
 
 ## 官方延伸阅读与验证
+
+- [Rust Reference：块表达式](https://doc.rust-lang.org/reference/expressions/block-expr.html)
+- [Rust Reference：if 表达式](https://doc.rust-lang.org/reference/expressions/if-expr.html)
+- [Rust Reference：循环与 break 结果](https://doc.rust-lang.org/reference/expressions/loop-expr.html)
+- [Rust Reference：短路逻辑运算](https://doc.rust-lang.org/reference/expressions/operator-expr.html#lazy-boolean-operators)
 
 - [函数与返回值](https://doc.rust-lang.org/book/ch03-03-how-functions-work.html)
 - [分支和循环](https://doc.rust-lang.org/book/ch03-05-control-flow.html)

@@ -4,8 +4,8 @@ date = 2026-10-12T09:00:00+08:00
 lastmod = 2026-10-13T09:00:00+08:00
 draft = false
 author = "Hex4C59"
-description = "从 for 循环改写出筛选、转换和汇总流程，读懂 iter、iter_mut、into_iter、filter、map 和 collect。"
-summary = "从 for 循环改写出筛选、转换和汇总流程，读懂 iter、iter_mut、into_iter、filter、map 和 collect。"
+description = "学习闭包和迭代器，区分 move 捕获与 Fn、FnMut、FnOnce 调用能力，检查每一步的数据类型。"
+summary = "学习闭包和迭代器，区分 move 捕获与 Fn、FnMut、FnOnce 调用能力，检查每一步的数据类型。"
 tags = ["Rust", "编程入门", "教程"]
 categories = ["Programming"]
 series = ["rust-from-zero"]
@@ -318,6 +318,123 @@ fn main() {
 
 输出 `["读书"]` 和 `原列表共 2 项`。`selected` 拥有自己的列表容器，但里面的 `&str` 仍借用 `titles` 中的文本；这些借用不能在原文本销毁后继续使用。
 
+## 语法细读：move 怎样捕获，Fn 怎样调用 {#syntax-depth}
+
+
+本章语法细读里的每个 Rust 程序可以分别替换自己项目的 `src/main.rs`：正常例子运行 `cargo run`，故意失败的例子运行 `cargo check`。下载包另保存为独立文件，直接编译的方法见下载包里的 `syntax/README.md`。各个程序相互独立。
+
+闭包要分两步读：它怎样取得外部数据，以及调用时怎样使用这些数据。`move` 解决第一步，`Fn`、`FnMut`、`FnOnce` 这组 trait 描述第二步。
+
+### move 不等于只能调用一次
+
+完整程序，下载包中为 `syntax/syntax10-call-traits.rs`：
+
+```rust
+fn twice(action: impl Fn()) {
+    action();
+    action();
+}
+fn twice_mut(mut action: impl FnMut()) {
+    action();
+    action();
+}
+fn once(action: impl FnOnce() -> String) -> String {
+    action()
+}
+fn main() {
+    let title = String::from("拥有但只读取");
+    let read = move || println!("{title}");
+    twice(read);
+    let mut count = 0;
+    let increase = || {
+        count += 1;
+        println!("计数：{count}");
+    };
+    twice_mut(increase);
+    assert_eq!(count, 2);
+    let owned = String::from("交出字符串");
+    let take = move || owned;
+    println!("{}", once(take));
+}
+```
+
+预期输出：
+
+```text
+拥有但只读取
+拥有但只读取
+计数：1
+计数：2
+交出字符串
+```
+
+`read` 用 `move` 把字符串移进闭包，却在每次调用时只读取它，因此仍实现 `Fn`，可以调用两次。外层原来的 `title` 已经移动，这和闭包自己能调用几次是两个问题。
+
+`increase` 通过可变借用修改外部计数，需要 `FnMut`；`twice_mut` 接收后把闭包绑定声明为 `mut`，才能反复以可变方式调用。调用完成并结束这次借用后，外层可以检查 `count`。
+
+`take` 的函数体把捕获的 `String` 当作返回值交出去。它实现 `FnOnce`，调用后不能再次取出已经交出的值。
+
+| 调用能力 | 调用时对闭包的要求 | 本例 |
+| --- | --- | --- |
+| `Fn` | 可以通过共享借用调用 | 拥有字符串但只读取 |
+| `FnMut` | 需要可变访问闭包状态 | 修改计数 |
+| `FnOnce` | 可以消耗闭包完成调用 | 交出捕获的字符串 |
+
+这三种能力有包含关系：实现 `Fn` 的闭包也能用于要求 `FnMut` 或 `FnOnce` 的位置；实现 `FnMut` 的闭包也能用于要求 `FnOnce` 的位置。名字里的 Once 表示调用接口允许消耗它，不是承诺每个实现都只能被调用一次。
+
+以下完整程序故意无法编译，下载包中为 `compile-fail/syntax10-fn-mut.rs`：
+
+```rust
+fn twice(action: impl Fn()) {
+    action();
+    action();
+}
+fn main() {
+    let mut count = 0;
+    let increase = || {
+        count += 1;
+    };
+    twice(increase);
+}
+```
+
+预期诊断包含 `E0525`。
+
+`twice` 只承诺用共享方式调用，但传入的闭包需要可变访问。增加 `move` 不能把“函数体修改捕获状态”变成只读调用；应按所需行为改用 `FnMut` 的接口。
+
+以下完整程序故意无法编译，下载包中为 `compile-fail/syntax10-once-move.rs`：
+
+```rust
+fn main() {
+    let owned = String::from("Rust");
+    let take = move || owned;
+    println!("{}", take());
+    println!("{}", take());
+}
+```
+
+预期诊断包含 `E0382`。
+
+第一次调用消耗了 `take`，第二次就发生移动后使用。需要重复取得独立字符串时，要明确创建副本或调整返回内容，不能仅把闭包变量加上 `mut`。
+
+### 闭包的类型推断不是自动泛型
+
+以下完整程序故意无法编译，下载包中为 `compile-fail/syntax10-closure-type.rs`：
+
+```rust
+fn main() {
+    let identity = |value| value;
+    println!("{}", identity(1));
+    println!("{}", identity("Rust"));
+}
+```
+
+预期诊断包含 `E0308`。
+
+第一次调用把这个闭包的参数和返回类型约束成整数，随后不能再传入文本。`|value| value` 没有声明一个每次可重新选择类型的泛型参数；需要这种能力时，使用 `fn identity<T>(value: T) -> T { value }` 这样的泛型函数。
+
+读迭代器链中的闭包时，也先写出每一步的输入类型，再看捕获了什么，以及函数体是读取、修改还是交出捕获值。这样才能解释为什么某个闭包能放进 `map` 或 `filter`，以及原来的变量之后还能否使用。
+
 ## 练习：筛选及格成绩
 
 从 `[50, 60, 85, 40, 100]` 选出至少 60 的成绩，收集成 `Vec<i32>`，再计算及格成绩的总和。预期列表为 `[60, 85, 100]`，总和为 245。
@@ -353,6 +470,8 @@ fn main() {
 进入下一章前，尝试说出一条调用链里 `iter`、`filter`、`map`、`collect` 各自提供或接收什么。链条变长后不好解释时，拆开即可。
 
 ## 官方延伸阅读
+
+- [Rust Reference：闭包捕获与调用 trait](https://doc.rust-lang.org/reference/types/closure.html)
 
 - [闭包](https://doc.rust-lang.org/book/ch13-01-closures.html)
 - [迭代器](https://doc.rust-lang.org/book/ch13-02-iterators.html)

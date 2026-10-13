@@ -4,8 +4,8 @@ date = 2026-10-12T09:00:00+08:00
 lastmod = 2026-10-13T09:00:00+08:00
 draft = false
 author = "Hex4C59"
-description = "把终端输入转换为数字，用 Result、match、map_err 和问号操作符报告与传播错误。"
-summary = "把终端输入转换为数字，用 Result、match、map_err 和问号操作符报告与传播错误。"
+description = "读取输入和处理失败，拆解 Result 与 Option 上的问号传播、错误转换和函数返回边界。"
+summary = "读取输入和处理失败，拆解 Result 与 Option 上的问号传播、错误转换和函数返回边界。"
 tags = ["Rust", "编程入门", "教程"]
 categories = ["Programming"]
 series = ["rust-from-zero"]
@@ -272,6 +272,98 @@ fn main() {
 
 可以先问自己：这次失败是用户需要修正的输入，还是程序内部假设被打破了？前者通常应该返回或显示可理解的错误。后者若使用 `expect`，至少应写明你依赖的假设，并用测试检查它。
 
+## 语法细读：? 怎样退出当前函数 {#syntax-depth}
+
+
+本章语法细读里的每个 Rust 程序可以分别替换自己项目的 `src/main.rs`：正常例子运行 `cargo run`，故意失败的例子运行 `cargo check`。下载包另保存为独立文件，直接编译的方法见下载包里的 `syntax/README.md`。各个程序相互独立。
+
+`?` 是语言运算符，不是名为“自动处理错误”的普通函数。读到它时，要明确成功分支留下什么值、失败分支退出哪一层，以及外层允许返回什么类型。
+
+### 在 Result 上，成功取值，失败转换并返回
+
+完整程序，下载包中为 `syntax/syntax07-question-result.rs`：
+
+```rust
+use std::num::ParseIntError;
+fn concise(input: &str) -> Result<u32, ParseIntError> {
+    let number = input.parse::<u32>()?;
+    Ok(number)
+}
+fn expanded(input: &str) -> Result<u32, ParseIntError> {
+    let number = match input.parse::<u32>() {
+        Ok(number) => number,
+        Err(error) => return Err(From::from(error)),
+    };
+    Ok(number)
+}
+fn within_block(input: &str) -> Result<u32, ParseIntError> {
+    let number = { input.parse::<u32>()? };
+    println!("解析后的代码：{number}");
+    Ok(number)
+}
+fn main() {
+    for input in ["12", "bad"] {
+        assert_eq!(concise(input), expanded(input));
+    }
+    println!("成功：{}", concise("12").unwrap());
+    assert!(within_block("bad").is_err());
+    println!("调用方仍继续执行");
+}
+```
+
+预期输出：
+
+```text
+成功：12
+调用方仍继续执行
+```
+
+对这里的 `Result<u32, ParseIntError>`，两个函数的行为可以这样对照：成功时从 `Ok` 里取出整数，失败时立即从当前函数返回 `Err`。展开版的 `From::from` 保留了错误转换这一步；此例输入与输出的错误类型相同，因此使用同类型转换。
+
+一般的 `Result<T, E>` 传播到 `Result<U, F>` 时，错误类型要能通过所需的转换得到 `F`；只有两边都写着 `Result` 还不够。第十四章再定义这样的错误转换。本节的展开只描述 `Result` 的常见情况，不代表所有支持 `?` 的类型都按同一段代码实现。
+
+`within_block` 的失败发生在一对普通花括号里，但 `?` 结束的是函数，不是那个块。输入为 `bad` 时，“解析后的代码”不会打印，`main` 收到失败结果后仍可以继续。若 `?` 写在一个返回结果的闭包中，则传播到那个闭包的调用结果。
+
+### Option 也能用 ?，但不能直接当成 Result 的错误
+
+完整程序，下载包中为 `syntax/syntax07-question-option.rs`：
+
+```rust
+fn first_number(numbers: &[u32]) -> Option<u32> {
+    let first = numbers.first()?;
+    Some(*first)
+}
+fn main() {
+    println!("{:?} / {:?}", first_number(&[3, 4]), first_number(&[]));
+}
+```
+
+预期输出：
+
+```text
+Some(3) / None
+```
+
+在返回 `Option` 的函数里，`Some` 留下内部值，`None` 立即返回 `None`。这种失败没有附带错误原因。
+
+以下完整程序故意无法编译，下载包中为 `compile-fail/syntax07-option-result.rs`：
+
+```rust
+fn first_number(numbers: &[u32]) -> Result<u32, &'static str> {
+    let first = numbers.first()?;
+    Ok(*first)
+}
+fn main() {
+    println!("{:?}", first_number(&[]));
+}
+```
+
+预期诊断包含 `E0277`。
+
+外层返回 `Result`，输入却是 `Option`，编译器不知道应把 `None` 变成哪个错误。这里可以先用 `numbers.first().ok_or("没有元素")?` 明确建立错误结果。错误原因由程序选择，`?` 不会凭空生成它。
+
+自查：对每个 `?` 写出它前面表达式的完整类型，再写出包围它的函数或闭包的返回类型。不要把增加 `?` 理解为“可以省略失败条件”。
+
 ## 练习：解析年龄
 
 写 `parse_age(input: &str) -> Result<u8, String>`。要求忽略首尾空白，只接受 0～150 的整数，并说明失败原因。验证 `18`、`0` 成功，`151`、`256`、`-1`、`abc` 和空文本失败。
@@ -312,6 +404,8 @@ fn main() {
 还可以给 `parse_age` 写一个不用终端的 `main`，直接调用五次并检查结果。下一章会把这样的检查组织成 `cargo test` 能自动执行的测试。此时先确认：输入来自哪里，不应该影响解析函数的规则。
 
 ## 官方延伸阅读
+
+- [Rust Reference：问号运算符](https://doc.rust-lang.org/reference/expressions/operator-expr.html#the-try-propagation-expression)
 
 - [Result 和错误传播](https://doc.rust-lang.org/book/ch09-02-recoverable-errors-with-result.html)
 - [Stdin::read_line](https://doc.rust-lang.org/std/io/struct.Stdin.html#method.read_line)

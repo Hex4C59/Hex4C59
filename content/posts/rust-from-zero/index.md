@@ -42,6 +42,23 @@ ShowToc = true
 - [Rust 入门 17：用 clap 整理命令行接口](/posts/rust-17-clap/)
 - [Rust 入门 18：请求本机 HTTP 服务，读取 JSON 响应](/posts/rust-18-http/)
 
+## 语法规则阅读路线 {#syntax-route}
+
+第二、三、四、六到十章增加了语法细读。每一节用最小程序拆开规则，再用故意失败的反例说明边界。按章节顺序读；已经做完项目的读者，可以用下表回查具体写法。
+
+| 位置 | 讨论的语法 | 阅读时要回答的问题 |
+| --- | --- | --- |
+| [第二章](/posts/rust-02-variables/#syntax-depth) | 绑定、类型推断、数字后缀与转换 | 推断受哪些位置约束；为什么窄化可能改变数值 |
+| [第三章](/posts/rust-03-functions/#syntax-depth) | 块、分号、单元值与控制流类型 | 一段代码产生什么值；哪个分支会结束函数 |
+| [第四章](/posts/rust-04-ownership/#syntax-depth) | mut、引用、解引用与再借用 | 正在修改绑定还是所指的数据；权限是否仍被借用 |
+| [第六章](/posts/rust-06-modeling/#syntax-depth) | 模式、守卫、ref、通配符与 let ... else | 模式建立了什么名字；内部字段会移动还是借用 |
+| [第七章](/posts/rust-07-errors/#syntax-depth) | Result 与 Option 上的问号 | 成功留下什么值；失败返回到哪一层 |
+| [第八章](/posts/rust-08-projects/#syntax-depth) | 路径、可见性、宏与属性 | 名字从哪里解析；访问和编译条件是否允许 |
+| [第九章](/posts/rust-09-traits/#syntax-depth) | 泛型参数、impl Trait 与生命周期关系 | 哪些位置必须相同；签名增加了哪些约束 |
+| [第十章](/posts/rust-10-iterators/#syntax-depth) | 闭包捕获与调用能力 | 捕获怎样发生；调用是否读取、修改或交出数据 |
+
+源码下载包的 `syntax/` 保存 22 个正常程序，`compile-fail/syntax*.rs` 保存 20 个预期失败的程序。它们逐个运行，不并入正常 Cargo 构建。不要只记录“能编译”：还要写出值的类型、名字的作用域和失败发生在哪条规则上。
+
 ## 练习与查阅附录
 
 - [三个阶段的分级练习与项目验收](/posts/rust-practice-checkpoints/)：第六、十二、十八章后的独立练习和可运行答案。

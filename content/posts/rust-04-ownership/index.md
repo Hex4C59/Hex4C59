@@ -4,8 +4,8 @@ date = 2026-10-12T09:00:00+08:00
 lastmod = 2026-10-13T09:00:00+08:00
 draft = false
 author = "Hex4C59"
-description = "用字符串修改和打印的具体例子解释 move、Copy、clone、共享借用和可变借用。"
-summary = "用字符串修改和打印的具体例子解释 move、Copy、clone、共享借用和可变借用。"
+description = "解释所有权、移动和借用，区分绑定的 mut、引用的 &mut、解引用、再借用和引用复制。"
+summary = "解释所有权、移动和借用，区分绑定的 mut、引用的 &mut、解引用、再借用和引用复制。"
 tags = ["Rust", "编程入门", "教程"]
 categories = ["Programming"]
 series = ["rust-from-zero"]
@@ -396,6 +396,131 @@ fn main() {
 
 这里所有权随返回值转移给调用方。函数返回了，字符串仍由 `main` 中的 `title` 管理，直到这个绑定离开作用域。
 
+## 语法细读：mut 改绑定，&mut 提供访问权限 {#syntax-depth}
+
+
+本章语法细读里的每个 Rust 程序可以分别替换自己项目的 `src/main.rs`：正常例子运行 `cargo run`，故意失败的例子运行 `cargo check`。下载包另保存为独立文件，直接编译的方法见下载包里的 `syntax/README.md`。各个程序相互独立。
+
+`mut` 出现的位置不同，约束的对象也不同。先用普通整数拆开引用，避免把字符串方法调用和引用规则混在一起。
+
+### 变量名可以改绑，与引用能否修改数据是两件事
+
+| 声明 | 能给这个变量换一个引用吗 | 能通过它修改普通整数吗 |
+| --- | --- | --- |
+| `let view = &number;` | 不能 | 不能 |
+| `let mut view = &number;` | 能 | 不能 |
+| `let slot = &mut number;` | 不能 | 能 |
+| `let mut slot = &mut number;` | 能 | 能 |
+
+表中的“能”仍要求其他借用和类型约束允许，不是绕过检查的承诺。这张表只讨论普通整数的引用；有内部可变性机制的类型还要按自己的接口理解。
+
+完整程序，下载包中为 `syntax/syntax04-binding-mut.rs`：
+
+```rust
+fn increment(slot: &mut i32) {
+    *slot += 1;
+}
+fn main() {
+    let mut first = 1;
+    let mut second = 10;
+    increment(&mut first);
+    let mut slot = &mut first;
+    *slot += 1;
+    slot = &mut second;
+    *slot += 3;
+    println!("{first} / {second}");
+    let mut view = &first;
+    println!("改绑前：{view}");
+    view = &second;
+    println!("改绑后：{view}");
+}
+```
+
+预期输出：
+
+```text
+3 / 13
+改绑前：3
+改绑后：13
+```
+
+`increment` 的参数绑定没有 `mut`，但它的类型是 `&mut i32`，已经允许修改所指的整数。`*slot` 是解引用表达式，指向被引用的位置；`*slot += 1` 修改那个位置，`slot = &mut second` 才是在给引用变量重新赋值。
+
+最后的 `view` 有 `mut`，所以能从指向 `first` 改成指向 `second`，但类型一直是共享引用 `&i32`。
+
+以下完整程序故意无法编译，下载包中为 `compile-fail/syntax04-shared-write.rs`：
+
+```rust
+fn main() {
+    let number = 1;
+    let mut view = &number;
+    *view = 2;
+    println!("{view}");
+}
+```
+
+预期诊断包含 `E0594`。
+
+给绑定加 `mut` 没有把 `&i32` 改成 `&mut i32`。这次失败发生在对 `*view` 的写入上，不是对变量 `view` 的重新赋值上。
+
+### &mut *slot 是从已有可变引用再借用
+
+完整程序，下载包中为 `syntax/syntax04-reborrow.rs`：
+
+```rust
+fn main() {
+    let mut number = 10;
+    let slot = &mut number;
+    *slot += 1;
+    let shorter = &mut *slot;
+    *shorter += 2;
+    *slot += 3;
+    println!("{number}");
+}
+```
+
+预期输出：
+
+```text
+16
+```
+
+先由 `slot` 借用 `number`，再用 `&mut *slot` 建立较短的可变借用 `shorter`。`shorter` 还要使用时，不能同时通过 `slot` 访问同一数据；最后一次使用结束后，这里可以恢复通过 `slot` 修改。这个过程称为再借用（reborrow），没有复制整数，也没有复制独占权限。
+
+以下完整程序故意无法编译，下载包中为 `compile-fail/syntax04-reference-move.rs`：
+
+```rust
+fn main() {
+    let mut number = 10;
+    let slot = &mut number;
+    let later = slot;
+    println!("{} / {}", *slot, *later);
+}
+```
+
+预期诊断包含 `E0382`。
+
+`let later = slot` 在这里移动了 `&mut i32`。可变引用没有 `Copy`，不能把它当作两份可同时使用的独占权限。若需要临时把权限交给下一步，再借用和按值移动要分别判断；函数调用在期望引用类型的位置也可能由编译器进行再借用。
+
+完整程序，下载包中为 `syntax/syntax04-shared-copy.rs`：
+
+```rust
+fn main() {
+    let text = String::from("Rust");
+    let first = &text;
+    let second = first;
+    println!("{first} / {second} / {text}");
+}
+```
+
+预期输出：
+
+```text
+Rust / Rust / Rust
+```
+
+普通共享引用 `&T` 可以复制，复制的是引用本身，所指的 `String` 没有获得独立副本，也没有移出 `text`。读 `*`、`&`、`&mut` 时，先确定正在谈的是变量绑定、引用值，还是被引用的数据。
+
 ## 把打印、修改和备份组合起来
 
 下面的完整程序对应下载包的 `basics/examples/ch04_ownership.rs`：
@@ -517,6 +642,9 @@ fn main() {
 下一章会把这些规则用到中文文本和多条记录上，学习字符串、可增长的列表，以及按名称保存数值的字典。
 
 ## 官方延伸阅读
+
+- [Rust Reference：借用和解引用运算](https://doc.rust-lang.org/reference/expressions/operator-expr.html#borrow-operators)
+- [Rust Reference：引用类型](https://doc.rust-lang.org/reference/types/pointer.html#references--and-mut)
 
 - [所有权与移动](https://doc.rust-lang.org/book/ch04-01-what-is-ownership.html)
 - [引用与借用](https://doc.rust-lang.org/book/ch04-02-references-and-borrowing.html)

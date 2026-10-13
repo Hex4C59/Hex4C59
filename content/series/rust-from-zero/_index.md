@@ -11,3 +11,5 @@ series_status: "18 章教材与配套项目已发布"
 [从学习指南开始](/posts/rust-00-learning-guide/) · [下载配套源码](/posts/rust-from-zero/course.zip)
 
 正式章节之外还提供[分级练习与项目验收](/posts/rust-practice-checkpoints/)和[常见错误排查](/posts/rust-troubleshooting/)。所有权与生命周期图解分别放在第四、九章中。
+
+第二、三、四、六到十章提供[语法细读](/posts/rust-from-zero/#syntax-route)，用类型推导、对照写法和编译反例解释语言规则。
