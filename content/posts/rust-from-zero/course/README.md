@@ -1,0 +1,114 @@
+# Rust 从零开始：配套源码
+
+这份源码配合《Rust 从零开始》中文教材使用。先安装 Rust 工具链，再在终端进入本文件所在的 `rust-course` 目录。所有运行示例都只依赖 Rust 标准库。
+
+项目采用 2024 edition，声明最低 Rust 版本为 1.85。本次于 2026-10-12 在 macOS arm64、rustc 1.99.0、cargo 1.99.0 上验证；没有实际验证最低版本或其他操作系统。
+
+## 第一次运行
+
+```sh
+rustc --version
+cargo --version
+cargo run -p rust-basics --example ch01_hello
+```
+
+每条 Cargo 命令都可以增加 `--offline`，例如 `cargo run --offline -p rust-basics --example ch01_hello`。工具链本身需要预先安装。
+
+## 教材与示例对应关系
+
+| 章 | 示例名称或项目入口 |
+| --- | --- |
+| 01 安装和首个程序 | `ch01_hello` |
+| 02 变量和类型 | `ch02_variables`、`answer02` |
+| 03 函数与循环 | `ch03_flow`、`answer03` |
+| 04 所有权与借用 | `ch04_ownership`、`answer04` |
+| 05 字符串与集合 | `ch05_collections`、`answer05` |
+| 06 结构体与枚举 | `ch06_modeling`、`answer06` |
+| 07 输入与错误 | `ch07_errors`、`answer07` |
+| 08 模块与测试 | `ch08_modules`、`basics/src/`、`basics/tests/` |
+| 09 泛型、trait、生命周期 | `ch09_traits`、`answer09` |
+| 10 闭包与迭代器 | `ch10_iterators`、`answer10` |
+| 11 项目核心逻辑 | `taskbook/src/lib.rs`、`taskbook/examples/memory.rs` |
+| 12 文件与命令行 | `taskbook/src/storage.rs`、`taskbook/src/main.rs`、`taskbook/tests/cli.rs` |
+
+运行基础示例和答案时，替换命令末尾的名称：
+
+```sh
+cargo run -p rust-basics --example ch04_ownership
+cargo run -p rust-basics --example answer04
+cargo run -p rust-basics --example ch07_errors
+```
+
+第 7 章示例需要你输入一行并回车。`30` 是有效输入；`abc`、`0`、`-1` 是失败条件。第 1 章答案、第 8 章新增测试、第 11 章新增统计函数和第 12 章损坏文件练习在教材正文中给出。
+
+## 故意失败的例子
+
+`compile-fail/` 不属于 Cargo 的正常构建目标。它们用于观察编译器如何拒绝不合法程序，在当前目录单独运行：
+
+```sh
+rustc --edition 2024 compile-fail/moved_value.rs
+rustc --explain E0382
+```
+
+| 文件 | 预期错误 | 原因 |
+| --- | --- | --- |
+| `immutable.rs` | E0384 | 对不可变变量重新赋值 |
+| `mismatched_types.rs` | E0308 | 文本变量被赋成整数 |
+| `moved_value.rs` | E0382 | 移动后继续访问原绑定 |
+| `borrow_conflict.rs` | E0502 | 共享借用仍需使用时修改同一数据 |
+| `dangling.rs` | E0515 | 返回指向局部变量的引用 |
+| `string_index.rs` | E0277 | 试图用整数索引字符串 |
+| `missing_lifetime.rs` | E0106 | 多个输入引用的返回关系未说明 |
+
+这些命令应该失败，不要为了让整套教材“零错误”把它们加到正常构建目标中。错误措辞和提示可能因编译器版本而异。
+
+## 最终项目
+
+先运行不读写文件的内存版本：
+
+```sh
+cargo run -p taskbook --example memory
+```
+
+在一份新解压的练习目录中运行完整工具：
+
+```sh
+cargo run -p taskbook -- list
+cargo run -p taskbook -- add "学习 Rust"
+cargo run -p taskbook -- add "写练习"
+cargo run -p taskbook -- done 1
+cargo run -p taskbook -- list
+```
+
+默认在当前工作目录中读写 `tasks.tsv`。如果有已有任务，两条新增命令会接着分配编号，而不是固定得到 1、2。不要把它指向其他程序的数据文件。
+
+macOS / Linux 可以为一次运行指定文件：
+
+```sh
+TASKBOOK_FILE=practice-tasks.tsv cargo run -p taskbook -- list
+```
+
+PowerShell 可以先运行 `$env:TASKBOOK_FILE = "practice-tasks.tsv"`，随后运行 Cargo 命令；结束后用 `Remove-Item Env:TASKBOOK_FILE` 移除设置。
+
+本工具面向学习和单进程顺序使用。它会覆盖写入整个任务文件；未实现事务、文件锁、并发写入协调和写入中断恢复。
+
+## 复查命令
+
+```sh
+cargo fmt --all -- --check
+cargo clippy --workspace --all-targets --offline -- -D warnings
+cargo test --workspace --offline
+cargo test --workspace --all-targets --offline
+cargo test --workspace --doc --offline
+cargo build -p taskbook --release --offline
+```
+
+`cargo test --workspace` 包含文档测试，`--all-targets` 包括示例里的测试。它们不会执行每个示例的 `main`；观察示例输出需要分别使用 `cargo run --example`。测试会在独立临时目录读写文件，不使用当前目录的 `tasks.tsv`。
+
+2026-10-12 逐个运行了 19 个正常示例与独立答案，确认 7 个编译失败案例按预期失败，并直接从教材正文重建了第 11～12 章项目，检查读者跟写时的构建、测试和保存结果。文章中的安装步骤未在全新机器上重新执行。
+
+2026-10-13 展开了第 1～3 节，并同步调整 `ch03_flow` 与 `answer03`，使第三节只使用数字、布尔值与固定长度数组。直接从三节正文提取并运行了 32 个完整程序，确认 2 个故意编译失败的例子符合预期，检查了 3 组修改输入，并在新建 Cargo 项目中运行首个程序。
+
+## 继续练习
+
+先尝试从空项目重写 `taskbook`，再增加只列出未完成任务或关键词搜索。每次只增加一种行为，写清输入、输出和失败条件，再加入对应测试。
