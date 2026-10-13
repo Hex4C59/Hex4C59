@@ -1,13 +1,13 @@
-在这里记录我的学习与思考，也把实践中的问题、解法和收获写进博客。
+I write about what I learn and think through, sharing the problems I encounter, the solutions I try, and the lessons I take away.
 
-> 好的想法需要地方降落，否则它们只会飘走！
+> Good ideas need a place to land, or they drift away.
 
-## 我关注的方向
+## Interests
 
-AI Agent、音视频开发和 rewriting existing software in Rust
+AI agents, audio/video development, and rewriting existing software in Rust.
 
-## 我的博客
+## Blog
 
-[Hex4C59's Blog](https://hex4c59.cc/) 这是我的博客：
+[Hex4C59's Blog](https://hex4c59.cc/)
 
-欢迎阅读，也欢迎评论交流想法。
+Feel free to read, leave a comment, or share your thoughts.
