@@ -1,5 +1,10 @@
 {{- /* Validate metadata independently of subject names and source folders. */ -}}
 {{- $articleSections := partialCached "site/article-sections.html" site -}}
+{{- range site.RegularPages -}}
+  {{- if and (in $articleSections .Section) (reflect.IsSlice .Params.tags) -}}
+    {{- if gt (len .Params.tags) 3 -}}{{- errorf "%s: tags must contain at most 3 entries" .File.Path -}}{{- end -}}
+  {{- end -}}
+{{- end -}}
 {{- $sectionKeys := slice -}}
 {{- range site.Data.sections.sections -}}
   {{- if in $sectionKeys .key -}}{{- errorf "sections: duplicate key %q" .key -}}{{- end -}}

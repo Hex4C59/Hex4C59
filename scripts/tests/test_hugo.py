@@ -41,8 +41,11 @@ class HugoContentTest(unittest.TestCase):
                         'tags = []\ncategories = ["ai"]\n' + fields + '\n+++\n' + body)
         return path
 
-    def build(self, error=None):
-        result = subprocess.run(["hugo", "--gc", "--minify", "--source", str(self.root)],
+    def build(self, error=None, include_drafts=False):
+        command = ["hugo", "--gc", "--minify", "--source", str(self.root)]
+        if include_drafts:
+            command.append("--buildDrafts")
+        result = subprocess.run(command,
                                 capture_output=True, text=True)
         output = result.stdout + result.stderr
         if error is None:
@@ -99,6 +102,24 @@ class HugoContentTest(unittest.TestCase):
         self.article(slug="hub", fields='series = ["course"]\nseries_index = true\nlayout = "series"')
         self.build()
         self.assertIn('katex.min.js', (self.output / "tutorials/hub/index.html").read_text())
+
+    def test_three_tags_are_allowed(self):
+        path = self.article()
+        path.write_text(path.read_text().replace('tags = []', 'tags = ["Rust", "所有权", "借用"]'))
+        self.build()
+
+    def test_more_than_three_tags_are_rejected(self):
+        path = self.article()
+        path.write_text(path.read_text().replace('tags = []', 'tags = ["Rust", "所有权", "借用", "移动"]'))
+        result = self.build("tags must contain at most 3 entries")
+        self.assertIn("tutorials/lesson/index.md", result.stdout + result.stderr)
+
+    def test_draft_tags_are_checked_when_included(self):
+        path = self.article()
+        path.write_text(path.read_text().replace('tags = []', 'tags = ["a", "b", "c", "d"]')
+                        .replace('draft = false', 'draft = true'))
+        self.build()
+        self.build("tags must contain at most 3 entries", include_drafts=True)
 
     def test_invalid_article_type(self):
         self.article(section="agent", fields='article_type = "typo"\ndifficulty = "beginner"')
