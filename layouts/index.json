@@ -1,5 +1,11 @@
 {{- $index := slice -}}
 {{- range partialCached "site/articles.html" site -}}
-  {{- $index = $index | append (dict "title" .Title "permalink" .RelPermalink "summary" (.Description | default .Summary | plainify | htmlUnescape) "content" .Plain "tags" (.Params.tags | default slice) "series" (.Params.series | default slice) "date" (.Date.Format "2006-01-02") "section" .Section "categories" (partial "site/categories.html" .) "source_kind" (partial "site/source.html" .)) -}}
+  {{- $labels := slice -}}{{- range .Params.categories -}}{{- $labels = $labels | append (index site.Data.categories .).label -}}{{- end -}}
+  {{- $aliases := slice -}}
+  {{- range .GetTerms "tags" -}}
+    {{- range .Params.aliases -}}{{- $aliases = $aliases | append (replace (path.Base (replaceRE `/$` "" .)) "-" " ") -}}{{- end -}}
+  {{- end -}}
+  {{- $source := partial "site/source.html" . -}}
+  {{- $index = $index | append (dict "title" .Title "permalink" .RelPermalink "summary" (.Description | default .Summary | plainify | htmlUnescape) "content" .Plain "tags" (.Params.tags | default slice) "tag_aliases" (uniq $aliases) "series" (.Params.series | default slice) "date" (.Date.Format "2006-01-02") "section" .Section "categories" (partial "site/categories.html" .) "category_labels" $labels "source_kind" $source "source_label" (index site.Data.article_sources $source).label) -}}
 {{- end -}}
 {{- $index | jsonify -}}

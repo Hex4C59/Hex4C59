@@ -170,6 +170,8 @@ class HugoContentTest(unittest.TestCase):
         self.assertIn('href=/categories/travel/', html)
         self.assertIn('旅行', html)
         self.assertIn('<title>旅行 |', (self.output / 'categories/travel/index.html').read_text())
+        import json
+        self.assertEqual(json.loads((self.output / 'index.json').read_text())[0]['category_labels'], ['旅行'])
         self.assertNotIn('js/copy-code.js', html)
         self.assertNotIn('katex.min.js', html)
         for url in ('/', '/articles/', '/series/', '/about/'):
@@ -239,6 +241,20 @@ class HugoContentTest(unittest.TestCase):
         self.build()
         html = (self.output / "tutorials/one/index.html").read_text()
         self.assertIn('data-series-sidebar=/tutorials/hub/', html)
+
+    def test_tag_aliases_remain_searchable(self):
+        import json
+        p = self.article(section="articles")
+        p.write_text(p.read_text().replace('tags = []', 'tags = ["记忆"]'))
+        term = self.content / 'tags/记忆/_index.md'
+        term.parent.mkdir(parents=True)
+        term.write_text('+++\ntitle = "记忆"\naliases = ["/tags/memory/"]\n+++\n')
+        self.build()
+        entry = json.loads((self.output / 'index.json').read_text())[0]
+        self.assertEqual(entry['tags'], ['记忆'])
+        self.assertIn('memory', entry['tag_aliases'])
+        self.assertEqual(entry['source_label'], '原创')
+        self.assertTrue((self.output / 'tags/memory/index.html').exists())
 
     def test_mixed_optional_formats_have_flat_filter_values(self):
         self.article(section="articles", slug="plain")

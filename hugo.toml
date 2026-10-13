@@ -93,7 +93,7 @@ buildExpired = false
     threshold = 0.4
     ignoreLocation = true
     minMatchCharLength = 2
-    keys = ["title", "summary", "content", "tags", "series"]
+    keys = ["title", "summary", "content", "tags", "tag_aliases", "series", "category_labels", "source_label"]
 
 [markup]
   [markup.goldmark.renderer]
