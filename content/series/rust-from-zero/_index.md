@@ -9,3 +9,5 @@ series_status: "18 章教材与配套项目已发布"
 这套教材按知识依赖顺序编排，每章都有完整示例、练习和参考答案。先运行、再修改、再独立完成练习。第十一、十二章把基础知识组合成能够保存数据的待办工具，后续章节扩展查询、JSON、备份与命令行接口，并用本机服务学习 HTTP 请求。
 
 [从学习指南开始](/posts/rust-00-learning-guide/) · [下载配套源码](/posts/rust-from-zero/course.zip)
+
+正式章节之外还提供[分级练习与项目验收](/posts/rust-practice-checkpoints/)和[常见错误排查](/posts/rust-troubleshooting/)。所有权与生命周期图解分别放在第四、九章中。

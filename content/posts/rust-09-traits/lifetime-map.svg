@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 0 680 454" role="img" aria-labelledby="title desc">
+<title id="title">引用和所有者作用域的关系</title><desc id="desc">上方的引用在所有者有效期间使用，可以编译。下方想在内层所有者离开作用域后使用引用，编译器拒绝。</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5"/></marker></defs>
+<style>text{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;fill:#444441;font-size:14px}.title{font-size:16px;font-weight:600}.small{font-size:12px;fill:#5f5e5a}.panel{fill:#faf9f6;stroke:#d8d6cf;stroke-width:1}.value{fill:#eeedfe;stroke:#534ab7;stroke-width:1}.owner{fill:#e1f5ee;stroke:#0f6e56;stroke-width:1}.ref{fill:#e6f1fb;stroke:#185fa5;stroke-width:1}.arrow{fill:none;stroke:#0f6e56;stroke-width:1.5;marker-end:url(#arrow)}.borrow{fill:none;stroke:#185fa5;stroke-width:1.5;stroke-dasharray:5 4;marker-end:url(#arrow)}.invalid{fill:#fce6e3;stroke:#c94d3d;stroke-width:1}.muted{fill:#f1efe8;stroke:#aaa89e;stroke-width:1}</style>
+<rect width="680" height="454" rx="8" fill="#fff"/>
+<text x="24" y="30" class="title">引用要使用时，它指向的数据必须仍然有效</text>
+<rect class="panel" x="16" y="48" width="648" height="150" rx="8"/>
+<text x="32" y="73">可以编译：在 title 的作用域内使用 view</text>
+<text x="40" y="109">title</text><rect class="owner" x="116" y="89" width="464" height="26" rx="6"/>
+<text x="128" y="107" class="small">创建 String</text><text x="476" y="107" class="small">离开作用域</text>
+<text x="40" y="149">view</text><rect class="ref" x="254" y="129" width="180" height="26" rx="6"/>
+<text x="264" y="147" class="small">借用</text><text x="352" y="147" class="small">最后一次使用</text>
+<path class="borrow" d="M312 127V119"/>
+<text x="116" y="180" class="small">view 的使用完全位于 title 仍然有效的范围内。</text>
+<rect class="panel" x="16" y="212" width="648" height="166" rx="8"/>
+<text x="32" y="237">不能编译：title 离开内层作用域后，仍想使用 view</text>
+<text x="40" y="273">title</text><rect class="owner" x="116" y="253" width="244" height="26" rx="6"/>
+<text x="128" y="271" class="small">创建 String</text><text x="278" y="271" class="small">作用域结束</text>
+<path d="M364 248V332" stroke="#993c1d" stroke-dasharray="4 4"/>
+<text x="40" y="313">view</text><path class="borrow" d="M254 303H542"/>
+<rect class="invalid" x="476" y="287" width="144" height="32" rx="6"/><text x="548" y="308" text-anchor="middle">这里仍想打印 view</text>
+<text x="116" y="354" class="small">增加生命周期标注不能延长 title 的存活时间。</text>
+<path class="arrow" d="M40 409H636"/><text x="40" y="434" class="small">程序执行顺序 →</text>
+</svg>

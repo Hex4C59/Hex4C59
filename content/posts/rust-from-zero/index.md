@@ -42,6 +42,13 @@ ShowToc = true
 - [Rust 入门 17：用 clap 整理命令行接口](/posts/rust-17-clap/)
 - [Rust 入门 18：请求本机 HTTP 服务，读取 JSON 响应](/posts/rust-18-http/)
 
+## 练习与查阅附录
+
+- [三个阶段的分级练习与项目验收](/posts/rust-practice-checkpoints/)：第六、十二、十八章后的独立练习和可运行答案。
+- [从报错位置找到问题](/posts/rust-troubleshooting/)：工具、工作区、所有权、依赖和运行错误的检查顺序。
+
+附录供练习和查阅，不计入十八章的顺序。第四、九章另有所有权和生命周期图解。
+
 ## 源码与运行方式
 
 解压下载包，进入 `rust-course` 目录。安装好 Rust 工具链后运行：

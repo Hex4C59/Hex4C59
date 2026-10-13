@@ -111,6 +111,23 @@ cargo build --workspace --release --locked --offline
 
 第十六章的任务比较答案保存为 `answer16`；第十七章的 `stats` 和第十八章的字段别名练习在正文中提供，主版本未预先加入。各工作区的 `cargo test` 不会执行其他工作区的测试。
 
+## 分级练习与项目验收
+
+教材新增两篇独立附录：分级练习与项目验收、常见错误排查。第四、九章的图解随网页提供，下载包保留对应代码。
+
+前两个阶段在外层 `rust-course` 运行：
+
+```sh
+cargo run -p rust-basics --example checkpoint06
+cargo test -p rust-basics --example checkpoint06
+cargo run -p rust-basics --example checkpoint12 -- practice-minutes.txt total
+cargo test -p rust-basics --example checkpoint12
+```
+
+`checkpoint06` 在内存中管理书单；`checkpoint12` 是独立的学习时长记录器，文件每行一个 1～1440 的整数。文件缺失时 `total` 输出 0 而不创建文件；`add` 覆盖保存全文，没有事务、文件锁和写入中断恢复。用专门的练习目录检查文件行为。
+
+第十八章后的顺序客户端位于 `projects/lesson-http/examples/checkpoint18.rs`。在同机启动最多三个一次性服务，再从 `projects` 运行 `cargo run -p lesson-http --example checkpoint18 -- --port 端口1 端口2`，将端口占位文字换成实际数字。失败后继续请求后续端口；全部成功退出 0，任一请求失败退出 1，参数错误退出 2。它仍只访问本机，不实现整个批次的绝对截止时间。
+
 ## 故意失败的例子
 
 `compile-fail/` 不属于 Cargo 的正常构建目标。它们用于观察编译器如何拒绝不合法程序，在当前目录单独运行：
@@ -129,6 +146,9 @@ rustc --explain E0382
 | `dangling.rs` | E0515 | 返回指向局部变量的引用 |
 | `string_index.rs` | E0277 | 试图用整数索引字符串 |
 | `missing_lifetime.rs` | E0106 | 多个输入引用的返回关系未说明 |
+| `support-move.rs` | E0382 | 排错附录：移动后打印旧绑定 |
+| `support-borrow.rs` | E0502 | 排错附录：共享引用仍需使用时修改字符串 |
+| `support-lifetime.rs` | E0597 | 排错附录：内层所有者销毁后使用引用 |
 
 这些命令应该失败，不要为了让整套教材“零错误”把它们加到正常构建目标中。错误措辞和提示可能因编译器版本而异。
 
@@ -182,6 +202,8 @@ cargo build -p taskbook --release --offline
 2026-10-13 新增第 13～15 章，在 macOS arm64、rustc 1.99.0、cargo 1.99.0 上运行了练习工作区的 20 项测试和基础工作区的 15 项测试，并通过格式检查、Clippy 与练习工作区 release 构建。另按正文重建三个项目，核对 4 个示例的输出、命令行演示、2 个预期编译错误和 2 道修改练习。基础工作区还在空 Cargo 缓存下离线运行；最低 Rust 1.85 和其他系统仍未实测。
 
 2026-10-13 新增第 16～18 章，在 macOS arm64、rustc 1.99.0、cargo 1.99.0 上运行 `projects` 工作区的 14 项测试，并通过格式检查、Clippy 和 release 构建。另从正文重建 12 个完整文件，运行备份与恢复、命令行演示、1 个独立答案和本机 HTTP 的 5 种响应模式；第十七章统计命令与第十八章字段别名的修改练习也通过了实际测试。最低 Rust 1.85、Windows 和 Linux 仍未实测。
+
+2026-10-13 补充分级练习和排错附录，从正文提取并运行内存书单、文件时长记录器和批量本机客户端。两个基础示例新增的 6 项单元测试通过；另检查跨进程保存、无效参数和损坏文件不被覆盖，确认 3 个预期编译错误及其修正版。批量客户端检查了 4 种响应组合和 3 种参数错误，服务响应改为 45 分钟和 0 分钟的练习也已实际运行。基础与 `projects` 工作区通过格式检查、Clippy 和全目标测试；验证环境仍为 macOS arm64、rustc 1.99.0、cargo 1.99.0，最低工具链和其他系统未在本轮实测。
 
 ## 继续练习
 
