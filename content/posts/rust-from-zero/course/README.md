@@ -1,6 +1,6 @@
 # Rust 从零开始：配套源码
 
-这份源码配合《Rust 从零开始》中文教材使用。先安装 Rust 工具链，再在终端进入本文件所在的 `rust-course` 目录。第 1～14 章的业务示例只使用标准库和本地库，第 15 章使用 Serde 与 serde_json。基础工作区和 `practice` 练习工作区分别运行。
+这份源码配合《Rust 从零开始》中文教材使用。先安装 Rust 工具链，再在终端进入本文件所在的 `rust-course` 目录。第 1～14 章的业务示例只使用标准库和本地库，第 15～16 章使用 Serde 与 serde_json，第 17 章加入 clap，第 18 章使用 reqwest 访问本机服务。基础、`practice` 和 `projects` 三个工作区分别运行。
 
 项目采用 2024 edition，声明最低 Rust 版本为 1.85。本次于 2026-10-12 在 macOS arm64、rustc 1.99.0、cargo 1.99.0 上验证；没有实际验证最低版本或其他操作系统。
 
@@ -81,6 +81,36 @@ cargo build --workspace --release --offline
 
 第十三章的批量清除和第十四章的分钟数上限练习在正文给出，不预先修改主版本。第十五章的默认字段练习保存为 `answer15`。
 
+## 第 16～18 章项目
+
+从 `rust-course` 进入新的独立工作区：
+
+```sh
+cd projects
+cargo fetch --locked
+cargo run -p taskbook-cli -- --help
+cargo run -p lesson-http --example serve
+```
+
+- `taskbook-backup`：验证源 JSON，原样复制到新文件；备份和恢复都拒绝已有目标。
+- `taskbook-cli`：复用旧任务与 JSON 逻辑，使用 clap 的子命令、`--file`、帮助和版本接口；不读取旧包的任务文件环境变量。
+- `lesson-http`：使用 reqwest 阻塞客户端请求 `127.0.0.1` 的一次性练习服务。服务打印实际端口后，在另一个同机终端运行 `cargo run -p lesson-http -- --port 实际端口`，将最后一个参数换成显示的数字。每次请求前需重新启动服务。
+
+本轮固定 clap 4.6.7、reqwest 0.13.5，并沿用 Serde 1.0.229 与 serde_json 1.0.154。`projects/Cargo.lock` 固定间接依赖。首次获取需要网络，之后可用 `--locked --offline`；本机请求练习没有启用 TLS，不访问公网或使用账号密钥。
+
+备份前先停止其他写入程序。复制没有事务、锁或断电恢复；目标创建后若写入失败，可能留下部分内容。恢复创建新文件，旧任务文件仍保留。普通 JSON 保存也继续覆盖整个文件。HTTP 的阻塞读写超时不是整个 `fetch` 函数的绝对截止时间。
+
+在 `projects` 中复查：
+
+```sh
+cargo fmt --all -- --check
+cargo clippy --workspace --all-targets --locked --offline -- -D warnings
+cargo test --workspace --all-targets --locked --offline
+cargo build --workspace --release --locked --offline
+```
+
+第十六章的任务比较答案保存为 `answer16`；第十七章的 `stats` 和第十八章的字段别名练习在正文中提供，主版本未预先加入。各工作区的 `cargo test` 不会执行其他工作区的测试。
+
 ## 故意失败的例子
 
 `compile-fail/` 不属于 Cargo 的正常构建目标。它们用于观察编译器如何拒绝不合法程序，在当前目录单独运行：
@@ -150,6 +180,8 @@ cargo build -p taskbook --release --offline
 2026-10-13 展开了第 1～3 节，并同步调整 `ch03_flow` 与 `answer03`，使第三节只使用数字、布尔值与固定长度数组。直接从三节正文提取并运行了 32 个完整程序，确认 2 个故意编译失败的例子符合预期，检查了 3 组修改输入，并在新建 Cargo 项目中运行首个程序。
 
 2026-10-13 新增第 13～15 章，在 macOS arm64、rustc 1.99.0、cargo 1.99.0 上运行了练习工作区的 20 项测试和基础工作区的 15 项测试，并通过格式检查、Clippy 与练习工作区 release 构建。另按正文重建三个项目，核对 4 个示例的输出、命令行演示、2 个预期编译错误和 2 道修改练习。基础工作区还在空 Cargo 缓存下离线运行；最低 Rust 1.85 和其他系统仍未实测。
+
+2026-10-13 新增第 16～18 章，在 macOS arm64、rustc 1.99.0、cargo 1.99.0 上运行 `projects` 工作区的 14 项测试，并通过格式检查、Clippy 和 release 构建。另从正文重建 12 个完整文件，运行备份与恢复、命令行演示、1 个独立答案和本机 HTTP 的 5 种响应模式；第十七章统计命令与第十八章字段别名的修改练习也通过了实际测试。最低 Rust 1.85、Windows 和 Linux 仍未实测。
 
 ## 继续练习
 

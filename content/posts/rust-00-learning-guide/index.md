@@ -17,11 +17,11 @@ ShowToc = true
 
 如果你还不会 Rust，可以从这套教材的第一章开始。你不需要事先掌握 C、C++ 或其他编程语言；需要会创建文件、安装软件，并愿意在终端里运行命令。第一章会解释这些命令在做什么。
 
-学完后，你应该能独立创建一个 Rust 项目，处理文本和列表，把代码拆成函数和模块，读懂常见编译错误，并写出一个能够保存数据的命令行工具。这是本教材的入门目标。网络服务、异步编程、并发、`unsafe` 和嵌入式开发留到后续专题；它们各自需要更多练习。
+学完后，你应该能独立创建一个 Rust 项目，处理文本和列表，把代码拆成函数和模块，读懂常见编译错误，并写出一个能够保存数据的命令行工具。这是本教材的入门目标。第十八章会用本机服务介绍 HTTP 请求。异步编程、并发、完整网络服务、`unsafe` 和嵌入式开发留到后续专题；它们各自需要更多练习。
 
 ## 先看最后会做出什么
 
-最后两章会实现 `taskbook`，一个在终端使用的待办工具。命令行界面（Command Line Interface，CLI）指用文字命令操作程序的方式。
+第十一、十二章会实现 `taskbook`，一个在终端使用的待办工具。命令行界面（Command Line Interface，CLI）指用文字命令操作程序的方式。
 
 ```sh
 cargo run -p taskbook -- add "学习 Rust"
@@ -41,7 +41,7 @@ cargo run -p taskbook -- list
 
 ## 下载源码，建立练习目录
 
-下载 [Rust 从零开始配套源码](/posts/rust-from-zero/course.zip)，解压后会得到一个 `rust-course` 目录。基础工作区有两个 Cargo 包；后续练习另放在 `practice` 工作区：
+下载 [Rust 从零开始配套源码](/posts/rust-from-zero/course.zip)，解压后会得到一个 `rust-course` 目录。基础工作区有两个 Cargo 包；后续练习另放在 `practice` 和 `projects` 工作区：
 
 ```text
 rust-course/
@@ -56,10 +56,14 @@ rust-course/
 │   ├── src/               第 11～12 章项目
 │   ├── examples/          第 11 章内存版本
 │   └── tests/             命令行集成测试
-└── practice/
-    ├── taskbook-plus/     第 13 章功能扩展
-    ├── error-lab/         第 14 章错误类型
-    └── taskbook-json/     第 15 章 JSON 存储
+├── practice/
+│   ├── taskbook-plus/     第 13 章功能扩展
+│   ├── error-lab/         第 14 章错误类型
+│   └── taskbook-json/     第 15 章 JSON 存储
+└── projects/
+    ├── taskbook-backup/   第 16 章备份与恢复
+    ├── taskbook-cli/      第 17 章 clap 命令行
+    └── lesson-http/       第 18 章本机 HTTP 请求
 ```
 
 先按第一章安装工具。之后在终端进入解压出的目录，例如：
@@ -83,6 +87,8 @@ cargo run -p rust-basics --example ch01_hello
 
 第 13～15 章放在 `rust-course/practice`。它包含功能扩展、错误类型和 JSON 存储三个包，不属于前面的基础工作区。先在这个目录运行 `cargo fetch --locked` 获取练习依赖，再运行带 `-p taskbook-plus`、`-p error-lab` 或 `-p taskbook-json` 的命令。第十五章使用 Serde 和 serde_json，首次获取依赖需要网络；下载包的锁文件固定了本轮使用的版本。
 
+第 16～18 章在 `rust-course/projects` 运行，包含 `taskbook-backup`、`taskbook-cli` 和 `lesson-http`。同样先运行 `cargo fetch --locked`。它们分别练习备份与恢复、clap 参数解析，以及只访问本机服务的 HTTP 请求；不要在外层工作区寻找这些包。
+
 ## 学习路线与验收
 
 | 阶段 | 章节 | 通过标准 |
@@ -92,6 +98,7 @@ cargo run -p rust-basics --example ch01_hello
 | 处理错误和组织代码 | 7～10 | 对无效输入返回错误，把逻辑拆成模块并写测试 |
 | 完成项目 | 11～12 | 新增、完成、列出任务；重启可读回；出错时给出明确提示 |
 | 继续完善项目 | 13～15 | 增加查询和删除，区分错误种类，把旧任务迁移到 JSON 新文件 |
+| 文件、命令行与网络 | 16～18 | 恢复到新文件，用 clap 检查参数，区分 HTTP、JSON 与业务失败 |
 
 第四章通常值得多做几遍。你可以在一章上停留几次练习，不必为了赶进度记住所有语法。第九章的生命周期先要求能读懂基本签名、解释引用来自哪里；复杂的泛型接口不在这次入门的验收范围内。
 
@@ -120,6 +127,8 @@ rustc --explain E0382
 2026-10-13 展开第 7～12 章后，直接从正文运行了 35 个正常程序，确认 7 个故意编译失败的例子，并检查 21 种输入或代码变体。第八章的库项目，以及第十一章到第十二章的待办工具，都按正文从新建 Cargo 项目重建，检查模块可见性、测试失败与恢复、错误传播、跨进程保存和无效输入不覆盖原文件。
 
 2026-10-13 新增第 13～15 章，在 macOS arm64、rustc 1.99.0、cargo 1.99.0 上运行了练习工作区的 20 项测试和基础工作区的 15 项测试，并通过格式检查、Clippy 与练习工作区 release 构建。另按正文重建三个项目，核对 4 个示例的输出、命令行演示、2 个预期编译错误和 2 道修改练习。基础工作区还在空 Cargo 缓存下离线运行；最低 Rust 1.85 和其他系统仍未实测。
+
+2026-10-13 新增第 16～18 章，在 macOS arm64、rustc 1.99.0、cargo 1.99.0 上运行 `projects` 工作区的 14 项测试，并通过格式检查、Clippy 和 release 构建。另从正文重建 12 个完整文件，运行备份与恢复、命令行演示、1 个独立答案和本机 HTTP 的 5 种响应模式；第十七章统计命令与第十八章字段别名的修改练习也通过了实际测试。最低 Rust 1.85、Windows 和 Linux 仍未实测。
 
 如果你的版本不同，错误消息的措辞可能不同。判断示例是否成功，主要看程序输出和测试结果。源码的 `README.md` 列出了复查命令。
 

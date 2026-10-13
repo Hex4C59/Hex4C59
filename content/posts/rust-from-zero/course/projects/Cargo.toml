@@ -1,0 +1,3 @@
+[workspace]
+members = ["taskbook-backup", "taskbook-cli", "lesson-http"]
+resolver = "3"

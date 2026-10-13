@@ -4,8 +4,8 @@ date = 2026-10-12T09:00:00+08:00
 lastmod = 2026-10-13T09:00:00+08:00
 draft = false
 author = "Hex4C59"
-description = "面向第一次学习 Rust 的中文教材。15 章讲解、完整代码、练习和参考答案，从基础语法到待办工具，再学习功能扩展、自定义错误与 JSON 数据迁移。"
-summary = "从安装和基础语法开始，学习所有权、集合、错误处理、测试、泛型和迭代器，再完成文件存储、功能扩展和 JSON 迁移项目。"
+description = "面向第一次学习 Rust 的中文教材。18 章讲解、完整代码、练习和参考答案，从基础语法到待办工具，再学习 JSON 迁移、备份恢复、clap 和本机 HTTP 请求。"
+summary = "从安装和基础语法开始，学习所有权、集合、错误处理、测试、泛型和迭代器，再完成 JSON 存储、备份恢复、命令行接口和 HTTP 请求项目。"
 tags = ["Rust", "编程入门", "教程"]
 categories = ["Programming"]
 series = ["rust-from-zero"]
@@ -13,8 +13,8 @@ series_order = 0
 layout = "series"
 series_index = true
 series_title = "Rust 从零开始"
-series_status = "15 章教材与配套项目已完成"
-series_intro = "从第一个能运行的程序开始，通过练习学会使用 Rust，做出能保存数据的命令行工具，再学习依赖管理和数据迁移。"
+series_status = "18 章教材与配套项目已发布"
+series_intro = "从第一个能运行的程序开始，通过练习学会使用 Rust，做出能保存数据的命令行工具，再学习依赖管理、备份和 HTTP 请求。"
 ShowToc = true
 +++
 
@@ -38,6 +38,9 @@ ShowToc = true
 - [Rust 入门 13：给待办工具增加筛选、搜索和删除](/posts/rust-13-taskbook-plus/)
 - [Rust 入门 14：用自定义错误类型保留失败原因](/posts/rust-14-typed-errors/)
 - [Rust 入门 15：用 Serde 保存 JSON，并迁移旧任务](/posts/rust-15-serde-json/)
+- [Rust 入门 16：备份任务数据，恢复到新文件](/posts/rust-16-backup/)
+- [Rust 入门 17：用 clap 整理命令行接口](/posts/rust-17-clap/)
+- [Rust 入门 18：请求本机 HTTP 服务，读取 JSON 响应](/posts/rust-18-http/)
 
 ## 源码与运行方式
 
@@ -50,7 +53,7 @@ cargo run -p taskbook -- list
 cargo test --workspace
 ```
 
-第 1～12 章使用基础工作区；第 13～15 章在 `practice` 工作区运行，第十五章使用 Serde 和 serde_json。更多命令、目录说明和验证范围见下载包中的 `README.md`。
+第 1～12 章使用基础工作区；第 13～15 章在 `practice` 工作区运行；第 16～18 章在 `projects` 工作区运行。JSON 项目使用 Serde，后续命令行和 HTTP 项目分别使用 clap 与 reqwest。更多命令、目录说明和验证范围见下载包中的 `README.md`。
 
 ```sh
 cd practice
@@ -59,3 +62,14 @@ cargo run -p taskbook-plus -- pending
 cargo run -p error-lab -- 30
 cargo run -p taskbook-json --example serde_basics
 ```
+
+第 16～18 章的命令从 `rust-course/projects` 运行，首次获取依赖需要网络。HTTP 示例只连接同机启动的练习服务：
+
+```sh
+cd ../projects
+cargo fetch --locked
+cargo run -p taskbook-cli -- --help
+cargo run -p lesson-http --example serve
+```
+
+服务打印端口后，在另一个进入 `projects` 的终端运行客户端。完整步骤、预期输出和失败条件见第十八章。

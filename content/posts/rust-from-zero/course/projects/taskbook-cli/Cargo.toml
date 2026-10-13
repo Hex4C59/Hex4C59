@@ -1,0 +1,13 @@
+[package]
+name = "taskbook-cli"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+publish = false
+
+[dependencies]
+clap = { version = "=4.6.7", features = ["derive"] }
+taskbook = { path = "../../taskbook" }
+taskbook-plus = { path = "../../practice/taskbook-plus" }
+taskbook-json = { path = "../../practice/taskbook-json" }
+taskbook-backup = { path = "../taskbook-backup" }
