@@ -1,7 +1,7 @@
 {{ $page := . }}{{ $date := "" }}{{ if reflect.IsMap . }}{{ $page = .Page }}{{ $date = .Updated }}{{ end }}
 {{ with $page }}
 {{ $series := false }}{{ if .Params.series_index }}{{ $series = partial "series/data.html" . }}{{ end }}
-<article class="post-line{{ if $series }} post-line-series{{ end }}">
+<article class="post-line{{ if $series }} post-line-series{{ end }}"{{ with .Params.categories }} data-category="{{ index . 0 }}"{{ end }}>
   {{ $displayDate := $date | default .Date }}
   <time class="line-date" datetime="{{ $displayDate.Format "2006-01-02" }}">{{ $displayDate.Format "2006-01-02" }}</time>
   <div class="line-body">

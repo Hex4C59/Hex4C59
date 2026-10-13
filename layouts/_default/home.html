@@ -1,12 +1,50 @@
 {{ define "main" }}
-{{ $pages := partial "series/recent-pages.html" (partialCached "site/articles.html" site) }}
+{{ $articles := partialCached "site/articles.html" site }}
+{{ $pages := partial "series/recent-pages.html" $articles }}
 {{ $catalog := partialCached "series/catalog.html" site }}
-<section class="intro" aria-labelledby="intro-title"><h2 id="intro-title">{{ site.Params.homeIntroTitle }}</h2><p>{{ site.Params.homeIntroContent }}</p></section>
-{{ $starts := slice }}{{ range site.Params.startSeries }}{{ range where $catalog "Key" . }}{{ $starts = $starts | append . }}{{ end }}{{ end }}
-{{ with $starts }}<section class="home-start" aria-labelledby="start-title"><div class="section-heading"><h2 id="start-title">从这里开始</h2><a href="{{ "about/" | relURL }}">关于博客 <span aria-hidden="true">↗</span></a></div><div class="start-links">{{ range . }}<a href="{{ .Start.RelPermalink }}"><span class="muted">{{ .Kind }}</span><strong>{{ .Title }}</strong><span>{{ .Start.Params.series_label | default .Start.Title }} →</span></a>{{ end }}</div></section>{{ end }}
-{{ $featured := slice }}{{ range site.Params.featuredSeries }}{{ range where $catalog "Key" . }}{{ $featured = $featured | append . }}{{ end }}{{ end }}{{ if not $featured }}{{ $featured = first 3 $catalog }}{{ end }}
-{{ with $featured }}<section class="home-series" aria-labelledby="featured-series-title"><div class="section-heading"><h2 id="featured-series-title">精选系列</h2><a href="{{ "series/" | relURL }}">全部系列 <span aria-hidden="true">↗</span></a></div><div class="series-directory">{{ range . }}{{ partial "series/entry.html" (dict "Series" .) }}{{ end }}</div></section>{{ end }}
-<section class="home-subjects" aria-labelledby="subject-title"><div class="section-heading"><h2 id="subject-title">按主题阅读</h2><a href="{{ "categories/" | relURL }}">全部分类 <span aria-hidden="true">↗</span></a></div><div class="home-subject-links">{{ $subjects := slice }}{{ range site.Taxonomies.categories }}{{ $config := index site.Data.categories .Page.Data.Term }}{{ $subjects = $subjects | append (dict "Page" .Page "Label" $config.label "Order" $config.order) }}{{ end }}{{ range sort $subjects "Order" }}<a href="{{ .Page.RelPermalink }}">{{ .Label }} <span aria-hidden="true">→</span></a>{{ end }}</div></section>
-<section class="list-container home-recent" aria-labelledby="recent-title"><div class="section-heading"><h2 id="recent-title">最近更新</h2><a href="{{ "articles/" | relURL }}">全部文章 <span aria-hidden="true">↗</span></a></div>{{ range first site.Params.paginationSize $pages }}{{ partial "post-entry.html" (dict "Page" . "Updated" (partial "series/updated.html" .)) }}{{ end }}</section>
+<section class="intro home-intro" aria-labelledby="intro-title">
+  <div class="intro-copy">
+    <h2 id="intro-title">{{ $lines := split site.Params.homeIntroTitle "，" }}{{ range $index, $line := $lines }}<span>{{ $parts := split $line "地方降落" }}{{ range $partIndex, $part := $parts }}{{ if $partIndex }}<span class="intro-highlight">地方降落</span>{{ end }}{{ $part }}{{ end }}{{ if lt $index (sub (len $lines) 1) }}，{{ end }}</span>{{ end }}</h2>
+    <p>{{ site.Params.homeIntroContent }}</p>
+  </div>
+  <div class="intro-art" aria-hidden="true">{{ with resources.Get "profile/reader.svg" }}{{ .Content | safeHTML }}{{ end }}</div>
+</section>
+
+{{ $starts := slice }}
+{{ range site.Params.startSeries }}{{ range where $catalog "Key" . }}{{ $starts = $starts | append . }}{{ end }}{{ end }}
+{{ with $starts }}
+<section class="home-start" aria-labelledby="start-title">
+  <div class="section-heading"><h2 id="start-title">从这里开始</h2><a href="{{ "about/" | relURL }}">关于博客 <span aria-hidden="true">↗</span></a></div>
+  <div class="start-links">
+    {{ range . }}<a href="{{ .Start.RelPermalink }}" data-series-key="{{ .Key }}"><span class="muted">{{ .Kind }}</span><strong>{{ .Title }}</strong><span>{{ .Start.Params.series_label | default .Start.Title }} <span aria-hidden="true">→</span></span></a>{{ end }}
+  </div>
+</section>
+{{ end }}
+
+<div class="home-reading-layout">
+  <section class="list-container home-recent" aria-labelledby="recent-title">
+    <div class="section-heading"><h2 id="recent-title">最近更新</h2><a href="{{ "articles/" | relURL }}">全部文章 <span aria-hidden="true">↗</span></a></div>
+    {{ range first site.Params.paginationSize $pages }}{{ partial "post-entry.html" (dict "Page" . "Updated" (partial "series/updated.html" .)) }}{{ end }}
+  </section>
+  <div class="home-reading-rail">
+    {{ $featured := slice }}
+    {{ range site.Params.featuredSeries }}{{ range where $catalog "Key" . }}{{ $featured = $featured | append . }}{{ end }}{{ end }}
+    {{ if not $featured }}{{ $featured = first 3 $catalog }}{{ end }}
+    {{ with $featured }}
+    <section class="home-series" aria-labelledby="featured-series-title">
+      <div class="section-heading"><h2 id="featured-series-title">精选系列</h2><a href="{{ "series/" | relURL }}">全部系列 <span aria-hidden="true">↗</span></a></div>
+      <div class="series-directory">{{ range . }}{{ partial "series/entry.html" (dict "Series" .) }}{{ end }}</div>
+    </section>
+    {{ end }}
+    <section class="home-subjects" aria-labelledby="subject-title">
+      <div class="section-heading"><h2 id="subject-title">按主题阅读</h2><a href="{{ "categories/" | relURL }}">全部分类 <span aria-hidden="true">↗</span></a></div>
+      <div class="home-subject-links">
+        {{ $subjects := slice }}
+        {{ range site.Taxonomies.categories }}{{ $config := index site.Data.categories .Page.Data.Term }}{{ $subjects = $subjects | append (dict "Page" .Page "Label" $config.label "Order" $config.order "Count" (len (partial "series/list-pages.html" .Pages))) }}{{ end }}
+        {{ range sort $subjects "Order" }}<a href="{{ .Page.RelPermalink }}" data-category="{{ .Page.Data.Term }}"><span>{{ .Label }}</span><span class="subject-count">{{ .Count }} 个阅读入口</span></a>{{ end }}
+      </div>
+    </section>
+  </div>
+</div>
 <div class="home-follow"><a href="{{ "about/" | relURL }}">了解作者</a><a href="{{ "index.xml" | relURL }}">通过 RSS 订阅更新</a></div>
 {{ end }}

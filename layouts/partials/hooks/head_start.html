@@ -5,5 +5,8 @@
   const theme = preferred === 'dark' || (preferred !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
   document.documentElement.dataset.theme = theme;
   document.documentElement.style.colorScheme = theme;
+  let motion;
+  try { motion = localStorage.getItem('pref-motion'); } catch (_) {}
+  document.documentElement.dataset.motion = motion === 'off' || matchMedia('(prefers-reduced-motion: reduce)').matches ? 'off' : 'on';
 })();
 </script>

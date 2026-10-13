@@ -23,6 +23,12 @@
 | `.agents/` | 内部写作与操作规则，不发布为正文 |
 | `themes/typo/` | 当前使用的上游主题；本站覆盖优先放在 `layouts/` 和 `assets/` |
 
+## 站点外观与动效
+
+本站的排版覆盖位于 `assets/css/site.css`，配色和交互样式集中在 `assets/css/chroma.css`，通过 `layouts/partials/head/css.html` 合并。亮色与暗色使用同一组语义变量。首页主栏展示最近文章，侧栏展示系列和主题；阅读插画复用个人主页的 Open Doodles 素材，来源见 `assets/profile/README.md`。
+
+`assets/js/motion.js` 管理首页首屏以外内容的短距离滚动入场，以及页脚中的动效开关。首屏内容直接显示，不运行循环动画。动效偏好存储在本机 `localStorage`；系统启用“减少动态效果”时优先关闭动画。无 JavaScript 时正文和导航仍可使用。支持 CSS 滚动时间线的浏览器会在文章顶部显示阅读进度。
+
 ## 新建文章
 
 先按[内容归类规则](../.agents/content/section-routing.md)选择主题、来源、形式和阅读关系。新文章统一放在 `articles`，内容可以是技术、阅读、旅行或日常观察。

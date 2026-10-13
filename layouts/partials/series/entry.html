@@ -1,5 +1,5 @@
 {{ $series := .Series }}{{ $heading := .Heading | default "h3" }}
-<article class="series-feature">
+<article class="series-feature" data-series-key="{{ $series.Key }}">
   <div class="series-feature-heading">
     <p class="series-feature-kind">{{ $series.Kind }}</p>
     {{ printf "<%s class='series-feature-title'>" $heading | safeHTML }}<a href="{{ $series.Page.RelPermalink }}">{{ $series.Title }}</a>{{ printf "</%s>" $heading | safeHTML }}
