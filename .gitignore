@@ -33,5 +33,8 @@ venv/
 .env.*
 !.env.example
 
-# 本地 Agent 文件
-/.agents/
+# 本地 Agent 文件；栏目规则允许纳入版本控制
+/.agents/*
+!/.agents/content/
+/.agents/content/*
+!/.agents/content/section-routing.md

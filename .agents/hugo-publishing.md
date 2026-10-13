@@ -11,6 +11,6 @@
 ## Local and CI checks
 
 - 本地预览使用 `hugo server -D`。
-- 发布构建使用 `hugo --gc --minify`；CI 的 Hugo 版本和完整构建参数以 [.github/workflows/deploy-hugo.yml](../.github/workflows/deploy-hugo.yml) 为准。
-- 发布前运行 `hugo --gc --minify` 与 `git diff --check`，并记录实际执行的命令。
+- 发布检查使用 `python3 scripts/build.py`，它运行 `hugo --gc --minify` 并检查生成链接和课程下载包。Hugo 版本由 [.hugo-version](../.hugo-version) 固定，完整构建参数以 [.github/workflows/deploy-hugo.yml](../.github/workflows/deploy-hugo.yml) 为准。
+- 发布前运行统一构建检查、`python3 -m unittest discover -s scripts/tests -v` 与 `git diff --check`，并记录实际执行的命令。目录、模板和资源入口见[维护说明](../docs/development.md)。
 - 修改项目行为、版本、接口或验证结果后，同时更新受影响的文章、`lastmod` 和相关延伸阅读，不要留下与当前代码不一致的旧示例。

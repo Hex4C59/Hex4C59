@@ -39,3 +39,5 @@ I write about what I learn along the way, from the first attempt to the lessons 
 Comments and conversations are always welcome.
 
 > Good ideas need a place to land, or they drift away.
+
+Blog maintenance: [development guide](docs/development.md).
