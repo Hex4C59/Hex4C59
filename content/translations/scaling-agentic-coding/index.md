@@ -6,8 +6,8 @@ draft = false
 author = "Hex4C59"
 description = "从试点、黑客松到内部专家与 CLAUDE.md，说明如何在组织内系统化落地 agentic coding，并衡量影响、规避常见采纳障碍。"
 summary = "成功与失败往往取决于执行：工作流、技能、团队动态与衡量方式，而非单一工具选型。"
-tags = []
-categories = ["Translations"]
+tags = ["Claude Code", "工程实践", "应用推广"]
+categories = ["engineering"]
 topics = ["claude-code", "engineering", "adoption"]
 translation_category = "工程实践"
 original_title = "How to scale agentic coding across your engineering organization"
@@ -16,6 +16,7 @@ original_author = "Anthropic"
 original_date = "2025-10-15"
 original_site = "Claude Blog"
 ShowToc = true
+source_kind = "translation"
 +++
 
 > **译文信息**  

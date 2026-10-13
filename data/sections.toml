@@ -1,3 +1,11 @@
+# Source folders retained for published URLs; primary navigation lives in navigation.toml.
+[[sections]]
+key = "articles"
+label = "文章"
+url = "/articles/"
+articles = true
+comments = true
+
 # Navigation order, article membership, comments and collection filters.
 # Classification by subject is described in .agents/content/section-routing.md.
 [[sections]]

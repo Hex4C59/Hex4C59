@@ -1,0 +1,7 @@
+{{ define "main" }}
+{{ partial "breadcrumbs.html" . }}
+<h1>标签</h1><p class="page-description">查找具体知识点、工具与对象。数字表示相关内容页的数量。</p>
+<label class="term-search">查找标签<input type="search" data-term-search placeholder="输入标签名称" aria-controls="tag-index"></label>
+<div class="term-list" id="tag-index" data-term-list>{{ range .Data.Terms.Alphabetical }}<a href="{{ .Page.RelPermalink }}" data-term="{{ .Page.LinkTitle | lower }}">{{ partial "collection/filter-label.html" (dict "Key" "tags" "Value" .Page.Data.Term) }} <span>{{ .Count }}</span></a>{{ end }}</div>
+<p class="empty-state" data-term-empty hidden>没有找到这个标签。</p>
+{{ end }}

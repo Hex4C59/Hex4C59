@@ -2,7 +2,7 @@
 {{- if .Lastmod.After $updated -}}{{- $updated = .Lastmod -}}{{- end -}}
 {{- if .Params.series_index -}}
   {{- with partial "series/data.html" . -}}
-    {{- range .Pages -}}
+    {{- range .Members -}}
       {{- if .Date.After $updated -}}{{- $updated = .Date -}}{{- end -}}
       {{- if .Lastmod.After $updated -}}{{- $updated = .Lastmod -}}{{- end -}}
     {{- end -}}

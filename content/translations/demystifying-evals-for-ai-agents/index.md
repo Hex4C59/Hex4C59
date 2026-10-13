@@ -5,8 +5,8 @@ draft = false
 author = "Hex4C59"
 description = "Anthropic 系统介绍 AI Agent 评估的组成、评分器、不同类型 Agent 的评估方法，以及从零搭建和长期维护评估体系的实践。"
 summary = "解释任务、试验、评分器、执行记录与最终结果的区别，比较代码、模型和人工评分，介绍编程、对话、研究与计算机操作 Agent 的评估方法，区分 pass@k 与 pass^k，并给出从初始数据集到长期维护的完整路线图。"
-tags = ["Agent", "Harness", "Claude", "评估", "测试"]
-categories = ["Translations"]
+tags = ["Agent", "Harness", "Claude", "评测", "自动化测试"]
+categories = ["ai"]
 topics = ["agents", "evaluation", "harness", "agentic-coding", "testing", "claude"]
 translation_category = "AI 与工具"
 original_title = "Demystifying evals for AI agents"
@@ -15,6 +15,8 @@ original_author = "Mikaela Grace, Jeremy Hadfield, Rodrigo Olivares, Jiri De Jon
 original_date = "2026-01-09"
 original_site = "Anthropic Engineering"
 ShowToc = true
+source_kind = "translation"
+lastmod = 2026-10-11T00:56:39+08:00
 +++
 
 > **译文信息**

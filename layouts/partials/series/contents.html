@@ -7,12 +7,15 @@
       {{ range .Pages }}
       <li>
         <a href="{{ .RelPermalink }}"{{ if eq . $current }} aria-current="page"{{ end }}>
-          <span class="chapter-number">{{ with .Params.series_number }}{{ printf "%02d" (int .) }}{{ else }}序言{{ end }}</span>
+          <span class="chapter-number">{{ with .Params.series_number }}{{ printf "%02d" (int .) }}{{ else }}导读{{ end }}</span>
           <span class="chapter-body"><span class="chapter-title">{{ .Params.series_label | default .Title }}</span></span>
         </a>
       </li>
       {{ end }}
     </ol>
   </section>
+  {{ end }}
+  {{ range $series.SupportGroups }}
+  <section class="series-part series-support"><h3>{{ .Title }}</h3><ul class="series-chapters">{{ range .Pages }}<li><a href="{{ .RelPermalink }}"{{ if eq . $current }} aria-current="page"{{ end }}><span class="chapter-number">附</span><span class="chapter-body"><span class="chapter-title">{{ .Params.series_label | default .Title }}</span></span></a></li>{{ end }}</ul></section>
   {{ end }}
 </div>

@@ -5,8 +5,8 @@ draft = false
 author = "Hex4C59"
 description = "从全自动 Agent 的真实风险出发，系统讲解 HITL 的三种介入模式、触发时机设计、暂停与恢复的工程实现，以及如何避免 Alert Fatigue 让 HITL 形同虚设。"
 summary = "Agent 不是越自动越好。本文系统分析 Human-in-the-Loop 的三种介入强度、触发逻辑、工程实现与常见陷阱，帮你在自主性与安全性之间找到合理的平衡点。"
-tags = ["Agent", "HITL", "Human-in-the-Loop", "Safety", "Guardrails", "Autonomy"]
-categories = ["Agent"]
+tags = ["Agent", "人在回路", "安全防护", "安全护栏", "Autonomy"]
+categories = ["ai"]
 series = ["agent-engineering"]
 series_order = 24
 difficulty = "intermediate"
@@ -14,6 +14,8 @@ article_type = "concept"
 topics = ["hitl", "human-in-the-loop", "safety", "autonomy", "agent-design"]
 frameworks = ["OpenAI"]
 ShowToc = true
+source_kind = "original"
+lastmod = 2026-04-02T02:58:46+00:00
 +++
 
 在 [Guardrails](/agent/guardrails-safety-boundary/) 那篇里，我们讲了如何用代码层面的防护边界约束 Agent 的行为——权限分级、沙箱隔离、输出过滤。这些机制有一个共同的假设：**防护逻辑在设计时就能写清楚**。

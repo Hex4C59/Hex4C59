@@ -6,7 +6,7 @@ author = "Hex4C59"
 description = "Simon Willison 介绍如何积累经过运行验证的代码示例，并让编程智能体组合和复用这些示例，以浏览器中的 PDF OCR 工具为例。"
 summary = "把已经做成的事情连同可运行代码记录下来。它们既能帮助开发者判断技术能做到什么，也能作为编程智能体构建新工具的参考。"
 tags = ["Agent", "智能体工程", "编程智能体", "代码复用", "OCR"]
-categories = ["Translations"]
+categories = ["engineering"]
 topics = ["agents", "agentic-engineering", "coding-agents", "code-reuse", "ocr"]
 translation_category = "工程实践"
 series = ["智能体工程模式"]
@@ -20,6 +20,8 @@ original_author = "Simon Willison"
 original_date = ""
 original_site = "Simon Willison’s Weblog"
 ShowToc = true
+source_kind = "translation"
+lastmod = 2026-10-11T21:22:32+08:00
 +++
 
 > **译文信息**

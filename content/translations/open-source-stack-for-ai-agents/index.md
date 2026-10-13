@@ -6,8 +6,8 @@ draft = false
 author = "Hex4C59"
 description = "一份实战者的 AI Agent 开源工具精选——覆盖框架编排、浏览器控制、语音、文档理解、记忆、测试、监控、仿真与垂直 Agent 九大类别，聚焦真正好用、可落地的工具。"
 summary = ""
-tags = []
-categories = ["Translations"]
+tags = ["智能体", "开源", "任务编排"]
+categories = ["ai"]
 topics = ["agents", "open-source", "orchestration", "llm", "tools", "voice"]
 translation_category = "AI 与工具"
 original_title = "The Open-Source Stack for AI Agents"
@@ -16,6 +16,7 @@ original_author = "Paolo Perrone"
 original_date = "2025-04-22"
 original_site = "Medium"
 ShowToc = true
+source_kind = "translation"
 +++
 
 > **译文信息**

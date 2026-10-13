@@ -5,8 +5,8 @@ draft = false
 author = "Hex4C59"
 description = "从传统 RAG 的局限出发，用 Python 构建一个能自主制定检索策略、多轮迭代收集信息、评估信息质量并生成结构化研究报告的 Research Agent。"
 summary = "不只是造一个 RAG 问答系统——这篇文章构建一个能自主研究的 Agent：研究规划、多轮 Agentic RAG 检索、信息质量审查、矛盾处理，以及带来源引用的结构化报告输出。"
-tags = ["Agent", "RAG", "Research Agent", "Agentic RAG", "Tool Use", "ReAct"]
-categories = ["Agent"]
+tags = ["Agent", "RAG", "Research Agent", "Agentic RAG", "工具调用", "ReAct"]
+categories = ["ai"]
 series = ["agent-engineering"]
 series_order = 17
 difficulty = "advanced"
@@ -14,6 +14,8 @@ article_type = "tutorial"
 topics = ["research-agent", "agentic-rag", "multi-step-retrieval", "information-synthesis", "tool-use"]
 frameworks = ["OpenAI"]
 ShowToc = true
+source_kind = "original"
+lastmod = 2026-03-28T08:34:20+00:00
 +++
 
 在 [什么是 RAG](/agent/what-is-rag/) 那篇文章的结尾，我说过要写一篇关于 Research Agent 的实战文章。这篇就是。

@@ -7,14 +7,17 @@ draft = false
 author = "Hex4C59"
 description = "用枚举、Display、Error 和 From 区分输入与文件错误，通过问号传播，并在命令行显示原因链。"
 summary = "用枚举、Display、Error 和 From 区分输入与文件错误，通过问号传播，并在命令行显示原因链。"
-tags = ["Rust", "编程入门", "教程"]
-categories = ["Programming"]
+tags = ["Rust", "错误处理"]
+categories = ["programming"]
 series = ["rust-from-zero"]
 series_order = 14
 series_label = "自定义错误类型"
 series_part = "继续完善项目"
 series_number = 14
 ShowToc = true
+source_kind = "original"
+article_type = "tutorial"
+series_role = "chapter"
 +++
 
 第七章为了显示错误，把解析失败转换成了 `String`。第十三章继续沿用这个接口，也能把错误交给用户。但当调用方需要区分“文件打不开”“数字格式不对”“分钟数为 0”时，文本不便于让程序判断错误种类。

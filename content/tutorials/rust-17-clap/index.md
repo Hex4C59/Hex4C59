@@ -7,14 +7,17 @@ draft = false
 author = "Hex4C59"
 description = "用 clap 的派生宏声明子命令、路径选项和参数类型，把参数错误与业务错误分开，并复用 JSON 存储和备份。"
 summary = "用 clap 的派生宏声明子命令、路径选项和参数类型，把参数错误与业务错误分开，并复用 JSON 存储和备份。"
-tags = ["Rust", "编程入门", "教程"]
-categories = ["Programming"]
+tags = ["Rust", "clap", "命令行"]
+categories = ["programming"]
 series = ["rust-from-zero"]
 series_order = 17
 series_number = 17
 series_label = "命令行与 clap"
 series_part = "文件、命令行与网络"
 ShowToc = true
+source_kind = "original"
+article_type = "tutorial"
+series_role = "chapter"
 +++
 
 待办工具的命令越来越多了：新增、查询、删除，还有上一章的备份和恢复。手写解析需要逐项检查参数个数，并一起维护帮助信息与实际行为。

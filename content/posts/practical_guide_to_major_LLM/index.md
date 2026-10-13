@@ -6,9 +6,11 @@ draft = false
 author = "Hex4C59"
 description = "结合 2026 年最新官方信息，梳理 OpenAI、Anthropic、Google、xAI、DeepSeek、Qwen、豆包、Kimi、GLM 等主流大模型的定位与选型建议。"
 summary = "从官网入口、产品线变化、能力对比到场景化推荐，帮助你在 2026 年重新理解主流大模型该怎么选。"
-tags = ["LLMs", "AI", "模型选型", "OpenAI", "Claude", "Gemini", "DeepSeek"]
-categories = ["Posts"]
+tags = ["LLM", "AI", "模型选型", "OpenAI", "Claude", "Gemini", "DeepSeek"]
+categories = ["ai"]
 ShowToc = true
+source_kind = "original"
+article_type = "review"
 +++
 
 大模型更新太快了。2025 年还能用一张简单表格概括的东西，到了 2026 年就已经明显不够用了：OpenAI 已经进入 GPT-5.4 时代，Anthropic 把 Claude 的重点继续押在 coding 和 agent 上，Google 的 Gemini 2.5 Pro 在 AI Studio 和开发者场景里越来越重要，xAI 也从 Grok 3 继续推进到了 Grok 4 系列。国内这边，DeepSeek、Qwen、GLM、Kimi、豆包/Seed 的节奏同样很快。

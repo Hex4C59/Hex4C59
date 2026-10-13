@@ -7,14 +7,17 @@ draft = false
 author = "Hex4C59"
 description = "引入 Serde 和 serde_json，验证任务文件的结构与业务规则，并把旧 TSV 数据迁移到不覆盖原文件的新 JSON。"
 summary = "引入 Serde 和 serde_json，验证任务文件的结构与业务规则，并把旧 TSV 数据迁移到不覆盖原文件的新 JSON。"
-tags = ["Rust", "编程入门", "教程"]
-categories = ["Programming"]
+tags = ["Rust", "Serde", "JSON", "数据迁移"]
+categories = ["programming"]
 series = ["rust-from-zero"]
 series_order = 15
 series_label = "Serde 与 JSON 保存"
 series_part = "继续完善项目"
 series_number = 15
 ShowToc = true
+source_kind = "original"
+article_type = "tutorial"
+series_role = "chapter"
 +++
 
 本章把待办任务保存成 JSON（JavaScript Object Notation）文本，并提供一条迁移命令，把旧 TSV 数据转换到新文件。新增、完成、筛选和删除继续复用第十三章的逻辑，文件错误则采用第十四章的类型化处理方式。

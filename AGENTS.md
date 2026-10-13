@@ -26,9 +26,9 @@
 
 只读取与当前任务匹配的专项文档：
 
-- 新建文章、规划或续写系列、调整文章栏目：先读取 [.agents/content/section-routing.md](.agents/content/section-routing.md)，确定正文存放栏目后再应用该栏目的专项规则。
+- 新建文章、规划或续写系列、调整文章栏目：先读取 [.agents/content/section-routing.md](.agents/content/section-routing.md)，确定主题、来源与系列关系，新文章默认使用统一文章目录。
 - 创建或编辑任意技术文章：读取 [.agents/content/technical-writing.md](.agents/content/technical-writing.md)。
-- 编辑 `content/agent/` 下的文章：再读取 [.agents/content/agent-section.md](.agents/content/agent-section.md)，并使用 [archetypes/agent.md](archetypes/agent.md) 作为 front matter 和文章骨架的来源。
+- 编写或编辑原创 Agent 机制与实践文章，包括 `content/agent/` 下的已有内容：再读取 [.agents/content/agent-section.md](.agents/content/agent-section.md)，并使用 [archetypes/agent.md](archetypes/agent.md) 作为 front matter 和文章骨架的来源。
 - 编辑 `series = ["DeepSeek Harness"]` 的文章：再读取 [.agents/content/deepseek-harness.md](.agents/content/deepseek-harness.md)。
 - 修改 Hugo 配置、布局、主题、构建或发布流程：读取 [.agents/hugo-publishing.md](.agents/hugo-publishing.md)。
 - 创建或修改 SVG 图表：读取 [.agents/visuals/svg-style-guide.md](.agents/visuals/svg-style-guide.md)。

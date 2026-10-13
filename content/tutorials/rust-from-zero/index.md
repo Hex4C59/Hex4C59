@@ -7,8 +7,8 @@ draft = false
 author = "Hex4C59"
 description = "面向第一次学习 Rust 的中文教材。18 章讲解、完整代码、练习和参考答案，从基础语法到待办工具，再学习 JSON 迁移、备份恢复、clap 和本机 HTTP 请求。"
 summary = "从安装和基础语法开始，学习所有权、集合、错误处理、测试、泛型和迭代器，再完成 JSON 存储、备份恢复、命令行接口和 HTTP 请求项目。"
-tags = ["Rust", "编程入门", "教程"]
-categories = ["Programming"]
+tags = ["Rust", "学习路线", "项目实践"]
+categories = ["programming"]
 series = ["rust-from-zero"]
 series_order = 0
 layout = "series"
@@ -17,6 +17,9 @@ series_title = "Rust 从零开始"
 series_status = "18 章教材与配套项目已发布"
 series_intro = "从第一个能运行的程序开始，通过练习学会使用 Rust，做出能保存数据的命令行工具，再学习依赖管理、备份和 HTTP 请求。"
 ShowToc = true
+source_kind = "original"
+article_type = "tutorial"
+series_kind = "course"
 +++
 
 [开始阅读：学习指南](/posts/rust-00-learning-guide/) · [下载配套源码](course.zip)

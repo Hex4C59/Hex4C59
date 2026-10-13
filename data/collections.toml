@@ -1,0 +1,2 @@
+[articles]
+filters = [{key = "categories", label = "主题"}, {key = "source_kind", label = "来源"}, {key = "article_type", label = "形式"}, {key = "tags", label = "标签"}]

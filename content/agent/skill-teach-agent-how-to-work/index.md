@@ -5,8 +5,8 @@ draft = false
 author = "Hex4C59"
 description = "从 Agent 的领域知识鸿沟出发，解释 Skill 这一新兴概念的设计动机、工作机制与实践价值，说明它为什么可能成为 Agent 能力扩展的主流范式。"
 summary = "系统解析 Skill 的概念、动机、结构、发现机制与生态趋势，说明它和 Tool、Prompt、微调的区别，以及为什么「写一份文档」可能比「训练一个模型」更实用。"
-tags = ["Agent", "Skill", "Prompt Engineering", "Knowledge", "LLM"]
-categories = ["Agent"]
+tags = ["Agent", "Agent Skills", "提示词工程", "知识管理", "LLM"]
+categories = ["ai"]
 series = ["agent-engineering"]
 series_order = 12
 difficulty = "beginner"
@@ -14,6 +14,8 @@ article_type = "concept"
 topics = ["skill", "knowledge", "prompt", "agent", "architecture"]
 frameworks = ["Cursor", "OpenAI"]
 ShowToc = true
+source_kind = "original"
+lastmod = 2026-03-23T10:35:35+00:00
 +++
 
 在这个系列里，我们花了大量篇幅讨论 Agent 的执行能力：[Tool Use](/agent/tool-use-core-of-agent/) 让它能连接外部世界，[MCP](/agent/mcp-model-context-protocol/) 让工具生态可以标准化复用，[工具接口设计](/agent/tool-interface-design/)让工具真正好用。

@@ -6,7 +6,7 @@ author = "Hex4C59"
 description = "Simon Willison 介绍为什么应在编程智能体会话开始时先运行测试，以及这条简短提示词如何帮助智能体了解项目并建立测试习惯。"
 summary = "先运行测试，让智能体找到测试入口、了解项目规模，并在后续改动中继续验证和补充测试。文中给出适用于作者 Python 项目的 uv run pytest 提示。"
 tags = ["Agent", "智能体工程", "编程智能体", "自动化测试", "pytest"]
-categories = ["Translations"]
+categories = ["engineering"]
 topics = ["agents", "agentic-engineering", "coding-agents", "testing", "pytest"]
 translation_category = "工程实践"
 series = ["智能体工程模式"]
@@ -20,6 +20,8 @@ original_author = "Simon Willison"
 original_date = ""
 original_site = "Simon Willison’s Weblog"
 ShowToc = false
+source_kind = "translation"
+lastmod = 2026-10-11T21:22:32+08:00
 +++
 
 > **译文信息**

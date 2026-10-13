@@ -1,0 +1,5 @@
+{{- $categories := slice -}}
+{{- range .Params.categories -}}
+  {{- $categories = $categories | append (lower .) -}}
+{{- end -}}
+{{- return $categories -}}

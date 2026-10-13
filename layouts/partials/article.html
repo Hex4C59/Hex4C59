@@ -1,20 +1,22 @@
 {{ $page := .Page }}{{ $series := .Series }}
 <article>
   <header class="single-intro-container">
-    {{ with $series }}<p class="series-eyebrow">{{ with $page.Params.series_number }}第 {{ printf "%02d" (int .) }} 篇 · {{ $page.Params.series_part }}{{ else }}序言{{ end }}</p>{{ end }}
-    <h1 class="single-title">{{ if $series }}{{ if not $page.Params.series_number }}序言：{{ end }}{{ $page.Params.series_label | default $page.Title }}{{ else }}{{ $page.Title }}{{ end }}</h1>
+    {{ with $series }}<p class="series-eyebrow">{{ if $page.Params.series_index }}{{ .Kind }} · 系列目录{{ else }}{{ with $page.Params.series_number }}第 {{ printf "%02d" (int .) }} 篇 · {{ $page.Params.series_part }}{{ else }}{{ with $page.Params.series_role }}{{ (index site.Data.series_roles .).label }}{{ else }}导读{{ end }}{{ end }}{{ end }}</p>{{ end }}
+    <h1 class="single-title">{{ if and $series $page.Params.series_index }}{{ $series.Title }}{{ else }}{{ if $series }}{{ $page.Params.series_label | default $page.Title }}{{ else }}{{ $page.Title }}{{ end }}{{ end }}</h1>
     {{ with $page.Description | default $page.Params.summary }}<p class="single-summary">{{ . | markdownify }}</p>{{ end }}
     <p class="single-date">
       <time datetime="{{ $page.Date.Format "2006-01-02" }}">{{ $page.Date.Format "2006-01-02" }}</time>
       · {{ $page.ReadingTime }} 分钟阅读 · {{ $page.Params.author | default site.Params.author }}
       {{ if ne ($page.Lastmod.Format "2006-01-02") ($page.Date.Format "2006-01-02") }}<span class="last-updated"> · 更新于 {{ $page.Lastmod.Format "2006-01-02" }}</span>{{ end }}
     </p>
+    <p class="single-classification">{{ partial "site/article-meta.html" $page }}</p>
+    {{ if and $series $page.Params.series_index }}<p class="course-start"><span>{{ $series.CountLabel }}</span>{{ with index $series.Pages 0 }}<a href="{{ .RelPermalink }}">开始阅读 →</a>{{ end }}</p>{{ end }}
     {{ if not $series }}
       {{ $catalog := partialCached "series/catalog.html" site }}
       {{ $memberships := where $catalog "Key" "in" ($page.Params.series | default slice) }}
-      {{ with $memberships }}<nav class="single-series" aria-label="所属系列"><span>所属专题</span>{{ range . }}<a href="{{ .Page.RelPermalink }}">{{ .Title }} <span aria-hidden="true">↗</span></a>{{ end }}</nav>{{ end }}
+      {{ with $memberships }}<nav class="single-series" aria-label="所属系列"><span>所属系列</span>{{ range . }}<a href="{{ .Page.RelPermalink }}">{{ .Title }} <span aria-hidden="true">↗</span></a>{{ end }}</nav>{{ end }}
     {{ end }}
-    {{ if and (not $series) ($page.Param "showTags") }}{{ with $page.GetTerms "tags" }}<div class="single-tags">{{ range . }}<a href="{{ .RelPermalink }}">#{{ .LinkTitle }}</a>{{ end }}</div>{{ end }}{{ end }}
+    {{ if $page.Param "showTags" }}{{ with $page.GetTerms "tags" }}<div class="single-tags">{{ range . }}<a href="{{ .RelPermalink }}">#{{ .LinkTitle }}</a>{{ end }}</div>{{ end }}{{ end }}
   </header>
   {{ if and ($page.Param "toc") (ne $page.Params.showtoc false) }}
     {{ if gt (len $page.Fragments.Headings) 0 }}<details class="toc"><summary>{{ if $series }}本文小节{{ else }}文章目录{{ end }}</summary>{{ $page.TableOfContents }}</details>{{ end }}

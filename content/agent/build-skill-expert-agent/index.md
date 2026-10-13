@@ -5,8 +5,8 @@ draft = false
 author = "Hex4C59"
 description = "用 Python 构建一个 Skill 驱动的写作 Agent——通过可插拔的 Skill 文件教它你的博客风格、文章结构和技术规范，展示 Skill 如何让 Agent 从通用工具变成领域专家。"
 summary = "前面所有 Agent 的领域知识都写在 System Prompt 里。这篇展示一种更好的方式：把领域知识抽离成独立的 Skill 文件，Agent 根据任务动态加载——改 Skill 文件就能改变 Agent 行为，不用动一行代码。"
-tags = ["Agent", "Skill", "Prompt Engineering", "Writing", "Knowledge"]
-categories = ["Agent"]
+tags = ["Agent", "Agent Skills", "提示词工程", "Writing", "知识管理"]
+categories = ["ai"]
 series = ["agent-engineering"]
 series_order = 22
 difficulty = "intermediate"
@@ -14,6 +14,8 @@ article_type = "tutorial"
 topics = ["skill", "knowledge", "prompt-engineering", "writing-agent", "domain-expert"]
 frameworks = ["OpenAI"]
 ShowToc = true
+source_kind = "original"
+lastmod = 2026-03-28T09:57:48+00:00
 +++
 
 前面五篇实战教程里，Agent 的"专业知识"都是硬编码在 System Prompt 里的。

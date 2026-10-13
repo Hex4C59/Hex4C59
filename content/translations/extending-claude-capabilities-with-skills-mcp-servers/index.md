@@ -6,8 +6,8 @@ draft = false
 author = "Hex4C59"
 description = "说明 Model Context Protocol（MCP）与 Agent Skills 如何分工与协同：连接外部系统与沉淀工作流知识，并给出金融分析与会议筹备等实例及选型对照表。"
 summary = "MCP 负责安全、标准化的工具与数据接入；Skills 负责领域知识与流程编排。二者组合可让 agent 按团队 playbook 产出一致结果，而非每次靠猜。"
-tags = []
-categories = ["Translations"]
+tags = ["模型上下文协议", "智能体技能", "Claude"]
+categories = ["ai"]
 topics = ["mcp", "agent-skills", "claude", "agents", "integrations"]
 translation_category = "AI 与工具"
 original_title = "Extending Claude's capabilities with skills and MCP servers"
@@ -16,6 +16,7 @@ original_author = "Anthropic"
 original_date = "2025-12-19"
 original_site = "Claude Blog"
 ShowToc = true
+source_kind = "translation"
 +++
 
 > **译文信息**  

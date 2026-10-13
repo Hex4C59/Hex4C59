@@ -6,8 +6,8 @@ draft = false
 author = "Hex4C59"
 description = "说明 Claude 生态中 Skills、prompts、Projects、Subagents、MCP 各自解决什么问题、何时选用，以及如何组合成研究型 agent 等工作流。"
 summary = "Skills 负责可复用的程序性知识与渐进式加载；Projects 承载长期背景与知识库；MCP 接数据与工具；Subagents 做隔离与分工；prompts 负责当下对话微调。"
-tags = []
-categories = ["Translations"]
+tags = ["智能体技能", "Claude", "模型上下文协议"]
+categories = ["ai"]
 topics = ["agent-skills", "claude", "mcp", "claude-code", "projects"]
 translation_category = "AI 与工具"
 original_title = "Skills explained: How Skills compares to prompts, Projects, MCP, and subagents"
@@ -16,6 +16,7 @@ original_author = "Anthropic"
 original_date = "2025-11-13"
 original_site = "Claude Blog"
 ShowToc = true
+source_kind = "translation"
 +++
 
 > **译文信息**  

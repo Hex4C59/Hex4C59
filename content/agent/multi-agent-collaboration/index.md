@@ -5,8 +5,8 @@ draft = false
 author = "Hex4C59"
 description = "解释为什么单 Agent 存在天花板，以及多 Agent 系统的四种编排模式、真实产品中的实现方式与常见失败场景。"
 summary = "系统分析多 Agent 协作的核心编排模式（Supervisor、Handoff、Agent-as-Tool、Peer-to-Peer），结合 Claude Code、Cursor、OpenAI Agents SDK 的真实架构，说明多 Agent 系统的设计取舍与工程落地方式。"
-tags = ["Agent", "Multi-Agent", "Orchestration", "Coordination", "LLM"]
-categories = ["Agent"]
+tags = ["Agent", "多智能体", "任务编排", "Coordination", "LLM"]
+categories = ["ai"]
 series = ["agent-engineering"]
 series_order = 10
 difficulty = "intermediate"
@@ -14,6 +14,8 @@ article_type = "concept"
 topics = ["multi-agent", "orchestration", "coordination", "supervisor", "handoff"]
 frameworks = ["OpenAI", "Anthropic", "LangGraph", "CrewAI"]
 ShowToc = true
+source_kind = "original"
+lastmod = 2026-03-23T10:35:35+00:00
 +++
 
 前面九篇文章把单 Agent 的能力栈拆得很清楚了：[Tool Use](/agent/tool-use-core-of-agent/) 让它能行动，[上下文管理](/agent/context-memory-state-management/)让它在长任务中保持方向感，[ReAct](/agent/react-paradigm/) 和 [Planning](/agent/planning-plan-and-execute/) 给了它推理和规划能力，[Reflection](/agent/reflection-agent/) 让它能审视自己的输出，[Prompt 设计](/agent/prompt-design-agent/)和[工具接口设计](/agent/tool-interface-design/)是把这些能力组装起来的工程手段，[评测](/agent/agent-evaluation/)告诉你它到底做得怎么样。

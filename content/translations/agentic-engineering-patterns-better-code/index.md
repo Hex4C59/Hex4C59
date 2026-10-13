@@ -6,7 +6,7 @@ author = "Hex4C59"
 description = "Simon Willison 讨论如何用编程智能体减少技术债务、完成耗时的重构、探索技术方案，并通过持续复盘改进代码质量。"
 summary = "编程智能体降低了重构和原型实验的成本。开发者可以把这些能力用于改进代码、验证技术选择，并把每次项目的经验记录为后续智能体任务的指引。"
 tags = ["Agent", "智能体工程", "编程智能体", "代码质量", "技术债务", "重构"]
-categories = ["Translations"]
+categories = ["engineering"]
 topics = ["agents", "agentic-engineering", "coding-agents", "code-quality", "refactoring"]
 translation_category = "工程实践"
 series = ["智能体工程模式"]
@@ -20,6 +20,8 @@ original_author = "Simon Willison"
 original_date = ""
 original_site = "Simon Willison’s Weblog"
 ShowToc = true
+source_kind = "translation"
+lastmod = 2026-10-11T21:22:32+08:00
 +++
 
 > **译文信息**

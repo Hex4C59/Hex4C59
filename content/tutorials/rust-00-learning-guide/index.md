@@ -7,13 +7,16 @@ draft = false
 author = "Hex4C59"
 description = "给第一次接触 Rust 的读者准备的学习路线、源码使用方式和阶段验收标准。"
 summary = "给第一次接触 Rust 的读者准备的学习路线、源码使用方式和阶段验收标准。"
-tags = ["Rust", "编程入门", "教程"]
-categories = ["Programming"]
+tags = ["Rust", "学习路线"]
+categories = ["programming"]
 series = ["rust-from-zero"]
 series_order = 0
 series_label = "学习指南"
 series_part = "开始之前"
 ShowToc = true
+source_kind = "original"
+article_type = "tutorial"
+series_role = "guide"
 +++
 
 如果你还不会 Rust，可以从这套教材的第一章开始。你不需要事先掌握 C、C++ 或其他编程语言；需要会创建文件、安装软件，并愿意在终端里运行命令。第一章会解释这些命令在做什么。

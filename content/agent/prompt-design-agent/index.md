@@ -5,8 +5,8 @@ draft = false
 author = "Hex4C59"
 description = "系统解释 Agent 的 system prompt 应该包含哪些部分、为什么这些部分重要，以及常见 prompt 设计错误该如何避免。"
 summary = "从角色定义、工具规则、推理格式、约束边界到动态上下文注入，完整拆解 Agent prompt 的设计方法与维护方式。"
-tags = ["Agent", "Prompt", "System Prompt", "LLM"]
-categories = ["Agent"]
+tags = ["Agent", "提示词", "System Prompt", "LLM"]
+categories = ["ai"]
 series = ["agent-engineering"]
 series_order = 7
 difficulty = "intermediate"
@@ -14,6 +14,8 @@ article_type = "concept"
 topics = ["prompt", "system-prompt", "context", "agent", "tool-use"]
 frameworks = ["OpenAI", "Anthropic"]
 ShowToc = true
+source_kind = "original"
+lastmod = 2026-03-23T05:37:21+00:00
 +++
 
 在前面几篇文章里，代码示例里都有一个 `system` 字段，每次都用几行占位文字一笔带过。这篇文章要把这件事正面讲清楚。

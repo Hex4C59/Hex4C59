@@ -6,8 +6,8 @@ draft = false
 author = "Hex4C59"
 description = "Claude 团队整理的 prompt engineering 要点：表述清晰、补充动机与约束、示例与预填充、思维链与输出格式控制、串联与排错，以及与 context engineering 的关系。"
 summary = "从「说清楚要什么」到预填充 JSON、思维链、串联多步提示；附技巧选择表与常见问题对策。"
-tags = []
-categories = ["Translations"]
+tags = ["提示词工程", "Claude", "大语言模型"]
+categories = ["ai"]
 topics = ["prompt-engineering", "claude", "llm", "context-engineering"]
 translation_category = "AI 与工具"
 original_title = "Best practices for prompt engineering"
@@ -16,6 +16,7 @@ original_author = "Anthropic"
 original_date = "2025-11-10"
 original_site = "Claude Blog"
 ShowToc = true
+source_kind = "translation"
 +++
 
 > **译文信息**  

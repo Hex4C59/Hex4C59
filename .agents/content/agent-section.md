@@ -1,12 +1,12 @@
 # Agent section guide
 
-本文件适用于 `content/agent/` 下的文章。它负责 Agent 专栏共有的目录、模板和站点约定；具体文章类型的写作要求见 [technical-writing.md](technical-writing.md)，DeepSeek Harness 系列另见 [deepseek-harness.md](deepseek-harness.md)。
+本文件适用于讨论 Agent 机制与实践的原创文章，包括 `content/articles/` 下的新文章与 `content/agent/` 下的已发布文章。它负责 Agent 内容的模板和写作约定；具体文章类型的写作要求见 [technical-writing.md](technical-writing.md)，DeepSeek Harness 系列另见 [deepseek-harness.md](deepseek-harness.md)。
 
 ## Files and front matter
 
-- 文章放在 `content/agent/<slug>/index.md`，图片和流程图放在同一文章目录，并使用相对路径。
+- 新文章放在 `content/articles/<slug>/index.md`，以 `categories` 表达主题；已发布文章保留原目录。图片和流程图放在同一文章目录，并使用相对路径。
 - 新建文章使用 [archetypes/agent.md](../../archetypes/agent.md)。模板是 front matter 字段和文章骨架的唯一来源，不要在本文件或文章中复制一份长期维护的字段清单。
-- 只有文章属于某个系列时才填写 `series` 和 `series_order`；系列顺序必须唯一且能反映实际阅读顺序。
+- 只有文章属于系列时才填写 `series`；是否需要 `series_order` 和角色字段按[内容归类规则](section-routing.md)确定。
 - `article_type`、`difficulty` 和其他字段使用模板中声明的值。不要为了满足字段数量填写与文章内容无关的标签或框架。
 
 ## Site integration

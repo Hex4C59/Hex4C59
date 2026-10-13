@@ -6,7 +6,7 @@ author = "Hex4C59"
 description = "Anthropic 分享与 Claude 协作优化 claude.ai 和桌面应用的两周实践：测量真实用户延迟、建立确定性基准、防止性能回退，并通过人工审核和渐进发布控制风险。"
 summary = "围绕四类核心用户流程、13 项 p75 指标，介绍如何用指令计数、布局偏移和 120 Hz 帧预算发现瓶颈，让 Claude 在 Slack 线程中持续优化，并用 CI 性能门槛、功能开关和人工判断保护成果。"
 tags = ["Claude", "Agent", "性能优化", "前端", "基准测试"]
-categories = ["Translations"]
+categories = ["engineering"]
 topics = ["claude", "agentic-coding", "performance", "frontend", "benchmarking", "observability"]
 translation_category = "AI 与工具"
 original_title = "How we made claude.ai 3x faster in two weeks"
@@ -15,6 +15,8 @@ original_author = "Raymond Wang, Sam Attard, Issac G."
 original_date = "2026-09-23"
 original_site = "Claude Developer Blog"
 ShowToc = true
+source_kind = "translation"
+lastmod = 2026-10-11T00:56:39+08:00
 +++
 
 > **译文信息**

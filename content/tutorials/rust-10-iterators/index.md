@@ -7,14 +7,17 @@ draft = false
 author = "Hex4C59"
 description = "学习闭包和迭代器，区分 move 捕获与 Fn、FnMut、FnOnce 调用能力，检查每一步的数据类型。"
 summary = "学习闭包和迭代器，区分 move 捕获与 Fn、FnMut、FnOnce 调用能力，检查每一步的数据类型。"
-tags = ["Rust", "编程入门", "教程"]
-categories = ["Programming"]
+tags = ["Rust", "迭代器", "闭包"]
+categories = ["programming"]
 series = ["rust-from-zero"]
 series_order = 10
 series_label = "闭包与迭代器"
 series_part = "写出可维护的程序"
 series_number = 10
 ShowToc = true
+source_kind = "original"
+article_type = "tutorial"
+series_role = "chapter"
 +++
 
 假设要从学习记录中找出至少 30 分钟的项目，给每项加 5 分钟，再统计总计。你已经能用 `for` 完成，本章会把这些操作表达为迭代器流水线，并解释每一步究竟拿到了值还是引用。

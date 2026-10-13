@@ -6,8 +6,8 @@ draft = false
 author = "Hex4C59"
 description = "介绍 Model Context Protocol（MCP）：开放标准如何统一 LLM 与外部系统的连接方式，以及 Connectors、开发者与企业场景的适用性。"
 summary = "把 MCP 比作 LLM 的 USB-C：一端 MCP Client、一端 MCP Server，减少重复集成，让 agent 能读写真实工具与数据。"
-tags = []
-categories = ["Translations"]
+tags = ["模型上下文协议", "Claude"]
+categories = ["ai"]
 topics = ["mcp", "model-context-protocol", "claude", "agents", "integrations"]
 translation_category = "AI 与工具"
 original_title = "What is Model Context Protocol? Connect AI to your world"
@@ -16,6 +16,7 @@ original_author = "Anthropic"
 original_date = "2025-10-31"
 original_site = "Claude Blog"
 ShowToc = true
+source_kind = "translation"
 +++
 
 > **译文信息**  

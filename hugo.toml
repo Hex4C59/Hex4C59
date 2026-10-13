@@ -30,9 +30,10 @@ buildExpired = false
   theme = "auto"
   colorPalette = "default"
   homeIntroTitle = "好的想法需要地方降落，否则它们只会飘走!"
-  homeIntroContent = "欢迎来到我的博客。在这里分享技术学习、AI Agent 实践，以及生活中的思考。"
-  paginationSize = 5
-  featuredSeries = ["agent-engineering", "智能体工程模式", "DeepSeek Harness"]
+  homeIntroContent = "这里记录我的学习、实践与思考。可以从一篇文章开始，也可以沿着系列慢慢读。"
+  paginationSize = 8
+  featuredSeries = ["rust-from-zero", "agent-engineering", "智能体工程模式"]
+  startSeries = ["agent-engineering", "rust-from-zero"]
   listDateFormat = "2006-01-02"
   singleDateFormat = "2006-01-02"
   listSummaries = true
@@ -46,8 +47,8 @@ buildExpired = false
     home = "首页"
 
   [[params.utilityMenu]]
-    name = "归档"
-    url = "/archives/"
+    name = "分类"
+    url = "/categories/"
   [[params.utilityMenu]]
     name = "搜索"
     url = "/search/"

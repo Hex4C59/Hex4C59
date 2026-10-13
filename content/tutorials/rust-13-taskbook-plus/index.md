@@ -7,14 +7,17 @@ draft = false
 author = "Hex4C59"
 description = "复用已有库，返回任务的借用视图，按编号删除任务，并用测试固定查询与修改的边界。"
 summary = "复用已有库，返回任务的借用视图，按编号删除任务，并用测试固定查询与修改的边界。"
-tags = ["Rust", "编程入门", "教程"]
-categories = ["Programming"]
+tags = ["Rust", "命令行", "项目实践"]
+categories = ["programming"]
 series = ["rust-from-zero"]
 series_order = 13
 series_label = "筛选、搜索与删除"
 series_part = "继续完善项目"
 series_number = 13
 ShowToc = true
+source_kind = "original"
+article_type = "tutorial"
+series_role = "chapter"
 +++
 
 第十二章的工具已经会保存任务。本章给它增加三个命令：`pending` 只看未完成项，`search "关键词"` 按标题搜索，`remove 编号` 删除任务。新增、完成和列出仍沿用原来的规则。

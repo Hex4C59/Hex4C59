@@ -7,14 +7,17 @@ draft = false
 author = "Hex4C59"
 description = "认识终端、Rust 编译器和 Cargo，创建项目，运行并修改第一个 Rust 程序。"
 summary = "认识终端、Rust 编译器和 Cargo，创建项目，运行并修改第一个 Rust 程序。"
-tags = ["Rust", "编程入门", "教程"]
-categories = ["Programming"]
+tags = ["Rust", "Cargo", "开发环境"]
+categories = ["programming"]
 series = ["rust-from-zero"]
 series_order = 1
 series_label = "安装与第一个程序"
 series_part = "把程序写出来"
 series_number = 1
 ShowToc = true
+source_kind = "original"
+article_type = "tutorial"
+series_role = "chapter"
 +++
 
 这一节会带你安装工具，创建一个能反复修改、检查和运行的 Rust 项目。你不需要会写代码，但要能打开终端、创建文件夹，用文本编辑器保存文件。后面两节继续用这个项目练习。

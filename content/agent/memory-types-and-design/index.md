@@ -5,8 +5,8 @@ draft = false
 author = "Hex4C59"
 description = "从「Agent 为什么会忘事」出发，系统梳理短期、情景、语义与程序四种记忆的定义、适用场景与工程实现，并厘清与 RAG、上下文管理的边界。"
 summary = "区分 in-context、情景、语义与程序记忆；说明压缩、检索、更新策略与协作架构，以及常见设计错误与选型问题，可与上下文状态管理与 RAG 两篇对照阅读。"
-tags = ["Agent", "Memory", "State Management", "RAG", "Context Window"]
-categories = ["Agent"]
+tags = ["Agent", "记忆", "状态管理", "RAG", "上下文窗口"]
+categories = ["ai"]
 series = ["agent-engineering"]
 series_order = 15
 difficulty = "intermediate"
@@ -14,6 +14,8 @@ article_type = "concept"
 topics = ["memory", "agent", "state-management", "long-horizon-tasks", "rag", "context-window"]
 frameworks = ["OpenAI", "Anthropic", "LangGraph"]
 ShowToc = true
+source_kind = "original"
+lastmod = 2026-03-28T08:07:07+00:00
 +++
 
 ## 一个问题先于设计

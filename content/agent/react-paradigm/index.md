@@ -5,8 +5,8 @@ draft = false
 author = "Hex4C59"
 description = "解释 ReAct 如何让模型在推理与行动之间交替运转，以及它为什么是 Agent 推理机制的基础范式。"
 summary = "系统分析 ReAct 的来源、执行结构、工程实现、核心价值与适用边界，说明它如何把工具调用从盲目行动变成可读、可调试的推理闭环。"
-tags = ["Agent", "ReAct", "Reasoning", "Tool Use", "LLM"]
-categories = ["Agent"]
+tags = ["Agent", "ReAct", "Reasoning", "工具调用", "LLM"]
+categories = ["ai"]
 series = ["agent-engineering"]
 series_order = 4
 difficulty = "advanced"
@@ -14,6 +14,8 @@ article_type = "concept"
 topics = ["react", "reasoning", "tool-use", "agent", "planning"]
 frameworks = ["OpenAI", "Anthropic"]
 ShowToc = true
+source_kind = "original"
+lastmod = 2026-03-23T10:35:35+00:00
 +++
 
 在前三篇文章里，我们已经把 Agent 的基础结构搭清楚了：

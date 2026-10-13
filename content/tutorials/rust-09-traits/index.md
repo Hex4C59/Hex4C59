@@ -7,14 +7,17 @@ draft = false
 author = "Hex4C59"
 description = "学习泛型、trait 和生命周期，解释类型参数关系、impl Trait、Sized、常量泛型及引用约束。"
 summary = "学习泛型、trait 和生命周期，解释类型参数关系、impl Trait、Sized、常量泛型及引用约束。"
-tags = ["Rust", "编程入门", "教程"]
-categories = ["Programming"]
+tags = ["Rust", "泛型", "trait", "生命周期"]
+categories = ["programming"]
 series = ["rust-from-zero"]
 series_order = 9
 series_label = "泛型、trait 与生命周期"
 series_part = "写出可维护的程序"
 series_number = 9
 ShowToc = true
+source_kind = "original"
+article_type = "tutorial"
+series_role = "chapter"
 +++
 
 你已经见过 `Vec<i32>`、`Option<&Task>` 和 `Result<u32, String>`。本章解释尖括号里的类型参数，再用一个小例子介绍 trait 和生命周期。目标是能读懂常见接口，并写出简单的复用函数。

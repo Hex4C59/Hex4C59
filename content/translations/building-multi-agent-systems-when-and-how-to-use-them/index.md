@@ -6,8 +6,8 @@ draft = false
 author = "Hex4C59"
 description = "Anthropic 梳理多智能体架构的适用场景：上下文隔离、并行探索与工具/提示/领域专业化，并说明如何按上下文边界分解任务、采用验证子智能体模式，以及常见实现误区。"
 summary = "从单智能体起步；在上下文污染、可并行子任务、需要专业化工具或提示时再引入多智能体；分解工作时应以「上下文」而非「工种」为界。"
-tags = []
-categories = ["Translations"]
+tags = ["多智能体", "智能体", "Claude"]
+categories = ["ai"]
 topics = ["multi-agent", "agents", "claude", "orchestration", "context-engineering"]
 translation_category = "AI 与工具"
 original_title = "Building multi-agent systems: When and how to use them"
@@ -16,6 +16,7 @@ original_author = "Cara Phillips"
 original_date = "2026-01-23"
 original_site = "Claude Blog"
 ShowToc = true
+source_kind = "translation"
 +++
 
 > **译文信息**  

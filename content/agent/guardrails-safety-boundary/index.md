@@ -5,8 +5,8 @@ draft = false
 author = "Hex4C59"
 description = "从 Agent 能力越强风险越大的现实出发，系统讲解输入防护、执行防护和输出防护三层安全边界的设计思路与工程实现。"
 summary = "系统分析 Agent 安全护栏的三层架构——输入防护、执行防护、输出防护——涵盖 Prompt Injection 防御、权限分级、沙箱隔离、敏感信息过滤，以及真实产品中的 Guardrails 设计。"
-tags = ["Agent", "Guardrails", "Security", "Safety", "Prompt Injection", "LLM"]
-categories = ["Agent"]
+tags = ["Agent", "安全护栏", "Security", "安全防护", "Prompt Injection", "LLM"]
+categories = ["ai"]
 series = ["agent-engineering"]
 series_order = 16
 difficulty = "intermediate"
@@ -14,6 +14,8 @@ article_type = "concept"
 topics = ["guardrails", "security", "safety", "prompt-injection", "sandbox", "permissions"]
 frameworks = ["OpenAI", "Anthropic"]
 ShowToc = true
+source_kind = "original"
+lastmod = 2026-03-28T08:25:01+00:00
 +++
 
 在前面的文章里，我们一直在给 Agent 加能力：[Tool Use](/agent/tool-use-core-of-agent/) 让它连接外部世界，[ReAct](/agent/react-paradigm/) 让它边想边做，[Planning](/agent/planning-plan-and-execute/) 让它拆解复杂任务，[多 Agent 协作](/agent/multi-agent-collaboration/) 让它组建团队。

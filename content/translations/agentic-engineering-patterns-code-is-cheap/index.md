@@ -6,7 +6,7 @@ author = "Hex4C59"
 description = "Simon Willison 讨论编程智能体如何降低编写代码的成本，为什么交付好代码仍然有成本，以及个人和团队需要调整哪些工程习惯。"
 summary = "编写代码的成本下降，改变了规划、重构、测试和文档工作的时间取舍。好代码仍需解决正确的问题，并满足验证、维护和项目所需的质量要求。"
 tags = ["Agent", "智能体工程", "编程智能体", "软件工程", "代码质量"]
-categories = ["Translations"]
+categories = ["engineering"]
 topics = ["agents", "agentic-engineering", "coding-agents", "code-quality"]
 translation_category = "工程实践"
 series = ["智能体工程模式"]
@@ -20,6 +20,8 @@ original_author = "Simon Willison"
 original_date = ""
 original_site = "Simon Willison’s Weblog"
 ShowToc = true
+source_kind = "translation"
+lastmod = 2026-10-11T21:22:32+08:00
 +++
 
 > **译文信息**

@@ -6,8 +6,8 @@ draft = false
 author = "Hex4C59"
 description = "介绍常见性能优化路径，以及如何用 Claude.ai 与 Claude Code 做根因分析与跨文件优化，含 Ramp 案例与 N+1 查询示例。"
 summary = "从被动 profiling 到主动优化，在上线前发现并修复瓶颈。"
-tags = []
-categories = ["Translations"]
+tags = ["Claude Code", "性能", "优化"]
+categories = ["engineering"]
 topics = ["claude-code", "performance", "optimization"]
 translation_category = "性能优化"
 original_title = "Optimize code performance quickly"
@@ -16,6 +16,7 @@ original_author = "Anthropic"
 original_date = "2025-10-06"
 original_site = "Claude Blog"
 ShowToc = true
+source_kind = "translation"
 +++
 
 > **译文信息**  

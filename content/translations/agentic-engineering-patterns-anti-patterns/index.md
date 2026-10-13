@@ -6,7 +6,7 @@ author = "Hex4C59"
 description = "Simon Willison 解释为什么不应把未经自己审查的智能体生成代码交给协作者，并列出一个好的智能体工程 PR 应具备的条件。"
 summary = "提交 PR 前，先亲自审查代码、确认它能正常工作，并核对说明文字。用便于审查的改动、清楚的背景和验证证据，尊重协作者投入的时间。"
 tags = ["Agent", "智能体工程", "编程智能体", "代码审查", "团队协作"]
-categories = ["Translations"]
+categories = ["engineering"]
 topics = ["agents", "agentic-engineering", "coding-agents", "code-review"]
 translation_category = "工程实践"
 series = ["智能体工程模式"]
@@ -20,6 +20,8 @@ original_author = "Simon Willison"
 original_date = ""
 original_site = "Simon Willison’s Weblog"
 ShowToc = true
+source_kind = "translation"
+lastmod = 2026-10-11T21:22:32+08:00
 +++
 
 > **译文信息**

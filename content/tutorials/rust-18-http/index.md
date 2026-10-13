@@ -7,14 +7,17 @@ draft = false
 author = "Hex4C59"
 description = "用 reqwest 的阻塞客户端访问本机 HTTP 服务，分别处理状态码、JSON、数据校验、响应大小和超时，再用本机测试固定这些行为。"
 summary = "用 reqwest 的阻塞客户端访问本机 HTTP 服务，分别处理状态码、JSON、数据校验、响应大小和超时，再用本机测试固定这些行为。"
-tags = ["Rust", "编程入门", "教程"]
-categories = ["Programming"]
+tags = ["Rust", "HTTP", "reqwest"]
+categories = ["programming"]
 series = ["rust-from-zero"]
 series_order = 18
 series_number = 18
 series_label = "HTTP 请求"
 series_part = "文件、命令行与网络"
 ShowToc = true
+source_kind = "original"
+article_type = "tutorial"
+series_role = "chapter"
 +++
 
 前面几章的数据来自命令行和本地文件。现在换一种来源：向一个 HTTP 服务发出请求，读取它返回的 JSON，再转成 Rust 结构体。

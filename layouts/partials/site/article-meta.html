@@ -1,0 +1,6 @@
+{{- $page := . -}}
+{{- range partial "site/categories.html" . -}}
+  {{- with site.GetPage (printf "/categories/%s" .) -}}<a href="{{ .RelPermalink }}">{{ partial "collection/filter-label.html" (dict "Key" "categories" "Value" .Data.Term) }}</a>{{- end -}}
+{{- end -}}
+<span>·</span><span>{{ partial "collection/filter-label.html" (dict "Key" "source_kind" "Value" (partial "site/source.html" $page)) }}</span>
+{{- with .Params.article_type -}}<span>·</span><span>{{ partial "collection/filter-label.html" (dict "Key" "article_type" "Value" .) }}</span>{{- end -}}

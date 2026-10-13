@@ -6,7 +6,8 @@ author = "Hex4C59"
 description = ""
 summary = ""
 tags = []
-categories = ["Programming"]
+categories = ["programming"]
+source_kind = "original"
 ShowToc = true
 math = false
 +++

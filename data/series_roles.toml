@@ -1,0 +1,16 @@
+[guide]
+label = "导读"
+in_sequence = true
+order = 1
+[chapter]
+label = "正文"
+in_sequence = true
+order = 2
+[exercise]
+label = "练习与验收"
+in_sequence = false
+order = 3
+[appendix]
+label = "参考附录"
+in_sequence = false
+order = 4

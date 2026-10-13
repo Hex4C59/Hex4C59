@@ -7,14 +7,17 @@ draft = false
 author = "Hex4C59"
 description = "学习变量、可变性和常用数据类型，拆解 let 绑定、类型推断、数字后缀和显式转换的规则。"
 summary = "学习变量、可变性和常用数据类型，拆解 let 绑定、类型推断、数字后缀和显式转换的规则。"
-tags = ["Rust", "编程入门", "教程"]
-categories = ["Programming"]
+tags = ["Rust", "变量绑定", "类型推断", "类型转换"]
+categories = ["programming"]
 series = ["rust-from-zero"]
 series_order = 2
 series_label = "变量与类型"
 series_part = "把程序写出来"
 series_number = 2
 ShowToc = true
+source_kind = "original"
+article_type = "tutorial"
+series_role = "chapter"
 +++
 
 上一节的程序只能打印固定文字。这一节用变量保存姓名和学习时长，计算还差多少分钟，再输出结果。学完后，你应该能写一个简单的费用或时长计算程序，并解释每个变量保存了什么。

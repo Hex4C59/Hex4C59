@@ -5,8 +5,8 @@ draft = false
 author = "Hex4C59"
 description = "Simon Willison 介绍如何让编程智能体通过命令行和浏览器试验代码，并使用 Rodney 与 Showboat 记录测试过程和结果。"
 summary = "自动化测试通过后，仍需确认功能在实际使用中正常工作。本文介绍 Python、curl 和浏览器自动化的试验方式，以及把发现的问题补入测试、把验证过程写成文档的方法。"
-tags = ["Agent", "智能体工程", "编程智能体", "测试", "Playwright", "Showboat"]
-categories = ["Translations"]
+tags = ["Agent", "智能体工程", "编程智能体", "自动化测试", "Playwright", "Showboat"]
+categories = ["engineering"]
 topics = ["agents", "agentic-engineering", "coding-agents", "testing", "browser-automation"]
 translation_category = "工程实践"
 series = ["智能体工程模式"]
@@ -20,6 +20,8 @@ original_author = "Simon Willison"
 original_date = ""
 original_site = "Simon Willison’s Weblog"
 ShowToc = true
+source_kind = "translation"
+lastmod = 2026-10-11T21:22:32+08:00
 +++
 
 > **译文信息**

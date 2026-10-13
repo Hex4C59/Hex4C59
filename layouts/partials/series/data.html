@@ -1,27 +1,41 @@
 {{- $result := false -}}
 {{- with .Params.series -}}
-  {{- $name := index . 0 -}}
-  {{- $hub := false -}}
-  {{- range where site.RegularPages "Params.series_index" true -}}
-    {{- if in .Params.series $name -}}{{- $hub = . -}}{{- end -}}
-  {{- end -}}
+  {{- $names := . -}}{{- $name := "" -}}{{- $hub := false -}}
+  {{- range where site.RegularPages "Params.series_index" true -}}{{- if intersect .Params.series $names -}}{{- $hub = . -}}{{- $name = index .Params.series 0 -}}{{- end -}}{{- end -}}
   {{- with $hub -}}
-    {{- $members := where site.RegularPages "Params.series" "intersect" (slice $name) -}}
-    {{- $members = sort (where $members "Params.series_index" "ne" true) "Params.series_order" -}}
-    {{- $groups := slice -}}
-    {{- $seen := slice -}}
-    {{- $minutes := 0 -}}
+    {{- $members := where (where site.RegularPages "Params.series" "intersect" (slice $name)) "Params.series_index" "ne" true -}}
+    {{- $sequence := slice -}}{{- $supplements := slice -}}
     {{- range $members -}}
+      {{- $role := .Params.series_role | default "chapter" -}}
+      {{- if (index site.Data.series_roles $role).in_sequence -}}{{- $sequence = $sequence | append . -}}{{- else -}}{{- $supplements = $supplements | append . -}}{{- end -}}
+    {{- end -}}
+    {{- $sequence = sort $sequence "Params.series_order" -}}
+    {{- $groups := slice -}}{{- $seen := slice -}}{{- $minutes := 0 -}}
+    {{- range $sequence -}}
       {{- $minutes = add $minutes .ReadingTime -}}
-      {{- $part := .Params.series_part | default "章节" -}}
+      {{- $part := .Params.series_part | default "正文" -}}
       {{- if not (in $seen $part) -}}
-        {{- $seen = $seen | append $part -}}
-        {{- $groupPages := where $members "Params.series_part" $part -}}
-        {{- if eq $part "章节" -}}{{- $groupPages = where $members "Params.series_part" nil -}}{{- end -}}
+        {{- $seen = $seen | append $part -}}{{- $groupPages := slice -}}
+        {{- range $sequence -}}{{- if eq (.Params.series_part | default "正文") $part -}}{{- $groupPages = $groupPages | append . -}}{{- end -}}{{- end -}}
         {{- $groups = $groups | append (dict "Title" $part "Pages" $groupPages) -}}
       {{- end -}}
     {{- end -}}
-    {{- $result = dict "Hub" . "Title" (.Params.series_title | default $name) "Pages" $members "Groups" $groups "Chapters" (where $members "Params.series_number" "gt" 0) "Minutes" $minutes -}}
+    {{- $supportGroups := slice -}}
+    {{- range $role, $config := site.Data.series_roles -}}
+      {{- $pages := where $supplements "Params.series_role" $role -}}
+      {{- if $pages -}}{{- $supportGroups = $supportGroups | append (dict "Title" $config.label "Pages" (sort $pages "Title") "Order" $config.order) -}}{{- end -}}
+    {{- end -}}
+    {{- $supportGroups = sort $supportGroups "Order" -}}
+    {{- $chapters := where $sequence "Params.series_number" "gt" 0 -}}
+    {{- $kind := .Params.series_kind | default "ordered" -}}
+    {{- $count := printf "%d 篇正文" (len $sequence) -}}
+    {{- if $chapters -}}
+      {{- $unit := cond (eq $kind "course") "章" "篇" -}}
+      {{- $count = printf "%d %s" (len $chapters) $unit -}}
+      {{- if gt (len $sequence) (len $chapters) -}}{{- $count = printf "导读 + %s" $count -}}{{- end -}}
+    {{- end -}}
+    {{- if $supplements -}}{{- $count = printf "%s · %d 篇配套资料" $count (len $supplements) -}}{{- end -}}
+    {{- $result = dict "Hub" . "Title" (.Params.series_title | default $name) "Members" $members "Pages" $sequence "Supplements" $supplements "SupportGroups" $supportGroups "Groups" $groups "Chapters" $chapters "Minutes" $minutes "CountLabel" $count "Kind" (index site.Data.series_kinds $kind).label -}}
   {{- end -}}
 {{- end -}}
 {{- return $result -}}

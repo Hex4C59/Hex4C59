@@ -6,7 +6,7 @@ author = "Hex4C59"
 description = "Lance Martin 与 CJ Avilla 介绍如何通过 Claude Managed Agents 构建定时简报自动化，涵盖来源读取、发布确认、持久记忆、权限和预算控制。"
 summary = "以一个读取 Slack 与 GitHub、按计划发布简报的参考实现为例，说明来源游标、失败报告、发布前复核、去重与确认、只读用户偏好，以及凭据隔离和单次运行预算的设计。"
 tags = ["Agent", "自动化", "Claude", "Managed Agents", "记忆"]
-categories = ["Translations"]
+categories = ["ai"]
 topics = ["agents", "automation", "managed-agents", "memory", "slack", "github", "claude"]
 translation_category = "AI 与工具"
 original_title = "Building effective agent automations"
@@ -15,6 +15,8 @@ original_author = "Lance Martin and CJ Avilla"
 original_date = "2026-10-08"
 original_site = "Claude Developer Blog"
 ShowToc = true
+source_kind = "translation"
+lastmod = 2026-10-11T00:56:39+08:00
 +++
 
 > **译文信息**

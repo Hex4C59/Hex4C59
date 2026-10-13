@@ -6,8 +6,8 @@ draft = false
 author = "Hex4C59"
 description = "说明响应式布局常见痛点、手写 media query 与框架工具链的局限，以及如何用 Claude.ai 快速生成范例、用 Claude Code 在仓库内系统排查与修复布局问题。"
 summary = "从试错式断点到 AI 辅助的生成与重构，让布局在不同视口下更可预期。"
-tags = []
-categories = ["Translations"]
+tags = ["Claude Code", "层叠样式表", "响应式设计"]
+categories = ["engineering"]
 topics = ["claude-code", "css", "responsive-design", "frontend"]
 translation_category = "前端开发"
 original_title = "Build responsive web layouts"
@@ -16,6 +16,7 @@ original_author = "Anthropic"
 original_date = "2025-10-10"
 original_site = "Claude Blog"
 ShowToc = true
+source_kind = "translation"
 +++
 
 > **译文信息**  

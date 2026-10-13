@@ -6,7 +6,7 @@ author = "Hex4C59"
 description = "Simon Willison 分析一条简短提示词，展示如何让编程智能体参考博客源码，为邮件简报工具加入 beats 内容，并用浏览器验证结果。"
 summary = "把参考代码库、目标文件、已有筛选逻辑和验证方式写进提示词，就能让智能体理解需求。本文保留了最终修改中的 SQL 查询和类型名称映射。"
 tags = ["Agent", "智能体工程", "编程智能体", "提示词", "代码复用", "邮件简报"]
-categories = ["Translations"]
+categories = ["engineering"]
 topics = ["agents", "agentic-engineering", "coding-agents", "prompting", "code-reuse"]
 translation_category = "工程实践"
 series = ["智能体工程模式"]
@@ -20,6 +20,8 @@ original_author = "Simon Willison"
 original_date = ""
 original_site = "Simon Willison’s Weblog"
 ShowToc = false
+source_kind = "translation"
+lastmod = 2026-10-11T21:22:32+08:00
 +++
 
 > **译文信息**

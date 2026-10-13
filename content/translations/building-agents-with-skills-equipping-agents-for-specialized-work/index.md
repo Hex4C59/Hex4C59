@@ -6,8 +6,8 @@ draft = false
 author = "Hex4C59"
 description = "Claude 官方博文：为何从「领域专用智能体」转向 Agent Skills；渐进式披露、脚本即工具、与 MCP 协同及金融、医疗等垂直场景。"
 summary = "Skills 把领域专长打包成智能体可读可用的文件，让通才变成专家；并与 Agent 循环、运行时、MCP 共同构成可演进的架构。"
-tags = []
-categories = ["Translations"]
+tags = ["智能体技能", "Claude Code", "模型上下文协议"]
+categories = ["ai"]
 topics = ["agent-skills", "claude-code", "mcp", "claude-agent-sdk", "agents"]
 translation_category = "AI 与工具"
 original_title = "Building agents with Skills: Equipping agents for specialized work"
@@ -16,6 +16,7 @@ original_author = "Barry Zhang, Mahesh Murag, Keith Lazuka, Ryan Whitehead"
 original_date = "2026-01-22"
 original_site = "Claude Blog"
 ShowToc = true
+source_kind = "translation"
 +++
 
 > **译文信息**  

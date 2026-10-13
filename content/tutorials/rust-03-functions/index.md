@@ -7,14 +7,17 @@ draft = false
 author = "Hex4C59"
 description = "学习函数、分支和循环，解释块与分号的结果类型、单元值、提前返回、循环标签和短路求值。"
 summary = "学习函数、分支和循环，解释块与分号的结果类型、单元值、提前返回、循环标签和短路求值。"
-tags = ["Rust", "编程入门", "教程"]
-categories = ["Programming"]
+tags = ["Rust", "函数", "表达式", "控制流"]
+categories = ["programming"]
 series = ["rust-from-zero"]
 series_order = 3
 series_label = "函数与控制流程"
 series_part = "把程序写出来"
 series_number = 3
 ShowToc = true
+source_kind = "original"
+article_type = "tutorial"
+series_role = "chapter"
 +++
 
 前两节里，你已经运行过程序，也学会了保存数据和计算。本节会把重复的动作写成可以多次调用的函数，再让程序按条件选择分支、依次处理记录。

@@ -6,8 +6,8 @@ draft = false
 author = "Hex4C59"
 description = "介绍 Claude Code 的权限模型与审批疲劳，以及基于操作系统能力的沙箱：文件系统隔离、网络隔离、沙箱化 bash，与云端 Claude Code 的凭据隔离设计。"
 summary = "用原生沙箱在固定边界内放手让 Claude 干活，减少反复点「批准」的同时降低 prompt injection 风险。"
-tags = []
-categories = ["Translations"]
+tags = ["Claude Code", "安全", "沙箱隔离"]
+categories = ["ai"]
 topics = ["claude-code", "security", "sandboxing"]
 translation_category = "安全"
 original_title = "Beyond permission prompts: making Claude Code more secure and autonomous"
@@ -16,6 +16,7 @@ original_author = "Anthropic"
 original_date = "2025-10-08"
 original_site = "Claude Blog"
 ShowToc = true
+source_kind = "translation"
 +++
 
 > **译文信息**  

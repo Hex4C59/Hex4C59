@@ -6,8 +6,8 @@ draft = false
 author = "Hex4C59"
 description = "介绍 Agent Skills：以文件与文件夹为智能体打包程序性知识与组织上下文，含渐进式披露、上下文加载顺序、可执行代码与编写评估及安全建议。"
 summary = "把专长装进可组合的 Skill 目录，让通用智能体在特定任务上更可靠。"
-tags = []
-categories = ["Translations"]
+tags = ["智能体技能", "Claude Code", "Claude"]
+categories = ["ai"]
 topics = ["agent-skills", "claude-code", "claude"]
 original_title = "Equipping agents for the real world with Agent Skills"
 original_url = "https://claude.com/blog/equipping-agents-for-the-real-world-with-agent-skills"
@@ -15,6 +15,7 @@ original_author = "Barry Zhang, Keith Lazuka, Mahesh Murag"
 original_date = "2025-10-16"
 original_site = "Claude Blog"
 ShowToc = true
+source_kind = "translation"
 +++
 
 > **译文信息**  

@@ -6,7 +6,7 @@ author = "Hex4C59"
 description = "从检索增强生成的基本流程出发，说明索引、向量化、混合检索与重排序等关键环节，以及 RAG 与微调、Agent 的关系。"
 summary = "解释 RAG 如何解决大模型知识过时、缺私有知识与幻觉问题，并梳理切片、Embedding、向量库、混合检索与上下文增强等工程要点。"
 tags = ["Agent", "RAG", "Embedding", "向量检索", "LLM"]
-categories = ["Agent"]
+categories = ["ai"]
 series = ["agent-engineering"]
 series_order = 14
 difficulty = "beginner"
@@ -14,6 +14,8 @@ article_type = "concept"
 topics = ["rag", "retrieval", "embeddings", "vector-database", "agent"]
 frameworks = ["OpenAI", "Anthropic"]
 ShowToc = true
+source_kind = "original"
+lastmod = 2026-03-25T04:23:49+00:00
 +++
 
 你有没有遇到过这种情况：问大模型一个关于你公司产品的问题，它一本正经地给了你一个错误答案；或者问它最近发生的事，它说「我的知识截止到某某年，无法回答」。

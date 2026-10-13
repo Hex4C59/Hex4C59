@@ -5,8 +5,8 @@ draft = false
 author = "Hex4C59"
 description = "用 Python 构建一个具备跨会话持久记忆的对话 Agent——通过情景记忆和语义记忆的分层设计，让 Agent 记住过去发生了什么、用户是谁、喜欢什么，真正实现「每次对话都比上次更懂你」。"
 summary = "前面所有实战教程的 Agent 一关就忘。这篇构建一个带持久记忆的 Agent：会话结束时自动提取关键事件存入情景记忆，从交互中累积用户画像存入语义记忆，下次启动时检索注入——让 Agent 跨会话保持连续性。"
-tags = ["Agent", "Memory", "Persistent Memory", "Episodic Memory", "Semantic Memory"]
-categories = ["Agent"]
+tags = ["Agent", "记忆", "Persistent Memory", "Episodic Memory", "Semantic Memory"]
+categories = ["ai"]
 series = ["agent-engineering"]
 series_order = 23
 difficulty = "intermediate"
@@ -14,6 +14,8 @@ article_type = "tutorial"
 topics = ["memory", "persistent-memory", "episodic-memory", "semantic-memory", "user-modeling"]
 frameworks = ["OpenAI"]
 ShowToc = true
+source_kind = "original"
+lastmod = 2026-03-28T09:57:48+00:00
 +++
 
 前面六篇实战教程——[Coding Agent](/agent/build-cli-coding-agent/)、[Research Agent](/agent/build-research-agent/)、[文件管理 Agent](/agent/build-file-management-agent/)、[代码审查](/agent/build-multi-agent-code-review/)、[MCP 集成](/agent/build-mcp-agent/)、[Skill 专家 Agent](/agent/build-skill-expert-agent/)——有一个共同的缺陷：**一关就忘。**

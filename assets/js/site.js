@@ -62,6 +62,7 @@
     const sorter = collection.querySelector('[data-sort]');
     const search = collection.querySelector('[data-title-search]');
     const shortcuts = Array.from(collection.querySelectorAll('[data-filter-shortcut]'));
+    const expand = collection.querySelector('[data-expand-series]');
     const rank = { beginner: 1, easy: 1, intermediate: 2, medium: 2, advanced: 3, hard: 3, unknown: 99 };
     const apply = () => {
       const query = search.value.trim().toLocaleLowerCase();
@@ -78,14 +79,16 @@
       let count = 0;
       const fragment = document.createDocumentFragment();
       sorted.forEach(({ node, filters: values }) => {
+        const matchesMode = node.dataset.mode === 'standalone' || node.dataset.mode === (expand?.checked ? 'member' : 'hub');
         const matches = filters.every((filter) => !filter.value || (values[filter.dataset.filter] || []).includes(filter.value));
         const matchesTitle = !query || node.dataset.title.includes(query);
-        node.hidden = !(matches && matchesTitle);
+        node.hidden = !(matchesMode && matches && matchesTitle);
         if (!node.hidden) count++;
         fragment.appendChild(node);
       });
       list.appendChild(fragment);
-      collection.querySelector('[data-count]').textContent = count === entries.length ? `共 ${count} 个阅读入口` : `显示 ${count} / ${entries.length} 个阅读入口`;
+      const total = entries.filter(({ node }) => node.dataset.mode === 'standalone' || node.dataset.mode === (expand?.checked ? 'member' : 'hub')).length;
+      collection.querySelector('[data-count]').textContent = count === total ? `共 ${count} 个阅读入口` : `显示 ${count} / ${total} 个阅读入口`;
       shortcuts.forEach((button) => {
         const filter = filters.find((item) => item.dataset.filter === button.dataset.filterShortcut);
         const active = filter?.value === button.dataset.value;
@@ -100,6 +103,7 @@
     }));
     filters.forEach((filter) => filter.addEventListener('change', apply));
     sorter.addEventListener('change', apply);
+    expand?.addEventListener('change', apply);
     search.addEventListener('input', apply);
     collection.querySelector('[data-reset]').addEventListener('click', () => {
       filters.forEach((filter) => { filter.value = ''; });
@@ -107,7 +111,20 @@
       sorter.value = 'recent';
       apply();
     });
+    const params = new URLSearchParams(window.location.search);
+    filters.forEach((filter) => { const value = params.get(filter.dataset.filter); if (value && Array.from(filter.options).some((option) => option.value === value)) filter.value = value; });
+    if (params.has('q')) search.value = params.get('q');
+    if (expand && params.get('expanded') === '1') expand.checked = true;
     apply();
   });
 
+  const termSearch = document.querySelector('[data-term-search]');
+  if (termSearch) {
+    const terms = Array.from(document.querySelectorAll('[data-term]'));
+    termSearch.addEventListener('input', () => {
+      const query = termSearch.value.trim().toLocaleLowerCase();
+      terms.forEach((term) => { term.hidden = !term.dataset.term.includes(query); });
+      document.querySelector('[data-term-empty]').hidden = terms.some((term) => !term.hidden);
+    });
+  }
 })();

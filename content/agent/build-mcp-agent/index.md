@@ -5,8 +5,8 @@ draft = false
 author = "Hex4C59"
 description = "用 Python 构建一个通过 MCP 协议动态发现和调用工具的 Agent——连接文件系统、GitHub 和 SQLite 三个真实的 MCP Server，展示从硬编码工具到协议驱动工具的架构升级。"
 summary = "前面所有实战教程的工具都是硬编码注册的。这篇展示一种完全不同的方式：Agent 启动时不知道有哪些工具，运行时通过 MCP 协议动态发现、注册和调用——连接文件系统、GitHub 和 SQLite 三个真实的 MCP Server。"
-tags = ["Agent", "MCP", "Tool Use", "Protocol", "Dynamic Tools"]
-categories = ["Agent"]
+tags = ["Agent", "MCP", "工具调用", "Protocol", "Dynamic Tools"]
+categories = ["ai"]
 series = ["agent-engineering"]
 series_order = 21
 difficulty = "intermediate"
@@ -14,6 +14,8 @@ article_type = "tutorial"
 topics = ["mcp", "tool-use", "dynamic-tools", "protocol", "integration"]
 frameworks = ["OpenAI", "Anthropic"]
 ShowToc = true
+source_kind = "original"
+lastmod = 2026-03-28T09:11:36+00:00
 +++
 
 前面四篇实战教程——[Coding Agent](/agent/build-cli-coding-agent/)、[Research Agent](/agent/build-research-agent/)、[文件管理 Agent](/agent/build-file-management-agent/)、[代码审查](/agent/build-multi-agent-code-review/)——有一个共同点：**工具都是硬编码的。**

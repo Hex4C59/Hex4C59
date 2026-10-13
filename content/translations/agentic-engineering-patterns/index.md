@@ -6,7 +6,7 @@ author = "Hex4C59"
 description = "Simon Willison《Agentic Engineering Patterns》中文系列目录，涵盖基本原则、编程智能体协作、测试与质量保证、代码理解、提示词详解和常用提示词。"
 summary = "按原指南顺序整理 6 个部分、16 篇文章及其小节的中文目录，并提供中文译文与英文原文入口。"
 tags = ["Agent", "智能体工程", "编程智能体", "软件工程"]
-categories = ["Translations"]
+categories = ["engineering"]
 topics = ["agents", "agentic-engineering", "coding-agents", "testing"]
 translation_category = "工程实践"
 series = ["智能体工程模式"]
@@ -22,6 +22,9 @@ original_author = "Simon Willison"
 original_date = ""
 original_site = "Simon Willison’s Weblog"
 ShowToc = true
+source_kind = "translation"
+series_kind = "translation"
+lastmod = 2026-10-11T21:22:32+08:00
 +++
 
 > **系列信息**

@@ -6,9 +6,9 @@ author = "Hex4C59"
 description = ""
 summary = ""
 tags = []
-categories = ["Agent"]
+categories = ["ai"]
+source_kind = "original"
 series = []
-series_order = 0
 difficulty = ""
 article_type = ""
 topics = []
@@ -18,7 +18,7 @@ ShowToc = true
 
 > 本文件只提供 Agent 文章的 front matter 和文章骨架，不是完整写作规范。通用技术写作要求见 `.agents/content/technical-writing.md`；Agent 专栏规则见 `.agents/content/agent-section.md`；DeepSeek Harness 系列另见 `.agents/content/deepseek-harness.md`。
 >
-> 新建文章后，先补全 front matter，再删除这段提示。`article_type` 使用 `concept`、`tutorial`、`practice`、`review` 或 `eval`；`difficulty` 使用 `beginner`、`intermediate` 或 `advanced`。只有属于某个系列时才填写 `series` 和 `series_order`。
+> 新建文章后，先补全 front matter，再删除这段提示。`article_type` 使用 `concept`、`tutorial`、`practice`、`review` 或 `eval`；`difficulty` 使用 `beginner`、`intermediate` 或 `advanced`。只有属于某个系列时才填写 `series`；正文排序与附录角色按内容归类规则填写。
 >
 > 如果文章介绍一个具体项目、框架或实验，请补充被测试的版本或 commit、运行环境、依赖、模型和关键配置，并把复现命令写进正文。
 

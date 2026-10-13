@@ -5,8 +5,8 @@ draft = false
 author = "Hex4C59"
 description = "从传统软件调试与 Agent 调试的根本差异出发，系统讲解 Agent 可观测性的三支柱——Tracing、Logging、Metrics——的设计与实现，以及如何用 Replay 复现问题、用结构化方法定位 Agent 的隐性错误。"
 summary = "补完评测-调试-修复闭环：Agent 评测告诉你出了问题，可观测性告诉你问题在哪、为什么出问题。涵盖 Trace 设计、结构化日志、关键指标、Replay 复现、常见调试模式和工具链选型。"
-tags = ["Agent", "Observability", "Debugging", "Tracing", "Logging", "LLM"]
-categories = ["Agent"]
+tags = ["Agent", "可观测性", "Debugging", "Tracing", "Logging", "LLM"]
+categories = ["ai"]
 series = ["agent-engineering"]
 series_order = 19
 difficulty = "intermediate"
@@ -14,6 +14,8 @@ article_type = "concept"
 topics = ["observability", "debugging", "tracing", "logging", "metrics", "evaluation"]
 frameworks = ["OpenAI", "Anthropic"]
 ShowToc = true
+source_kind = "original"
+lastmod = 2026-03-28T08:50:50+00:00
 +++
 
 在 [评测那篇文章](/agent/agent-evaluation/) 里，我们讨论了如何判断一个 Agent 做得好不好——四维评测框架帮助你发现"任务完成率下降了""某类任务系统性失败""成本异常升高"这些问题。

@@ -1,0 +1,8 @@
+[course]
+label = "课程"
+[ordered]
+label = "有序系列"
+[collection]
+label = "文章合集"
+[translation]
+label = "译文合集"

@@ -6,8 +6,8 @@ draft = false
 author = "Hex4C59"
 description = "用顺序、并行与评估-优化三种模式组织多智能体任务：各自适用场景、代价与收益，以及如何组合与选型。"
 summary = "工作流为自主决策提供结构；生产中最常见的是顺序式、并行式与评估-优化式，选错会拖累延迟、token 或可靠性。"
-tags = []
-categories = ["Translations"]
+tags = ["智能体", "工作流", "Claude"]
+categories = ["ai"]
 topics = ["agents", "workflows", "claude", "orchestration", "multi-agent"]
 translation_category = "AI 与工具"
 original_title = "Common workflow patterns for AI agents—and when to use them"
@@ -16,6 +16,7 @@ original_author = "Anthropic"
 original_date = "2026-03-05"
 original_site = "Claude Blog"
 ShowToc = true
+source_kind = "translation"
 +++
 
 > **译文信息**  

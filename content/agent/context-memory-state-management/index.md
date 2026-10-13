@@ -5,8 +5,8 @@ draft = false
 author = "Hex4C59"
 description = "解释 Agent 在长任务中出现“失忆”、目标漂移与重复调用工具的根本原因，并给出可落地的状态管理设计。"
 summary = "从 context window、工作/情节/语义记忆分层出发，系统分析长任务中的记忆问题，并给出任务状态对象、上下文压缩、滑动窗口与检查点等工程模式。"
-tags = ["Agent", "Memory", "Context Window", "State Management", "LLM"]
-categories = ["Agent"]
+tags = ["Agent", "记忆", "上下文窗口", "状态管理", "LLM"]
+categories = ["ai"]
 series = ["agent-engineering"]
 series_order = 3
 difficulty = "advanced"
@@ -14,6 +14,8 @@ article_type = "concept"
 topics = ["context-window", "memory", "state-management", "agent", "long-horizon-tasks"]
 frameworks = ["OpenAI", "Anthropic"]
 ShowToc = true
+source_kind = "original"
+lastmod = 2026-03-23T04:46:29+00:00
 +++
 
 在前两篇文章里，我们把 Agent 的核心结构拆清楚了：它需要目标、上下文、决策能力、执行能力和反馈闭环；而 Tool Use 是让它真正能行动的关键接口。

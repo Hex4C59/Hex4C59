@@ -1,6 +1,3 @@
 {{ define "main" }}
-{{ $series := partial "series/data.html" . }}
-{{ with $series }}
-  {{ with index .Pages 0 }}{{ partial "series/reader.html" (dict "Series" $series "Article" . "IsIndex" true) }}{{ end }}
-{{ end }}
+{{ with partial "series/data.html" . }}{{ partial "series/reader.html" (dict "Series" . "Article" .Hub "IsIndex" true) }}{{ end }}
 {{ end }}

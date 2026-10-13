@@ -6,7 +6,7 @@ author = "Hex4C59"
 description = "Simon Willison 介绍如何用一句简短的红灯／绿灯 TDD 提示，让编程智能体先写测试、确认失败，再实现代码直到测试通过。"
 summary = "测试先行可以帮助避免智能体写出无效或多余的代码。关键是实现前亲眼确认测试失败，再通过实现让它通过，以验证新代码确实受到测试覆盖。"
 tags = ["Agent", "智能体工程", "编程智能体", "TDD", "自动化测试"]
-categories = ["Translations"]
+categories = ["engineering"]
 topics = ["agents", "agentic-engineering", "coding-agents", "testing", "tdd"]
 translation_category = "工程实践"
 series = ["智能体工程模式"]
@@ -20,6 +20,8 @@ original_author = "Simon Willison"
 original_date = ""
 original_site = "Simon Willison’s Weblog"
 ShowToc = false
+source_kind = "translation"
+lastmod = 2026-10-11T21:22:32+08:00
 +++
 
 > **译文信息**

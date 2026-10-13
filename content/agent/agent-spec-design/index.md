@@ -5,8 +5,8 @@ draft = false
 author = "Hex4C59"
 description = "系统解析 Agent Spec 的本质，说明它与普通 Prompt 的区别，并给出一套包含六大核心组件的工程化设计方法论与通用模板。"
 summary = "从 Prompt Engineering 进阶到 Agent Workflow Design。系统分析 Agent Spec 的六大核心组件、四步设计流程以及常见避坑指南，帮你用自然语言定义真正的系统工作流。"
-tags = ["Agent", "Agent Spec", "Prompt", "Workflow", "LLM"]
-categories = ["Agent"]
+tags = ["Agent", "Agent Spec", "提示词", "Workflow", "LLM"]
+categories = ["ai"]
 series = ["agent-engineering"]
 series_order = 25
 difficulty = "intermediate"
@@ -14,6 +14,8 @@ article_type = "concept"
 topics = ["agent-spec", "prompt-engineering", "workflow", "design-pattern"]
 frameworks = ["LangChain"]
 ShowToc = true
+source_kind = "original"
+lastmod = 2026-04-03T17:51:57+00:00
 +++
 
 从"会写提示词（Prompt）"升级到"会设计智能体规范（Agent Spec）"，是 Agent 开发者必须跨越的一道坎。这一层级已经脱离了语言技巧的范畴，进入到了真正的系统设计领域。

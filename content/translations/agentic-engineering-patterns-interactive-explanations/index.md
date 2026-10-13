@@ -6,7 +6,7 @@ author = "Hex4C59"
 description = "Simon Willison 以词云布局算法为例，介绍如何让编程智能体生成动画和交互式讲解，帮助理解代码并偿还认知债务。"
 summary = "代码讲解能说明结构，交互式动画则能把算法的运行过程展现出来。作者通过可暂停、调速和逐帧查看的词云动画，理解了螺线布局与碰撞检测。"
 tags = ["Agent", "智能体工程", "编程智能体", "代码理解", "交互式讲解", "词云"]
-categories = ["Translations"]
+categories = ["engineering"]
 topics = ["agents", "agentic-engineering", "coding-agents", "code-understanding", "visualization"]
 translation_category = "工程实践"
 series = ["智能体工程模式"]
@@ -20,6 +20,8 @@ original_author = "Simon Willison"
 original_date = ""
 original_site = "Simon Willison’s Weblog"
 ShowToc = true
+source_kind = "translation"
+lastmod = 2026-10-11T21:22:32+08:00
 +++
 
 > **译文信息**

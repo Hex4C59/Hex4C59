@@ -7,9 +7,14 @@ draft = false
 author = "Hex4C59"
 description = "按工具、工作区、编译和运行阶段排查常见问题，重现移动、借用和生命周期错误，并检查依赖、文件路径及本机 HTTP 服务。"
 summary = "按工具、工作区、编译和运行阶段排查常见问题，重现移动、借用和生命周期错误，并检查依赖、文件路径及本机 HTTP 服务。"
-tags = ["Rust", "编程入门", "教程"]
-categories = ["Programming"]
+tags = ["Rust", "调试", "错误处理"]
+categories = ["programming"]
 ShowToc = true
+source_kind = "original"
+article_type = "tutorial"
+series = ["rust-from-zero"]
+series_role = "appendix"
+series_label = "常见报错排查"
 +++
 
 遇到 Rust 报错时，先判断它发生在哪一步：终端没有找到工具，Cargo 没有找到项目，编译器拒绝代码，还是程序已经启动但操作失败。不同阶段需要检查的东西不同。

@@ -6,7 +6,7 @@ author = "Hex4C59"
 description = "Anthropic 分享长期应用开发中的 Harness 设计：以规划、生成与评估 Agent 改善前端设计和全栈应用质量，并随模型能力变化简化编排。"
 summary = "从前端设计的生成—评估循环，到规划、生成、评估三个 Agent 协作开发全栈应用，介绍跨会话交接、迭代验收约定、真实界面测试，以及随模型升级重新审视 Harness 的工程实践。"
 tags = ["Agent", "Harness", "Claude", "Agent SDK"]
-categories = ["Translations"]
+categories = ["ai"]
 topics = ["agentic-coding", "harness", "agents", "evaluation", "frontend", "claude"]
 translation_category = "AI 与工具"
 original_title = "Harness design for long-running application development"
@@ -15,6 +15,8 @@ original_author = "Prithvi Rajasekaran"
 original_date = "2026-03-24"
 original_site = "Anthropic Engineering"
 ShowToc = true
+source_kind = "translation"
+lastmod = 2026-10-11T00:56:38+08:00
 +++
 
 > **译文信息**

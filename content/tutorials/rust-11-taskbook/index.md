@@ -7,14 +7,17 @@ draft = false
 author = "Hex4C59"
 description = "组合结构体、枚举、集合和错误处理，实现任务新增、完成、展示和命令参数解析。"
 summary = "组合结构体、枚举、集合和错误处理，实现任务新增、完成、展示和命令参数解析。"
-tags = ["Rust", "编程入门", "教程"]
-categories = ["Programming"]
+tags = ["Rust", "命令行", "项目实践"]
+categories = ["programming"]
 series = ["rust-from-zero"]
 series_order = 11
 series_label = "实战：任务与命令"
 series_part = "完成一个小项目"
 series_number = 11
 ShowToc = true
+source_kind = "original"
+article_type = "tutorial"
+series_role = "chapter"
 +++
 
 前面十章已经覆盖了这个项目要用的主要语法。这一章开始实现 `taskbook`：保存一组待办任务，新增任务，按编号标记完成，并把结果展示成文本。

@@ -5,8 +5,8 @@ draft = false
 author = "Hex4C59"
 description = "用 Python 构建一个多 Agent 代码审查系统——Supervisor Agent 协调逻辑、安全、性能三个专家 Agent 并行审查 PR，交叉检验后生成结构化审查报告。"
 summary = "不只是多个 Agent 跑在一起——这篇文章的核心在于 Supervisor 编排模式的工程落地：任务分发策略、Agent 间上下文隔离、并行执行、交叉审查（Reflection 的多Agent 形态）、矛盾仲裁和结构化报告输出。"
-tags = ["Agent", "Multi-Agent", "Supervisor", "Code Review", "Reflection", "Parallel"]
-categories = ["Agent"]
+tags = ["Agent", "多智能体", "Supervisor", "代码审查", "反思", "Parallel"]
+categories = ["ai"]
 series = ["agent-engineering"]
 series_order = 20
 difficulty = "advanced"
@@ -14,6 +14,8 @@ article_type = "tutorial"
 topics = ["multi-agent", "supervisor", "code-review", "parallel-execution", "cross-review"]
 frameworks = ["OpenAI"]
 ShowToc = true
+source_kind = "original"
+lastmod = 2026-03-28T08:56:59+00:00
 +++
 
 在 [多 Agent 协作那篇](/agent/multi-agent-collaboration/) 里，我们讨论了四种编排模式和它们各自适用的场景。其中 Supervisor 模式——一个主管 Agent 统一调度多个 Worker Agent——是最易理解、最好调试的模式，适合作为多 Agent 系统的第一个实战项目。

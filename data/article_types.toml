@@ -14,3 +14,7 @@ order = 4
 [eval]
 label = "评测与实验"
 order = 5
+
+[essay]
+label = "随笔"
+order = 6

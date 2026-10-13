@@ -6,7 +6,7 @@ author = "Hex4C59"
 description = "Simon Willison 逐段分析构建 GIF 优化网页的提示词，涵盖 Gifsicle 的 WebAssembly 编译、预览与手动设置、浏览器测试和可复现构建文件。"
 summary = "以一个浏览器 GIF 优化工具为例，解释怎样给编程智能体描述目标、利用仓库中的既有模式、提供测试工具，并通过后续提示补齐构建脚本和项目署名。"
 tags = ["Agent", "智能体工程", "编程智能体", "WebAssembly", "Gifsicle", "提示词"]
-categories = ["Translations"]
+categories = ["engineering"]
 topics = ["agents", "agentic-engineering", "coding-agents", "webassembly", "prompting"]
 translation_category = "工程实践"
 series = ["智能体工程模式"]
@@ -20,6 +20,8 @@ original_author = "Simon Willison"
 original_date = ""
 original_site = "Simon Willison’s Weblog"
 ShowToc = true
+source_kind = "translation"
+lastmod = 2026-10-11T21:22:32+08:00
 +++
 
 > **译文信息**

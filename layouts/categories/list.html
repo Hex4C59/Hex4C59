@@ -1,0 +1,8 @@
+{{ define "main" }}
+{{ partial "breadcrumbs.html" . }}
+<h1>分类</h1><p class="page-description">按文章的主要主题浏览。每个主题也会收录相关系列。</p>
+<div class="subject-directory">
+{{ $terms := slice }}{{ range site.Taxonomies.categories }}{{ $config := index site.Data.categories .Page.Data.Term }}{{ $terms = $terms | append (dict "Page" .Page "Pages" .Pages "Label" $config.label "Description" $config.description "Order" $config.order) }}{{ end }}
+{{ range sort $terms "Order" }}<article class="subject-entry"><h2><a href="{{ .Page.RelPermalink }}">{{ .Label }}</a></h2><p>{{ .Description }}</p><span class="muted">{{ len (partial "series/list-pages.html" .Pages) }} 个阅读入口</span></article>{{ end }}
+</div>
+{{ end }}

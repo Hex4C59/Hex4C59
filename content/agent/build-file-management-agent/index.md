@@ -5,8 +5,8 @@ draft = false
 author = "Hex4C59"
 description = "用 Python 构建一个带完整安全防护的文件管理 Agent——权限分级的工具集、Dry-run 预览机制、操作审批流程和 Undo 回滚能力，展示 Guardrails 如何嵌入 ReAct 执行循环。"
 summary = "不只是文件操作——这篇文章的核心是展示 Guardrails 如何在有不可逆操作的 Agent 系统中落地：四级权限工具、Dry-run 预览、用户审批流程、Undo 日志和回滚，以及这些机制如何与 ReAct 循环无缝集成。"
-tags = ["Agent", "Guardrails", "File Management", "Tool Use", "ReAct", "Safety"]
-categories = ["Agent"]
+tags = ["Agent", "安全护栏", "File Management", "工具调用", "ReAct", "安全防护"]
+categories = ["ai"]
 series = ["agent-engineering"]
 series_order = 18
 difficulty = "intermediate"
@@ -14,6 +14,8 @@ article_type = "tutorial"
 topics = ["file-management", "guardrails", "dry-run", "undo", "permissions", "tool-use"]
 frameworks = ["OpenAI"]
 ShowToc = true
+source_kind = "original"
+lastmod = 2026-03-28T08:41:54+00:00
 +++
 
 前两篇实战文章里，我们构建了 [CLI Coding Agent](/agent/build-cli-coding-agent/) 和 [Research Agent](/agent/build-research-agent/)。这两个 Agent 有一个共同特点：它们的大多数操作是**可逆的**。Coding Agent 写错了代码可以 `git checkout` 回来，Research Agent 搜索到的信息最多就是不准确，不会造成实际损失。

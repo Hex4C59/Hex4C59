@@ -5,8 +5,8 @@ draft = false
 author = "Hex4C59"
 description = "解释为什么 Agent 时代的工具接口不能只追求人类可用，并从粒度、返回值、错误处理与状态管理四个维度给出可落地的设计原则。"
 summary = "系统分析面向 Agent 的工具接口设计，说明为什么粒度、返回格式、错误信息和显式状态会直接决定 Agent 的决策质量与恢复能力。"
-tags = ["Agent", "Tool Design", "Tool Use", "Interface Design", "LLM"]
-categories = ["Agent"]
+tags = ["Agent", "Tool Design", "工具调用", "Interface Design", "LLM"]
+categories = ["ai"]
 series = ["agent-engineering"]
 series_order = 9
 difficulty = "intermediate"
@@ -14,6 +14,8 @@ article_type = "concept"
 topics = ["tool-use", "tool-design", "agent", "mcp", "interface-design"]
 frameworks = ["OpenAI", "Anthropic"]
 ShowToc = true
+source_kind = "original"
+lastmod = 2026-03-23T09:09:54+00:00
 +++
 
 在 [Tool Use](/agent/tool-use-core-of-agent/) 那篇里，我们讨论了工具是 Agent 与外部世界的接口层，以及工具描述写得好不好对调用决策的影响。

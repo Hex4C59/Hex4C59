@@ -1,4 +1,7 @@
 {{ $page := .Page }}{{ $series := .Series }}
+{{ if not (in $series.Pages $page) }}
+<nav class="series-pagination" aria-label="系列资料导航"><a href="{{ $series.Hub.RelPermalink }}"><span class="muted">所属系列</span><span>返回 {{ $series.Title }} 的目录 →</span></a></nav>
+{{ else }}
 {{ $previous := false }}{{ $next := false }}
 {{ range $index, $chapter := $series.Pages }}
   {{ if eq $chapter $page }}
@@ -7,6 +10,7 @@
   {{ end }}
 {{ end }}
 <nav class="series-pagination" aria-label="系列章节导航">
-  {{ with $previous }}<a href="{{ .RelPermalink }}"><span class="muted">← 上一篇</span><span>{{ .Params.series_label | default .Title }}</span></a>{{ else }}<span class="series-pagination-start muted">序言 · 系列起点</span>{{ end }}
-  {{ with $next }}<a class="series-next" href="{{ .RelPermalink }}"><span class="muted">下一篇 →</span><span>{{ .Params.series_label | default .Title }}</span></a>{{ else }}<a class="series-next" href="{{ $series.Hub.RelPermalink }}"><span class="muted">已读到本系列末篇</span><span>返回序言 →</span></a>{{ end }}
+  {{ with $previous }}<a href="{{ .RelPermalink }}"><span class="muted">← 上一篇</span><span>{{ .Params.series_label | default .Title }}</span></a>{{ else }}<a href="{{ $series.Hub.RelPermalink }}"><span class="muted">阅读起点</span><span>返回系列目录</span></a>{{ end }}
+  {{ with $next }}<a class="series-next" href="{{ .RelPermalink }}"><span class="muted">下一篇 →</span><span>{{ .Params.series_label | default .Title }}</span></a>{{ else }}<a class="series-next" href="{{ $series.Hub.RelPermalink }}"><span class="muted">已读到本系列末篇</span><span>返回目录 →</span></a>{{ end }}
 </nav>
+{{ end }}

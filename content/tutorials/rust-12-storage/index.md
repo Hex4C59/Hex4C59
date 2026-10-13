@@ -7,14 +7,17 @@ draft = false
 author = "Hex4C59"
 description = "为待办工具设计文件格式，读写数据，连接命令行入口，测试跨进程持久化并构建可执行文件。"
 summary = "为待办工具设计文件格式，读写数据，连接命令行入口，测试跨进程持久化并构建可执行文件。"
-tags = ["Rust", "编程入门", "教程"]
-categories = ["Programming"]
+tags = ["Rust", "文件操作", "数据持久化"]
+categories = ["programming"]
 series = ["rust-from-zero"]
 series_order = 12
 series_label = "实战：文件与完整程序"
 series_part = "完成一个小项目"
 series_number = 12
 ShowToc = true
+source_kind = "original"
+article_type = "tutorial"
+series_role = "chapter"
 +++
 
 这一章为待办工具加上文件存储和真正的命令行入口。完成后，每条命令都可以单独启动程序，之前写入的任务会重新读回来。

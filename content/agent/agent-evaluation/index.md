@@ -5,8 +5,8 @@ draft = false
 author = "Hex4C59"
 description = "解释 Agent 评测为什么不能只看最终答案，并给出覆盖任务完成率、过程合理性、错误恢复与稳定性的评测框架。"
 summary = "系统分析 Agent 评测与模型评测的差异，说明如何构建测试集、结合自动评测与 LLM-as-judge，并把失败案例转化成可持续的改进信号。"
-tags = ["Agent", "Evaluation", "Reliability", "Testing", "LLM"]
-categories = ["Agent"]
+tags = ["Agent", "评测", "可靠性", "自动化测试", "LLM"]
+categories = ["ai"]
 series = ["agent-engineering"]
 series_order = 6
 difficulty = "intermediate"
@@ -14,6 +14,8 @@ article_type = "concept"
 topics = ["eval", "agent", "reliability", "task-completion", "testing"]
 frameworks = ["OpenAI", "Anthropic"]
 ShowToc = true
+source_kind = "original"
+lastmod = 2026-03-23T04:46:29+00:00
 +++
 
 这个系列到目前为止，已经把 Agent 的核心结构讲清楚了：Tool Use 是它与外部世界的接口，上下文管理决定它在长任务中能否保持方向感，ReAct 是它的推理-行动范式，Planning 是它处理复杂任务的全局结构。

@@ -6,7 +6,7 @@ author = "Hex4C59"
 description = "Simon Willison 以 SwiftUI 演示应用 Present 为例，介绍如何让编程智能体使用 Showboat 生成有组织的代码讲解，帮助读者理解实现。"
 summary = "让智能体阅读源码、规划讲解顺序，再通过 Showboat 记录说明和直接读取的代码片段。作者借此理解了一个通过 Vibe Coding 构建的 SwiftUI 应用。"
 tags = ["Agent", "智能体工程", "编程智能体", "代码理解", "SwiftUI", "Showboat"]
-categories = ["Translations"]
+categories = ["engineering"]
 topics = ["agents", "agentic-engineering", "coding-agents", "code-understanding", "swiftui"]
 translation_category = "工程实践"
 series = ["智能体工程模式"]
@@ -20,6 +20,8 @@ original_author = "Simon Willison"
 original_date = ""
 original_site = "Simon Willison’s Weblog"
 ShowToc = true
+source_kind = "translation"
+lastmod = 2026-10-11T21:22:32+08:00
 +++
 
 > **译文信息**

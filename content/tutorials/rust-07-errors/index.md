@@ -7,14 +7,17 @@ draft = false
 author = "Hex4C59"
 description = "读取输入和处理失败，拆解 Result 与 Option 上的问号传播、错误转换和函数返回边界。"
 summary = "读取输入和处理失败，拆解 Result 与 Option 上的问号传播、错误转换和函数返回边界。"
-tags = ["Rust", "编程入门", "教程"]
-categories = ["Programming"]
+tags = ["Rust", "错误处理", "Result", "输入输出"]
+categories = ["programming"]
 series = ["rust-from-zero"]
 series_order = 7
 series_label = "输入与错误处理"
 series_part = "写出可维护的程序"
 series_number = 7
 ShowToc = true
+source_kind = "original"
+article_type = "tutorial"
+series_role = "chapter"
 +++
 
 前面几章的值大多写在代码里。从这一章开始，程序要接收人输入的内容。输入 `30` 时记录学习时长，输入 `abc` 时说明哪里不对，输入结束时也要有明确的处理方式。

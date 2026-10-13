@@ -6,8 +6,8 @@ draft = false
 author = "Hex4C59"
 description = "Anthropic 对 2026 年代理式编程（agentic coding）的展望：编码 agent 成为协作者、行业数据与落地案例，以及组织应优先关注的四个方向。"
 summary = "工程团队正从「写代码」转向「协调会写代码的 agent」；研究显示约 60% 工作会用到 AI，但可「完全托付」的任务仅占 0–20%。文末附完整趋势报告 PDF 链接。"
-tags = []
-categories = ["Translations"]
+tags = ["Claude Code", "智能体", "智能体编程"]
+categories = ["ai"]
 topics = ["claude-code", "agents", "agentic-coding", "engineering"]
 translation_category = "AI 与工具"
 original_title = "Eight trends defining how software gets built in 2026"
@@ -16,6 +16,7 @@ original_author = "Anthropic"
 original_date = "2026-01-21"
 original_site = "Claude Blog"
 ShowToc = true
+source_kind = "translation"
 +++
 
 > **译文信息**  

@@ -1,0 +1,7 @@
+{{- $pages := .RegularPages -}}
+{{- if or .IsHome (eq .Section "articles") -}}{{- $pages = partialCached "site/articles.html" site -}}{{- end -}}
+{{- $pages = partial "series/recent-pages.html" $pages -}}
+{{- printf "<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"yes\"?>" | safeHTML }}
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>{{ .Title }}</title><link>{{ .Permalink }}</link><description>{{ .Description | default site.Params.description }}</description><language>{{ site.Language.LanguageCode }}</language>{{ with .OutputFormats.Get "RSS" }}<atom:link href="{{ .Permalink }}" rel="self" type="application/rss+xml" />{{ end }}
+{{ range $pages }}<item><title>{{ .Title }}</title><link>{{ .Permalink }}</link><guid>{{ .Permalink }}</guid><pubDate>{{ (partial "series/updated.html" .).Format "Mon, 02 Jan 2006 15:04:05 -0700" }}</pubDate><description>{{ .Description | default .Summary | plainify | htmlUnescape | transform.XMLEscape | safeHTML }}</description></item>{{ end }}
+</channel></rss>

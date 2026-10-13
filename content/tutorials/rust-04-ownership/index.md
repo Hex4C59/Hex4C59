@@ -7,14 +7,17 @@ draft = false
 author = "Hex4C59"
 description = "解释所有权、移动和借用，区分绑定的 mut、引用的 &mut、解引用、再借用和引用复制。"
 summary = "解释所有权、移动和借用，区分绑定的 mut、引用的 &mut、解引用、再借用和引用复制。"
-tags = ["Rust", "编程入门", "教程"]
-categories = ["Programming"]
+tags = ["Rust", "所有权", "移动语义", "借用"]
+categories = ["programming"]
 series = ["rust-from-zero"]
 series_order = 4
 series_label = "所有权与借用"
 series_part = "理解数据如何使用"
 series_number = 4
 ShowToc = true
+source_kind = "original"
+article_type = "tutorial"
+series_role = "chapter"
 +++
 
 前三章把整数传给函数后，调用方仍可以继续使用这些整数。换成可以增长的文本，你可能第一次遇到“这个值已经被移动”的报错。

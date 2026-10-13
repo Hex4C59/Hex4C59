@@ -1,9 +1,7 @@
-{{- $label := printf "%v" .Value -}}
-{{- if eq .Key "article_type" -}}
-  {{- with index site.Data.article_types (lower $label) -}}{{- $label = .label -}}{{- end -}}
-{{- else -}}
-{{- with index site.Data.collection_labels .Key -}}
-  {{- with index . (lower $label) -}}{{- $label = . -}}{{- end -}}
-{{- end -}}
-{{- end -}}
+{{- $label := printf "%v" .Value -}}{{- $key := lower $label -}}
+{{- if eq .Key "article_type" -}}{{- with index site.Data.article_types $key -}}{{- $label = .label -}}{{- end -}}
+{{- else if eq .Key "categories" -}}{{- with index site.Data.categories $key -}}{{- $label = .label -}}{{- end -}}
+{{- else if eq .Key "tags" -}}{{- with site.GetPage (printf "/tags/%s" $key) -}}{{- $label = .LinkTitle -}}{{- range .RegularPages -}}{{- range .Params.tags -}}{{- if eq (lower .) $key -}}{{- $label = . -}}{{- end -}}{{- end -}}{{- end -}}{{- end -}}
+{{- else if eq .Key "source_kind" -}}{{- with index site.Data.article_sources $key -}}{{- $label = .label -}}{{- end -}}
+{{- else -}}{{- with index site.Data.collection_labels .Key -}}{{- with index . $key -}}{{- $label = . -}}{{- end -}}{{- end -}}{{- end -}}
 {{- return $label -}}

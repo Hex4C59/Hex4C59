@@ -1,7 +1,7 @@
 {{ $series := .Series }}{{ $heading := .Heading | default "h3" }}
 <article class="series-feature">
   <div class="series-feature-heading">
-    <p class="series-feature-kind">{{ $series.Kind }}{{ range $series.Sections }}{{ with site.GetPage . }}<span>·</span><a href="{{ .RelPermalink }}">{{ .Title }}</a>{{ end }}{{ end }}</p>
+    <p class="series-feature-kind">{{ $series.Kind }}</p>
     {{ printf "<%s class='series-feature-title'>" $heading | safeHTML }}<a href="{{ $series.Page.RelPermalink }}">{{ $series.Title }}</a>{{ printf "</%s>" $heading | safeHTML }}
     <p class="series-feature-meta">{{ $series.CountLabel }}{{ with $series.Status }}<span>·</span>{{ . }}{{ end }}<span>·</span>更新于 <time datetime="{{ $series.Updated.Format "2006-01-02" }}">{{ $series.Updated.Format "2006-01-02" }}</time></p>
   </div>

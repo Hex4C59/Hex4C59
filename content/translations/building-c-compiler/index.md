@@ -6,7 +6,7 @@ author = "Hex4C59"
 description = "Anthropic 研究员 Nicholas Carlini 分享让 16 个 Claude Agent 从零构建 C 编译器的实验，以及长期自主开发中的测试、并行协作与能力边界。"
 summary = "16 个 Claude Agent 在共享代码库中并行开发，用 Rust 构建能够编译 Linux 内核的 C 编译器。本文介绍持续运行循环、基于 Git 的任务锁、高质量测试、GCC 对照验证和角色分工，并完整保留实验成本、编译器限制及作者对自主开发的思考。"
 tags = ["Agent", "Harness", "Claude", "编译器", "并行开发"]
-categories = ["Translations"]
+categories = ["ai"]
 topics = ["agentic-coding", "harness", "agents", "compilers", "rust", "evaluation", "claude"]
 translation_category = "AI 与工具"
 original_title = "Building a C compiler with a team of parallel Claudes"
@@ -15,6 +15,8 @@ original_author = "Nicholas Carlini"
 original_date = "2026-02-05"
 original_site = "Anthropic Engineering"
 ShowToc = true
+source_kind = "translation"
+lastmod = 2026-10-11T00:56:39+08:00
 +++
 
 > **译文信息**

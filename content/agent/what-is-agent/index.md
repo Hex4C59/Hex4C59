@@ -6,7 +6,7 @@ author = "Hex4C59"
 description = "从目标、工具、状态与执行闭环几个角度理解 Agent，说明它和普通聊天机器人、固定工作流之间的区别。"
 summary = "系统解释什么是 Agent，为什么它不只是一个会聊天的模型，以及在什么场景下才值得引入 Agent 设计。"
 tags = ["Agent", "AI", "LLM"]
-categories = ["Agent"]
+categories = ["ai"]
 series = ["agent-engineering"]
 series_order = 1
 difficulty = "beginner"
@@ -14,6 +14,8 @@ article_type = "concept"
 topics = ["agent", "workflow", "tools", "planning"]
 frameworks = ["OpenAI"]
 ShowToc = true
+source_kind = "original"
+lastmod = 2026-03-24T09:01:08+00:00
 +++
 
 很多人第一次听到 Agent 这个词时，脑海里想到的往往是“更聪明一点的聊天机器人”。这个理解不能说完全错，但它只触及了表面。真正让 Agent 和普通对话系统拉开差距的，不是它会不会说话，而是它能不能围绕一个目标持续行动，能不能在过程中调用工具、维护状态、根据结果调整下一步，并最终完成任务。

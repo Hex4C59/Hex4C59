@@ -4,51 +4,77 @@
 
 ## 目录用途
 
-| 目录或文件 | 用途 |
+| 路径 | 用途 |
 | --- | --- |
-| `content/agent/` | 原创 Agent 专题文章 |
-| `content/tutorials/` | 编程、工具和原理教程，以及配套练习、参考资料 |
-| `content/posts/` | 经验、比较、选型、观点和生活随笔 |
-| `content/translations/` | 以外文原作为主体的翻译与译述 |
-| `content/series/` | 系列专题页；正文仍放在自己的主栏目 |
-| `archetypes/` | 新文章模板 |
-| `data/sections.toml` | 栏目顺序、名称、导航地址、文章收录、评论和筛选配置 |
-| `data/article_types.toml` | Agent 文章类型的字段值、显示标签和排序 |
-| `data/collection_labels.toml` | 难度、主题及其他筛选值的中文标签 |
-| `layouts/` | 本站布局覆盖；`partials/site/` 读取公共配置，`partials/series/` 处理系列阅读 |
-| `assets/css/`、`assets/js/` | 通过 Hugo 合并、压缩并加内容指纹的样式和脚本 |
-| `static/` | 字体、KaTeX 等保持固定地址的资源；`static/CNAME` 是域名文件的唯一来源 |
-| `themes/typo/` | 当前使用的主题；本站改动优先放在 `layouts/` 和 `assets/` 中 |
-| `scripts/` | 构建、链接检查、课程打包和验证工具 |
-| `.agents/` | Agent 工作规则与写作计划，不参与站点发布 |
-| `public/`、`resources/`、`.hugo_build.lock` | 本地生成物，不提交 |
+| `content/articles/` | 新文章的统一目录；首页与文章页也汇总旧目录中的文章 |
+| `content/agent/`、`content/tutorials/`、`content/posts/`、`content/translations/` | 已发布正文与兼容入口，保留现有网址和资源 |
+| `content/series/` | 系列说明与阅读入口，成员正文只存放一份 |
+| `content/categories/`、`content/tags/` | 分类显示信息与历史名称的跳转 |
+| `content/about.md` | 作者与博客介绍 |
+| `data/navigation.toml` | 首页、文章、系列、关于等稳定导航 |
+| `data/categories.toml` | 主题键、名称、说明和顺序 |
+| `data/article_sources.toml`、`data/article_types.toml` | 来源与文章形式 |
+| `data/series_kinds.toml`、`data/series_roles.toml` | 系列类型、成员角色与是否参与阅读顺序 |
+| `data/collections.toml` | 统一文章列表的筛选项 |
+| `data/sections.toml` | 正文目录登记、评论开关与旧入口的筛选配置 |
+| `layouts/`、`assets/`、`static/` | 页面模板、构建资源与直接复制的静态文件 |
+| `archetypes/` | 新文章的 front matter 模板 |
+| `scripts/` | 构建、链接检查、课程打包与行为测试 |
+| `.agents/` | 内部写作与操作规则，不发布为正文 |
+| `themes/typo/` | 当前使用的上游主题；本站覆盖优先放在 `layouts/` 和 `assets/` |
 
 ## 新建文章
 
-先按[栏目归类规则](../.agents/content/section-routing.md)选择目录。文章来源优先于主题：翻译放“译文”；原创 Agent 内容放“Agent”；其他教学内容放“教程”；经历与判断放“随笔”。系列组织阅读顺序，栏目说明文章的主要用途。
+先按[内容归类规则](../.agents/content/section-routing.md)选择主题、来源、形式和阅读关系。新文章统一放在 `articles`，内容可以是技术、阅读、旅行或日常观察。
 
 ```sh
-hugo new content --kind tutorials tutorials/my-first-topic/index.md
-hugo new content --kind agent agent/my-agent-topic/index.md
-hugo new content --kind translations translations/my-translation/index.md
-hugo new content posts/my-observation/index.md
+hugo new content articles/my-article/index.md
+hugo new content --kind translations articles/my-translation/index.md
+hugo new content --kind agent articles/my-agent-article/index.md
 ```
 
-文章采用叶子页面包：正文是 `index.md`，图片、图表和下载文件放在旁边，用相对路径引用。发布前填写标题、日期、作者和 `description`，确认 `tags`、`categories` 为数组，再将 `draft` 改为 `false`。模板还提供 `summary`；未填写时 Hugo 会生成摘要。
+正文使用叶子页面包：`index.md` 和图片、图表、下载文件放在同一目录。发布前填写标题、日期、作者、描述、主题与标签，确认译文的出处完整，再将 `draft` 改为 `false`。例如：
 
-Agent 文章需要 `difficulty` 和 `article_type`；五种类型的可用值见 `data/article_types.toml`。译文需要原文标题、URL、作者和站点名。草稿可以保留待填字段，发布构建只检查已发布文章。
+```toml
+categories = ["programming"]
+source_kind = "original"
+article_type = "tutorial"
+tags = ["Rust", "所有权", "借用"]
+```
 
-文章目录决定栏目。Rust 教程虽存放在 `content/tutorials/`，仍通过 front matter 的 `url` 保留原来的 `/posts/rust-…/` 地址。这些地址同时用于外部链接和评论定位，迁移时不要删除。
+`categories` 使用数据文件中的稳定主题键；`article_type` 可选。技术文章按需设置学习难度、公式或示例，其他文章无需这些字段。
+
+新增主题时只需在 `data/categories.toml` 增加名称、说明和顺序，然后把键填写到文章中。分类页、文章筛选和首页主题入口会自动出现。改名优先调整显示名称，保持主题键与网址稳定。没有文章的主题不显示在浏览入口。
+
+标签使用具体、统一的名称。归并旧标签时，在新标签的 `content/tags/<slug>/_index.md` 中设置旧地址的 `aliases`。普通标签无需建立单独的内容文件。
+
+已发布文章保留原目录及 `url`。例如 Rust 正文仍在 `content/tutorials/`，公开地址仍为 `/posts/rust-…/`；旧 Agent 和译文入口也继续可访问。
 
 ## 连续课程与系列
 
-章节填写 `series = ["系列键"]` 和非负整数 `series_order`。同一个系列内的章节排序不能重复。需要显示章号时使用正整数 `series_number`，章号也不能重复；序言可以不填章号。
+系列说明放在 `content/series/<key>/_index.md`，成员使用相同的 `series` 键。普通合集可以不填排序，按最近更新展示；需要固定顺序时为所有正文填写唯一的 `series_order`。
 
-专题说明放在 `content/series/<key>/_index.md`。其中的 `series_start` 使用正文的源路径，例如 `/tutorials/rust-00-learning-guide/`，供 Hugo 的 `site.GetPage` 查找。正文里的阅读链接使用公开地址，例如 `/posts/rust-00-learning-guide/`。两者在迁移过的文章上可能不同。
+连续阅读系列增加一个 `series_index = true`、`layout = "series"` 的目录文章。目录可以选择 `series_kind = "course"`、`"translation"` 或 `"ordered"`。成员可以来自不同源目录；文章最多加入一个连续阅读系列，还可以加入多个开放合集。
 
-需要连续阅读布局时，创建一个带 `series_index = true`、`layout = "series"` 的目录文章，并且只加入一个系列。目录文章不参与章节序号去重，每个系列最多有一个目录文章；章节与目录文章放在同一主栏目。配套附录可以留在同一栏目，不加入正式章节序列。
+```toml
+# 正式章节
+series = ["rust-from-zero"]
+series_role = "chapter"
+series_order = 4
+series_number = 4
+```
 
-目录文章可用 `series_notes_label` 自定义折叠说明的标题。教程默认显示“目录与配套资料”，译文默认显示“原指南目录与译文说明”。
+```toml
+# 配套附录：属于同一课程，不参与章节顺序
+series = ["rust-from-zero"]
+series_role = "appendix"
+```
+
+导读使用 `guide`，练习使用 `exercise`。只有参与阅读顺序的成员填写非负整数 `series_order`；章号为唯一的正整数。配套资料不填这两个字段。角色与显示名称在 `data/series_roles.toml` 中维护，是否参与顺序由 `in_sequence` 决定。
+
+系列起点 `series_start` 使用源路径，例如 `/tutorials/rust-00-learning-guide/`；正文链接使用公开网址。首页和文章页把连续系列合并到目录入口，更新日期包含附录。文章列表可展开成员，标签页默认展开；搜索和归档保留全部内容页。
+
+首页的推荐起点由 `hugo.toml` 中的 `startSeries` 选择，精选系列由 `featuredSeries` 选择。内容主题变化时调整这些选择，不修改首页模板。
 
 ## 样式与脚本
 

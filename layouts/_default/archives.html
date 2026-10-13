@@ -1,12 +1,6 @@
 {{ define "main" }}
-{{ partial "breadcrumbs.html" . }}
-<h1>{{ .Title }}</h1>
-{{ $pages := where site.RegularPages "Section" "in" (partialCached "site/article-sections.html" site) }}
-{{ $pages = partial "series/list-pages.html" $pages }}
-<p class="page-description">共 {{ len $pages }} 个阅读入口，系列文章合并展示，按发布时间整理。</p>
-{{ range $pages.GroupByDate "2006" }}
-<section class="archive-year" aria-labelledby="year-{{ .Key }}"><h2 id="year-{{ .Key }}">{{ .Key }} <span class="muted">/ {{ len .Pages }}</span></h2>
-  {{ range .Pages }}<div class="archive-line"><time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "01-02" }}</time><a href="{{ .RelPermalink }}">{{ if .Params.series_index }}{{ $series := partial "series/data.html" . }}{{ $series.Title }} <span class="archive-series-label">系列 · {{ len $series.Chapters }} 篇 + 序言</span>{{ else }}{{ .Title }}{{ end }}</a></div>{{ end }}
-</section>
-{{ end }}
+{{ partial "breadcrumbs.html" . }}<h1>{{ .Title }}</h1>
+{{ $pages := (partialCached "site/articles.html" site).ByDate.Reverse }}
+<p class="page-description">共 {{ len $pages }} 个内容页，包含系列章节与配套资料，按发布时间整理。</p>
+{{ range $pages.GroupByDate "2006" }}<section class="archive-year" aria-labelledby="year-{{ .Key }}"><h2 id="year-{{ .Key }}">{{ .Key }} <span class="muted">/ {{ len .Pages }}</span></h2>{{ range .Pages }}<div class="archive-line"><time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "01-02" }}</time><a href="{{ .RelPermalink }}">{{ .Title }}</a></div>{{ end }}</section>{{ end }}
 {{ end }}

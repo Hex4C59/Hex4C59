@@ -1,0 +1,10 @@
+{{ if and site.Params.breadcrumbs.enabled (not .IsHome) }}
+<nav class="breadcrumbs" aria-label="面包屑"><a href="{{ site.Home.RelPermalink }}">首页</a>
+{{ $reader := partial "series/data.html" . }}
+{{ if or $reader (eq .Section "series") }}<span aria-hidden="true">/</span><a href="{{ "series/" | relURL }}">系列</a>{{ if and $reader (not .Params.series_index) }}<span aria-hidden="true">/</span><a href="{{ $reader.Hub.RelPermalink }}">{{ $reader.Title }}</a>{{ end }}
+{{ else if or (in (partialCached "site/article-sections.html" site) .Section) (in (slice "categories" "tags") .Section) }}
+<span aria-hidden="true">/</span><a href="{{ "articles/" | relURL }}">文章</a>
+{{ if in (slice "categories" "tags") .Section }}{{ if eq .Kind "term" }}<span aria-hidden="true">/</span><a href="{{ printf "%s/" .Section | relURL }}">{{ cond (eq .Section "tags") "标签" "分类" }}</a>{{ end }}{{ end }}
+{{ end }}
+</nav>
+{{ end }}

@@ -6,7 +6,7 @@ author = "Hex4C59"
 description = "Simon Willison 解释编程智能体的运行机制，涵盖大语言模型、聊天模板、Token 缓存、工具调用、系统提示词和推理。"
 summary = "编程智能体用运行框架组织 LLM、系统提示词和工具。本文通过对话与天气查询示例，说明框架如何维护历史、执行工具并把结果反馈给模型。"
 tags = ["Agent", "智能体工程", "编程智能体", "LLM", "工具调用", "提示词"]
-categories = ["Translations"]
+categories = ["engineering"]
 topics = ["agents", "agentic-engineering", "coding-agents", "tool-use", "prompting"]
 translation_category = "工程实践"
 series = ["智能体工程模式"]
@@ -20,6 +20,8 @@ original_author = "Simon Willison"
 original_date = ""
 original_site = "Simon Willison’s Weblog"
 ShowToc = true
+source_kind = "translation"
+lastmod = 2026-10-11T21:22:32+08:00
 +++
 
 > **译文信息**

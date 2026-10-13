@@ -2,17 +2,16 @@
   {{ if .IsHome }}<h1 class="header-title">{{ else }}<p class="header-title">{{ end }}
     <a href="{{ site.Home.RelPermalink }}">{{ site.Title }}</a>
   {{ if .IsHome }}</h1>{{ else }}</p>{{ end }}
-  <nav class="header-menu" aria-label="内容栏目">
-    {{ range site.Data.sections.sections }}
-    {{ $active := hasPrefix $.RelPermalink .url }}
-    {{ $active = eq $.Section .key }}
-    <a href="{{ .url | relURL }}"{{ if $active }} aria-current="page"{{ end }}>/{{ .label }}</a>
-    {{ end }}
+  {{ $active := "" }}
+  {{ if .IsHome }}{{ $active = "home" }}
+  {{ else if or (eq .Section "series") (partial "series/data.html" .) }}{{ $active = "series" }}
+  {{ else if or (in (partialCached "site/article-sections.html" site) .Section) (in (slice "categories" "tags") .Section) }}{{ $active = "articles" }}
+  {{ else if eq .Layout "about" }}{{ $active = "about" }}{{ end }}
+  <nav class="header-menu" aria-label="主要导航">
+    {{ range site.Data.navigation.main }}<a href="{{ .url | relURL }}"{{ if eq $active .key }} aria-current="page"{{ end }}>{{ .label }}</a>{{ end }}
   </nav>
   <nav class="header-tools" aria-label="浏览工具">
-    {{ range site.Params.utilityMenu }}
-    <a href="{{ .url | relURL }}"{{ if hasPrefix $.RelPermalink .url }} aria-current="page"{{ end }}>{{ .name }}</a>
-    {{ end }}
+    {{ range site.Params.utilityMenu }}<a href="{{ .url | relURL }}"{{ if hasPrefix $.RelPermalink .url }} aria-current="page"{{ end }}>{{ .name }}</a>{{ end }}
     <button id="theme-toggle" type="button" aria-label="切换深浅主题">主题</button>
   </nav>
 </div>

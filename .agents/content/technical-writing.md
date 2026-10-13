@@ -4,7 +4,7 @@
 
 ## Section and series
 
-新建文章、规划或续写系列、调整栏目时，先按[栏目归类规则](section-routing.md)确定正文目录，再安排提纲和 front matter。栏目范围、判断顺序、系列归属与已发布文章的迁移要求以该文件为准。
+新建文章、规划或续写系列、调整归属时，先按[内容归类规则](section-routing.md)确定主题、来源与系列关系，再安排提纲和 front matter。新文章默认使用 `content/articles/`；已发布文章保留目录与网址。
 
 ## Audience and scope
 

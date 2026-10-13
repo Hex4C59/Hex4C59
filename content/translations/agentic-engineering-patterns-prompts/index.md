@@ -6,7 +6,7 @@ author = "Hex4C59"
 description = "Simon Willison 分享用于 HTML 原型、文章校对、图片替代文本和播客摘录的四组提示词，并说明自己的使用方式和修改原则。"
 summary = "附录收录作者使用的 Claude 项目自定义指令：用原生 HTML 构建工具、检查文章问题、起草图片替代文本，以及从播客转录稿中挑选精彩引文。"
 tags = ["Agent", "智能体工程", "提示词", "Claude", "无障碍", "校对"]
-categories = ["Translations"]
+categories = ["engineering"]
 topics = ["agents", "agentic-engineering", "prompting", "accessibility", "proofreading"]
 translation_category = "工程实践"
 series = ["智能体工程模式"]
@@ -20,6 +20,8 @@ original_author = "Simon Willison"
 original_date = ""
 original_site = "Simon Willison’s Weblog"
 ShowToc = true
+source_kind = "translation"
+lastmod = 2026-10-11T21:22:32+08:00
 +++
 
 > **译文信息**

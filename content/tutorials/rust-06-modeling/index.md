@@ -7,14 +7,17 @@ draft = false
 author = "Hex4C59"
 description = "学习结构体、枚举和 Option，解释模式绑定、引用匹配、守卫、通配符与 let ... else。"
 summary = "学习结构体、枚举和 Option，解释模式绑定、引用匹配、守卫、通配符与 let ... else。"
-tags = ["Rust", "编程入门", "教程"]
-categories = ["Programming"]
+tags = ["Rust", "结构体", "枚举", "模式匹配"]
+categories = ["programming"]
 series = ["rust-from-zero"]
 series_order = 6
 series_label = "结构体与枚举"
 series_part = "理解数据如何使用"
 series_number = 6
 ShowToc = true
+source_kind = "original"
+article_type = "tutorial"
+series_role = "chapter"
 +++
 
 第五章已经能保存一组标题。现在每条任务还需要完成状态，单靠一个字符串就不够了。程序也需要区分“新增”“完成”“列出”这些不同操作。

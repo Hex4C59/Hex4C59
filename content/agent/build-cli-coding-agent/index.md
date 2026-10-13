@@ -5,8 +5,8 @@ draft = false
 author = "Hex4C59"
 description = "用 Python 从零构建一个结构真实的 CLI Coding Agent，涵盖工具注册、ReAct 循环、上下文管理和安全边界的完整实现。"
 summary = "不只是造玩具——这篇文章构建一个结构上真实的 CLI Coding Agent：ReAct 循环驱动多步推理、完整的工具注册机制、上下文窗口管理，以及你在真实工程里必须处理的失败模式。"
-tags = ["Agent", "Coding Agent", "CLI", "Tool Use", "ReAct", "State Management"]
-categories = ["Agent"]
+tags = ["Agent", "编程智能体", "CLI", "工具调用", "ReAct", "状态管理"]
+categories = ["ai"]
 series = ["agent-engineering"]
 series_order = 13
 difficulty = "advanced"
@@ -14,6 +14,8 @@ article_type = "tutorial"
 topics = ["coding-agent", "cli", "tool-use", "react", "state-management"]
 frameworks = ["OpenAI"]
 ShowToc = true
+source_kind = "original"
+lastmod = 2026-03-24T13:39:09+00:00
 +++
 
 Claude Code 和 Codex 的出现让"AI 写代码"从概念变成了日常工具。但如果你只是用它们，你并不真正理解它们。

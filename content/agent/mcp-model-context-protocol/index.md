@@ -5,8 +5,8 @@ draft = false
 author = "Hex4C59"
 description = "从工具集成的 N×M 问题出发，系统解析 MCP 的架构设计、核心原语、传输机制与安全模型，说明它为什么可能成为 Agent 工具层的基础协议。"
 summary = "系统分析 Model Context Protocol（MCP）的设计动机、三层架构（Host-Client-Server）、三种原语（Tools / Resources / Prompts）、传输机制与安全边界，结合实际代码示例说明如何构建和接入 MCP Server。"
-tags = ["Agent", "MCP", "Tool Use", "Protocol", "LLM"]
-categories = ["Agent"]
+tags = ["Agent", "MCP", "工具调用", "Protocol", "LLM"]
+categories = ["ai"]
 series = ["agent-engineering"]
 series_order = 11
 difficulty = "intermediate"
@@ -14,6 +14,8 @@ article_type = "concept"
 topics = ["mcp", "tool-use", "protocol", "architecture", "agent"]
 frameworks = ["Anthropic", "OpenAI"]
 ShowToc = true
+source_kind = "original"
+lastmod = 2026-03-23T10:35:35+00:00
 +++
 
 在 [Tool Use](/agent/tool-use-core-of-agent/) 那篇里，我在最后提到过 MCP：当 Tool Use 要走向规模化复用时，工具生态的标准化就成了绕不开的问题。在[工具接口设计](/agent/tool-interface-design/)那篇里，我们讨论了面向 Agent 的工具应该怎么设计——粒度、返回值、错误处理、状态管理。

@@ -7,14 +7,17 @@ draft = false
 author = "Hex4C59"
 description = "复用 JSON 校验，在 Rust 中备份和恢复任务文件，学习 create_new、写入失败边界，以及如何用测试确认旧文件没有被覆盖。"
 summary = "复用 JSON 校验，在 Rust 中备份和恢复任务文件，学习 create_new、写入失败边界，以及如何用测试确认旧文件没有被覆盖。"
-tags = ["Rust", "编程入门", "教程"]
-categories = ["Programming"]
+tags = ["Rust", "备份恢复", "文件操作"]
+categories = ["programming"]
 series = ["rust-from-zero"]
 series_order = 16
 series_number = 16
 series_label = "备份与恢复"
 series_part = "文件、命令行与网络"
 ShowToc = true
+source_kind = "original"
+article_type = "tutorial"
+series_role = "chapter"
 +++
 
 上一章的任务文件已经能读写 JSON。发生误删后，还需要一份此前保存的副本。这一章给工具增加手动备份，再把备份恢复到一个新文件里。

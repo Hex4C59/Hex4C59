@@ -7,14 +7,17 @@ draft = false
 author = "Hex4C59"
 description = "拆分模块并写测试，解释 crate、self、super 路径、可见性、use 别名、宏和属性。"
 summary = "拆分模块并写测试，解释 crate、self、super 路径、可见性、use 别名、宏和属性。"
-tags = ["Rust", "编程入门", "教程"]
-categories = ["Programming"]
+tags = ["Rust", "Cargo", "模块", "可见性"]
+categories = ["programming"]
 series = ["rust-from-zero"]
 series_order = 8
 series_label = "模块与测试"
 series_part = "写出可维护的程序"
 series_number = 8
 ShowToc = true
+source_kind = "original"
+article_type = "tutorial"
+series_role = "chapter"
 +++
 
 当一个程序包含输入、计算和文件读写时，把所有内容放在 `main.rs` 会越来越难修改。本章将温度转换逻辑放到独立模块，并写测试固定它的行为。

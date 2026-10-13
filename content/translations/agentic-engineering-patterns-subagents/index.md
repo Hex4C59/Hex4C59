@@ -6,7 +6,7 @@ author = "Hex4C59"
 description = "Simon Willison 介绍子智能体如何节省主智能体的上下文，以 Claude Code 的 Explore 子智能体为例，讨论并行任务和专家分工。"
 summary = "子智能体用独立上下文处理探索、测试和调试等任务，再向主智能体返回所需信息。本文结合一次 Django 差异视图修改，说明这种协作方式的用途。"
 tags = ["Agent", "智能体工程", "编程智能体", "子智能体", "上下文管理"]
-categories = ["Translations"]
+categories = ["engineering"]
 topics = ["agents", "agentic-engineering", "coding-agents", "subagents", "context"]
 translation_category = "工程实践"
 series = ["智能体工程模式"]
@@ -20,6 +20,8 @@ original_author = "Simon Willison"
 original_date = ""
 original_site = "Simon Willison’s Weblog"
 ShowToc = true
+source_kind = "translation"
+lastmod = 2026-10-11T21:22:32+08:00
 +++
 
 > **译文信息**

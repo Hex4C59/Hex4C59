@@ -1,0 +1,1 @@
+{{ define "main" }}{{ partial "collection.html" (dict "Page" . "Pages" (partialCached "site/articles.html" site) "Config" site.Data.collections.articles) }}{{ end }}

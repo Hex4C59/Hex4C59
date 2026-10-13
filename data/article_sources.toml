@@ -1,0 +1,5 @@
+[original]
+label = "原创"
+[translation]
+label = "译文"
+requires_attribution = true

@@ -5,8 +5,8 @@ draft = false
 author = "Hex4C59"
 description = "解释 Reflection 为什么是 Agent 的质量保证层，以及如何用输出后审查、执行中自我纠错和多 Agent 交叉审查发现并修正隐性错误。"
 summary = "系统分析 Reflection 在 Agent 系统中的角色、三种实现形态、批评标准设计、失效场景，以及它与 ReAct 和 Planning 的关系。"
-tags = ["Agent", "Reflection", "Quality Control", "Reliability", "LLM"]
-categories = ["Agent"]
+tags = ["Agent", "反思", "Quality Control", "可靠性", "LLM"]
+categories = ["ai"]
 series = ["agent-engineering"]
 series_order = 8
 difficulty = "intermediate"
@@ -14,6 +14,8 @@ article_type = "concept"
 topics = ["reflection", "self-critique", "quality-control", "agent", "planning"]
 frameworks = ["OpenAI", "Anthropic"]
 ShowToc = true
+source_kind = "original"
+lastmod = 2026-03-23T05:45:25+00:00
 +++
 
 在前面几篇文章里，我们把 Agent 的执行能力搭起来了：[ReAct](/agent/react-paradigm/) 让它边推理边行动，[Planning](/agent/planning-plan-and-execute/) 让它在长任务里保持全局视图，[评测](/agent/agent-evaluation/) 让我们知道它在哪里出问题。

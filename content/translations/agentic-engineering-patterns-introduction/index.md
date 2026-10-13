@@ -6,7 +6,7 @@ author = "Hex4C59"
 description = "Simon Willison 介绍《Agentic Engineering Patterns》的写作计划，解释智能体工程与 Vibe Coding 的区别，以及持续更新的指南与章节形式。"
 summary = "作为《智能体工程模式》的序言，本文介绍项目缘起、最初两篇文章、作者的写作原则，以及适合持续修订的指南与章节组织方式。"
 tags = ["Agent", "智能体工程", "编程智能体", "软件工程"]
-categories = ["Translations"]
+categories = ["engineering"]
 topics = ["agents", "agentic-engineering", "coding-agents", "vibe-coding"]
 translation_category = "工程实践"
 series = ["智能体工程模式"]
@@ -19,6 +19,8 @@ original_author = "Simon Willison"
 original_date = "2026-02-23"
 original_site = "Simon Willison’s Weblog"
 ShowToc = true
+source_kind = "translation"
+lastmod = 2026-10-11T23:35:05+08:00
 +++
 
 > **译文信息**

@@ -1,0 +1,17 @@
+# Stable browsing entrances, independent of article subjects and source folders.
+[[main]]
+key = "home"
+label = "首页"
+url = "/"
+[[main]]
+key = "articles"
+label = "文章"
+url = "/articles/"
+[[main]]
+key = "series"
+label = "系列"
+url = "/series/"
+[[main]]
+key = "about"
+label = "关于"
+url = "/about/"

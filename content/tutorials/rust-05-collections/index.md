@@ -7,14 +7,17 @@ draft = false
 author = "Hex4C59"
 description = "处理中文字符串，使用 Vec、切片和 HashMap，理解索引、遍历和可变引用。"
 summary = "处理中文字符串，使用 Vec、切片和 HashMap，理解索引、遍历和可变引用。"
-tags = ["Rust", "编程入门", "教程"]
-categories = ["Programming"]
+tags = ["Rust", "字符串", "集合"]
+categories = ["programming"]
 series = ["rust-from-zero"]
 series_order = 5
 series_label = "字符串与集合"
 series_part = "理解数据如何使用"
 series_number = 5
 ShowToc = true
+source_kind = "original"
+article_type = "tutorial"
+series_role = "chapter"
 +++
 
 上一章已经能让函数读取和修改一个字符串。接下来处理更常见的情况：标题可能含中文，记录可能从三条增加到四条，还需要按名称统计次数。

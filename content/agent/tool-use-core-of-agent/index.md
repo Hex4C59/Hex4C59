@@ -5,8 +5,8 @@ draft = false
 author = "Hex4C59"
 description = "从模型的封闭性出发，解释 Tool Use 为什么是 Agent 与外部世界连接的关键接口，以及工程上如何把工具系统设计到真正可用。"
 summary = "系统分析 Tool Use 在 Agent 中的角色，涵盖函数调用协议、执行闭环、工具设计、并发调用、安全边界与 MCP。"
-tags = ["Agent", "Tool Use", "Function Calling", "LLM"]
-categories = ["Agent"]
+tags = ["Agent", "工具调用", "函数调用", "LLM"]
+categories = ["ai"]
 series = ["agent-engineering"]
 series_order = 2
 difficulty = "advanced"
@@ -14,6 +14,8 @@ article_type = "concept"
 topics = ["tool-use", "function-calling", "architecture", "llm"]
 frameworks = ["OpenAI", "Anthropic"]
 ShowToc = true
+source_kind = "original"
+lastmod = 2026-03-23T10:35:35+00:00
 +++
 
 在上一篇文章《什么是 Agent：从聊天助手到可执行系统》里，我提到过一个判断：如果让我只选一个最关键的能力，我会优先选 Tool Use。

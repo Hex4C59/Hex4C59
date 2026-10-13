@@ -5,8 +5,8 @@ draft = false
 author = "Hex4C59"
 description = "解释 Planning 为什么是复杂 Agent 任务的必要上层结构，以及 Plan-and-Execute 如何把任务分解、执行与检查点串成稳定闭环。"
 summary = "系统分析 ReAct 在长任务中的局限，说明 Planning 的核心思想、Plan-and-Execute 的执行结构、代码实现与常见失败模式。"
-tags = ["Agent", "Planning", "ReAct", "Task Decomposition", "LLM"]
-categories = ["Agent"]
+tags = ["Agent", "规划", "ReAct", "Task Decomposition", "LLM"]
+categories = ["ai"]
 series = ["agent-engineering"]
 series_order = 5
 difficulty = "intermediate"
@@ -14,6 +14,8 @@ article_type = "concept"
 topics = ["planning", "plan-and-execute", "agent", "task-decomposition", "reflection"]
 frameworks = ["OpenAI", "Anthropic"]
 ShowToc = true
+source_kind = "original"
+lastmod = 2026-03-23T10:35:35+00:00
 +++
 
 在上一篇《ReAct：模型如何让推理与行动交替运转》里，我们把 ReAct 的局限性说清楚了：

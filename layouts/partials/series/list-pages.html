@@ -1,9 +1,8 @@
-{{- /* Only series with an explicit index are grouped; other series remain articles. */ -}}
-{{- $pages := . -}}
-{{- $hidden := slice -}}
-{{- range where $pages "Params.series_index" true -}}
-  {{- range where $pages "Params.series" "intersect" .Params.series -}}
-    {{- if not .Params.series_index -}}{{- $hidden = $hidden | append . -}}{{- end -}}
-  {{- end -}}
+{{- /* Lift matching members to their hub even when the hub is outside a filtered subset. */ -}}
+{{- $urls := slice -}}
+{{- range . -}}
+  {{- $entry := . -}}
+  {{- with partial "series/data.html" . -}}{{- $entry = .Hub -}}{{- end -}}
+  {{- $urls = $urls | append $entry.RelPermalink -}}
 {{- end -}}
-{{- return ($pages | complement $hidden) -}}
+{{- return (where site.RegularPages "RelPermalink" "in" (uniq $urls)) -}}

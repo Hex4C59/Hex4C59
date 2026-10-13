@@ -1,0 +1,58 @@
+{{- $title := .Title -}}{{- $description := .Description -}}
+{{- if and (eq .Kind "term") (eq .Section "categories") -}}{{- with index site.Data.categories .Data.Term -}}{{- $title = .label -}}{{- $description = .description -}}{{- end -}}{{- end -}}
+{{- if and (eq .Kind "term") (eq .Section "tags") -}}{{- $title = partial "collection/filter-label.html" (dict "Key" "tags" "Value" .Data.Term) -}}{{- end -}}
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+
+{{/* Head start hook */}}
+{{ partial "functions/get_hook.html" (dict "hook" "head_start" "context" .) }}
+
+{{ $faviconPath := (.Site.Params.faviconPath | default "" | absURL) }}
+
+<link rel="icon" type="image/ico" href="{{ urls.JoinPath $faviconPath "favicon.ico" }}">
+<link rel="icon" type="image/png" sizes="16x16" href="{{ urls.JoinPath $faviconPath "favicon-16x16.png" }}">
+<link rel="icon" type="image/png" sizes="32x32" href="{{ urls.JoinPath $faviconPath "favicon-32x32.png" }}">
+<link rel="icon" type="image/png" sizes="192x192" href="{{ urls.JoinPath $faviconPath "android-chrome-192x192.png" }}">
+<link rel="apple-touch-icon" sizes="180x180" href="{{ urls.JoinPath $faviconPath "apple-touch-icon.png" }}">
+
+{{ with .OutputFormats.Get "rss" -}}
+{{ printf `<link rel=%q type=%q href=%q title=%q>` .Rel .MediaType.Type .Permalink site.Title | safeHTML }}
+{{ end }}
+
+{{- if .IsHome -}}
+<meta name="description" content="{{ site.Params.Description }}"/>
+{{- else -}}
+<meta name="description" content="{{ $description }}"/>
+{{- end }}
+
+{{ if .Param "fediverse" }}
+<meta name="fediverse:creator" content="{{ .Params.Fediverse }}">
+{{ end }}
+
+<title>
+    {{ if .IsHome }}
+    {{ site.Title }}
+    {{ else }}
+    {{ printf "%s | %s" $title site.Title }}
+    {{ end }}
+</title>
+
+<link rel="canonical" href="{{ .Permalink }}"/>
+
+{{ if and (eq .Kind "term") (in (slice "categories" "tags") .Section) }}
+<meta property="og:url" content="{{ .Permalink }}"><meta property="og:site_name" content="{{ site.Title }}"><meta property="og:title" content="{{ $title }}"><meta property="og:description" content="{{ $description }}"><meta property="og:type" content="website">
+{{ else }}{{ template "partials/opengraph.html" . }}{{ end }}
+
+{{ partialCached "head/css.html" . }}
+{{ partialCached "head/js.html" . }}
+
+{{ if hugo.IsProduction }}
+{{ template "_internal/google_analytics.html" . }}
+
+{{ if .Site.Params.umami.enable }}
+{{ partial "umami.html" . }}
+{{ end }}
+{{ end }}
+
+{{/* Head end hook */}}
+{{ partial "functions/get_hook.html" (dict "hook" "head_end" "context" .) }}

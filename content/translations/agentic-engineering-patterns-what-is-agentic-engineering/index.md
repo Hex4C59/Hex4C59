@@ -6,7 +6,7 @@ author = "Hex4C59"
 description = "Simon Willison 解释智能体工程、编程智能体和工具循环，讨论软件工程师的职责，以及智能体工程与 Vibe Coding 的区别。"
 summary = "编程智能体既能编写代码，也能执行代码。智能体工程利用这一能力开展迭代，同时由工程师明确问题、权衡方案、提供工具并验证结果。"
 tags = ["Agent", "智能体工程", "编程智能体", "软件工程"]
-categories = ["Translations"]
+categories = ["engineering"]
 topics = ["agents", "agentic-engineering", "coding-agents", "vibe-coding"]
 translation_category = "工程实践"
 series = ["智能体工程模式"]
@@ -20,6 +20,8 @@ original_author = "Simon Willison"
 original_date = ""
 original_site = "Simon Willison’s Weblog"
 ShowToc = true
+source_kind = "translation"
+lastmod = 2026-10-11T23:35:05+08:00
 +++
 
 > **译文信息**

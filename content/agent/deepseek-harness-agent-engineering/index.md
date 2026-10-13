@@ -6,8 +6,8 @@ draft = false
 author = "Hex4C59"
 description = "从自动程序设计、代码补全和对话式生成讲到仓库级 Coding Agent，并以固定 commit 的 DeepSeek Harness 为例分析文档、Agent 指令、测试、Review、CI 与权限边界如何共同约束软件工程 Agent。"
 summary = "AI Coding Agent 的难点不只在生成代码，还在于理解项目事实、执行受限操作、验证真实结果和划分责任。本文回顾这条演进路径，并用 DeepSeek Harness 的源码、文档、测试与 CI 建立一张可核验的工程证据图。"
-tags = ["Agent", "Coding Agent", "Software Engineering", "DeepSeek Harness", "Repository-level Agent", "Testing"]
-categories = ["Agent"]
+tags = ["Agent", "编程智能体", "软件工程", "DeepSeek Harness", "Repository-level Agent", "自动化测试"]
+categories = ["ai"]
 series = ["DeepSeek Harness"]
 series_order = 1
 difficulty = "intermediate"
@@ -15,6 +15,7 @@ article_type = "concept"
 topics = ["coding-agent", "repository-level-agent", "software-engineering", "tool-use", "testing", "security"]
 frameworks = ["DeepSeek Harness", "Cordis", "TypeScript"]
 ShowToc = true
+source_kind = "original"
 +++
 
 ## 这篇文章要解决什么问题

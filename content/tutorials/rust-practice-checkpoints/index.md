@@ -7,9 +7,14 @@ draft = false
 author = "Hex4C59"
 description = "在第六、十二、十八章后完成内存书单、文件记录器和批量本机 HTTP 客户端，按修改、补全和独立实现三档检查学习结果。"
 summary = "在第六、十二、十八章后完成内存书单、文件记录器和批量本机 HTTP 客户端，按修改、补全和独立实现三档检查学习结果。"
-tags = ["Rust", "编程入门", "教程"]
-categories = ["Programming"]
+tags = ["Rust", "练习", "项目验收"]
+categories = ["programming"]
 ShowToc = true
+source_kind = "original"
+article_type = "tutorial"
+series = ["rust-from-zero"]
+series_role = "exercise"
+series_label = "分级练习与项目验收"
 +++
 
 这篇练习配合《Rust 从零开始》的第六、十二、十八章使用。每个阶段都有三档任务：修改现有程序、补全指定行为、根据需求从空文件实现一个小项目。
