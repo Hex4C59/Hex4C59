@@ -1,0 +1,14 @@
+{{- $styles := slice
+  (resources.Get "css/reset.css")
+  (resources.Get "css/vars.css")
+  (resources.Get "css/utils.css")
+  (resources.Get "css/fonts.css")
+  (resources.Get "css/syntax-highlighting.css")
+  (resources.Get "css/main.css")
+  (resources.Get "css/custom.css")
+  (resources.Get (printf "css/colors/%s.css" (site.Params.colorPalette | default "default")))
+  (resources.Get "css/site.css")
+-}}
+{{- with $styles | resources.Concat "css/site-bundle.css" | minify | fingerprint }}
+<link rel="stylesheet" href="{{ .RelPermalink }}" integrity="{{ .Data.Integrity }}" media="all">
+{{- end }}

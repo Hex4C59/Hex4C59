@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="{{ site.Language.LanguageCode }}" dir="ltr">
+{{ partialCached "validation/content.html" site }}
 <head>{{ partial "head.html" . }}</head>
 {{ $series := partial "series/data.html" . }}
 <body id="top"{{ if $series }} class="series-page"{{ else if .IsHome }} class="home-page"{{ else if eq .Section "series" }} class="series-directory-page"{{ end }}>
@@ -11,7 +12,8 @@
   </div>
   {{ partial "functions/get_hook.html" (dict "hook" "body_end" "context" .) }}
   <footer>{{ partial "footer.html" . }}</footer>
-  {{ if .Param "math" }}{{ partialCached "math.html" . }}{{ end }}
-  <script defer src="{{ "js/copy-code.js" | relURL }}"></script>
+  {{ $features := partial "site/page-features.html" . }}
+  {{ if $features.Math }}{{ partialCached "math.html" . }}{{ end }}
+  {{ if $features.Code }}<script defer src="{{ "js/copy-code.js" | relURL }}"></script>{{ end }}
 </body>
 </html>

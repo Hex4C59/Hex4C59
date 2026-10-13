@@ -16,6 +16,6 @@
     {{ partial "breadcrumbs.html" $article }}
     {{ partial "article.html" (dict "Page" $article "Series" $series) }}
     <div class="back-to-top"><a href="#top">回到顶部 ↑</a></div>
-    {{ if .IsIndex }}<details class="reading-notes"><summary>原指南目录与译文说明</summary><div class="single-content">{{ $series.Hub.Content }}</div></details>{{ end }}
+    {{ if .IsIndex }}<details class="reading-notes"><summary>{{ $series.Hub.Params.series_notes_label | default (cond (eq $series.Hub.Section "translations") "原指南目录与译文说明" "目录与配套资料") }}</summary><div class="single-content">{{ $series.Hub.Content }}</div></details>{{ end }}
   </div>
 </div>

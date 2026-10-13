@@ -1,0 +1,10 @@
+{{- $pages := slice . -}}
+{{- if .Params.series_index -}}
+  {{- with partial "series/data.html" . -}}{{- with index .Pages 0 -}}{{- $pages = $pages | append . -}}{{- end -}}{{- end -}}
+{{- end -}}
+{{- $math := false -}}{{- $code := false -}}
+{{- range $pages -}}
+  {{- if .Params.math -}}{{- $math = true -}}{{- end -}}
+  {{- if findRE `<pre[ >]` .Content 1 -}}{{- $code = true -}}{{- end -}}
+{{- end -}}
+{{- return (dict "Math" $math "Code" $code) -}}

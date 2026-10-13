@@ -2,7 +2,7 @@
 {{ $options := dict "isCaseSensitive" site.Params.fuseOpts.iscasesensitive "shouldSort" site.Params.fuseOpts.shouldsort "threshold" site.Params.fuseOpts.threshold "ignoreLocation" site.Params.fuseOpts.ignorelocation "minMatchCharLength" site.Params.fuseOpts.minmatchcharlength "keys" site.Params.fuseOpts.keys }}
 {{ partial "breadcrumbs.html" . }}
 <h1>{{ .Title }}</h1>
-<p class="page-description">在 Agent、教程、随笔与译文中搜索。</p>
+<p class="page-description">在{{ range $i, $key := partialCached "site/article-sections.html" site }}{{ if $i }}、{{ end }}{{ (partial "site/section.html" $key).label }}{{ end }}中搜索。</p>
 <section id="site-search" data-index="{{ "index.json" | relURL }}" data-options="{{ $options | jsonify }}" aria-label="全站搜索">
   <label class="sr-only" for="search-input">搜索关键词</label>
   <input id="search-input" class="search-input" type="search" placeholder="输入关键词，例如 MCP、记忆、工具调用…" autocomplete="off" enterkeyhint="search">

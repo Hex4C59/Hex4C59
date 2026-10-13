@@ -9,10 +9,6 @@
 "medium" = "中等"
 "unknown" = "未标注"
 
-[article_type]
-"concept" = "概念与设计"
-"tutorial" = "实战教程"
-
 [translation_category]
 "ai 与工具" = "人工智能与工具"
 

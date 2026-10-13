@@ -1,0 +1,5 @@
+{{- $sections := slice -}}
+{{- range site.Data.sections.sections -}}
+  {{- if .articles -}}{{- $sections = $sections | append .key -}}{{- end -}}
+{{- end -}}
+{{- return $sections -}}

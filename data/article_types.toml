@@ -1,0 +1,16 @@
+# Keys are front matter values; labels are shared by filters and shortcuts.
+[concept]
+label = "概念与设计"
+order = 1
+[tutorial]
+label = "实战教程"
+order = 2
+[practice]
+label = "工程实战"
+order = 3
+[review]
+label = "方案与项目复盘"
+order = 4
+[eval]
+label = "评测与实验"
+order = 5

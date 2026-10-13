@@ -13,7 +13,7 @@
         {{ printf "<atom:link href=%q rel=\"self\" type=%q />" .Permalink .MediaType | safeHTML }}
     {{ end }}
     {{ $pages := .RegularPages.ByDate.Reverse }}
-    {{ if .IsHome }}{{ $pages = (where site.RegularPages "Section" "in" site.Params.mainSections).ByDate.Reverse }}{{ end }}
+    {{ if .IsHome }}{{ $pages = (where site.RegularPages "Section" "in" (partialCached "site/article-sections.html" site)).ByDate.Reverse }}{{ end }}
     {{ range first 10 $pages }}
     <item>
       <title>{{ .Title }}</title>

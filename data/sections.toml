@@ -1,0 +1,40 @@
+# Navigation order, article membership, comments and collection filters.
+# Classification by subject is described in .agents/content/section-routing.md.
+[[sections]]
+key = "agent"
+label = "Agent"
+url = "/agent/"
+articles = true
+comments = true
+article_types = true
+difficulty_sort = true
+filters = [{key = "difficulty", label = "难度"}, {key = "article_type", label = "类型"}, {key = "topics", label = "主题"}, {key = "frameworks", label = "相关技术"}]
+
+[[sections]]
+key = "series"
+label = "系列"
+url = "/series/"
+articles = false
+comments = false
+
+[[sections]]
+key = "tutorials"
+label = "教程"
+url = "/tutorials/"
+articles = true
+comments = true
+
+[[sections]]
+key = "posts"
+label = "随笔"
+url = "/posts/"
+articles = true
+comments = true
+
+[[sections]]
+key = "translations"
+label = "译文"
+url = "/translations/"
+articles = true
+comments = true
+filters = [{key = "translation_category", label = "分类"}, {key = "topics", label = "主题"}, {key = "original_site", label = "来源"}]

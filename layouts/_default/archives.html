@@ -1,7 +1,7 @@
 {{ define "main" }}
 {{ partial "breadcrumbs.html" . }}
 <h1>{{ .Title }}</h1>
-{{ $pages := where site.RegularPages "Section" "in" site.Params.mainSections }}
+{{ $pages := where site.RegularPages "Section" "in" (partialCached "site/article-sections.html" site) }}
 {{ $pages = partial "series/list-pages.html" $pages }}
 <p class="page-description">共 {{ len $pages }} 个阅读入口，系列文章合并展示，按发布时间整理。</p>
 {{ range $pages.GroupByDate "2006" }}

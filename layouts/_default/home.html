@@ -1,5 +1,5 @@
 {{ define "main" }}
-{{ $pages := where site.RegularPages "Section" "in" site.Params.mainSections }}
+{{ $pages := where site.RegularPages "Section" "in" (partialCached "site/article-sections.html" site) }}
 {{ $pages = partial "series/recent-pages.html" $pages }}
 {{ $paginator := .Paginate $pages site.Params.paginationSize }}
 {{ .Content }}

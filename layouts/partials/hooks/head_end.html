@@ -1,8 +1,9 @@
-{{ $styles := slice (resources.Get "css/fonts.css") (resources.Get "css/site.css") }}
-{{ with $styles | resources.Concat "css/site-bundle.css" | minify | fingerprint }}
-<link rel="stylesheet" href="{{ .RelPermalink }}" integrity="{{ .Data.Integrity }}">
-{{ end }}
-{{ $scripts := slice (resources.Get "js/vendor/fuse.basic.min.js") (resources.Get "js/site.js") }}
-{{ with $scripts | resources.Concat "js/site-bundle.js" | minify | fingerprint }}
+{{ with resources.Get "js/site.js" | minify | fingerprint }}
 <script defer src="{{ .RelPermalink }}" integrity="{{ .Data.Integrity }}"></script>
+{{ end }}
+{{ if eq .Layout "search" }}
+  {{ $scripts := slice (resources.Get "js/vendor/fuse.basic.min.js") (resources.Get "js/search.js") }}
+  {{ with $scripts | resources.Concat "js/search-bundle.js" | minify | fingerprint }}
+<script defer src="{{ .RelPermalink }}" integrity="{{ .Data.Integrity }}"></script>
+  {{ end }}
 {{ end }}

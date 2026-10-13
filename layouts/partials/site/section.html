@@ -1,0 +1,5 @@
+{{- $section := dict -}}
+{{- range site.Data.sections.sections -}}
+  {{- if eq .key $ -}}{{- $section = . -}}{{- end -}}
+{{- end -}}
+{{- return $section -}}

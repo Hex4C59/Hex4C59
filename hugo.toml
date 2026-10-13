@@ -27,7 +27,6 @@ buildExpired = false
   author = "Hex4C59"
   authorEmail = "hex4c59@users.noreply.github.com"
   description = "在这里记录我的学习与思考"
-  mainSections = ["posts", "tutorials", "agent", "translations"]
   theme = "auto"
   colorPalette = "default"
   homeIntroTitle = "好的想法需要地方降落，否则它们只会飘走!"
@@ -40,38 +39,12 @@ buildExpired = false
   readTime = true
   showTags = true
   toc = true
-  math = true
 
   [params.breadcrumbs]
     enabled = true
     showCurrentPage = false
     home = "首页"
 
-  [[params.menu]]
-    name = "Agent"
-    url = "/agent/"
-    section = "agent"
-    description = "概念、系统设计与实战教程"
-  [[params.menu]]
-    name = "系列"
-    url = "/series/"
-    section = "series"
-    description = "按主题整理的系列文章与阅读路线"
-  [[params.menu]]
-    name = "教程"
-    url = "/tutorials/"
-    section = "tutorials"
-    description = "按章节学习编程，配合示例、练习与项目"
-  [[params.menu]]
-    name = "随笔"
-    url = "/posts/"
-    section = "posts"
-    description = "技术学习、工具选型与个人思考"
-  [[params.menu]]
-    name = "译文"
-    url = "/translations/"
-    section = "translations"
-    description = "英文技术文章的中文翻译"
   [[params.utilityMenu]]
     name = "归档"
     url = "/archives/"
@@ -99,7 +72,6 @@ buildExpired = false
     repoId = "R_kgDOPvFwkg"
     category = "Comments"
     categoryId = "DIC_kwDOPvFwks4C5BOF"
-    sections = ["posts", "tutorials", "translations", "agent"]
     mapping = "pathname"
     strict = "0"
     reactionsEnabled = "1"

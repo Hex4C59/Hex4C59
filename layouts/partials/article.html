@@ -25,4 +25,4 @@
 {{ if $page.Store.Get "hasMermaid" }}
 <script defer type="module" id="mermaid_script" data-light-theme="default" data-dark-theme="dark" src="{{ "js/mermaid.js" | relURL }}"></script>
 {{ end }}
-{{ if and (in site.Params.comments.sections $page.Section) (ne $page.Params.comments false) (not $page.Params.disableComment) }}{{ partial "comments.html" $page }}{{ end }}
+{{ if and ((partial "site/section.html" $page.Section).comments) (ne $page.Params.comments false) (not $page.Params.disableComment) }}{{ partial "comments.html" $page }}{{ end }}

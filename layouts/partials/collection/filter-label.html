@@ -1,5 +1,9 @@
 {{- $label := printf "%v" .Value -}}
+{{- if eq .Key "article_type" -}}
+  {{- with index site.Data.article_types (lower $label) -}}{{- $label = .label -}}{{- end -}}
+{{- else -}}
 {{- with index site.Data.collection_labels .Key -}}
   {{- with index . (lower $label) -}}{{- $label = . -}}{{- end -}}
+{{- end -}}
 {{- end -}}
 {{- return $label -}}

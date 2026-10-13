@@ -13,19 +13,16 @@
 <div class="section-heading collection-list-heading"><h2>按篇浏览</h2></div>
 {{ $allPages := .RegularPages.ByLastmod.Reverse }}
 {{ $pages := partial "series/list-pages.html" $allPages }}
-{{ $filters := slice }}
-{{ if eq .Section "agent" }}
-  {{ $filters = slice (dict "key" "difficulty" "label" "难度") (dict "key" "article_type" "label" "类型") (dict "key" "topics" "label" "主题") (dict "key" "frameworks" "label" "相关技术") }}
-{{ else }}
-  {{ $filters = slice (dict "key" "translation_category" "label" "分类") (dict "key" "topics" "label" "主题") (dict "key" "original_site" "label" "来源") }}
-{{ end }}
+{{ $config := partial "site/section.html" .Section }}
+{{ $filters := $config.filters | default slice }}
 <section class="collection" data-collection>
-  {{ if eq .Section "agent" }}
-  <div class="collection-shortcuts" role="group" aria-label="Agent 阅读类型">
+  {{ if $config.article_types }}
+  <div class="collection-shortcuts" role="group" aria-label="{{ $config.label }} 阅读类型">
     <span class="shortcut-label">阅读类型</span>
     <button type="button" class="is-active" data-filter-shortcut="article_type" data-value="" aria-pressed="true">全部</button>
-    {{ $types := slice (dict "value" "concept" "label" "概念与设计") (dict "value" "tutorial" "label" "实战教程") }}
-    {{ range $types }}
+    {{ $types := slice }}
+    {{ range $key, $type := site.Data.article_types }}{{ $types = $types | append (merge $type (dict "value" $key)) }}{{ end }}
+    {{ range sort $types "order" }}
       {{ $count := len (where $pages "Params.article_type" .value) }}
       {{ if gt $count 0 }}<button type="button" data-filter-shortcut="article_type" data-value="{{ .value }}" aria-pressed="false">{{ .label }} <span>{{ $count }}</span></button>{{ end }}
     {{ end }}
@@ -39,7 +36,7 @@
         {{ range $allPages }}{{ with index .Params $key }}{{ if reflect.IsSlice . }}{{ $values = $values | append . }}{{ else }}{{ $values = $values | append (slice .) }}{{ end }}{{ end }}{{ end }}
         {{ if gt (len $values) 0 }}<label class="filter-label">{{ .label }}<select data-filter="{{ $key }}"><option value="">全部</option>{{ range sort (uniq $values) }}<option value="{{ . | lower }}">{{ partial "collection/filter-label.html" (dict "Key" $key "Value" .) }}</option>{{ end }}</select></label>{{ end }}
       {{ end }}
-      <label class="filter-label">排序<select data-sort><option value="recent">最近更新</option><option value="newest">最新发布</option><option value="title">标题升序</option>{{ if ne .Section "translations" }}<option value="difficulty">难度从低到高</option>{{ end }}</select></label>
+      <label class="filter-label">排序<select data-sort><option value="recent">最近更新</option><option value="newest">最新发布</option><option value="title">标题升序</option>{{ if $config.difficulty_sort }}<option value="difficulty">难度从低到高</option>{{ end }}</select></label>
       <label class="filter-label filter-search">标题关键词<input type="search" data-title-search placeholder="输入关键词"></label>
     </div>
     <div class="filter-footer"><button type="button" data-reset>重置筛选</button></div>

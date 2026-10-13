@@ -1,0 +1,79 @@
+{{- /* Run once per build. Semantic classification remains an editorial decision. */ -}}
+{{- $articleSections := partialCached "site/article-sections.html" site -}}
+{{- $sectionKeys := slice -}}
+{{- range site.Data.sections.sections -}}
+  {{- if in $sectionKeys .key -}}{{- errorf "sections: duplicate key %q" .key -}}{{- end -}}
+  {{- $sectionKeys = $sectionKeys | append .key -}}
+  {{- if not (and .key .label .url) -}}{{- errorf "sections: key, label and url are required" -}}{{- end -}}
+{{- end -}}
+{{- $urls := newScratch -}}
+{{- range where site.RegularPages "Draft" false -}}
+  {{- $page := . -}}{{- $file := .File.Path -}}
+  {{- with $urls.Get .RelPermalink -}}{{- errorf "%s: URL %s is also used by %s" $file $page.RelPermalink . -}}{{- end -}}
+  {{- $urls.Set .RelPermalink $file -}}
+  {{- if and .Section (not (in $articleSections .Section)) -}}{{- errorf "%s: unknown article section %q" $file .Section -}}{{- end -}}
+  {{- if in $articleSections .Section -}}
+    {{- if not .Title -}}{{- errorf "%s: title is required" $file -}}{{- end -}}
+    {{- if .Date.IsZero -}}{{- errorf "%s: an explicit publication date is required" $file -}}{{- end -}}
+    {{- range $key := slice "description" "author" -}}
+      {{- if not (index $page.Params $key) -}}{{- errorf "%s: %s is required" $file $key -}}{{- end -}}
+    {{- end -}}
+    {{- range $key := slice "tags" "categories" -}}
+      {{- if not (reflect.IsSlice (index $page.Params $key)) -}}{{- errorf "%s: %s must be an array" $file $key -}}{{- end -}}
+    {{- end -}}
+    {{- with .Params.article_type -}}
+      {{- if not (index site.Data.article_types .) -}}{{- errorf "%s: unknown article_type %q; see data/article_types.toml" $file . -}}{{- end -}}
+    {{- end -}}
+    {{- if eq .Section "agent" -}}
+      {{- if not .Params.article_type -}}{{- errorf "%s: Agent articles require article_type" $file -}}{{- end -}}
+      {{- if not (in (slice "beginner" "intermediate" "advanced") .Params.difficulty) -}}{{- errorf "%s: difficulty must be beginner, intermediate or advanced" $file -}}{{- end -}}
+    {{- end -}}
+    {{- if eq .Section "translations" -}}
+      {{- range $key := slice "original_title" "original_url" "original_author" "original_site" -}}
+        {{- if not (index $page.Params $key) -}}{{- errorf "%s: translations require %s" $file $key -}}{{- end -}}
+      {{- end -}}
+      {{- if not (findRE `^https?://` (.Params.original_url | default "")) -}}{{- errorf "%s: original_url must be an HTTP(S) URL" $file -}}{{- end -}}
+    {{- end -}}
+    {{- with .Params.series -}}
+      {{- if not (reflect.IsSlice .) -}}{{- errorf "%s: series must be an array" $file -}}{{- end -}}
+    {{- end -}}
+    {{- if and .Params.series_index (ne (len (.Params.series | default slice)) 1) -}}{{- errorf "%s: a series hub must belong to exactly one series" $file -}}{{- end -}}
+    {{- range $key := slice "math" "series_index" -}}
+      {{- if isset $page.Params $key -}}
+        {{- if ne (printf "%T" (index $page.Params $key)) "bool" -}}{{- errorf "%s: %s must be true or false" $file $key -}}{{- end -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- range site.Taxonomies.series -}}
+  {{- $term := .Page -}}{{- $key := $term.Data.Term -}}
+  {{- $pages := where .Pages "Draft" false -}}
+  {{- $hubs := where $pages "Params.series_index" true -}}
+  {{- $members := where $pages "Params.series_index" "ne" true -}}
+  {{- if gt (len $hubs) 1 -}}{{- errorf "series %q: only one series_index hub is allowed" $key -}}{{- end -}}
+  {{- $orders := newScratch -}}{{- $numbers := newScratch -}}
+  {{- range $members -}}
+    {{- $member := . -}}{{- $file := .File.Path -}}
+    {{- $order := printf "%v" .Params.series_order -}}
+    {{- if not (and (in (slice "int" "int64" "float64") (printf "%T" .Params.series_order)) (findRE `^[0-9]+$` $order)) -}}
+      {{- errorf "%s: series_order must be a non-negative integer in series %q" $file $key -}}
+    {{- else -}}
+      {{- with $orders.Get $order -}}{{- errorf "%s: duplicate series_order %s in series %q (also %s)" $file $order $key . -}}{{- end -}}
+      {{- $orders.Set $order $file -}}
+    {{- end -}}
+    {{- if isset .Params "series_number" -}}
+      {{- $value := .Params.series_number -}}
+      {{- $number := printf "%v" $value -}}
+      {{- if not (and (in (slice "int" "int64" "float64") (printf "%T" $value)) (findRE `^[1-9][0-9]*$` $number)) -}}{{- errorf "%s: series_number must be a positive integer" $file -}}{{- end -}}
+      {{- with $numbers.Get $number -}}{{- errorf "%s: duplicate series_number %s in series %q (also %s)" $file $number $key . -}}{{- end -}}
+      {{- $numbers.Set $number $file -}}
+    {{- end -}}
+    {{- range $hubs -}}
+      {{- if ne .Section $member.Section -}}{{- errorf "%s: chapters must use the hub section %q" $file .Section -}}{{- end -}}
+    {{- end -}}
+  {{- end -}}
+  {{- with $term.Params.series_start -}}
+    {{- $start := site.GetPage . -}}
+    {{- if not (in $members $start) -}}{{- errorf "series %q: series_start %q must resolve to a published member's content path" $key . -}}{{- end -}}
+  {{- end -}}
+{{- end -}}
