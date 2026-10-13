@@ -2,7 +2,7 @@
 title: "Rust 从零开始"
 url: "/series/rust-from-zero/"
 description: "给第一次学习 Rust 的读者准备的 18 章中文教材。从安装与语法到所有权、错误处理和测试，实现可保存数据的命令行工具，再学习 JSON 存储、备份恢复、clap 命令行接口和本机 HTTP 请求。"
-series_start: "/posts/rust-00-learning-guide/"
+series_start: "/tutorials/rust-00-learning-guide/"
 series_status: "18 章教材与配套项目已发布"
 ---
 

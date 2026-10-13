@@ -8,7 +8,11 @@
     <div class="term-list">{{ range .Data.Terms.Alphabetical }}<a href="{{ .Page.RelPermalink }}">{{ .Page.LinkTitle }} <span>{{ .Count }}</span></a>{{ end }}</div>
   {{ else }}
     {{ $pages := partial "series/list-pages.html" .RegularPages }}
-    {{ $paginator := .Paginate $pages.ByDate.Reverse site.Params.paginationSize }}
+    {{ $pages = $pages.ByDate.Reverse }}
+    {{ if eq .Section "tutorials" }}
+      {{ $pages = union (where $pages "Params.series_index" true) (where $pages "Params.series_index" "ne" true) }}
+    {{ end }}
+    {{ $paginator := .Paginate $pages site.Params.paginationSize }}
     {{ range $paginator.Pages }}{{ partial "post-entry.html" . }}{{ end }}
     {{ partial "pagination-controls.html" $paginator }}
   {{ end }}

@@ -5,6 +5,7 @@
   <nav class="header-menu" aria-label="内容栏目">
     {{ range site.Params.menu }}
     {{ $active := hasPrefix $.RelPermalink .url }}
+    {{ with .section }}{{ $active = eq $.Section . }}{{ end }}
     <a href="{{ .url | relURL }}"{{ if $active }} aria-current="page"{{ end }}>/{{ .name }}</a>
     {{ end }}
   </nav>
