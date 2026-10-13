@@ -21,7 +21,7 @@ original_date = ""
 original_site = "Simon Willison’s Weblog"
 ShowToc = true
 source_kind = "translation"
-lastmod = 2026-10-11T21:22:32+08:00
+lastmod = 2026-10-14T00:43:37+08:00
 +++
 
 > **译文信息**
@@ -72,15 +72,19 @@ Explore 子智能体忙了几秒钟，返回的响应以下面这些内容开头
 
 > 太好了！现在让我把所有发现整理成一份完整的总结：
 >
+> ### 摘要：章节差异视图实现 {#summary-chapter-diff-view-implementation}
+>
 > 我已经找到这个 Django 博客中章节差异视图的完整实现。以下是关键组件：
+>
+> #### 1. Python 代码：差异生成（`/home/user/simonwillisonblog/guides/views.py`，第 139—202 行） {#1-python-code-diff-generation-homeusersimonwillisonblogguidesviewspy-lines-139-202}
 >
 > `chapter_changes()` 视图函数使用 Python 内置的 `difflib.unified_diff()` 生成差异：［……］
 
 子智能体的完整响应，包含了主智能体开始编辑代码、满足我最初需求所需的全部细节。
 
-Explore 子智能体展示了最简单的一种协作方式：子智能体运行时，主智能体暂停等待。这类子智能体的主要优势，是能够使用全新的上下文开展工作，避免消耗主智能体可用的上下文 Token 配额。
-
 ## 并行子智能体 {#parallel-subagents}
+
+Explore 子智能体展示了最简单的一种协作方式：子智能体运行时，主智能体暂停等待。这类子智能体的主要优势，是能够使用全新的上下文开展工作，避免消耗主智能体可用的上下文 Token 配额。
 
 主智能体也可以同时运行多个子智能体，显著提升处理速度。还可以使用 Claude Haiku 等更快、更便宜的模型，加速这些任务。
 

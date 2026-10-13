@@ -24,7 +24,7 @@ original_site = "Simon Willison’s Weblog"
 ShowToc = true
 source_kind = "translation"
 series_kind = "translation"
-lastmod = 2026-10-11T21:22:32+08:00
+lastmod = 2026-10-14T00:43:37+08:00
 +++
 
 > **系列信息**
@@ -33,8 +33,9 @@ lastmod = 2026-10-11T21:22:32+08:00
 > - 作者：Simon Willison
 > - 中文目录翻译与整理：Hex4C59
 > - 目录整理日期：2026-10-11
+> - 原站核对日期：2026-10-14
 >
-> 本页为指南目录的非官方中文翻译，保留原有章节顺序和小节层级。各章标题优先链接到中文译文，其余链接指向英文原文。
+> 本页为指南目录的非官方中文翻译，保留原有章节顺序和小节层级。章节和小节标题链接到中文译文，来源链接指向英文原文。
 
 本指南介绍如何运用各种模式，让 Claude Code、OpenAI Codex 等编程智能体取得更好的结果。关于这个项目的更多信息，请参阅作者的[项目介绍](https://simonwillison.net/2026/Feb/23/agentic-engineering-patterns/)。
 
@@ -48,55 +49,55 @@ lastmod = 2026-10-11T21:22:32+08:00
 
 ### 01. [什么是智能体工程？]({{< relref "/translations/agentic-engineering-patterns-what-is-agentic-engineering/" >}})
 
-- 智能体工程
-- 这不就是 Vibe Coding 吗？
-- 关于本指南
+- [智能体工程]({{< relref "/translations/agentic-engineering-patterns-what-is-agentic-engineering/" >}}#智能体工程)
+- [这不就是 Vibe Coding 吗？]({{< relref "/translations/agentic-engineering-patterns-what-is-agentic-engineering/" >}}#这不就是-vibe-coding-吗)
+- [关于本指南]({{< relref "/translations/agentic-engineering-patterns-what-is-agentic-engineering/" >}}#关于本指南)
 
 ### 02. [如今，编写代码的成本已经很低]({{< relref "/translations/agentic-engineering-patterns-code-is-cheap/" >}})
 
-- 好代码仍然有成本
-- 我们需要养成新的习惯
+- [好代码仍然有成本]({{< relref "/translations/agentic-engineering-patterns-code-is-cheap/" >}}#好代码仍然有成本)
+- [我们需要养成新的习惯]({{< relref "/translations/agentic-engineering-patterns-code-is-cheap/" >}}#我们需要养成新的习惯)
 
 ### 03. [积累你已经掌握的实现方法]({{< relref "/translations/agentic-engineering-patterns-hoard-things-you-know-how-to-do/" >}})
 
-- 重新组合已有积累
-- 编程智能体让这种方法更加强大
+- [重新组合已有积累]({{< relref "/translations/agentic-engineering-patterns-hoard-things-you-know-how-to-do/" >}}#重新组合已有积累)
+- [编程智能体让这种方法更加强大]({{< relref "/translations/agentic-engineering-patterns-hoard-things-you-know-how-to-do/" >}}#编程智能体让这种方法更加强大)
 
 ### 04. [AI 应该帮助我们写出更好的代码]({{< relref "/translations/agentic-engineering-patterns-better-code/" >}})
 
-- 避免引入技术债务
-- 编程智能体可以替我们处理这些问题
-- AI 工具让我们能够考虑更多方案
-- 拥抱复利式工程循环（Compound Engineering Loop）
+- [避免引入技术债务]({{< relref "/translations/agentic-engineering-patterns-better-code/" >}}#avoiding-taking-on-technical-debt)
+- [编程智能体可以替我们处理这些问题]({{< relref "/translations/agentic-engineering-patterns-better-code/" >}}#coding-agents-can-handle-these-for-us)
+- [AI 工具让我们能够考虑更多方案]({{< relref "/translations/agentic-engineering-patterns-better-code/" >}}#ai-tools-let-us-consider-more-options)
+- [拥抱复利式工程循环（Compound Engineering Loop）]({{< relref "/translations/agentic-engineering-patterns-better-code/" >}}#embrace-the-compound-engineering-loop)
 
 ### 05. [反模式：应该避免的做法]({{< relref "/translations/agentic-engineering-patterns-anti-patterns/" >}})
 
-- 把未经审查的代码丢给协作者
+- [把未经审查的代码丢给协作者]({{< relref "/translations/agentic-engineering-patterns-anti-patterns/" >}}#inflicting-unreviewed-code-on-collaborators)
 
 ## 第二部分：与编程智能体协作
 
 ### 06. [编程智能体如何工作]({{< relref "/translations/agentic-engineering-patterns-how-coding-agents-work/" >}})
 
-- 大语言模型（Large Language Models，LLM）
-- 按聊天模板组织提示词
-- Token 缓存
-- 调用工具
-- 系统提示词
-- 推理
-- 在循环中组合 LLM、系统提示词和工具
+- [大语言模型（Large Language Models，LLM）]({{< relref "/translations/agentic-engineering-patterns-how-coding-agents-work/" >}}#large-language-models)
+- [按聊天模板组织提示词]({{< relref "/translations/agentic-engineering-patterns-how-coding-agents-work/" >}}#chat-templated-prompts)
+- [Token 缓存]({{< relref "/translations/agentic-engineering-patterns-how-coding-agents-work/" >}}#token-caching)
+- [调用工具]({{< relref "/translations/agentic-engineering-patterns-how-coding-agents-work/" >}}#calling-tools)
+- [系统提示词]({{< relref "/translations/agentic-engineering-patterns-how-coding-agents-work/" >}}#the-system-prompt)
+- [推理]({{< relref "/translations/agentic-engineering-patterns-how-coding-agents-work/" >}}#reasoning)
+- [在循环中组合 LLM、系统提示词和工具]({{< relref "/translations/agentic-engineering-patterns-how-coding-agents-work/" >}}#llm-system-prompt-tools-in-a-loop)
 
 ### 07. [与编程智能体协作时如何使用 Git]({{< relref "/translations/agentic-engineering-patterns-using-git-with-coding-agents/" >}})
 
-- Git 基础知识
-- 核心概念与提示词
-- 重写历史
+- [Git 基础知识]({{< relref "/translations/agentic-engineering-patterns-using-git-with-coding-agents/" >}}#git-essentials)
+- [核心概念与提示词]({{< relref "/translations/agentic-engineering-patterns-using-git-with-coding-agents/" >}}#core-concepts-and-prompts)
+- [重写历史]({{< relref "/translations/agentic-engineering-patterns-using-git-with-coding-agents/" >}}#rewriting-history)
 
 ### 08. [子智能体]({{< relref "/translations/agentic-engineering-patterns-subagents/" >}})
 
-- Claude Code 的 Explore 子智能体
-- 并行子智能体
-- 专家子智能体
-- 官方文档
+- [Claude Code 的 Explore 子智能体]({{< relref "/translations/agentic-engineering-patterns-subagents/" >}}#claude-codes-explore-subagent)
+- [并行子智能体]({{< relref "/translations/agentic-engineering-patterns-subagents/" >}}#parallel-subagents)
+- [专家子智能体]({{< relref "/translations/agentic-engineering-patterns-subagents/" >}}#specialist-subagents)
+- [官方文档]({{< relref "/translations/agentic-engineering-patterns-subagents/" >}}#official-documentation)
 
 ## 第三部分：测试与质量保证
 
@@ -106,25 +107,25 @@ lastmod = 2026-10-11T21:22:32+08:00
 
 ### 11. [让智能体执行手动测试]({{< relref "/translations/agentic-engineering-patterns-agentic-manual-testing/" >}})
 
-- 智能体执行手动测试的机制
-- 使用浏览器自动化测试 Web 用户界面
-- 让智能体使用 Showboat 记录过程
+- [智能体执行手动测试的机制]({{< relref "/translations/agentic-engineering-patterns-agentic-manual-testing/" >}}#mechanisms-for-agentic-manual-testing)
+- [使用浏览器自动化测试 Web 用户界面]({{< relref "/translations/agentic-engineering-patterns-agentic-manual-testing/" >}}#using-browser-automation-for-web-uis)
+- [让智能体使用 Showboat 记录过程]({{< relref "/translations/agentic-engineering-patterns-agentic-manual-testing/" >}}#have-them-take-notes-with-showboat)
 
 ## 第四部分：理解代码
 
 ### 12. [按顺序讲解代码]({{< relref "/translations/agentic-engineering-patterns-linear-walkthroughs/" >}})
 
-- 使用 Showboat 和 Present 的示例
+- [使用 Showboat 和 Present 的示例]({{< relref "/translations/agentic-engineering-patterns-linear-walkthroughs/" >}}#an-example-using-showboat-and-present)
 
 ### 13. [交互式讲解]({{< relref "/translations/agentic-engineering-patterns-interactive-explanations/" >}})
 
-- 理解词云
+- [理解词云]({{< relref "/translations/agentic-engineering-patterns-interactive-explanations/" >}}#understanding-word-clouds)
 
 ## 第五部分：提示词详解
 
 ### 14. [使用 WebAssembly 和 Gifsicle 构建 GIF 优化工具]({{< relref "/translations/agentic-engineering-patterns-gif-optimization/" >}})
 
-- 后续提示词
+- [后续提示词]({{< relref "/translations/agentic-engineering-patterns-gif-optimization/" >}}#the-follow-up-prompts)
 
 ### 15. [为博客转邮件简报工具添加新的内容类型]({{< relref "/translations/agentic-engineering-patterns-adding-a-new-content-type/" >}})
 
@@ -132,7 +133,7 @@ lastmod = 2026-10-11T21:22:32+08:00
 
 ### 16. [我使用的提示词]({{< relref "/translations/agentic-engineering-patterns-prompts/" >}})
 
-- Artifacts（产物）
-- 校对
-- 替代文本（Alt Text）
-- 播客亮点
+- [Artifacts（产物）]({{< relref "/translations/agentic-engineering-patterns-prompts/" >}}#artifacts)
+- [校对]({{< relref "/translations/agentic-engineering-patterns-prompts/" >}}#proofreader)
+- [替代文本（Alt Text）]({{< relref "/translations/agentic-engineering-patterns-prompts/" >}}#alt-text)
+- [播客亮点]({{< relref "/translations/agentic-engineering-patterns-prompts/" >}}#podcast-highlights)

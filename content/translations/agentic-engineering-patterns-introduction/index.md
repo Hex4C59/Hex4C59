@@ -20,7 +20,7 @@ original_date = "2026-02-23"
 original_site = "Simon Willison’s Weblog"
 ShowToc = true
 source_kind = "translation"
-lastmod = 2026-10-11T23:35:05+08:00
+lastmod = 2026-10-14T00:43:37+08:00
 +++
 
 > **译文信息**
@@ -70,9 +70,9 @@ lastmod = 2026-10-11T23:35:05+08:00
 
 ## 原页面附带的近期文章
 
-以下为页面附带的文章推荐，不属于《智能体工程模式》的章节。
+以下为 2026 年 10 月 14 日核对时原页面附带的文章推荐，不属于《智能体工程模式》的章节。原站列表会随新文章发布而更新。
 
+- [你好 Python 3.15，再见 Python 3.10，现在我可以用 Python 3.11 了](https://simonwillison.net/2026/Oct/12/python-3-15/)——2026 年 10 月 12 日
 - [用语音为我的博客构建一项新功能](https://simonwillison.net/2026/Oct/9/built-using-my-voice/)——2026 年 10 月 9 日
 - [Claude Haiku 5.5](https://simonwillison.net/2026/Oct/7/claude-haiku-5-5/)——2026 年 10 月 7 日
 - [我们几乎需要为所有东西默认设置不可突破的预算上限](https://simonwillison.net/2026/Oct/3/default-hard-budget-caps/)——2026 年 10 月 3 日
-- [OpenAI DevDay 2026 实时记录](https://simonwillison.net/2026/Sep/29/openai-devday-2026-live-blog/)——2026 年 9 月 29 日
