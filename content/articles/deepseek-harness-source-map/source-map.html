@@ -1,0 +1,104 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>目录、包依赖与服务装配</title><style>
+
+*{box-sizing:border-box}html,body{margin:0;padding:0}html{color-scheme:light dark}:root{--paper:#faf9f6;--ink:#242320;--muted:#66635d;--rule:#c2beb5;--agent:#126d61;--agent-bg:#dceee7;--tool:#96511e;--tool-bg:#f8e4cf;--model:#6044ab;--model-bg:#ece5fa}@media(prefers-color-scheme:dark){:root{--paper:#242320;--ink:#faf9f6;--muted:#c2beb5;--rule:#6d6962;--agent:#8cd9cd;--agent-bg:#203c37;--tool:#e8b47d;--tool-bg:#453225;--model:#c3b1f8;--model-bg:#332a47}}
+body{font:15px/1.75 "PingFang SC",system-ui,sans-serif;color:var(--ink);background:var(--paper)}main{max-width:760px;min-width:0;margin:0 auto;padding:16px 0 24px}.eyebrow{font:12px ui-monospace,monospace;letter-spacing:.1em;color:var(--muted);margin:0 0 8px}h1{font:500 27px/1.4 "Songti SC",Georgia,serif;margin:0 0 18px}fieldset{border:0;padding:0;margin:0 0 18px;display:flex;gap:8px;flex-wrap:wrap}legend{padding:0;margin-bottom:8px;font-size:13px;color:var(--muted)}label{position:relative;display:inline-flex}label input{position:absolute;width:1px;height:1px;opacity:0}label span{padding:8px 12px;border:1px solid var(--rule);border-radius:6px;cursor:pointer;font-size:14px}input:checked+span{border-color:var(--agent);color:var(--agent);background:var(--agent-bg)}input:focus-visible+span{outline:3px solid var(--model);outline-offset:3px}.panel{display:none}main:has(#directory:checked) .panel--directory,main:has(#dependency:checked) .panel--dependency,main:has(#service:checked) .panel--service{display:block}.diagram-container{width:100%;min-width:0;overflow-x:auto}svg{width:100%;min-width:640px;display:block}.compact{display:none}.compact svg{min-width:320px;max-width:360px;margin-inline:auto}.node{stroke-width:1.2}.node-agent{fill:var(--agent-bg);stroke:var(--agent)}.node-tool{fill:var(--tool-bg);stroke:var(--tool)}.node-model{fill:var(--model-bg);stroke:var(--model)}.name{font:600 18px ui-monospace,"PingFang SC",monospace;text-anchor:middle}.sub{font-size:13px;text-anchor:middle;fill:var(--muted)}.badge{font:11px ui-monospace,monospace;fill:var(--muted);text-anchor:middle}.edge{fill:none;stroke-width:1.5}.dashed{stroke-dasharray:5 4}.stroke-muted{stroke:var(--muted)}.stroke-agent{stroke:var(--agent)}.stroke-tool{stroke:var(--tool)}.stroke-model{stroke:var(--model)}.fill-muted{fill:var(--muted)}.fill-agent{fill:var(--agent)}.fill-tool{fill:var(--tool)}.fill-model{fill:var(--model)}.ink-agent{fill:var(--agent)}.ink-tool{fill:var(--tool)}.ink-model{fill:var(--model)}.mask{fill:var(--paper)}.edge-label{font-size:13px;fill:var(--muted);text-anchor:middle}.legend{border-top:1px solid var(--rule);padding-top:12px;color:var(--muted);font-size:13px;margin:0}.explanation{margin:12px 0 0;font-size:14px}.sources{font-size:12px;margin:10px 0 0;color:var(--muted)}.notice{margin:16px 0 0;border-left:2px solid var(--agent);padding-left:12px;font-size:13px;color:var(--muted)}
+@media(max-width:639px){main{padding:12px 0 20px}h1{font-size:24px}.wide{display:none}.compact{display:block}label span{padding:8px 10px}}
+@media print{fieldset{display:none}.panel{display:block!important;break-inside:avoid;margin-bottom:24px}.wide{display:block}.compact{display:none}.diagram-container{overflow-x:visible}svg{min-width:0}}
+
+</style></head><body><main><p class="eyebrow">DSH / SOURCE MAP</p><h1>从目录归属追到服务装配</h1><fieldset><legend>同一项文件系统能力，切换关系视角</legend>
+<label><input type="radio" name="view" id="directory" checked><span>目录归属</span></label>
+<label><input type="radio" name="view" id="dependency"><span>包依赖</span></label>
+<label><input type="radio" name="view" id="service"><span>服务装配</span></label>
+</fieldset>
+<section class="panel panel--directory" aria-label="directory 关系图">
+<div class="diagram-container wide"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 376" role="img" aria-labelledby="source-map-directory-wide-title source-map-directory-wide-desc"><title id="source-map-directory-wide-title">目录：文件系统家族中的代表包</title><desc id="source-map-directory-wide-desc">fs、tool-fs 和 fs-local 是 packages/fs 下的三个代表包；目录关系没有表达运行时调用。</desc><defs>
+<marker id="source-map-directory-wide-arrow-muted" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0 0L8 3L0 6Z" class="fill-muted"/></marker>
+<marker id="source-map-directory-wide-arrow-tool" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0 0L8 3L0 6Z" class="fill-tool"/></marker>
+<marker id="source-map-directory-wide-arrow-agent" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0 0L8 3L0 6Z" class="fill-agent"/></marker>
+<marker id="source-map-directory-wide-arrow-model" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0 0L8 3L0 6Z" class="fill-model"/></marker>
+</defs>
+<path d="M320 116V148" class="edge stroke-muted"/>
+<path d="M104 200V148H536V200" class="edge stroke-muted"/>
+<path d="M320 148V200" class="edge stroke-muted"/>
+<rect x="224" y="16" width="192" height="100" rx="6" class="node node-agent"/><text x="320.0" y="60" class="name ink-agent">packages/fs/</text><text x="320.0" y="86" class="sub">能力家族</text>
+<rect x="24" y="200" width="160" height="96" rx="6" class="node node-agent"/><text x="104.0" y="244" class="name ink-agent">fs/</text><text x="104.0" y="270" class="sub">服务定义</text>
+<rect x="240" y="200" width="160" height="96" rx="6" class="node node-tool"/><text x="320.0" y="244" class="name ink-tool">tool-fs/</text><text x="320.0" y="270" class="sub">模型可见工具</text>
+<rect x="456" y="200" width="160" height="96" rx="6" class="node node-model"/><text x="536.0" y="244" class="name ink-model">fs-local/</text><text x="536.0" y="270" class="sub">本地实现</text>
+</svg></div>
+<div class="diagram-container compact"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 528" role="img" aria-labelledby="source-map-directory-compact-title source-map-directory-compact-desc"><title id="source-map-directory-compact-title">目录：文件系统家族中的代表包</title><desc id="source-map-directory-compact-desc">fs、tool-fs 和 fs-local 是 packages/fs 下的三个代表包；目录关系没有表达运行时调用。</desc><defs>
+<marker id="source-map-directory-compact-arrow-muted" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0 0L8 3L0 6Z" class="fill-muted"/></marker>
+<marker id="source-map-directory-compact-arrow-tool" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0 0L8 3L0 6Z" class="fill-tool"/></marker>
+<marker id="source-map-directory-compact-arrow-agent" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0 0L8 3L0 6Z" class="fill-agent"/></marker>
+<marker id="source-map-directory-compact-arrow-model" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0 0L8 3L0 6Z" class="fill-model"/></marker>
+</defs>
+<path d="M48 116V416" class="edge stroke-muted"/>
+<path d="M48 192H80" class="edge stroke-muted"/>
+<path d="M48 304H80" class="edge stroke-muted"/>
+<path d="M48 416H80" class="edge stroke-muted"/>
+<rect x="24" y="16" width="272" height="100" rx="6" class="node node-agent"/><text x="160.0" y="60" class="name ink-agent">packages/fs/</text><text x="160.0" y="86" class="sub">能力家族</text>
+<rect x="80" y="152" width="208" height="96" rx="6" class="node node-agent"/><text x="184.0" y="196" class="name ink-agent">fs/</text><text x="184.0" y="222" class="sub">服务定义</text>
+<rect x="80" y="264" width="208" height="96" rx="6" class="node node-tool"/><text x="184.0" y="308" class="name ink-tool">tool-fs/</text><text x="184.0" y="334" class="sub">模型可见工具</text>
+<rect x="80" y="376" width="208" height="96" rx="6" class="node node-model"/><text x="184.0" y="420" class="name ink-model">fs-local/</text><text x="184.0" y="446" class="sub">本地实现</text>
+</svg></div>
+<p class="legend">连线 = 目录中的上下级归属</p><p class="explanation">同一个 fs 家族同时容纳接口、工具与提供者。目录归属帮助定位代码范围，没有说明包之间的调用或装配。</p><p class="sources">依据：packages/fs/README.md。这里只取三个代表包。</p></section>
+<section class="panel panel--dependency" aria-label="dependency 关系图">
+<div class="diagram-container wide"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 376" role="img" aria-labelledby="source-map-dependency-wide-title source-map-dependency-wide-desc"><title id="source-map-dependency-wide-title">包依赖：两个包共享文件系统接口</title><desc id="source-map-dependency-wide-desc">tool-fs 和 fs-local 各有一条指向 dsh-fs 的 peer 依赖；图中的计数仅针对这两条边。</desc><defs>
+<marker id="source-map-dependency-wide-arrow-muted" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0 0L8 3L0 6Z" class="fill-muted"/></marker>
+<marker id="source-map-dependency-wide-arrow-tool" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0 0L8 3L0 6Z" class="fill-tool"/></marker>
+<marker id="source-map-dependency-wide-arrow-agent" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0 0L8 3L0 6Z" class="fill-agent"/></marker>
+<marker id="source-map-dependency-wide-arrow-model" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0 0L8 3L0 6Z" class="fill-model"/></marker>
+</defs>
+<path d="M144 128V168Q144 176 152 176H264Q272 176 272 184V236" class="edge stroke-tool" marker-end="url(#source-map-dependency-wide-arrow-tool)"/>
+<path d="M496 128V168Q496 176 488 176H376Q368 176 368 184V236" class="edge stroke-model" marker-end="url(#source-map-dependency-wide-arrow-model)"/>
+<rect x="176" y="144" width="80" height="24" class="mask"/><text x="216.0" y="161" class="edge-label">PEER</text>
+<rect x="384" y="144" width="80" height="24" class="mask"/><text x="424.0" y="161" class="edge-label">PEER</text>
+<rect x="32" y="32" width="224" height="96" rx="6" class="node node-tool"/><text x="144.0" y="76" class="name ink-tool">dsh-tool-fs</text><text x="144.0" y="102" class="sub">消费接口</text><rect x="208" y="40" width="40" height="18" rx="2" class="mask"/><text x="228" y="53" class="badge">0 in</text>
+<rect x="384" y="32" width="224" height="96" rx="6" class="node node-model"/><text x="496.0" y="76" class="name ink-model">dsh-fs-local</text><text x="496.0" y="102" class="sub">实现接口</text><rect x="560" y="40" width="40" height="18" rx="2" class="mask"/><text x="580" y="53" class="badge">0 in</text>
+<rect x="224" y="236" width="192" height="96" rx="6" class="node node-agent"/><text x="320.0" y="280" class="name ink-agent">dsh-fs</text><text x="320.0" y="306" class="sub">共享契约</text><rect x="368" y="244" width="40" height="18" rx="2" class="mask"/><text x="388" y="257" class="badge">2 in</text>
+</svg></div>
+<div class="diagram-container compact"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 528" role="img" aria-labelledby="source-map-dependency-compact-title source-map-dependency-compact-desc"><title id="source-map-dependency-compact-title">包依赖：两个包共享文件系统接口</title><desc id="source-map-dependency-compact-desc">tool-fs 和 fs-local 各有一条指向 dsh-fs 的 peer 依赖；图中的计数仅针对这两条边。</desc><defs>
+<marker id="source-map-dependency-compact-arrow-muted" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0 0L8 3L0 6Z" class="fill-muted"/></marker>
+<marker id="source-map-dependency-compact-arrow-tool" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0 0L8 3L0 6Z" class="fill-tool"/></marker>
+<marker id="source-map-dependency-compact-arrow-agent" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0 0L8 3L0 6Z" class="fill-agent"/></marker>
+<marker id="source-map-dependency-compact-arrow-model" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0 0L8 3L0 6Z" class="fill-model"/></marker>
+</defs>
+<path d="M80 128V168Q80 176 72 176H24Q16 176 16 184V424Q16 432 24 432H96" class="edge stroke-tool" marker-end="url(#source-map-dependency-compact-arrow-tool)"/>
+<path d="M256 344V384" class="edge stroke-model" marker-end="url(#source-map-dependency-compact-arrow-model)"/>
+<rect x="24" y="200" width="72" height="24" class="mask"/><text x="60.0" y="217" class="edge-label">PEER</text>
+<rect x="176" y="352" width="72" height="24" class="mask"/><text x="212.0" y="369" class="edge-label">PEER</text>
+<rect x="40" y="32" width="240" height="96" rx="6" class="node node-tool"/><text x="160.0" y="76" class="name ink-tool">dsh-tool-fs</text><text x="160.0" y="102" class="sub">消费接口</text><rect x="232" y="40" width="40" height="18" rx="2" class="mask"/><text x="252" y="53" class="badge">0 in</text>
+<rect x="40" y="248" width="240" height="96" rx="6" class="node node-model"/><text x="160.0" y="292" class="name ink-model">dsh-fs-local</text><text x="160.0" y="318" class="sub">实现接口</text><rect x="232" y="256" width="40" height="18" rx="2" class="mask"/><text x="252" y="269" class="badge">0 in</text>
+<rect x="96" y="384" width="208" height="96" rx="6" class="node node-agent"/><text x="200.0" y="428" class="name ink-agent">dsh-fs</text><text x="200.0" y="454" class="sub">共享契约</text><rect x="256" y="392" width="40" height="18" rx="2" class="mask"/><text x="276" y="405" class="badge">2 in</text>
+</svg></div>
+<p class="legend">箭头 = 消费包 → peer 包；in = 本图入边数</p><p class="explanation">两种角色都依赖 dsh-fs 接口。工具包没有通过生产依赖固定到 fs-local；fs-local 在工具的开发依赖中出现。</p><p class="sources">依据：两个包的 package.json。普通依赖、开发依赖及其他 peer 边已省略。</p></section>
+<section class="panel panel--service" aria-label="service 关系图">
+<div class="diagram-container wide"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 376" role="img" aria-labelledby="source-map-service-wide-title source-map-service-wide-desc"><title id="source-map-service-wide-title">服务装配：工具消费 base 中的文件系统提供者</title><desc id="source-map-service-wide-desc">tool-fs 调用 ctx.fs，base 中的 fs-sandbox 注册该服务；它的文本读取沿用 LocalFileSystem 的实现。</desc><defs>
+<marker id="source-map-service-wide-arrow-muted" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0 0L8 3L0 6Z" class="fill-muted"/></marker>
+<marker id="source-map-service-wide-arrow-tool" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0 0L8 3L0 6Z" class="fill-tool"/></marker>
+<marker id="source-map-service-wide-arrow-agent" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0 0L8 3L0 6Z" class="fill-agent"/></marker>
+<marker id="source-map-service-wide-arrow-model" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0 0L8 3L0 6Z" class="fill-model"/></marker>
+</defs>
+<path d="M104 112V144Q104 152 112 152H264Q272 152 272 160V208" class="edge stroke-tool" marker-end="url(#source-map-service-wide-arrow-tool)"/>
+<path d="M536 112V144Q536 152 528 152H376Q368 152 368 160V208" class="edge stroke-model dashed" marker-end="url(#source-map-service-wide-arrow-model)"/>
+<rect x="152" y="120" width="96" height="24" class="mask"/><text x="200.0" y="137" class="edge-label">调用接口</text>
+<rect x="380" y="120" width="148" height="24" class="mask"/><text x="454.0" y="137" class="edge-label">注册为 ctx.fs</text>
+<rect x="24" y="16" width="224" height="96" rx="6" class="node node-tool"/><text x="136.0" y="60" class="name ink-tool">tool-fs</text><text x="136.0" y="86" class="sub">模型可见消费方</text>
+<rect x="392" y="16" width="224" height="96" rx="6" class="node node-model"/><text x="504.0" y="60" class="name ink-model">fs-sandbox</text><text x="504.0" y="86" class="sub">base 选择的提供者</text>
+<rect x="224" y="208" width="192" height="96" rx="6" class="node node-agent"/><text x="320.0" y="252" class="name ink-agent">ctx.fs</text><text x="320.0" y="278" class="sub">运行时服务键</text>
+</svg></div>
+<div class="diagram-container compact"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 528" role="img" aria-labelledby="source-map-service-compact-title source-map-service-compact-desc"><title id="source-map-service-compact-title">服务装配：工具消费 base 中的文件系统提供者</title><desc id="source-map-service-compact-desc">tool-fs 调用 ctx.fs，base 中的 fs-sandbox 注册该服务；它的文本读取沿用 LocalFileSystem 的实现。</desc><defs>
+<marker id="source-map-service-compact-arrow-muted" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0 0L8 3L0 6Z" class="fill-muted"/></marker>
+<marker id="source-map-service-compact-arrow-tool" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0 0L8 3L0 6Z" class="fill-tool"/></marker>
+<marker id="source-map-service-compact-arrow-agent" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0 0L8 3L0 6Z" class="fill-agent"/></marker>
+<marker id="source-map-service-compact-arrow-model" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0 0L8 3L0 6Z" class="fill-model"/></marker>
+</defs>
+<path d="M136 112V208" class="edge stroke-tool" marker-end="url(#source-map-service-compact-arrow-tool)"/>
+<path d="M232 400V304" class="edge stroke-model dashed" marker-end="url(#source-map-service-compact-arrow-model)"/>
+<rect x="144" y="144" width="112" height="24" class="mask"/><text x="200.0" y="161" class="edge-label">调用接口</text>
+<rect x="52" y="344" width="172" height="24" class="mask"/><text x="138.0" y="361" class="edge-label">注册为 ctx.fs</text>
+<rect x="40" y="16" width="240" height="96" rx="6" class="node node-tool"/><text x="160.0" y="60" class="name ink-tool">tool-fs</text><text x="160.0" y="86" class="sub">模型可见消费方</text>
+<rect x="64" y="208" width="192" height="96" rx="6" class="node node-agent"/><text x="160.0" y="252" class="name ink-agent">ctx.fs</text><text x="160.0" y="278" class="sub">运行时服务键</text>
+<rect x="24" y="400" width="272" height="96" rx="6" class="node node-model"/><text x="160.0" y="444" class="name ink-model">fs-sandbox</text><text x="160.0" y="470" class="sub">base 选择的提供者</text>
+</svg></div>
+<p class="legend">实线 = 调用接口；虚线 = 提供者注册到服务键</p><p class="explanation">共享 base 配置选择 fs-sandbox。它继承 LocalFileSystem，文本读取沿用父类实现；后续 patch 可以改变装配。</p><p class="sources">依据：tool-fs/src/read.ts、fs-sandbox/src/index.ts 与 base/cordis.patch.yml。</p></section>
+<p class="notice">固定基线 d7432673 · 静态源码示意。图中省略的关系不代表不存在；实际调用次序和启动配置仍需查源码。系统字体回退；无脚本时也可切换。</p></main></body></html>
