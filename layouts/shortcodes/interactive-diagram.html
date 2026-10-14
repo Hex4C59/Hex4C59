@@ -1,0 +1,62 @@
+{{- $source := .Get "src" -}}
+{{- $diagram := .Page.Resources.Get $source -}}
+{{- if not $diagram -}}
+  {{- errorf "interactive-diagram: missing page resource %q in %s" $source .Page.File.Path -}}
+{{- else -}}
+  {{- range split (.Get "assets" | default "") "," -}}
+    {{- if . -}}
+      {{- $asset := $.Page.Resources.Get (strings.TrimSpace .) -}}
+      {{- if not $asset -}}{{- errorf "interactive-diagram: missing asset %q" . -}}{{- else -}}{{- $published := $asset.RelPermalink -}}{{- end -}}
+    {{- end -}}
+  {{- end -}}
+  {{- /* Bundle HTML is a page resource; publish its content as a standalone asset. */ -}}
+  {{- $target := strings.TrimPrefix "/" (path.Join .Page.RelPermalink $source) -}}
+  {{- $html := os.ReadFile (path.Join (path.Dir .Page.File.Filename) $source) -}}
+  {{- $diagram = resources.FromString $target $html -}}
+  {{- $title := .Get "title" | default "交互式流程图" -}}
+  {{- $id := printf "interactive-diagram-%s-%d" .Page.File.UniqueID .Ordinal -}}
+  {{- $height := .Get "height" | default "1150" -}}
+  {{- $mobileHeight := .Get "mobile-height" | default $height -}}
+  {{- $compactHeight := .Get "compact-height" | default $mobileHeight -}}
+  <figure class="interactive-diagram" style="margin:1.8rem 0;padding:1.3rem 0;border-top:1px solid var(--code-border);border-bottom:1px solid var(--code-border);container-type:inline-size">
+    <iframe id="{{ $id }}" src="{{ $diagram.RelPermalink }}" title="{{ $title }}" width="100%" height="{{ $height }}" loading="lazy" sandbox="allow-scripts" style="display:block;width:100%;border:0;background:transparent;--figure-height:{{ $height }}px;--figure-mobile-height:{{ $mobileHeight }}px;--figure-compact-height:{{ $compactHeight }}px"></iframe>
+    <figcaption style="font-size:.78rem;line-height:1.8;margin-top:.7rem;color:var(--content-secondary)">{{ $title }} · <a href="{{ $diagram.RelPermalink }}" target="_blank" rel="noopener">在独立窗口中查看</a></figcaption>
+  </figure>
+  {{- if .Get "mobile-height" -}}
+  <style>@container(max-width:719px){#{{ $id }}{height:var(--figure-compact-height)}}@container(max-width:399px){#{{ $id }}{height:var(--figure-mobile-height)}}</style>
+  {{- end -}}
+  <script>
+  (() => {
+    const frame = document.getElementById({{ $id }});
+    const scheme = window.matchMedia('(prefers-color-scheme: dark)');
+    const sendTheme = () => {
+      const selected = document.documentElement.dataset.theme;
+      const theme = selected === 'dark' || selected === 'light' ? selected : document.body.classList.contains('dark') ? 'dark' : scheme.matches ? 'dark' : 'light';
+      frame.style.colorScheme = theme;
+      const vars = getComputedStyle(document.documentElement);
+      const colors = {
+        paper: vars.backgroundColor,
+        ink: getComputedStyle(document.body).color,
+        muted: vars.getPropertyValue('--content-secondary-' + theme).trim(),
+        line: vars.getPropertyValue('--code-border-' + theme).trim(),
+        accent: vars.getPropertyValue('--accent').trim(),
+        code: vars.getPropertyValue('--code-background-' + theme).trim()
+      };
+      frame.contentWindow.postMessage({ type: 'diagram-theme', theme, colors }, '*');
+    };
+    window.addEventListener('message', event => {
+      if (event.source !== frame.contentWindow || !event.data) return;
+      if (event.data.type === 'diagram-ready') { sendTheme(); return; }
+      if (event.data.type !== 'diagram-height') return;
+      const height = event.data.height;
+      if (typeof height !== 'number' || !Number.isFinite(height)) return;
+      frame.height = String(Math.max(400, Math.min(4000, Math.ceil(height))));
+    });
+    frame.addEventListener('load', sendTheme);
+    const observer = new MutationObserver(sendTheme);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'data-theme'] });
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class', 'data-theme'] });
+    scheme.addEventListener('change', sendTheme);
+  })();
+  </script>
+{{- end -}}

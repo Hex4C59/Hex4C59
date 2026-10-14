@@ -63,6 +63,25 @@ class HugoContentTest(unittest.TestCase):
         path.write_text('+++\ntitle = "Course"\nseries_start = "/tutorials/one/"\n+++\n')
         return path
 
+    def test_interactive_diagram_publishes_bundle_html_and_assets(self):
+        article = self.article(section="articles", body='{{< interactive-diagram src="diagram.html" assets="flow.css,flow.js" title="Flow" >}}')
+        (article.parent / "diagram.html").write_text('<!doctype html><html><body><p>Diagram</p><script src="flow.js"></script></body></html>')
+        (article.parent / "flow.js").write_text('document.body.dataset.ready = "yes";')
+        (article.parent / "flow.css").write_text('body { margin: 0; }')
+        self.build()
+        bundle = self.output / "articles/lesson"
+        html = (bundle / "index.html").read_text()
+        self.assertIn('src=/articles/lesson/diagram.html', html)
+        self.assertIn('sandbox=allow-scripts', html)
+        self.assertIn('Diagram', (bundle / "diagram.html").read_text())
+        self.assertTrue((bundle / "flow.js").is_file())
+        self.assertTrue((bundle / "flow.css").is_file())
+
+    def test_interactive_diagram_rejects_missing_dependency(self):
+        article = self.article(section="articles", body='{{< interactive-diagram src="diagram.html" assets="missing.js" >}}')
+        (article.parent / "diagram.html").write_text('<p>Diagram</p>')
+        self.build(error='interactive-diagram: missing asset')
+
     def test_old_url_keeps_article_navigation_and_one_stylesheet(self):
         self.article(fields='url = "/posts/old-lesson/"')
         self.build()
