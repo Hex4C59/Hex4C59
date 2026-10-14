@@ -1,0 +1,134 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>同一条报错，谁把它送回模型？</title><style>
+
+*,*::before,*::after{box-sizing:border-box}html,body{margin:0;padding:0}html{color-scheme:light dark}
+:root{--paper:#faf9f6;--paper-2:#f1f0ec;--ink:#242320;--muted:#66635d;--rule:#c2beb5;--model:#6044ab;--model-bg:#ece5fa;--agent:#126d61;--agent-bg:#dceee7;--tool:#96511e;--tool-bg:#f8e4cf;--human:#66635d;--human-bg:#f1f0ec;--session:#a03861}
+:root[data-theme="dark"]{--paper:#242320;--paper-2:#302e29;--ink:#faf9f6;--muted:#c2beb5;--rule:#6d6962;--model:#c3b1f8;--model-bg:#332a47;--agent:#8cd9cd;--agent-bg:#203c37;--tool:#e8b47d;--tool-bg:#453225;--human:#c2beb5;--human-bg:#302e29;--session:#f1aac4}@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--paper:#242320;--paper-2:#302e29;--ink:#faf9f6;--muted:#c2beb5;--rule:#6d6962;--model:#c3b1f8;--model-bg:#332a47;--agent:#8cd9cd;--agent-bg:#203c37;--tool:#e8b47d;--tool-bg:#453225;--human:#c2beb5;--human-bg:#302e29;--session:#f1aac4}}
+body{background:var(--paper);color:var(--ink);font-family:"PingFang SC",system-ui,sans-serif;font-size:15px;line-height:1.75}main{max-width:760px;min-width:0;margin:0 auto;padding:16px 0 20px}.eyebrow{font:12px ui-monospace,monospace;color:var(--muted);letter-spacing:.12em;margin:0 0 8px}h1{font:500 27px/1.4 "Songti SC",Georgia,serif;margin:0 0 20px}
+fieldset{border:0;padding:0;margin:0 0 20px;display:flex;gap:8px;flex-wrap:wrap}legend{padding:0;margin:0 0 8px;color:var(--muted);font-size:13px}.choice{position:relative;display:inline-flex}.choice input{position:absolute;width:1px;height:1px;opacity:0}.choice span{border:1px solid var(--rule);border-radius:6px;padding:8px 14px;font-size:14px;cursor:pointer}.choice input:checked+span{color:var(--agent);border-color:var(--agent);background:var(--agent-bg)}.choice input:focus-visible+span{outline:3px solid var(--model);outline-offset:3px}.panel{display:none}main:has(#conversation:checked) .panel--conversation,main:has(#agent:checked) .panel--agent{display:block}.diagram-container{width:100%;overflow-x:auto;min-width:0}svg{width:100%;min-width:640px;display:block}.compact{display:none}.compact svg{min-width:320px;max-width:360px;margin-inline:auto}.route{fill:none;stroke-width:1.6}.route-label{text-anchor:middle;font-size:13px;fill:var(--muted)}.mask{fill:var(--paper)}.node{stroke-width:1.2}.node-model{fill:var(--model-bg);stroke:var(--model)}.node-agent{fill:var(--agent-bg);stroke:var(--agent)}.node-human{fill:var(--human-bg);stroke:var(--human)}.node-tool{fill:var(--tool-bg);stroke:var(--tool)}.node-name{text-anchor:middle;font-size:18px;font-weight:600}.sublabel{text-anchor:middle;font-size:13px;fill:var(--muted)}
+.fill-model{fill:var(--model)}.fill-agent{fill:var(--agent)}.fill-human{fill:var(--human)}.fill-tool{fill:var(--tool)}.stroke-model{stroke:var(--model)}.stroke-agent{stroke:var(--agent)}.stroke-human{stroke:var(--human)}.stroke-tool{stroke:var(--tool)}.text-model{fill:var(--model)}.text-agent{fill:var(--agent)}.text-human{fill:var(--human)}.text-tool{fill:var(--tool)}
+.legend{display:flex;flex-wrap:wrap;gap:8px 20px;border-top:1px solid var(--rule);padding-top:12px;margin:0;color:var(--muted);font-size:12px}.legend span::before{content:"";display:inline-block;width:8px;height:8px;margin-right:6px;background:var(--human)}.legend .model::before{background:var(--model)}.legend .agent::before{background:var(--agent)}.legend .tool::before{background:var(--tool)}.explanation{margin:12px 0 0;font-size:14px}.note{font-size:12px;color:var(--muted);margin:12px 0 0}
+@media(max-width:639px){main{padding:12px 0 16px}h1{font-size:24px}.wide{display:none}.compact{display:block}.choice span{padding:8px 12px}.legend{gap:4px 16px}}
+@media print{fieldset{display:none}.panel{display:block!important;break-inside:avoid}.compact{display:none}.wide{display:block}.diagram-container{overflow-x:visible}svg{min-width:0}.panel--agent{margin-top:32px}}
+
+</style></head><body><main><p class="eyebrow">DEEPSEEK HARNESS / 01</p><h1>同一条报错，谁把它送回模型？</h1><fieldset><legend>切换交互方式，观察执行反馈由谁承担</legend><label class="choice"><input id="conversation" name="mode" type="radio" checked><span>对话助手</span></label><label class="choice"><input id="agent" name="mode" type="radio"><span>Coding Agent</span></label></fieldset><div class="panels">
+<section class="panel panel--conversation" aria-label="对话助手反馈流程">
+<div class="diagram-container wide"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 328" role="img" aria-labelledby="feedback-conversation-wide-title feedback-conversation-wide-desc">
+<title id="feedback-conversation-wide-title">对话助手的执行反馈</title>
+<desc id="feedback-conversation-wide-desc">模型向开发者提出代码建议，开发者操作仓库与执行环境，再把实际结果送回模型；人员仍负责授权和验收。</desc>
+<defs>
+<marker id="feedback-conversation-wide-arrow-0" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0 0L8 3L0 6Z" class="fill-model"/></marker>
+<marker id="feedback-conversation-wide-arrow-1" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0 0L8 3L0 6Z" class="fill-human"/></marker>
+<marker id="feedback-conversation-wide-arrow-2" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0 0L8 3L0 6Z" class="fill-human"/></marker>
+<marker id="feedback-conversation-wide-arrow-3" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0 0L8 3L0 6Z" class="fill-tool"/></marker>
+</defs>
+<path d="M232 56H144Q136 56 136 64V168" class="route stroke-model" marker-end="url(#feedback-conversation-wide-arrow-0)"/>
+<path d="M200 168V128Q200 120 208 120H320Q328 120 328 112V96" class="route stroke-human" marker-end="url(#feedback-conversation-wide-arrow-1)"/>
+<path d="M264 204H396" class="route stroke-human" marker-end="url(#feedback-conversation-wide-arrow-2)"/>
+<path d="M396 252H264" class="route stroke-tool" marker-end="url(#feedback-conversation-wide-arrow-3)"/>
+<rect x="152" y="24" width="80" height="24" class="mask"/><text x="192" y="41" class="route-label">代码建议</text>
+<rect x="224" y="128" width="80" height="24" class="mask"/><text x="264" y="145" class="route-label">送回观察</text>
+<rect x="288" y="172" width="84" height="24" class="mask"/><text x="330" y="189" class="route-label">执行命令</text>
+<rect x="288" y="260" width="84" height="24" class="mask"/><text x="330" y="277" class="route-label">实际结果</text>
+<rect x="232" y="16" width="176" height="80" rx="6" class="node node-model"/>
+<rect x="24" y="168" width="240" height="112" rx="6" class="node node-human"/>
+<rect x="396" y="168" width="220" height="112" rx="6" class="node node-tool"/>
+<text x="320" y="48" class="node-name text-model">模型</text>
+<text x="320" y="76" class="sublabel">根据返回继续判断</text>
+<text x="144" y="200" class="node-name text-human">开发者</text>
+<text x="144" y="224" class="sublabel">应用修改 · 执行命令</text>
+<text x="144" y="248" class="sublabel">选择材料 · 粘贴报错</text>
+<text x="506" y="200" class="node-name text-tool">仓库与执行环境</text>
+<text x="506" y="224" class="sublabel">代码 · 依赖 · 测试</text>
+<text x="506" y="248" class="sublabel">返回实际执行结果</text>
+</svg></div>
+<div class="diagram-container compact"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 424" role="img" aria-labelledby="feedback-conversation-compact-title feedback-conversation-compact-desc">
+<title id="feedback-conversation-compact-title">对话助手的执行反馈</title>
+<desc id="feedback-conversation-compact-desc">模型向开发者提出代码建议，开发者操作仓库与执行环境，再把实际结果送回模型；人员仍负责授权和验收。</desc>
+<defs>
+<marker id="feedback-conversation-compact-arrow-0" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0 0L8 3L0 6Z" class="fill-model"/></marker>
+<marker id="feedback-conversation-compact-arrow-1" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0 0L8 3L0 6Z" class="fill-human"/></marker>
+<marker id="feedback-conversation-compact-arrow-2" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0 0L8 3L0 6Z" class="fill-human"/></marker>
+<marker id="feedback-conversation-compact-arrow-3" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0 0L8 3L0 6Z" class="fill-tool"/></marker>
+</defs>
+<path d="M120 88V152" class="route stroke-model" marker-end="url(#feedback-conversation-compact-arrow-0)"/>
+<path d="M216 152V88" class="route stroke-human" marker-end="url(#feedback-conversation-compact-arrow-1)"/>
+<path d="M104 256V316" class="route stroke-human" marker-end="url(#feedback-conversation-compact-arrow-2)"/>
+<path d="M212 316V256" class="route stroke-tool" marker-end="url(#feedback-conversation-compact-arrow-3)"/>
+<rect x="32" y="108" width="80" height="24" class="mask"/><text x="72" y="125" class="route-label">代码建议</text>
+<rect x="224" y="108" width="64" height="24" class="mask"/><text x="256" y="125" class="route-label">送回观察</text>
+<rect x="32" y="272" width="64" height="24" class="mask"/><text x="64" y="289" class="route-label">执行命令</text>
+<rect x="220" y="272" width="64" height="24" class="mask"/><text x="252" y="289" class="route-label">实际结果</text>
+<rect x="72" y="16" width="176" height="72" rx="6" class="node node-model"/>
+<rect x="24" y="152" width="240" height="104" rx="6" class="node node-human"/>
+<rect x="24" y="316" width="240" height="88" rx="6" class="node node-tool"/>
+<text x="160" y="44" class="node-name text-model">模型</text>
+<text x="160" y="68" class="sublabel">根据返回继续判断</text>
+<text x="144" y="184" class="node-name text-human">开发者</text>
+<text x="144" y="208" class="sublabel">应用修改 · 执行命令</text>
+<text x="144" y="232" class="sublabel">选择材料 · 粘贴报错</text>
+<text x="144" y="348" class="node-name text-tool">仓库与执行环境</text>
+<text x="144" y="372" class="sublabel">代码 · 依赖 · 测试</text>
+</svg></div>
+<p class="legend"><span class="model">模型</span><span>人工搬运</span><span class="tool">仓库环境</span></p>
+<p class="explanation">开发者应用模型建议、运行检查，再选择相关报错贴回对话。工作区发生变化时，也需要把新的信息带回模型。</p></section>
+<section class="panel panel--agent" aria-label="Coding Agent反馈流程">
+<div class="diagram-container wide"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 328" role="img" aria-labelledby="feedback-agent-wide-title feedback-agent-wide-desc">
+<title id="feedback-agent-wide-title">Coding Agent的执行反馈</title>
+<desc id="feedback-agent-wide-desc">模型向Harness提出工具请求，Harness操作仓库与执行环境，再把实际结果送回模型；人员仍负责授权和验收。</desc>
+<defs>
+<marker id="feedback-agent-wide-arrow-0" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0 0L8 3L0 6Z" class="fill-model"/></marker>
+<marker id="feedback-agent-wide-arrow-1" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0 0L8 3L0 6Z" class="fill-agent"/></marker>
+<marker id="feedback-agent-wide-arrow-2" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0 0L8 3L0 6Z" class="fill-agent"/></marker>
+<marker id="feedback-agent-wide-arrow-3" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0 0L8 3L0 6Z" class="fill-tool"/></marker>
+</defs>
+<path d="M232 56H144Q136 56 136 64V168" class="route stroke-model" marker-end="url(#feedback-agent-wide-arrow-0)"/>
+<path d="M200 168V128Q200 120 208 120H320Q328 120 328 112V96" class="route stroke-agent" marker-end="url(#feedback-agent-wide-arrow-1)"/>
+<path d="M264 204H396" class="route stroke-agent" marker-end="url(#feedback-agent-wide-arrow-2)"/>
+<path d="M396 252H264" class="route stroke-tool" marker-end="url(#feedback-agent-wide-arrow-3)"/>
+<rect x="152" y="24" width="80" height="24" class="mask"/><text x="192" y="41" class="route-label">工具请求</text>
+<rect x="224" y="128" width="80" height="24" class="mask"/><text x="264" y="145" class="route-label">送回观察</text>
+<rect x="288" y="172" width="84" height="24" class="mask"/><text x="330" y="189" class="route-label">执行命令</text>
+<rect x="288" y="260" width="84" height="24" class="mask"/><text x="330" y="277" class="route-label">实际结果</text>
+<rect x="232" y="16" width="176" height="80" rx="6" class="node node-model"/>
+<rect x="24" y="168" width="240" height="112" rx="6" class="node node-agent"/>
+<rect x="396" y="168" width="220" height="112" rx="6" class="node node-tool"/>
+<text x="320" y="48" class="node-name text-model">模型</text>
+<text x="320" y="76" class="sublabel">根据返回继续判断</text>
+<text x="144" y="200" class="node-name text-agent">Harness</text>
+<text x="144" y="224" class="sublabel">检查权限 · 调用工具</text>
+<text x="144" y="248" class="sublabel">整理结果 · 继续请求</text>
+<text x="506" y="200" class="node-name text-tool">仓库与执行环境</text>
+<text x="506" y="224" class="sublabel">代码 · 依赖 · 测试</text>
+<text x="506" y="248" class="sublabel">返回实际执行结果</text>
+</svg></div>
+<div class="diagram-container compact"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 424" role="img" aria-labelledby="feedback-agent-compact-title feedback-agent-compact-desc">
+<title id="feedback-agent-compact-title">Coding Agent的执行反馈</title>
+<desc id="feedback-agent-compact-desc">模型向Harness提出工具请求，Harness操作仓库与执行环境，再把实际结果送回模型；人员仍负责授权和验收。</desc>
+<defs>
+<marker id="feedback-agent-compact-arrow-0" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0 0L8 3L0 6Z" class="fill-model"/></marker>
+<marker id="feedback-agent-compact-arrow-1" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0 0L8 3L0 6Z" class="fill-agent"/></marker>
+<marker id="feedback-agent-compact-arrow-2" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0 0L8 3L0 6Z" class="fill-agent"/></marker>
+<marker id="feedback-agent-compact-arrow-3" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0 0L8 3L0 6Z" class="fill-tool"/></marker>
+</defs>
+<path d="M120 88V152" class="route stroke-model" marker-end="url(#feedback-agent-compact-arrow-0)"/>
+<path d="M216 152V88" class="route stroke-agent" marker-end="url(#feedback-agent-compact-arrow-1)"/>
+<path d="M104 256V316" class="route stroke-agent" marker-end="url(#feedback-agent-compact-arrow-2)"/>
+<path d="M212 316V256" class="route stroke-tool" marker-end="url(#feedback-agent-compact-arrow-3)"/>
+<rect x="32" y="108" width="80" height="24" class="mask"/><text x="72" y="125" class="route-label">工具请求</text>
+<rect x="224" y="108" width="64" height="24" class="mask"/><text x="256" y="125" class="route-label">送回观察</text>
+<rect x="32" y="272" width="64" height="24" class="mask"/><text x="64" y="289" class="route-label">执行命令</text>
+<rect x="220" y="272" width="64" height="24" class="mask"/><text x="252" y="289" class="route-label">实际结果</text>
+<rect x="72" y="16" width="176" height="72" rx="6" class="node node-model"/>
+<rect x="24" y="152" width="240" height="104" rx="6" class="node node-agent"/>
+<rect x="24" y="316" width="240" height="88" rx="6" class="node node-tool"/>
+<text x="160" y="44" class="node-name text-model">模型</text>
+<text x="160" y="68" class="sublabel">根据返回继续判断</text>
+<text x="144" y="184" class="node-name text-agent">Harness</text>
+<text x="144" y="208" class="sublabel">检查权限 · 调用工具</text>
+<text x="144" y="232" class="sublabel">整理结果 · 继续请求</text>
+<text x="144" y="348" class="node-name text-tool">仓库与执行环境</text>
+<text x="144" y="372" class="sublabel">代码 · 依赖 · 测试</text>
+</svg></div>
+<p class="legend"><span class="model">模型</span><span class="agent">运行系统</span><span class="tool">仓库环境</span></p>
+<p class="explanation">工具返回报错后，Harness 整理结果；后续请求获准继续时，模型能据此调整动作。工具拒绝、取消和停止条件都可能中断这个过程。</p></section>
+</div><p class="note">职责示意，非 dsh 实测轨迹。图省略模型路由、会话持久化与失败分支；人员仍负责授权和验收。字体使用系统回退。</p></main></body></html>
