@@ -1,0 +1,10 @@
+{
+  "name": "software-design-03-examples",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test dispatch.test.mjs",
+    "demo": "node demo.mjs"
+  }
+}
