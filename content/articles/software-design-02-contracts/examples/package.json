@@ -1,0 +1,14 @@
+{
+  "name": "software-design-02-examples",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tasks.test.mjs check.test.mjs",
+    "check:types": "tsc --noEmit --strict --target ES2022 --module NodeNext typed.ts",
+    "check:invalid": "tsc --noEmit --strict --target ES2022 --module NodeNext invalid.ts"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
+  }
+}
