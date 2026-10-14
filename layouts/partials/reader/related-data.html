@@ -1,0 +1,39 @@
+{{- $page := . -}}{{- $entries := slice -}}{{- $seen := slice -}}
+{{- range $item := .Params.related_reading -}}
+  {{- $target := site.GetPage $item.ref -}}
+  {{- if not $target -}}{{- errorf "related_reading: missing page %q in %s" $item.ref $page.File.Path -}}
+  {{- else if or $target.Draft (eq $target $page) (not $item.reason) -}}{{- errorf "related_reading: use another published page and a reason in %s" $page.File.Path -}}
+  {{- else if not (in $seen $target.RelPermalink) -}}
+    {{- $entries = $entries | append (dict "Page" $target "Title" $target.Title "Reason" $item.reason "Detail" (printf "%d 分钟阅读" $target.ReadingTime)) -}}
+    {{- $seen = $seen | append $target.RelPermalink -}}
+  {{- end -}}
+{{- end -}}
+{{- $ranked := newScratch -}}
+{{- range partialCached "site/articles.html" site -}}
+  {{- if and (ne . $page) (not .Draft) -}}
+    {{- $candidate := . -}}{{- $target := . -}}{{- $title := .Title -}}{{- $detail := printf "%d 分钟阅读" .ReadingTime -}}
+    {{- with partialCached "series/data.html" . .RelPermalink -}}{{- $target = .Hub -}}{{- $title = .Title -}}{{- $detail = .CountLabel -}}{{- end -}}
+    {{- if and (ne $target $page) (not $target.Draft) (not (in $seen $target.RelPermalink)) -}}
+      {{- $series := intersect ($page.Params.series | default slice) ($candidate.Params.series | default slice) -}}
+      {{- $tags := intersect (apply ($page.Params.tags | default slice) "lower" ".") (apply ($candidate.Params.tags | default slice) "lower" ".") -}}
+      {{- $categories := intersect (partial "site/categories.html" $page) (partial "site/categories.html" $candidate) -}}
+      {{- $score := add (mul 100 (len $series)) (add (mul 20 (len $tags)) (len $categories)) -}}
+      {{- $reason := "" -}}
+      {{- if $series -}}
+        {{- $name := index $series 0 -}}{{- with site.GetPage (printf "/series/%s" $name) -}}{{- $name = .Title -}}{{- end -}}
+        {{- $reason = printf "同系列 · %s" $name -}}
+      {{- else if $tags -}}
+        {{- $reason = printf "同话题 · %s" (partial "collection/filter-label.html" (dict "Key" "tags" "Value" (index $tags 0))) -}}
+      {{- else if $categories -}}
+        {{- $reason = printf "同主题 · %s" (partial "collection/filter-label.html" (dict "Key" "categories" "Value" (index $categories 0))) -}}
+      {{- end -}}
+      {{- if gt $score 0 -}}
+        {{- $entry := dict "Page" $target "Title" $title "Reason" $reason "Detail" $detail "Score" $score "Sort" (printf "%05d-%019d-%s" $score $candidate.Lastmod.Unix $target.RelPermalink) -}}
+        {{- $previous := $ranked.Get $target.RelPermalink -}}
+        {{- if or (not $previous) (gt $score $previous.Score) (and (eq $score $previous.Score) (gt $entry.Sort $previous.Sort)) -}}{{- $ranked.Set $target.RelPermalink $entry -}}{{- end -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- range sort $ranked.Values "Sort" "desc" -}}{{- $entries = $entries | append . -}}{{- end -}}
+{{- return (first 3 $entries) -}}

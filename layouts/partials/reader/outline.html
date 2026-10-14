@@ -1,0 +1,15 @@
+{{ if and (.Param "toc") (ne .Params.showtoc false) (gt (len .Fragments.Identifiers) 0) }}
+<details class="reader-outline" data-reader-outline open>
+  <summary>本文目录 <span class="reader-outline-mark" aria-hidden="true">TREE</span></summary>
+  {{ .TableOfContents }}
+</details>
+{{ end }}
+<div class="reader-progress" data-reading-progress hidden>
+  <span class="reader-progress-label">阅读进度</span>
+  <div class="reader-progress-meter" role="progressbar" aria-label="本文阅读进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+    <span class="reader-progress-glyphs" data-progress-glyphs aria-hidden="true">░░░░░░░░░░░░░░░░░░</span>
+    <span class="reader-progress-percent" data-progress-percent aria-hidden="true">0%</span>
+  </div>
+</div>
+
+{{ partial "reader/tools.html" . }}

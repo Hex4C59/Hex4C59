@@ -1,0 +1,72 @@
+{
+  "upstream": "nanxstats/anthrosevka",
+  "release": "v0.4.0",
+  "revision": "3034350ccf478ee033aa400a1261f4e11b5ba5a3",
+  "archive_url": "https://github.com/nanxstats/anthrosevka/releases/download/v0.4.0/AnthrosevkaMono.zip",
+  "archive_sha256": "7ee740092275fcc9b37cc5d0bf4542df492c4d6a195a21555f2cf1727060481f",
+  "converted_on": "2026-10-14",
+  "fonttools_version": "4.60.1",
+  "files": [
+    {
+      "file": "anthrosevka-mono-regular.woff2",
+      "family": "Hex Mono",
+      "style": "Regular",
+      "weight": 400,
+      "unicode_range": null,
+      "upstream_version": 34.08009338378906,
+      "sha256": "2ca0863f6575389338d0cfd458bcad3158592c72b86060b561f85880872d2627",
+      "license": "OFL.txt",
+      "source_face": "AnthrosevkaMono-Regular.ttf",
+      "glyph_count": 3383
+    },
+    {
+      "file": "anthrosevka-mono-medium.woff2",
+      "family": "Hex Mono",
+      "style": "Medium",
+      "weight": 500,
+      "unicode_range": null,
+      "upstream_version": 34.08009338378906,
+      "sha256": "566ca3e24666e86201141b8cbce953d163454bbca21f728504ae2e5663c3bf35",
+      "license": "OFL.txt",
+      "source_face": "AnthrosevkaMono-Medium.ttf",
+      "glyph_count": 3383
+    },
+    {
+      "file": "anthrosevka-mono-semibold.woff2",
+      "family": "Hex Mono",
+      "style": "SemiBold",
+      "weight": 600,
+      "unicode_range": null,
+      "upstream_version": 34.08009338378906,
+      "sha256": "6cee2ceaf4c6f4272bd090eb3ac93d573ec4848865a2a9cbddfb220d6c87d74f",
+      "license": "OFL.txt",
+      "source_face": "AnthrosevkaMono-SemiBold.ttf",
+      "glyph_count": 3383
+    },
+    {
+      "file": "anthrosevka-mono-bold.woff2",
+      "family": "Hex Mono",
+      "style": "Bold",
+      "weight": 700,
+      "unicode_range": null,
+      "upstream_version": 34.08009338378906,
+      "sha256": "979d8c203e170936c5e8ab5bc0ab9154c48e86485e498a0e9cdaa43b44fbb883",
+      "license": "OFL.txt",
+      "source_face": "AnthrosevkaMono-Bold.ttf",
+      "glyph_count": 3383
+    },
+    {
+      "file": "anthrosevka-mono-italic.woff2",
+      "family": "Hex Mono",
+      "style": "Italic",
+      "weight": 400,
+      "unicode_range": null,
+      "upstream_version": 34.08009338378906,
+      "sha256": "101100da7e7112d4faf9374bf0df2f1c1e5123e63d23c72787b28112b089690d",
+      "license": "OFL.txt",
+      "source_face": "AnthrosevkaMono-Italic.ttf",
+      "glyph_count": 3383
+    }
+  ],
+  "subset_unicode_file": "subset-unicodes.txt"
+}

@@ -11,6 +11,7 @@
         {{ partial "series/contents.html" (dict "Series" $series "Current" $article) }}
       </nav>
     </details>
+    {{ partial "reader/outline.html" $article }}
   </aside>
   <div class="series-article" id="series-article-content" tabindex="-1">
     {{ partial "breadcrumbs.html" $article }}

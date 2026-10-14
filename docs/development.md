@@ -27,7 +27,7 @@
 
 本站的排版覆盖位于 `assets/css/site.css`，配色和交互样式集中在 `assets/css/chroma.css`，通过 `layouts/partials/head/css.html` 合并。亮色与暗色使用同一组语义变量。首页主栏展示最近文章，侧栏展示系列和主题；阅读插画复用个人主页的 Open Doodles 素材，来源见 `assets/profile/README.md`。
 
-`assets/js/motion.js` 管理首页首屏以外内容的短距离滚动入场，以及页脚中的动效开关。首屏内容直接显示，不运行循环动画。动效偏好存储在本机 `localStorage`；系统启用“减少动态效果”时优先关闭动画。无 JavaScript 时正文和导航仍可使用。支持 CSS 滚动时间线的浏览器会在文章顶部显示阅读进度。
+`assets/js/motion.js` 管理入场动效和页脚中的动效开关。首页首屏直接显示，其余列表使用 320 毫秒的短距离入场。文章首屏使用 600 毫秒的淡入上移，标题、摘要和元信息略微错开；正文按二级标题分组，以 650 毫秒触发一次入场，同组内容同步出现，不逐段重复播放。它不改写正文结构，也不在 CSS 中预先隐藏内容。锚点跳转、带片段地址进入和恢复阅读位置时，目标章节直接可读。动效偏好存储在本机 `localStorage`；关闭动效或系统启用“减少动态效果”时，取消正在播放的入场并移除过渡。无 JavaScript 时正文和完整目录仍可使用。
 
 ## 新建文章
 
@@ -86,7 +86,23 @@ series_role = "appendix"
 
 `layouts/partials/head/css.html` 是唯一的公共 CSS 入口。它依次合并主题基础样式、字体、代码高亮、配色和本站样式，生成一个带指纹的 CSS 文件。修改本站样式放在 `assets/css/site.css`，代码配色放在 `assets/css/syntax-highlighting.css`。
 
-公共交互由 `assets/js/site.js` 负责。Fuse 和 `assets/js/search.js` 仅在搜索页加载；搜索索引仍在读者输入关键词后请求。存在代码块时加载复制按钮脚本；Mermaid 的加载继续由代码块渲染钩子决定。
+文章页与连续阅读系列共用 `layouts/partials/reader/outline.html`。桌面目录按章节展开，子目录使用 300 毫秒的网格高度过渡；折叠内容退出键盘和辅助技术访问，关闭动效时即时切换。当前章节自动显示下级小节；读者手动展开或收起的状态在当前浏览会话中按文章保存。系列目录单独折叠，手机端点击本文目录完成定位后收起并把焦点交给对应标题。关闭 JavaScript 时仍可展开完整目录并使用锚点。
+
+文章阅读交互放在 `assets/js/reader.js`，仅在文章页加载。它按正文更新字符进度，并提供复制链接、复制 Markdown 和下载 Markdown。手机端把保存工具移到文章头部，进度保留在底部。复制受限时显示可选中的文本；Markdown 读取失败时保留重试和下载入口。
+
+`layouts/partials/reader/markdown.html` 在构建时生成带内容摘要文件名的 Markdown，并在 HTML 中提供 `text/markdown` alternate 链接。导出包含标题、作者、日期和原文地址，展开 Hugo shortcode，保留围栏代码及公式；常规图片、附件、站内链接和 HTML 图片地址转为绝对地址，展示用脚本与样式不进入正文。草稿只会在显式包含草稿的预览中生成，生产构建不发布草稿导出。
+
+普通文章末尾通过 `reader/related-data.html` 选择最多三条继续阅读入口，按同系列、同话题、同主题排序，并展示对应关系。连续课程合并到目录入口，系列文章保留章节顺序导航。可以在文章 front matter 中优先指定入口及理由；`ref` 使用源内容路径，目标必须是另一篇已发布页面：
+
+```toml
+related_reading = [
+  { ref = "/articles/example/", reason = "补充前置知识" },
+]
+```
+
+正文和全站主标题、文章列表标题使用 Source Sans 3 与思源黑体；文章内的小节标题、元信息、目录和代码使用 Anthrosevka Mono 的本地网页子集 Hex Mono，中文回退到思源黑体。站点品牌标题保留原有衬线字体，页脚复用首页的阅读者插画并生成独立的深浅色资源。字体在 `static/fonts/editorial/` 与 `static/fonts/anthrosevka/` 自托管，来源、许可与摘要随文件记录。代码块由 `layouts/_default/_markup/render-codeblock.html` 统一提供语言栏和复制按钮。
+
+链接颜色和按钮背景使用 160–180 毫秒的短过渡，导航下划线与少量箭头使用 200–220 毫秒的位移过渡，同样遵循动效偏好。公共交互由 `assets/js/site.js` 负责。Fuse 和 `assets/js/search.js` 仅在搜索页加载；搜索索引仍在读者输入关键词后请求。存在代码块时加载复制按钮脚本；Mermaid 的加载继续由代码块渲染钩子决定。
 
 需要数学公式的文章在 front matter 中填写 `math = true`，支持 `$…$` 和 `$$…$$`。未开启的页面不加载 KaTeX。连续阅读布局同时考虑当前展示章节与目录文章的设置。
 

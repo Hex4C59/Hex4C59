@@ -1,0 +1,15 @@
+{{- with partial "reader/related-data.html" . -}}
+<section class="related-reading" aria-labelledby="related-reading-title">
+  <h2 id="related-reading-title">继续阅读</h2>
+  <ul>
+    {{ range . }}
+    <li>
+      <p class="related-reading-reason">{{ .Reason }}</p>
+      <a href="{{ .Page.RelPermalink }}">{{ .Title }} <span aria-hidden="true">↗</span></a>
+      {{ with .Page.Description | default .Page.Params.summary }}<p class="related-reading-summary">{{ . | plainify | truncate 100 }}</p>{{ end }}
+      <p class="related-reading-detail">{{ .Detail }}</p>
+    </li>
+    {{ end }}
+  </ul>
+</section>
+{{- end -}}

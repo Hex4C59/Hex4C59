@@ -1,0 +1,24 @@
+{{- $page := .Page -}}{{- $line := .Line -}}
+{{- /* Leave inline code and indented code intact. */ -}}
+{{- if not (or (strings.Contains $line "`") (and (not .IsHTML) (or (hasPrefix $line "    ") (hasPrefix $line "\t")))) -}}
+  {{- $patterns := slice `!?\[[^\]\n]*\]\((<[^>\n]+>|(?:[^\s()]|\([^\s()]*\))+)(?:\s+[^)\n]*)?\)` `^ {0,3}\[[^\^\]\n][^\]\n]*\]:[ \t]+(<[^>\n]+>|\S+)` `(?:href|src|poster)=["']([^"'<>]+)["']` -}}
+  {{- range $pattern := $patterns -}}
+    {{- range findRESubmatch $pattern $line -}}
+      {{- $whole := index . 0 -}}{{- $value := index . 1 -}}
+      {{- $target := strings.TrimSuffix ">" (strings.TrimPrefix "<" $value) -}}
+      {{- $resolved := partial "reader/markdown-url.html" (dict "Page" $page "Target" $target) -}}
+      {{- $replacement := replace $value $target $resolved 1 -}}
+      {{- $line = replace $line $whole (replace $whole $value $replacement 1) 1 -}}
+    {{- end -}}
+  {{- end -}}
+  {{- range findRESubmatch `srcset=["']([^"']+)["']` $line -}}
+    {{- $whole := index . 0 -}}{{- $value := index . 1 -}}{{- $items := slice -}}
+    {{- range split $value "," -}}
+      {{- $item := strings.TrimSpace . -}}{{- $parts := split $item " " -}}{{- $target := index $parts 0 -}}
+      {{- $resolved := partial "reader/markdown-url.html" (dict "Page" $page "Target" $target) -}}
+      {{- $items = $items | append (replace $item $target $resolved 1) -}}
+    {{- end -}}
+    {{- $line = replace $line $whole (replace $whole $value (delimit $items ", ") 1) 1 -}}
+  {{- end -}}
+{{- end -}}
+{{- return $line -}}

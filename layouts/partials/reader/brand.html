@@ -1,0 +1,8 @@
+{{- with resources.Get "profile/reader.svg" -}}
+  {{- $light := resources.FromString "images/reader-mark-light.svg" (replace .Content "currentColor" "#29323f") | minify | fingerprint -}}
+  {{- $dark := resources.FromString "images/reader-mark-dark.svg" (replace .Content "currentColor" "#e7e3dc") | minify | fingerprint -}}
+  <span class="footer-reader" aria-hidden="true">
+    <img class="footer-reader-light" src="{{ $light.RelPermalink }}" width="322" height="240" alt="" loading="lazy">
+    <img class="footer-reader-dark" src="{{ $dark.RelPermalink }}" width="322" height="240" alt="" loading="lazy">
+  </span>
+{{- end -}}

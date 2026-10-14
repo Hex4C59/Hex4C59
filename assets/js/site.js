@@ -41,12 +41,19 @@
       }
     };
     const syncMenu = () => {
-      menu.open = desktop.matches;
+      let preferred;
+      try { preferred = sessionStorage.getItem(`${storageKey}:expanded`); } catch (_) {}
+      menu.open = desktop.matches && preferred === 'true';
       requestAnimationFrame(revealCurrent);
     };
     syncMenu();
     try { nav.scrollTop = Number(sessionStorage.getItem(storageKey)) || 0; } catch (_) {}
     menu.addEventListener('toggle', revealCurrent);
+    menu.querySelector('summary').addEventListener('click', () => {
+      requestAnimationFrame(() => {
+        try { sessionStorage.setItem(`${storageKey}:expanded`, String(menu.open)); } catch (_) {}
+      });
+    });
     desktop.addEventListener('change', syncMenu);
     nav.addEventListener('scroll', () => {
       try { sessionStorage.setItem(storageKey, String(nav.scrollTop)); } catch (_) {}

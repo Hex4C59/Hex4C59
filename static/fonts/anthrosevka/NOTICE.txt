@@ -1,0 +1,6 @@
+Anthrosevka Mono v0.4.0 web subsets, locally named Hex Mono.
+Copyright 2015-2026, Renzhi Li (aka. Belleve Invis, belleve@typeof.net).
+Based on the Iosevka custom build published at nanxstats/anthrosevka.
+Independent project; not endorsed by or affiliated with Anthropic PBC.
+Format conversion, glyph subsetting and local family naming by Hex4C59, 2026.
+Distributed under the SIL Open Font License 1.1; see OFL.txt.

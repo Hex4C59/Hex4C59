@@ -93,6 +93,133 @@ class HugoContentTest(unittest.TestCase):
         self.assertNotIn('search-bundle', html)
         self.assertNotIn('katex.min.js', html)
 
+    def test_article_reader_keeps_chrome_out_of_search_text(self):
+        self.article(body="## 第一节\n\n### A child\n\n```rust\nfn main() {}\n```\n")
+        self.build()
+        html = (self.output / "tutorials/lesson/index.html").read_text()
+        self.assertIn('href=#article-content', html)
+        self.assertEqual(html.count('id=TableOfContents'), 1)
+        self.assertIn('href=#%e7%ac%ac%e4%b8%80%e8%8a%82', html.lower())
+        self.assertIn('data-reading-progress', html)
+        self.assertIn('data-code-language=rust', html)
+        self.assertIn('type=button aria-label=复制代码 hidden', html)
+        import json
+        entry = json.loads((self.output / 'index.json').read_text())[0]
+        self.assertIn('fn main()', entry['content'])
+        self.assertNotIn('CODE', entry['content'])
+        self.assertNotIn('复制', entry['content'])
+
+    def test_reader_preserves_toc_opt_out_and_series_navigation(self):
+        self.series()
+        self.article(slug="hub", fields='series = ["course"]\nseries_index = true')
+        self.article(slug="no-toc", fields='showtoc = false')
+        self.build()
+        chapter = (self.output / "tutorials/one/index.html").read_text()
+        self.assertIn('aria-label=系列章节目录', chapter)
+        self.assertEqual(chapter.count('id=TableOfContents'), 1)
+        hidden = (self.output / "tutorials/no-toc/index.html").read_text()
+        self.assertNotIn('id=TableOfContents', hidden)
+        self.assertIn('data-reading-progress', hidden)
+
+    def test_markdown_export_preserves_code_and_resolves_bundle_links(self):
+        article = self.article(section="articles", body=(
+            '## 正文\n\n![plot](plot.svg)\n\n[data](data.csv)\n\n'
+            '[note][asset]\n\n[asset]: plot.svg "Diagram"\n\n'
+            '`[sample](plot.svg)`\n\n```markdown\n[sample](plot.svg)\n'
+            '<script>sample()</script>\n```\n\n    [indented](plot.svg)\n\n$$x^2$$\n\n'
+            '<figure>\n    <source srcset="plot.svg 1x, plot.svg 2x">\n    <img src="plot.svg">\n</figure>\n'))
+        (article.parent / "plot.svg").write_text('<svg xmlns="http://www.w3.org/2000/svg"/>')
+        (article.parent / "data.csv").write_text('a,b\n1,2\n')
+        self.build()
+        html = (self.output / "articles/lesson/index.html").read_text()
+        url = re.search(r'data-markdown-url=([^ >]+)', html).group(1).strip('"')
+        markdown = (self.output / url.lstrip('/')).read_text()
+        self.assertTrue(markdown.startswith('# Lesson\n'))
+        self.assertIn('原文：https://hex4c59.cc/articles/lesson/', markdown)
+        self.assertIn('![plot](https://hex4c59.cc/articles/lesson/plot.svg)', markdown)
+        self.assertIn('[asset]: https://hex4c59.cc/articles/lesson/plot.svg "Diagram"', markdown)
+        self.assertIn('`[sample](plot.svg)`', markdown)
+        self.assertIn('```markdown\n[sample](plot.svg)\n<script>sample()</script>\n```', markdown)
+        self.assertIn('$$x^2$$', markdown)
+        self.assertIn('    [indented](plot.svg)', markdown)
+        self.assertIn('srcset="https://hex4c59.cc/articles/lesson/plot.svg 1x, https://hex4c59.cc/articles/lesson/plot.svg 2x"', markdown)
+        self.assertNotIn('draft =', markdown)
+        self.assertIn('type=text/markdown', html)
+
+    def test_markdown_export_expands_interactive_shortcodes_without_scripts(self):
+        article = self.article(section="articles", body='{{< interactive-diagram src="diagram.html" title="Flow" mobile-height="600" >}}')
+        (article.parent / 'diagram.html').write_text('<!doctype html><html><body>Flow</body></html>')
+        self.build()
+        html = (self.output / 'articles/lesson/index.html').read_text()
+        url = re.search(r'data-markdown-url=([^ >]+)', html).group(1).strip('"')
+        markdown = (self.output / url.lstrip('/')).read_text()
+        self.assertIn('https://hex4c59.cc/articles/lesson/diagram.html', markdown)
+        self.assertIn('Flow', markdown)
+        self.assertNotIn('<script', markdown)
+        self.assertNotIn('<style', markdown)
+        self.assertNotIn('{{<', markdown)
+
+    def test_markdown_export_respects_a_site_path_prefix(self):
+        config = self.root / 'hugo.toml'
+        original = config.read_text()
+        self.addCleanup(config.write_text, original)
+        config.write_text(original.replace('baseURL = "https://hex4c59.cc/"', 'baseURL = "https://example.org/blog/"'))
+        self.article(slug='next')
+        article = self.article(section='articles', body='![plot](plot.svg)\n\n[next](/tutorials/next/)\n\n[home](/blog)\n')
+        (article.parent / 'plot.svg').write_text('<svg xmlns="http://www.w3.org/2000/svg"/>')
+        self.build()
+        html = (self.output / 'articles/lesson/index.html').read_text()
+        url = re.search(r'data-markdown-url=([^ >]+)', html).group(1).strip('"')
+        self.assertTrue(url.startswith('/blog/markdown/'))
+        markdown = (self.output / url[len('/blog/'):]).read_text()
+        self.assertIn('![plot](https://example.org/blog/articles/lesson/plot.svg)', markdown)
+        self.assertIn('[next](https://example.org/blog/tutorials/next/)', markdown)
+        self.assertIn('[home](https://example.org/blog)', markdown)
+
+    def test_reader_script_and_export_are_limited_to_articles(self):
+        self.article()
+        self.article(slug='draft', fields='', body='Never export this draft.')
+        path = self.content / 'tutorials/draft/index.md'
+        path.write_text(path.read_text().replace('draft = false', 'draft = true'))
+        self.build()
+        article = (self.output / 'tutorials/lesson/index.html').read_text()
+        home = (self.output / 'index.html').read_text()
+        self.assertIn('/js/reader.min.', article)
+        self.assertNotIn('/js/reader.min.', home)
+        self.assertNotIn('type=text/markdown', home)
+        self.assertFalse(any('Never export this draft.' in p.read_text() for p in (self.output / 'markdown').glob('*.md')))
+
+    def test_related_reading_prioritizes_curated_links_and_deduplicates_courses(self):
+        current = self.article(slug='current')
+        current.write_text(current.read_text().replace('tags = []', 'tags = ["Rust"]'))
+        self.series()
+        self.article(slug='hub', fields='series = ["course"]\nseries_index = true')
+        for slug in ('one', 'two'):
+            path = self.content / ('tutorials/' + slug + '/index.md')
+            path.write_text(path.read_text().replace('tags = []', 'tags = ["Rust"]'))
+        self.article(slug='chosen')
+        self.article(slug='draft')
+        path = self.content / 'tutorials/draft/index.md'
+        path.write_text(path.read_text().replace('draft = false', 'draft = true'))
+        current.write_text(current.read_text().replace('tags = ["Rust"]', 'tags = ["Rust"]\nrelated_reading = [{ref = "/tutorials/chosen/", reason = "补充前置知识"}]'))
+        self.build()
+        html = (self.output / 'tutorials/current/index.html').read_text()
+        related = re.search(r'<section class=related-reading.*?</section>', html, re.S).group()
+        self.assertIn('补充前置知识', related)
+        self.assertIn('同话题 · Rust', related)
+        self.assertEqual(related.count('href=/tutorials/hub/'), 1)
+        self.assertNotIn('href=/tutorials/one/', related)
+        self.assertNotIn('href=/tutorials/two/', related)
+        self.assertNotIn('href=/tutorials/current/', related)
+        self.assertNotIn('href=/tutorials/draft/', related)
+        self.assertLess(related.index('href=/tutorials/chosen/'), related.index('href=/tutorials/hub/'))
+        chapter = (self.output / 'tutorials/one/index.html').read_text()
+        self.assertNotIn('class=related-reading', chapter)
+
+    def test_related_reading_rejects_missing_curated_page(self):
+        self.article(fields='related_reading = [{ref = "/articles/missing/", reason = "Read next"}]')
+        self.build('related_reading: missing page')
+
     def test_five_article_types_have_labels_and_shortcuts(self):
         for kind in ("concept", "tutorial", "practice", "review", "eval"):
             self.article(section="agent", slug=kind,

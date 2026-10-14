@@ -1,0 +1,9 @@
+{{- $result := transform.HighlightCodeBlock . -}}
+{{- $language := .Type | default "text" -}}
+<div class="code-block">
+  <div class="code-block-header">
+    <span class="code-block-label" role="note" aria-label="代码语言：{{ $language }}" data-code-language="{{ $language }}"></span>
+    <button class="copy-code-button" type="button" aria-label="复制代码" hidden></button>
+  </div>
+  {{ $result.Wrapped }}
+</div>

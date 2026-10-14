@@ -1,3 +1,7 @@
+<div class="footer-identity">
+  {{ partialCached "reader/brand.html" site }}
+  <a class="footer-title" href="{{ site.Home.RelPermalink }}">{{ site.Title }}</a>
+</div>
 <div class="footer-links">
   {{ range site.Params.social }}<a href="{{ .url }}" target="_blank" rel="noopener noreferrer me">{{ .name }}</a>{{ end }}
   {{ with site.Home.OutputFormats.Get "RSS" }}<a href="{{ .RelPermalink }}">RSS</a>{{ end }}

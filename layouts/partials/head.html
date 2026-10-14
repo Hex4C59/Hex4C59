@@ -38,6 +38,9 @@
 </title>
 
 <link rel="canonical" href="{{ .Permalink }}"/>
+{{ if and .IsPage (in (partialCached "site/article-sections.html" site) .Section) }}
+  {{ with partialCached "reader/markdown.html" . .RelPermalink }}<link rel="alternate" type="text/markdown" href="{{ .RelPermalink }}" title="Markdown 原文">{{ end }}
+{{ end }}
 
 {{ if and (eq .Kind "term") (in (slice "categories" "tags") .Section) }}
 <meta property="og:url" content="{{ .Permalink }}"><meta property="og:site_name" content="{{ site.Title }}"><meta property="og:title" content="{{ $title }}"><meta property="og:description" content="{{ $description }}"><meta property="og:type" content="website">

@@ -10,3 +10,9 @@
 <script defer src="{{ .RelPermalink }}" integrity="{{ .Data.Integrity }}"></script>
   {{ end }}
 {{ end }}
+
+{{ if and .IsPage (in (partialCached "site/article-sections.html" site) .Section) }}
+  {{ with resources.Get "js/reader.js" | minify | fingerprint }}
+<script defer src="{{ .RelPermalink }}" integrity="{{ .Data.Integrity }}"></script>
+  {{ end }}
+{{ end }}

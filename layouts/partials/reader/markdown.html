@@ -1,0 +1,40 @@
+{{- $page := . -}}{{- $lines := slice -}}{{- $fence := "" -}}{{- $fenceLength := 0 -}}{{- $skipTag := "" -}}{{- $htmlTag := "" -}}{{- $htmlDepth := 0 -}}
+{{- range split (replace .RenderShortcodes "\r\n" "\n") "\n" -}}
+  {{- $line := . -}}
+  {{- $marker := findRESubmatch "^ {0,3}(`{3,}|~{3,})(.*)$" $line -}}
+  {{- if $marker -}}
+    {{- $delimiter := index (index $marker 0) 1 -}}
+    {{- $rest := index (index $marker 0) 2 -}}
+    {{- if not $fence -}}
+      {{- $fence = substr $delimiter 0 1 -}}{{- $fenceLength = len $delimiter -}}
+    {{- else if and (hasPrefix $delimiter $fence) (ge (len $delimiter) $fenceLength) (eq (strings.TrimSpace $rest) "") -}}
+      {{- $fence = "" -}}
+    {{- end -}}
+  {{- else if not $fence -}}
+    {{- /* Shortcode scripts/styles are presentation, not article text. */ -}}
+    {{- if $skipTag -}}
+      {{- $closing := printf `(?is)^.*?</%s\s*>` $skipTag -}}
+      {{- if findRE $closing $line -}}{{- $line = replaceRE $closing "" $line -}}{{- $skipTag = "" -}}{{- else -}}{{- $line = "" -}}{{- end -}}
+    {{- end -}}
+    {{- if not (strings.Contains $line "`") -}}
+      {{- range $tag := slice "script" "style" -}}
+        {{- $line = replaceRE (printf `(?is)<%s\b[^>]*>.*?</%s\s*>` $tag $tag) "" $line -}}
+        {{- $opening := printf `(?is)<%s\b.*$` $tag -}}
+        {{- if findRE $opening $line -}}{{- $line = replaceRE $opening "" $line -}}{{- $skipTag = $tag -}}{{- end -}}
+      {{- end -}}
+    {{- end -}}
+    {{- if not $htmlTag -}}
+      {{- with findRESubmatch `(?i)^ {0,3}<(figure|picture|div|details|table)(?:\s|>)` $line -}}
+        {{- $htmlTag = lower (index (index . 0) 1) -}}
+      {{- end -}}
+    {{- end -}}
+    {{- $line = partial "reader/markdown-line.html" (dict "Page" $page "Line" $line "IsHTML" (ne $htmlTag "")) -}}
+    {{- if $htmlTag -}}
+      {{- $htmlDepth = add $htmlDepth (sub (len (findRE (printf `(?i)<%s(?:\s|>)` $htmlTag) $line)) (len (findRE (printf `(?i)</%s\s*>` $htmlTag) $line))) -}}
+      {{- if le $htmlDepth 0 -}}{{- $htmlTag = "" -}}{{- $htmlDepth = 0 -}}{{- end -}}
+    {{- end -}}
+  {{- end -}}
+  {{- if or (not $skipTag) (ne $line "") -}}{{- $lines = $lines | append $line -}}{{- end -}}
+{{- end -}}
+{{- $text := printf "# %s\n\n作者：%s · 发布于 %s\n\n原文：%s\n\n%s\n" .Title (.Params.author | default site.Params.author) (.Date.Format "2006-01-02") .Permalink (delimit $lines "\n") -}}
+{{- return (resources.FromString (printf "markdown/%s.md" (crypto.SHA256 $text)) $text) -}}

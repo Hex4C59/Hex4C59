@@ -2,6 +2,18 @@
 {{ $series := partial "series/data.html" . }}
 {{ if $series }}
   {{ partial "series/reader.html" (dict "Series" $series "Article" . "IsIndex" false) }}
+{{ else if in (partialCached "site/article-sections.html" site) .Section }}
+  <div class="article-workspace">
+    <aside class="article-sidebar" aria-label="文章导航">
+      <p class="reader-sidebar-title">{{ .Title }}</p>
+      {{ partial "reader/outline.html" . }}
+    </aside>
+    <div class="article-main" id="article-content" tabindex="-1">
+      {{ partial "breadcrumbs.html" . }}
+      {{ partial "article.html" (dict "Page" . "Series" false) }}
+      <div class="back-to-top"><a href="#top">回到顶部 ↑</a></div>
+    </div>
+  </div>
 {{ else }}
   {{ partial "breadcrumbs.html" . }}
   {{ partial "article.html" (dict "Page" . "Series" false) }}

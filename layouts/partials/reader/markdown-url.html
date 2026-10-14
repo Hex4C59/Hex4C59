@@ -1,0 +1,13 @@
+{{- $target := .Target -}}
+{{- if and $target (not (hasPrefix $target "#")) (not (hasPrefix $target "//")) (not (strings.Contains $target `\`)) -}}
+  {{- $url := urls.Parse $target -}}
+  {{- if not $url.IsAbs -}}
+    {{- $prefix := site.Home.RelPermalink -}}
+    {{- if and (hasPrefix $target "/") (not (or (hasPrefix $url.Path $prefix) (eq $url.Path (strings.TrimSuffix "/" $prefix)))) -}}
+      {{- $target = printf "%s%s" $prefix (strings.TrimPrefix "/" $target) -}}
+    {{- end -}}
+    {{- $base := urls.Parse .Page.Permalink -}}
+    {{- $target = ($base.ResolveReference (urls.Parse $target)).String -}}
+  {{- end -}}
+{{- end -}}
+{{- return $target -}}

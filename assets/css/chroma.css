@@ -138,26 +138,22 @@ footer { margin-top: 2.8rem; padding-top: 1.5rem; border-top: 1px solid var(--co
 #motion-toggle { display: block; margin: .8rem auto 0; padding: .2rem .5rem; min-height: 36px; color: var(--content-secondary); background: transparent; border: 0; cursor: pointer; font: .7rem/1.5 var(--font-body); }
 #motion-toggle:hover { color: var(--accent); }
 #motion-toggle:disabled { cursor: default; color: var(--content-secondary); }
-.reading-progress { display: none; }
-/* Reading progress is the only fixed layer (z-index 1). */
-@supports (animation-timeline: scroll()) {
-  .reading-progress { display: block; position: fixed; top: 0; left: 0; right: 0; height: 2px; background: var(--accent); transform-origin: left; z-index: 1; animation: reading-progress linear both; animation-timeline: scroll(root block); }
-  @keyframes reading-progress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-}
 @media (prefers-reduced-motion: no-preference) {
+  a { transition: color .16s ease, text-decoration-color .16s ease, background-color .18s ease, border-color .18s ease; }
+  button, summary { transition: color .16s ease, background-color .18s ease, border-color .18s ease; }
+  .related-reading li > a > span { transition: transform .2s var(--ease-out); }
   .header-menu a::after { transition: transform .22s var(--ease-out); }
   .series-feature-links a > span[aria-hidden], .start-links a > span:last-child > span { transition: transform .22s var(--ease-out); }
   @media (hover: hover) and (pointer: fine) {
+    :root:not([data-motion="off"]) .related-reading li > a:hover > span { transform: translate(2px, -2px); }
     :root:not([data-motion="off"]) .series-feature-links a:hover > span[aria-hidden], :root:not([data-motion="off"]) .start-links a:hover > span:last-child > span { transform: translateX(3px); }
   }
 }
 :root[data-motion="off"] { scroll-behavior: auto; }
 :root[data-motion="off"] *, :root[data-motion="off"] *::before, :root[data-motion="off"] *::after { animation: none !important; transition: none !important; }
-:root[data-motion="off"] .reading-progress { display: none; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation: none !important; transition: none !important; }
-  .reading-progress { display: none; }
 }
 @media (max-width: 1050px) {
   .home-reading-layout { grid-template-columns: minmax(0, 1fr) 16rem; gap: 1.8rem; }

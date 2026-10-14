@@ -1,0 +1,14 @@
+{{- $markdown := partialCached "reader/markdown.html" . .RelPermalink -}}
+<div class="reader-tools" data-reader-tools data-copy-url="{{ .Permalink }}" data-markdown-url="{{ $markdown.RelPermalink }}">
+  <p class="reader-tools-label">保存与分享</p>
+  <div class="reader-tools-actions">
+    <button type="button" data-reader-copy="link" hidden>复制链接</button>
+    <button type="button" data-reader-copy="markdown" hidden>复制 Markdown</button>
+    <a href="{{ $markdown.RelPermalink }}" download="{{ path.Base .RelPermalink | default "article" }}.md">下载 Markdown</a>
+  </div>
+  <p class="reader-tools-status" role="status" aria-live="polite" data-copy-status></p>
+  <div class="reader-copy-fallback" data-copy-fallback hidden>
+    <label>请选中并复制<textarea readonly rows="4" data-copy-text></textarea></label>
+    <button type="button" data-copy-close>收起</button>
+  </div>
+</div>
