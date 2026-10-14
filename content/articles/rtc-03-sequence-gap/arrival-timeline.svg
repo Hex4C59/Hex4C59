@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="290" viewBox="0 0 800 290" role="img" aria-labelledby="title desc">
+  <title id="title">同样的缺口，两种后续到达情况</title>
+  <desc id="desc">接收端在第 0、20、40 毫秒分别收到 200、201、203，两种情况都暂缺 202。甲在第 50 毫秒收到 202，乙在第 70 毫秒收到。虚线是 202 对应声音在第 60 毫秒原定的播放时刻；加上 5 毫秒准备，甲可赶上，乙来不及。全部时刻属于接收端同一条本地时间轴。</desc>
+  <style>
+    text { font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; fill: #373733; }
+    .group { font-size: 20px; font-weight: 600; }
+    .packet { font-size: 18px; text-anchor: middle; }
+    .note { font-size: 14px; fill: #656560; }
+    .axis { stroke: #9a9a91; stroke-width: 1; fill: none; }
+    .tick { stroke: #bfbfb6; stroke-width: 1; }
+    .point { fill: #373733; }
+    .focus { fill: #8f455d; }
+    .deadline { stroke: #8f455d; stroke-width: 1; stroke-dasharray: 4 4; fill: none; }
+    .leader { stroke: #8f455d; stroke-width: 1; fill: none; }
+  </style>
+  <rect width="800" height="290" fill="#fff"/>
+  <text class="note" x="24" y="28">接收端本地时间（毫秒）</text>
+  <text class="note focus" x="582" y="28" text-anchor="middle">202 的播放时刻</text>
+  <text class="note focus" x="582" y="50" text-anchor="middle">60 毫秒</text>
+  <path class="deadline" d="M582 64V228"/>
+  <g class="group">
+    <text x="24" y="111">甲</text>
+    <text x="24" y="215">乙</text>
+  </g>
+  <path class="axis" d="M138 104H730 M138 208H730"/>
+  <g class="point">
+    <circle cx="138" cy="104" r="3"/><circle cx="286" cy="104" r="3"/><circle cx="434" cy="104" r="3"/>
+    <circle cx="138" cy="208" r="3"/><circle cx="286" cy="208" r="3"/><circle cx="434" cy="208" r="3"/>
+  </g>
+  <g class="focus"><circle cx="508" cy="104" r="5"/><circle cx="656" cy="208" r="5"/></g>
+  <g class="packet">
+    <text x="138" y="87">200</text><text x="286" y="87">201</text><text x="434" y="87">203</text><text class="focus" x="508" y="87">202</text>
+    <text x="138" y="191">200</text><text x="286" y="191">201</text><text x="434" y="191">203</text><text class="focus" x="656" y="191">202</text>
+  </g>
+  <g class="note" text-anchor="middle">
+    <text x="138" y="128">0</text><text x="286" y="128">20</text><text x="434" y="128">40</text><text x="508" y="128">50</text><text x="730" y="128">80</text>
+    <text x="138" y="232">0</text><text x="286" y="232">20</text><text x="434" y="232">40</text><text x="656" y="232">70</text><text x="730" y="232">80</text>
+  </g>
+  <g class="note">
+    <text x="138" y="156">50 毫秒到达 · 55 毫秒准备好</text>
+    <text x="138" y="260">70 毫秒到达 · 75 毫秒准备好</text>
+  </g>
+</svg>

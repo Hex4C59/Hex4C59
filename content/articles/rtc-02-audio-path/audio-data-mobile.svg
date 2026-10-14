@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="500" viewBox="0 0 360 500" role="img" aria-labelledby="title desc">
+  <title id="title">PCM、编码内容和 RTP 包</title>
+  <desc id="desc">从上向下阅读：PCM 样本经过编码得到编码内容，打包再为编码内容添加包含序列号和时间戳等信息的 RTP 报头。图中的 PCM 数值仅作示意，图形尺寸不表示字节数，省略安全处理与下层网络封装。</desc>
+  <style>
+    text { font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; fill: #373733; }
+    .title { font-size: 20px; font-weight: 600; }
+    .body { font-size: 18px; }
+    .note { font-size: 14px; fill: #656560; }
+    .outline { fill: #fff; stroke: #8b8b83; stroke-width: 1; }
+    .payload { fill: #f0f0eb; }
+    .route { fill: none; stroke: #71716b; stroke-width: 1.5; marker-end: url(#arrow); }
+    .header { fill: #8f455d; }
+  </style>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="#71716b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect width="360" height="500" fill="#fff"/>
+  <text class="title" x="24" y="32">PCM 样本</text>
+  <rect class="outline" x="24" y="50" width="312" height="64"/>
+  <g class="body" text-anchor="middle">
+    <text x="180" y="77">120 · 80 · −30</text>
+    <text x="180" y="101">−90 · −10 · 60</text>
+  </g>
+  <path class="route" d="M180 127V168"/>
+  <text class="note" x="198" y="152">编码</text>
+  <text class="title" x="24" y="196">编码内容</text>
+  <rect class="payload" x="24" y="212" width="312" height="60"/>
+  <rect x="24" y="212" width="312" height="60" fill="none" stroke="#8b8b83"/>
+  <text class="body" x="180" y="249" text-anchor="middle">编码内容</text>
+  <path class="route" d="M180 285V326"/>
+  <text class="note" x="198" y="310">打包</text>
+  <text class="title" x="24" y="354">RTP 包</text>
+  <rect class="outline" x="24" y="370" width="312" height="88"/>
+  <rect class="payload" x="24.5" y="402" width="311" height="55.5"/>
+  <path d="M24 402H336" fill="none" stroke="#8f455d"/>
+  <text class="note header" x="180" y="391" text-anchor="middle">序列号 · 时间戳等</text>
+  <text class="body" x="180" y="437" text-anchor="middle">编码内容</text>
+  <text class="note" x="180" y="488" text-anchor="middle">报头 + 负载</text>
+</svg>

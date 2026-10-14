@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="548" viewBox="0 0 800 548" role="img" aria-labelledby="processing-backlog-title processing-backlog-desc" id="processing-backlog-root">
+<title id="processing-backlog-title">每块多用2毫秒，队列等待怎样累积</title>
+<desc id="processing-backlog-desc">单个串行处理者每20毫秒收到一块，每块处理22毫秒，第1、2、3、50块分别等待0、2、4、98毫秒。</desc>
+<defs>
+      <style>#processing-backlog-root { color: #29323f; font-family: "Hex Sans", "Hex Han Sans", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif; }
+      #processing-backlog-root .diagram-container { width:100%;overflow-x:auto }
+      #processing-backlog-root .diagram-container { overflow:visible }</style><pattern id="processing-backlog-processing-backlog-processing" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#f1ede7"/><path d="M-2 2L2-2M0 8L8 0M6 10L10 6" stroke="#ddd7cf" stroke-width="1"/></pattern></defs>
+<rect x="0" y="0" width="800" height="548" rx="0" fill="#fcfaf7" stroke="none" stroke-width="1" />
+<text x="32" y="40" font-size="25" fill="#29323f" font-weight="600" text-anchor="start" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >每块慢 2 ms，等待不断累积</text>
+<text x="32" y="70" font-size="16" fill="#64666b" font-weight="400" text-anchor="start" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >每 20 ms 来一块，处理每块需 22 ms；前一块结束后才能开始下一块。</text>
+<line x1="256" y1="112" x2="256" y2="440" stroke="#ddd7cf" stroke-width="1" />
+<line x1="375" y1="112" x2="375" y2="440" stroke="#ddd7cf" stroke-width="1" />
+<line x1="494" y1="112" x2="494" y2="440" stroke="#ddd7cf" stroke-width="1" />
+<line x1="613" y1="112" x2="613" y2="440" stroke="#ddd7cf" stroke-width="1" />
+<line x1="732" y1="112" x2="732" y2="440" stroke="#ddd7cf" stroke-width="1" />
+<text x="32" y="157" font-size="18" fill="#29323f" font-weight="600" text-anchor="start" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >第 1 块</text>
+<text x="32" y="182" font-size="14" fill="#64666b" font-weight="400" text-anchor="start" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >0 → 0 ms</text>
+<circle cx="256" cy="152" r="3" fill="#64666b"/>
+<text x="264" y="158" font-size="16" fill="#64666b" font-weight="400" text-anchor="start" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >0 ms</text>
+<text x="32" y="241" font-size="18" fill="#29323f" font-weight="600" text-anchor="start" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >第 2 块</text>
+<text x="32" y="266" font-size="14" fill="#64666b" font-weight="400" text-anchor="start" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >20 → 22 ms</text>
+<rect x="256" y="224" width="9.52" height="24" rx="0" fill="#f1ede7" stroke="#64666b" stroke-width="1" data-block="2" data-arrival-ms="20" data-start-ms="22" data-wait-ms="2"/>
+<text x="273.52" y="242" font-size="16" fill="#64666b" font-weight="400" text-anchor="start" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >2 ms</text>
+<text x="32" y="325" font-size="18" fill="#29323f" font-weight="600" text-anchor="start" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >第 3 块</text>
+<text x="32" y="350" font-size="14" fill="#64666b" font-weight="400" text-anchor="start" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >40 → 44 ms</text>
+<rect x="256" y="308" width="19.04" height="24" rx="0" fill="#f1ede7" stroke="#64666b" stroke-width="1" data-block="3" data-arrival-ms="40" data-start-ms="44" data-wait-ms="4"/>
+<text x="283.04" y="326" font-size="16" fill="#64666b" font-weight="400" text-anchor="start" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >4 ms</text>
+<text x="32" y="409" font-size="18" fill="#29323f" font-weight="600" text-anchor="start" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >第 50 块</text>
+<text x="32" y="434" font-size="14" fill="#64666b" font-weight="400" text-anchor="start" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >980 → 1078 ms</text>
+<rect x="256" y="392" width="466.48" height="24" rx="0" fill="#f5e8e9" stroke="#a13c54" stroke-width="1" data-block="50" data-arrival-ms="980" data-start-ms="1078" data-wait-ms="98"/>
+<text x="714.48" y="410" font-size="16" fill="#a13c54" font-weight="400" text-anchor="end" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >98 ms</text>
+<line x1="256" y1="452" x2="256" y2="460" stroke="#64666b" stroke-width="1" />
+<text x="256" y="480" font-size="14" fill="#64666b" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >0</text>
+<line x1="375" y1="452" x2="375" y2="460" stroke="#64666b" stroke-width="1" />
+<text x="375" y="480" font-size="14" fill="#64666b" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >25</text>
+<line x1="494" y1="452" x2="494" y2="460" stroke="#64666b" stroke-width="1" />
+<text x="494" y="480" font-size="14" fill="#64666b" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >50</text>
+<line x1="613" y1="452" x2="613" y2="460" stroke="#64666b" stroke-width="1" />
+<text x="613" y="480" font-size="14" fill="#64666b" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >75</text>
+<line x1="732" y1="452" x2="732" y2="460" stroke="#64666b" stroke-width="1" />
+<text x="732" y="480" font-size="14" fill="#64666b" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >100</text>
+<line x1="256" y1="456" x2="732" y2="456" stroke="#64666b" stroke-width="1" />
+<text x="32" y="520" font-size="18" fill="#29323f" font-weight="500" text-anchor="start" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >第 50 块已等 98 ms，才开始处理。</text>
+<text x="32" y="542" font-size="14" fill="#64666b" font-weight="400" text-anchor="start" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >横轴：排队等待 · 标签：到达 → 开始</text>
+</svg>

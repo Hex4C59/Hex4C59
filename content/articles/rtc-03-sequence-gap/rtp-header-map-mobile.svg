@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="552" viewBox="0 0 360 552" role="img" aria-labelledby="rtp-header-map-mobile-title rtp-header-map-mobile-desc" id="rtp-header-map-mobile-root">
+<title id="rtp-header-map-mobile-title">把12字节RTP报头切成字段</title>
+<desc id="rtp-header-map-mobile-desc">简化RTP报头由两个控制字节、两字节序列号、四字节时间戳和四字节SSRC组成，本例读出PT111、序号202、时间戳9920和SSRC0x11223344。</desc>
+<defs>
+      <style>#rtp-header-map-mobile-root { color: #29323f; font-family: "Hex Sans", "Hex Han Sans", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif; }
+      #rtp-header-map-mobile-root .diagram-container { width:100%;overflow-x:auto }
+      #rtp-header-map-mobile-root .diagram-container { overflow:visible }</style><pattern id="rtp-header-map-mobile-rtp-header-map-mobile-processing" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#f1ede7"/><path d="M-2 2L2-2M0 8L8 0M6 10L10 6" stroke="#ddd7cf" stroke-width="1"/></pattern></defs>
+<rect x="0" y="0" width="360" height="552" rx="0" fill="#fcfaf7" stroke="none" stroke-width="1" />
+<text x="20" y="34" font-size="21" fill="#29323f" font-weight="600" text-anchor="start" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >把 12 字节 RTP 报头切开</text>
+<text x="20" y="62" font-size="14" fill="#64666b" font-weight="400" text-anchor="start" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >本例无扩展、填充和贡献源列表</text>
+<text x="20" y="83" font-size="14" fill="#64666b" font-weight="400" text-anchor="start" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >多字节整数：高位字节在前</text>
+<rect x="20" y="124" width="320" height="76" rx="0" fill="#f1ede7" stroke="#64666b" stroke-width="1" />
+<text x="32" y="149" font-size="14" fill="#64666b" font-weight="600" text-anchor="start" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >0—1 字节 · 控制与格式</text>
+<text x="32" y="177" font-size="16" fill="#29323f" font-weight="400" text-anchor="start" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >80 6F</text>
+<text x="328" y="177" font-size="14" fill="#64666b" font-weight="400" text-anchor="end" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >V=2；PT=111</text>
+<rect x="20" y="216" width="320" height="76" rx="0" fill="#f5e8e9" stroke="#a13c54" stroke-width="1" />
+<text x="32" y="241" font-size="14" fill="#a13c54" font-weight="600" text-anchor="start" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >2—3 字节 · 序列号</text>
+<text x="32" y="269" font-size="16" fill="#29323f" font-weight="400" text-anchor="start" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >00 CA</text>
+<text x="328" y="269" font-size="14" fill="#a13c54" font-weight="400" text-anchor="end" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >202</text>
+<rect x="20" y="308" width="320" height="76" rx="0" fill="#e9edf4" stroke="#405d91" stroke-width="1" />
+<text x="32" y="333" font-size="14" fill="#405d91" font-weight="600" text-anchor="start" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >4—7 字节 · 时间戳</text>
+<text x="32" y="361" font-size="16" fill="#29323f" font-weight="400" text-anchor="start" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >00 00 26 C0</text>
+<text x="328" y="361" font-size="14" fill="#405d91" font-weight="400" text-anchor="end" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >9920</text>
+<rect x="20" y="400" width="320" height="76" rx="0" fill="#f1ede7" stroke="#64666b" stroke-width="1" />
+<text x="32" y="425" font-size="14" fill="#64666b" font-weight="600" text-anchor="start" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >8—11 字节 · SSRC</text>
+<text x="32" y="453" font-size="16" fill="#29323f" font-weight="400" text-anchor="start" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >11 22 33 44</text>
+<text x="328" y="453" font-size="14" fill="#64666b" font-weight="400" text-anchor="end" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >0x11223344</text>
+<text x="20" y="515" font-size="15" fill="#29323f" font-weight="500" text-anchor="start" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >这里仅有报头，还没有音频负载。</text>
+<text x="20" y="541" font-size="12" fill="#64666b" font-weight="400" text-anchor="start" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >教学构造 · PT=111 需要双方事先协商</text>
+</svg>

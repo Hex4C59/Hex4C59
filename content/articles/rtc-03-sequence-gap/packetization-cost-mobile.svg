@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="544" viewBox="0 0 360 544" role="img" aria-labelledby="packetization-cost-mobile-title packetization-cost-mobile-desc" id="packetization-cost-mobile-root">
+<title id="packetization-cost-mobile-title">相同音频负载，更短的包付出更多报头开销</title>
+<desc id="packetization-cost-mobile-desc">固定32kbit每秒音频负载，每包40字节报头；10、20、40毫秒打包分别每秒100、50、25包，IP层总码率64、48、40kbit每秒。</desc>
+<defs>
+      <style>#packetization-cost-mobile-root { color: #29323f; font-family: "Hex Sans", "Hex Han Sans", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif; }
+      #packetization-cost-mobile-root .diagram-container { width:100%;overflow-x:auto }
+      #packetization-cost-mobile-root .diagram-container { overflow:visible }</style><pattern id="packetization-cost-mobile-packetization-cost-mobile-processing" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#f1ede7"/><path d="M-2 2L2-2M0 8L8 0M6 10L10 6" stroke="#ddd7cf" stroke-width="1"/></pattern></defs>
+<rect x="0" y="0" width="360" height="544" rx="0" fill="#fcfaf7" stroke="none" stroke-width="1" />
+<text x="20" y="34" font-size="21" fill="#29323f" font-weight="600" text-anchor="start" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >同样的声音，报头占了多少</text>
+<text x="20" y="62" font-size="14" fill="#64666b" font-weight="400" text-anchor="start" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >音频负载固定为 32 kbit/s</text>
+<text x="20" y="83" font-size="14" fill="#64666b" font-weight="400" text-anchor="start" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >每包附加报头 40 字节</text>
+<line x1="20" y1="112" x2="20" y2="450" stroke="#ddd7cf" stroke-width="1" />
+<line x1="95" y1="112" x2="95" y2="450" stroke="#ddd7cf" stroke-width="1" />
+<line x1="170" y1="112" x2="170" y2="450" stroke="#ddd7cf" stroke-width="1" />
+<line x1="245" y1="112" x2="245" y2="450" stroke="#ddd7cf" stroke-width="1" />
+<line x1="320" y1="112" x2="320" y2="450" stroke="#ddd7cf" stroke-width="1" />
+<rect x="16" y="123" width="316" height="28" rx="0" fill="#fcfaf7" stroke="none" stroke-width="1" />
+<text x="20" y="142" font-size="17" fill="#29323f" font-weight="600" text-anchor="start" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >10 ms / 包</text>
+<text x="340" y="142" font-size="14" fill="#64666b" font-weight="400" text-anchor="end" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >100 包/秒</text>
+<rect x="20" y="152" width="150" height="32" rx="0" fill="#e9edf4" stroke="#405d91" stroke-width="1" data-duration-ms="10" data-audio-kbps="32"/>
+<rect x="170" y="152" width="150" height="32" rx="0" fill="url(#packetization-cost-mobile-packetization-cost-mobile-processing)" stroke="#64666b" stroke-width="1" data-duration-ms="10" data-header-kbps="32" data-total-kbps="64"/>
+<text x="95" y="174" font-size="14" fill="#405d91" font-weight="400" text-anchor="middle" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >负载 32</text>
+<text x="245" y="174" font-size="14" fill="#64666b" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >32</text>
+<text x="320" y="202" font-size="13" fill="#29323f" font-weight="400" text-anchor="end" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >合计 64</text>
+<rect x="16" y="247" width="316" height="28" rx="0" fill="#fcfaf7" stroke="none" stroke-width="1" />
+<text x="20" y="266" font-size="17" fill="#29323f" font-weight="600" text-anchor="start" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >20 ms / 包</text>
+<text x="340" y="266" font-size="14" fill="#64666b" font-weight="400" text-anchor="end" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >50 包/秒</text>
+<rect x="20" y="276" width="150" height="32" rx="0" fill="#e9edf4" stroke="#405d91" stroke-width="1" data-duration-ms="20" data-audio-kbps="32"/>
+<rect x="170" y="276" width="75" height="32" rx="0" fill="#f5e8e9" stroke="#a13c54" stroke-width="1" data-duration-ms="20" data-header-kbps="16" data-total-kbps="48"/>
+<text x="95" y="298" font-size="14" fill="#405d91" font-weight="400" text-anchor="middle" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >负载 32</text>
+<text x="207.5" y="298" font-size="14" fill="#a13c54" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >16</text>
+<text x="245" y="326" font-size="13" fill="#29323f" font-weight="400" text-anchor="end" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >合计 48</text>
+<rect x="16" y="371" width="316" height="28" rx="0" fill="#fcfaf7" stroke="none" stroke-width="1" />
+<text x="20" y="390" font-size="17" fill="#29323f" font-weight="600" text-anchor="start" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >40 ms / 包</text>
+<text x="340" y="390" font-size="14" fill="#64666b" font-weight="400" text-anchor="end" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >25 包/秒</text>
+<rect x="20" y="400" width="150" height="32" rx="0" fill="#e9edf4" stroke="#405d91" stroke-width="1" data-duration-ms="40" data-audio-kbps="32"/>
+<rect x="170" y="400" width="37.5" height="32" rx="0" fill="url(#packetization-cost-mobile-packetization-cost-mobile-processing)" stroke="#64666b" stroke-width="1" data-duration-ms="40" data-header-kbps="8" data-total-kbps="40"/>
+<text x="95" y="422" font-size="14" fill="#405d91" font-weight="400" text-anchor="middle" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >负载 32</text>
+<text x="188.75" y="422" font-size="14" fill="#64666b" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >8</text>
+<text x="207.5" y="450" font-size="13" fill="#29323f" font-weight="400" text-anchor="end" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >合计 40</text>
+<line x1="20" y1="456" x2="20" y2="464" stroke="#64666b" stroke-width="1" />
+<text x="20" y="484" font-size="13" fill="#64666b" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >0</text>
+<line x1="95" y1="456" x2="95" y2="464" stroke="#64666b" stroke-width="1" />
+<text x="95" y="484" font-size="13" fill="#64666b" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >16</text>
+<line x1="170" y1="456" x2="170" y2="464" stroke="#64666b" stroke-width="1" />
+<text x="170" y="484" font-size="13" fill="#64666b" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >32</text>
+<line x1="245" y1="456" x2="245" y2="464" stroke="#64666b" stroke-width="1" />
+<text x="245" y="484" font-size="13" fill="#64666b" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >48</text>
+<line x1="320" y1="456" x2="320" y2="464" stroke="#64666b" stroke-width="1" />
+<text x="320" y="484" font-size="13" fill="#64666b" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >64</text>
+<line x1="20" y1="460" x2="320" y2="460" stroke="#64666b" stroke-width="1" />
+<text x="20" y="513" font-size="14" fill="#29323f" font-weight="500" text-anchor="start" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >蓝色：音频；右段：附加报头。</text>
+<text x="20" y="537" font-size="12" fill="#64666b" font-weight="400" text-anchor="start" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >理论 IP 层预算 · 横轴单位：kbit/s</text>
+</svg>

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="932" viewBox="0 0 360 932" role="img" aria-labelledby="packet-playout-mobile-title packet-playout-mobile-desc" id="packet-playout-mobile-root">
+<title id="packet-playout-mobile-title">收到包与赶上播放是两次判断</title>
+<desc id="packet-playout-mobile-desc">六个预期包中202在58毫秒收到并在63毫秒准备好，错过60毫秒的播放；204到160毫秒未见，其他四包按时，重复201不提供新声音。</desc>
+<defs>
+      <style>#packet-playout-mobile-root { color: #29323f; font-family: "Hex Sans", "Hex Han Sans", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif; }
+      #packet-playout-mobile-root .diagram-container { width:100%;overflow-x:auto }
+      #packet-playout-mobile-root .diagram-container { overflow:visible }</style><pattern id="packet-playout-mobile-packet-playout-mobile-processing" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#f1ede7"/><path d="M-2 2L2-2M0 8L8 0M6 10L10 6" stroke="#ddd7cf" stroke-width="1"/></pattern></defs>
+<rect x="0" y="0" width="360" height="932" rx="0" fill="#fcfaf7" stroke="none" stroke-width="1" />
+<text x="20" y="34" font-size="21" fill="#29323f" font-weight="600" text-anchor="start" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >收到了，不一定赶上播放</text>
+<text x="20" y="62" font-size="14" fill="#64666b" font-weight="400" text-anchor="start" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >到达后还需 5 ms 准备</text>
+<text x="20" y="83" font-size="14" fill="#64666b" font-weight="400" text-anchor="start" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >统一的接收端本地时钟；观察到 160 ms</text>
+<line x1="20" y1="112" x2="20" y2="768" stroke="#ddd7cf" stroke-width="1" />
+<line x1="100" y1="112" x2="100" y2="768" stroke="#ddd7cf" stroke-width="1" />
+<line x1="180" y1="112" x2="180" y2="768" stroke="#ddd7cf" stroke-width="1" />
+<line x1="260" y1="112" x2="260" y2="768" stroke="#ddd7cf" stroke-width="1" />
+<line x1="340" y1="112" x2="340" y2="768" stroke="#ddd7cf" stroke-width="1" />
+<rect x="16" y="104" width="328" height="28" rx="0" fill="#fcfaf7" stroke="none" stroke-width="1" />
+<text x="20" y="122" font-size="18" fill="#29323f" font-weight="600" text-anchor="start" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >200</text>
+<text x="340" y="122" font-size="15" fill="#64666b" font-weight="400" text-anchor="end" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >赶上</text>
+<line x1="60" y1="148" x2="60" y2="184" stroke="#64666b" stroke-width="2" data-sequence="200" data-playout-ms="20"/>
+<text x="60" y="206" font-size="12" fill="#64666b" font-weight="400" text-anchor="middle" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >播放 20</text>
+<rect x="20" y="156" width="10" height="20" rx="0" fill="#e9edf4" stroke="#405d91" stroke-width="1" data-sequence="200" data-arrival-ms="0" data-ready-ms="5" data-playout-ms="20"/>
+<circle cx="20" cy="156" r="2" fill="#405d91"/>
+<text x="24" y="146" font-size="12" fill="#405d91" font-weight="400" text-anchor="start" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >0 → 5</text>
+<rect x="16" y="216" width="328" height="28" rx="0" fill="#fcfaf7" stroke="none" stroke-width="1" />
+<text x="20" y="234" font-size="18" fill="#29323f" font-weight="600" text-anchor="start" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >201</text>
+<text x="340" y="234" font-size="15" fill="#64666b" font-weight="400" text-anchor="end" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >赶上</text>
+<line x1="100" y1="260" x2="100" y2="296" stroke="#64666b" stroke-width="2" data-sequence="201" data-playout-ms="40"/>
+<text x="100" y="318" font-size="12" fill="#64666b" font-weight="400" text-anchor="middle" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >播放 40</text>
+<rect x="60" y="268" width="10" height="20" rx="0" fill="#e9edf4" stroke="#405d91" stroke-width="1" data-sequence="201" data-arrival-ms="20" data-ready-ms="25" data-playout-ms="40"/>
+<circle cx="60" cy="268" r="2" fill="#405d91"/>
+<text x="65" y="258" font-size="12" fill="#405d91" font-weight="400" text-anchor="middle" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >20 → 25</text>
+<rect x="16" y="328" width="328" height="28" rx="0" fill="#fcfaf7" stroke="none" stroke-width="1" />
+<text x="20" y="346" font-size="18" fill="#29323f" font-weight="600" text-anchor="start" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >202</text>
+<text x="340" y="346" font-size="15" fill="#a13c54" font-weight="400" text-anchor="end" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >迟到 3 ms</text>
+<line x1="140" y1="372" x2="140" y2="408" stroke="#a13c54" stroke-width="2" data-sequence="202" data-playout-ms="60"/>
+<text x="140" y="430" font-size="12" fill="#64666b" font-weight="400" text-anchor="middle" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >播放 60</text>
+<rect x="136" y="380" width="10" height="20" rx="0" fill="#f5e8e9" stroke="#a13c54" stroke-width="1" data-sequence="202" data-arrival-ms="58" data-ready-ms="63" data-playout-ms="60"/>
+<circle cx="136" cy="380" r="2" fill="#a13c54"/>
+<text x="141" y="370" font-size="12" fill="#a13c54" font-weight="400" text-anchor="middle" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >58 → 63</text>
+<rect x="16" y="440" width="328" height="28" rx="0" fill="#fcfaf7" stroke="none" stroke-width="1" />
+<text x="20" y="458" font-size="18" fill="#29323f" font-weight="600" text-anchor="start" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >203</text>
+<text x="340" y="458" font-size="15" fill="#64666b" font-weight="400" text-anchor="end" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >赶上</text>
+<line x1="180" y1="484" x2="180" y2="520" stroke="#64666b" stroke-width="2" data-sequence="203" data-playout-ms="80"/>
+<text x="180" y="542" font-size="12" fill="#64666b" font-weight="400" text-anchor="middle" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >播放 80</text>
+<rect x="100" y="492" width="10" height="20" rx="0" fill="#e9edf4" stroke="#405d91" stroke-width="1" data-sequence="203" data-arrival-ms="40" data-ready-ms="45" data-playout-ms="80"/>
+<circle cx="100" cy="492" r="2" fill="#405d91"/>
+<text x="105" y="482" font-size="12" fill="#405d91" font-weight="400" text-anchor="middle" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >40 → 45</text>
+<rect x="16" y="552" width="328" height="28" rx="0" fill="#fcfaf7" stroke="none" stroke-width="1" />
+<text x="20" y="570" font-size="18" fill="#29323f" font-weight="600" text-anchor="start" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >204</text>
+<text x="340" y="570" font-size="15" fill="#a13c54" font-weight="400" text-anchor="end" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >到期缺失</text>
+<line x1="220" y1="596" x2="220" y2="632" stroke="#64666b" stroke-width="2" stroke-dasharray="4,3" data-sequence="204" data-playout-ms="100"/>
+<text x="220" y="654" font-size="12" fill="#64666b" font-weight="400" text-anchor="middle" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >播放 100</text>
+<text x="28" y="618" font-size="13" fill="#64666b" font-weight="400" text-anchor="start" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >截至 160 ms 未观察到</text>
+<rect x="16" y="664" width="328" height="28" rx="0" fill="#fcfaf7" stroke="none" stroke-width="1" />
+<text x="20" y="682" font-size="18" fill="#29323f" font-weight="600" text-anchor="start" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >205</text>
+<text x="340" y="682" font-size="15" fill="#64666b" font-weight="400" text-anchor="end" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >赶上</text>
+<line x1="260" y1="708" x2="260" y2="744" stroke="#64666b" stroke-width="2" data-sequence="205" data-playout-ms="120"/>
+<text x="260" y="766" font-size="12" fill="#64666b" font-weight="400" text-anchor="middle" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >播放 120</text>
+<rect x="210" y="716" width="10" height="20" rx="0" fill="#e9edf4" stroke="#405d91" stroke-width="1" data-sequence="205" data-arrival-ms="95" data-ready-ms="100" data-playout-ms="120"/>
+<circle cx="210" cy="716" r="2" fill="#405d91"/>
+<text x="215" y="706" font-size="12" fill="#405d91" font-weight="400" text-anchor="middle" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >95 → 100</text>
+<line x1="20" y1="780" x2="20" y2="788" stroke="#64666b" stroke-width="1" />
+<text x="20" y="808" font-size="13" fill="#64666b" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >0</text>
+<line x1="100" y1="780" x2="100" y2="788" stroke="#64666b" stroke-width="1" />
+<text x="100" y="808" font-size="13" fill="#64666b" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >40</text>
+<line x1="180" y1="780" x2="180" y2="788" stroke="#64666b" stroke-width="1" />
+<text x="180" y="808" font-size="13" fill="#64666b" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >80</text>
+<line x1="260" y1="780" x2="260" y2="788" stroke="#64666b" stroke-width="1" />
+<text x="260" y="808" font-size="13" fill="#64666b" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >120</text>
+<line x1="340" y1="780" x2="340" y2="788" stroke="#64666b" stroke-width="1" />
+<text x="340" y="808" font-size="13" fill="#64666b" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >160</text>
+<line x1="20" y1="784" x2="340" y2="784" stroke="#64666b" stroke-width="1" />
+<text x="20" y="856" font-size="15" fill="#29323f" font-weight="500" text-anchor="start" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >202 补齐了序号，仍错过播放期限。</text>
+<text x="20" y="884" font-size="12" fill="#64666b" font-weight="400" text-anchor="start" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >短条：到达 → 准备好；标线：计划播放。</text>
+<text x="20" y="910" font-size="12" fill="#64666b" font-weight="400" text-anchor="start" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >重复的 201 没有新增声音，图只画首次到达。</text>
+</svg>

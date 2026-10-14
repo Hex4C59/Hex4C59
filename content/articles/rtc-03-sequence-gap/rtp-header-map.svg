@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="420" viewBox="0 0 800 420" role="img" aria-labelledby="rtp-header-map-title rtp-header-map-desc" id="rtp-header-map-root">
+<title id="rtp-header-map-title">把12字节RTP报头切成字段</title>
+<desc id="rtp-header-map-desc">简化RTP报头由两个控制字节、两字节序列号、四字节时间戳和四字节SSRC组成，本例读出PT111、序号202、时间戳9920和SSRC0x11223344。</desc>
+<defs>
+      <style>#rtp-header-map-root { color: #29323f; font-family: "Hex Sans", "Hex Han Sans", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif; }
+      #rtp-header-map-root .diagram-container { width:100%;overflow-x:auto }
+      #rtp-header-map-root .diagram-container { overflow:visible }</style><pattern id="rtp-header-map-rtp-header-map-processing" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#f1ede7"/><path d="M-2 2L2-2M0 8L8 0M6 10L10 6" stroke="#ddd7cf" stroke-width="1"/></pattern></defs>
+<rect x="0" y="0" width="800" height="420" rx="0" fill="#fcfaf7" stroke="none" stroke-width="1" />
+<text x="32" y="40" font-size="25" fill="#29323f" font-weight="600" text-anchor="start" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >把 12 字节 RTP 报头切开</text>
+<text x="32" y="70" font-size="16" fill="#64666b" font-weight="400" text-anchor="start" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >简化报头：无扩展、无填充、无贡献源列表；横向宽度按字节数绘制。</text>
+<rect x="32" y="144" width="61.3333" height="124" rx="0" fill="#f1ede7" stroke="#64666b" stroke-width="1" data-byte-offset="0" data-byte-count="1"/>
+<text x="62.6667" y="173" font-size="15" fill="#64666b" font-weight="600" text-anchor="middle" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >控制</text>
+<text x="62.6667" y="248" font-size="15" fill="#64666b" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >V=2</text>
+<rect x="93.3333" y="144" width="61.3333" height="124" rx="0" fill="#f1ede7" stroke="#64666b" stroke-width="1" data-byte-offset="1" data-byte-count="1"/>
+<text x="124" y="173" font-size="15" fill="#64666b" font-weight="600" text-anchor="middle" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >M / PT</text>
+<text x="124" y="248" font-size="15" fill="#64666b" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >PT=111</text>
+<rect x="154.667" y="144" width="122.667" height="124" rx="0" fill="#f5e8e9" stroke="#a13c54" stroke-width="1" data-byte-offset="2" data-byte-count="2"/>
+<text x="216" y="173" font-size="15" fill="#a13c54" font-weight="600" text-anchor="middle" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >序列号</text>
+<text x="216" y="248" font-size="15" fill="#a13c54" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >202</text>
+<rect x="277.333" y="144" width="245.333" height="124" rx="0" fill="#e9edf4" stroke="#405d91" stroke-width="1" data-byte-offset="4" data-byte-count="4"/>
+<text x="400" y="173" font-size="15" fill="#405d91" font-weight="600" text-anchor="middle" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >时间戳</text>
+<text x="400" y="248" font-size="15" fill="#405d91" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >9920</text>
+<rect x="522.667" y="144" width="245.333" height="124" rx="0" fill="#f1ede7" stroke="#64666b" stroke-width="1" data-byte-offset="8" data-byte-count="4"/>
+<text x="645.333" y="173" font-size="15" fill="#64666b" font-weight="600" text-anchor="middle" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >SSRC</text>
+<text x="645.333" y="248" font-size="15" fill="#64666b" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >0x11223344</text>
+<text x="62.6667" y="208" font-size="17" fill="#29323f" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >80</text>
+<text x="62.6667" y="299" font-size="13" fill="#64666b" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >0</text>
+<text x="124" y="208" font-size="17" fill="#29323f" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >6F</text>
+<text x="124" y="299" font-size="13" fill="#64666b" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >1</text>
+<text x="185.333" y="208" font-size="17" fill="#29323f" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >00</text>
+<text x="185.333" y="299" font-size="13" fill="#64666b" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >2</text>
+<text x="246.667" y="208" font-size="17" fill="#29323f" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >CA</text>
+<text x="246.667" y="299" font-size="13" fill="#64666b" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >3</text>
+<text x="308" y="208" font-size="17" fill="#29323f" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >00</text>
+<text x="308" y="299" font-size="13" fill="#64666b" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >4</text>
+<text x="369.333" y="208" font-size="17" fill="#29323f" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >00</text>
+<text x="369.333" y="299" font-size="13" fill="#64666b" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >5</text>
+<text x="430.667" y="208" font-size="17" fill="#29323f" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >26</text>
+<text x="430.667" y="299" font-size="13" fill="#64666b" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >6</text>
+<text x="492" y="208" font-size="17" fill="#29323f" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >C0</text>
+<text x="492" y="299" font-size="13" fill="#64666b" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >7</text>
+<text x="553.333" y="208" font-size="17" fill="#29323f" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >11</text>
+<text x="553.333" y="299" font-size="13" fill="#64666b" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >8</text>
+<text x="614.667" y="208" font-size="17" fill="#29323f" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >22</text>
+<text x="614.667" y="299" font-size="13" fill="#64666b" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >9</text>
+<text x="676" y="208" font-size="17" fill="#29323f" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >33</text>
+<text x="676" y="299" font-size="13" fill="#64666b" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >10</text>
+<text x="737.333" y="208" font-size="17" fill="#29323f" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >44</text>
+<text x="737.333" y="299" font-size="13" fill="#64666b" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >11</text>
+<text x="32" y="330" font-size="15" fill="#64666b" font-weight="400" text-anchor="start" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >字节位置从 0 开始。PT=111 依赖本例协商，时间戳的单位由媒体时钟决定。</text>
+<text x="32" y="380" font-size="19" fill="#29323f" font-weight="500" text-anchor="start" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >读出报头，只能识别包；这里还没有音频负载。</text>
+<text x="32" y="411" font-size="14" fill="#64666b" font-weight="400" text-anchor="start" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >教学报头 · 固定部分为 12 字节 · 图中每个十六进制数代表 1 字节</text>
+</svg>

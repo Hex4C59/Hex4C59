@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="580" viewBox="0 0 360 580" role="img" aria-labelledby="callback-batching-mobile-title callback-batching-mobile-desc" id="callback-batching-mobile-root">
+<title id="callback-batching-mobile-title">两次回调，拼成一次编码输入</title>
+<desc id="callback-batching-mobile-desc">48kHz单声道16位PCM，每次10毫秒回调有480样本960字节；合并两次后有960样本1920字节，覆盖20毫秒声音。</desc>
+<defs>
+      <style>#callback-batching-mobile-root { color: #29323f; font-family: "Hex Sans", "Hex Han Sans", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif; }
+      #callback-batching-mobile-root .diagram-container { width:100%;overflow-x:auto }
+      #callback-batching-mobile-root .diagram-container { overflow:visible }</style><pattern id="callback-batching-mobile-callback-batching-mobile-processing" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#f1ede7"/><path d="M-2 2L2-2M0 8L8 0M6 10L10 6" stroke="#ddd7cf" stroke-width="1"/></pattern></defs>
+<rect x="0" y="0" width="360" height="580" rx="0" fill="#fcfaf7" stroke="none" stroke-width="1" />
+<text x="20" y="34" font-size="21" fill="#29323f" font-weight="600" text-anchor="start" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >两次回调，拼成一次编码输入</text>
+<text x="20" y="62" font-size="14" fill="#64666b" font-weight="400" text-anchor="start" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >48 kHz · 单声道 · 16 位 PCM</text>
+<text x="20" y="83" font-size="14" fill="#64666b" font-weight="400" text-anchor="start" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >横条表示覆盖的声音区间</text>
+<line x1="20" y1="108" x2="20" y2="436" stroke="#ddd7cf" stroke-width="1" />
+<line x1="180" y1="108" x2="180" y2="436" stroke="#ddd7cf" stroke-width="1" />
+<line x1="340" y1="108" x2="340" y2="436" stroke="#ddd7cf" stroke-width="1" />
+<text x="20" y="132" font-size="16" fill="#29323f" font-weight="600" text-anchor="start" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >第一块回调</text>
+<rect x="20" y="144" width="160" height="64" rx="0" fill="#e9edf4" stroke="#405d91" stroke-width="1" data-media-start-ms="0" data-media-end-ms="10" data-samples="480" data-bytes="960"/>
+<text x="100" y="166" font-size="15" fill="#405d91" font-weight="500" text-anchor="middle" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >480 样本</text>
+<text x="100" y="193" font-size="14" fill="#405d91" font-weight="400" text-anchor="middle" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >960 字节</text>
+<text x="20" y="252" font-size="16" fill="#29323f" font-weight="600" text-anchor="start" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >第二块回调</text>
+<rect x="180" y="264" width="160" height="64" rx="0" fill="#e9edf4" stroke="#405d91" stroke-width="1" data-media-start-ms="10" data-media-end-ms="20" data-samples="480" data-bytes="960"/>
+<text x="260" y="286" font-size="15" fill="#405d91" font-weight="500" text-anchor="middle" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >480 样本</text>
+<text x="260" y="313" font-size="14" fill="#405d91" font-weight="400" text-anchor="middle" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >960 字节</text>
+<text x="20" y="372" font-size="16" fill="#29323f" font-weight="600" text-anchor="start" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >合并的编码输入</text>
+<rect x="20" y="384" width="320" height="64" rx="0" fill="#f5e8e9" stroke="#a13c54" stroke-width="1" data-media-start-ms="0" data-media-end-ms="20" data-samples="960" data-bytes="1920"/>
+<text x="180" y="406" font-size="15" fill="#a13c54" font-weight="500" text-anchor="middle" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >960 样本</text>
+<text x="180" y="433" font-size="14" fill="#a13c54" font-weight="400" text-anchor="middle" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >1920 字节</text>
+<line x1="20" y1="464" x2="20" y2="472" stroke="#64666b" stroke-width="1" />
+<text x="20" y="492" font-size="13" fill="#64666b" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >0</text>
+<line x1="180" y1="464" x2="180" y2="472" stroke="#64666b" stroke-width="1" />
+<text x="180" y="492" font-size="13" fill="#64666b" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >10</text>
+<line x1="340" y1="464" x2="340" y2="472" stroke="#64666b" stroke-width="1" />
+<text x="340" y="492" font-size="13" fill="#64666b" font-weight="400" text-anchor="middle" font-family="&quot;Monaspace&quot;, &quot;SFMono-Regular&quot;, Consolas, monospace" >20</text>
+<line x1="20" y1="468" x2="340" y2="468" stroke="#64666b" stroke-width="1" />
+<text x="20" y="540" font-size="15" fill="#29323f" font-weight="500" text-anchor="start" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >第 20 ms 收齐后，才可提交编码。</text>
+<text x="20" y="564" font-size="12" fill="#64666b" font-weight="400" text-anchor="start" font-family="&quot;Hex Sans&quot;, &quot;Hex Han Sans&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif" >教学构造 · 块长转换 · 时间单位：毫秒</text>
+</svg>
