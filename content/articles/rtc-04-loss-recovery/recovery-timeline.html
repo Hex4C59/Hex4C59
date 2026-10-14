@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>202 的恢复时间线</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#faf9f6;color:#242320;font-family:"PingFang SC",system-ui,sans-serif}.frame{max-width:720px;margin:auto;padding:8px 0;min-width:0}h1{font:400 24px/1.4 "Songti SC",Georgia,serif;margin:0 16px 8px}p{margin:0 16px 12px;font-size:14px;line-height:1.7;color:#66635d}.diagram-container{width:100%;overflow-x:auto}svg{display:block;width:100%;min-width:720px;font-family:"PingFang SC",system-ui,sans-serif}text{fill:#242320;font-size:16px}.method{font-size:18px;font-weight:600}.axis{stroke:#66635d;stroke-width:1}.guide{stroke:#a03861;stroke-width:1.5;stroke-dasharray:4 4}.event{fill:#242320}.network{fill:#6044ab}.recovery{fill:#126d61}.conceal{fill:#96511e}.meta{fill:#66635d;font-size:14px}.deadline{fill:#a03861}.compact{display:none}.wide{display:block}@media(max-width:719px){.wide{display:none}.compact{display:block;min-width:320px;max-width:400px;margin-inline:auto}h1{font-size:22px}}@media(prefers-color-scheme:dark){body{background:#242320;color:#faf9f6}text{fill:#faf9f6}p,.meta{color:#c2beb5;fill:#c2beb5}.axis{stroke:#c2beb5}.event{fill:#faf9f6}.guide{stroke:#f1aac4}.network{fill:#c3b1f8}.recovery{fill:#8cd9cd}.conceal{fill:#e8b47d}.deadline{fill:#f1aac4}}@media print{.diagram-container{overflow-x:visible}svg{min-width:0}.wide{display:block}.compact{display:none}}
+</style>
+</head>
+<body>
+<main class="frame">
+<h1>202 丢失后，三条路径何时准备好</h1>
+<p>接收端本地时间，单位为毫秒。播放定在 60，后续处理统一预留 5；数值为教学构造。</p>
+<div class="diagram-container">
+<svg class="wide" viewBox="0 0 720 480" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="recovery-timeline-wide-title recovery-timeline-wide-desc">
+<title id="recovery-timeline-wide-title">202 的恢复时间线</title>
+<desc id="recovery-timeline-wide-desc">重传在72毫秒准备好而错过60毫秒播放，后续包的FEC在45毫秒准备好，PLC在55毫秒启动以按时输出。</desc>
+<g class="axis" fill="none"><path d="M128 104H608M128 224H608M128 344H608M128 408H608"/><path d="M128 404V412M248 404V412M368 404V412M488 404V412M608 404V412"/><path d="M128 80V100M152 108V128M452 108V128M512 80V100M128 228V248M188 200V220M308 320V340M368 348V368"/></g>
+<g class="guide"><path d="M368 76V132M368 196V252M368 316V372"/></g>
+<text class="deadline" x="368" y="44" text-anchor="middle">60：固定播放时刻</text>
+<text class="method network" x="24" y="110">重传</text>
+<text class="network" x="128" y="68" text-anchor="middle">40 发现缺口</text>
+<text class="network" x="152" y="152">42 发出 NACK</text>
+<text class="network" x="452" y="152">67 原包返回</text>
+<text class="network" x="512" y="68" text-anchor="middle">72 准备好，迟到</text>
+<g class="network"><circle cx="128" cy="104" r="4"/><circle cx="152" cy="104" r="4"/><circle cx="452" cy="104" r="4"/><circle cx="512" cy="104" r="6"/></g>
+<text class="method recovery" x="24" y="230">FEC</text>
+<text class="recovery" x="128" y="272">40 后续包 203 到达</text>
+<text class="recovery" x="188" y="188">45 恢复输出准备好</text>
+<g class="recovery"><circle cx="128" cy="224" r="4"/><circle cx="188" cy="224" r="6"/></g>
+<text class="method conceal" x="24" y="350">PLC</text>
+<text class="conceal" x="308" y="308" text-anchor="end">55 开始生成替代声音</text>
+<text class="conceal" x="368" y="392">60 按时输出</text>
+<g class="conceal"><circle cx="308" cy="344" r="4"/><circle cx="368" cy="344" r="6"/></g>
+<g class="meta" text-anchor="middle"><text class="meta" x="128" y="436">40</text><text class="meta" x="248" y="436">50</text><text class="meta" x="368" y="436">60</text><text class="meta" x="488" y="436">70</text><text class="meta" x="608" y="436">80 ms</text></g>
+<text class="meta" x="128" y="464">● 到达或准备事件　竖虚线：播放时刻；FEC 行假设包中确有冗余。</text>
+</svg>
+<svg class="compact" viewBox="0 0 320 624" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="recovery-timeline-compact-title recovery-timeline-compact-desc">
+<title id="recovery-timeline-compact-title">202 的恢复时间线，紧凑版</title>
+<desc id="recovery-timeline-compact-desc">同一60毫秒播放安排下，重传72毫秒才就绪，FEC45毫秒就绪，PLC55毫秒开始并在60毫秒输出。</desc>
+<g class="axis" fill="none"><path d="M32 112H288M32 280H288M32 448H288M32 528H288"/><path d="M32 524V532M96 524V532M160 524V532M224 524V532M288 524V532"/><path d="M44.8 88V108M204.8 116V136M236.8 88V108M32 284V308M64 256V276M128 424V444M160 452V476"/></g>
+<g class="guide"><path d="M160 88V140M160 256V308M160 424V476"/></g>
+<text class="method network" x="16" y="32">重传：72 毫秒才能准备好</text>
+<text class="network" x="44.8" y="76">42 发出请求</text>
+<text class="network" x="204.8" y="160" text-anchor="middle">67 原包返回</text>
+<text class="network" x="236.8" y="76" text-anchor="middle">72 就绪</text>
+<g class="network"><circle cx="44.8" cy="112" r="4"/><circle cx="204.8" cy="112" r="4"/><circle cx="236.8" cy="112" r="6"/></g>
+<text class="method recovery" x="16" y="208">FEC：45 毫秒准备好</text>
+<text class="recovery" x="32" y="332">40 后续包 203 到达</text>
+<text class="recovery" x="64" y="244">45 恢复输出就绪</text>
+<g class="recovery"><circle cx="32" cy="280" r="4"/><circle cx="64" cy="280" r="6"/></g>
+<text class="method conceal" x="16" y="380">PLC：55 开始，60 输出</text>
+<text class="conceal" x="128" y="412" text-anchor="middle">55 开始隐藏</text>
+<text class="conceal" x="160" y="500">60 按时输出</text>
+<g class="conceal"><circle cx="128" cy="448" r="4"/><circle cx="160" cy="448" r="6"/></g>
+<g text-anchor="middle"><text class="meta" x="32" y="552">40</text><text class="meta" x="96" y="552">50</text><text class="meta" x="160" y="552">60</text><text class="meta" x="224" y="552">70</text><text class="meta" x="288" y="552">80 ms</text></g>
+<text class="meta" x="16" y="580">● 事件　竖虚线：60 毫秒播放期限</text>
+<text class="meta" x="16" y="598">FEC 行假设包中确有恢复冗余。</text>
+</svg>
+</div>
+</main>
+</body>
+</html>
