@@ -1,0 +1,10 @@
+{
+  "name": "software-design-05-examples",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test state.test.mjs file.test.mjs",
+    "demo": "node retry-demo.mjs"
+  }
+}
