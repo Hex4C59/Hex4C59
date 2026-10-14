@@ -4,7 +4,7 @@
 {{ $catalog := partialCached "series/catalog.html" site }}
 <section class="intro home-intro" aria-labelledby="intro-title">
   <div class="intro-copy">
-    <h2 id="intro-title">{{ $lines := split site.Params.homeIntroTitle "，" }}{{ range $index, $line := $lines }}<span>{{ $parts := split $line "地方降落" }}{{ range $partIndex, $part := $parts }}{{ if $partIndex }}<span class="intro-highlight">地方降落</span>{{ end }}{{ $part }}{{ end }}{{ if lt $index (sub (len $lines) 1) }}，{{ end }}</span>{{ end }}</h2>
+    <h2 id="intro-title">{{ $lines := split site.Params.homeIntroTitle "，" }}{{ range $index, $line := $lines }}<span>{{ $line }}{{ if lt $index (sub (len $lines) 1) }}，{{ end }}</span>{{ end }}</h2>
     <p>{{ site.Params.homeIntroContent }}</p>
   </div>
   <div class="intro-art" aria-hidden="true">{{ with resources.Get "profile/reader.svg" }}{{ .Content | safeHTML }}{{ end }}</div>

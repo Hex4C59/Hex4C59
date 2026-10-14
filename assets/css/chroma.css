@@ -59,9 +59,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .home-page { --main-width: 1120px; --header-top-gap: 1.8rem; --header-bottom-gap: 1rem; }
 .home-intro { display: grid; grid-template-columns: minmax(0, 1fr) 260px; align-items: center; gap: 2rem; padding: 1.2rem 0 1.6rem; }
 .home-page .intro { margin: 0; }
-.home-intro h2 { font-size: clamp(1.65rem, 2.7vw, 2.05rem); line-height: 1.65; letter-spacing: -.035em; margin: 0 0 1rem; }
+.home-intro h2 { font-family: "Hex Handwriting", var(--font-body); font-weight: 400; font-size: clamp(2rem, 3.3vw, 2.85rem); line-height: 1.55; letter-spacing: 0; color: var(--accent); margin: 0 0 1rem; }
 .home-intro h2 > span { display: block; }
-.intro-highlight { color: var(--accent); }
 .home-intro p { max-width: 34rem; margin: 0; font-size: .9rem; line-height: 1.9; }
 .intro-art { width: 260px; justify-self: end; color: var(--content-primary); }
 .intro-art svg { display: block; width: 100%; height: auto; }
@@ -171,7 +170,7 @@ footer { margin-top: 2.8rem; padding-top: 1.5rem; border-top: 1px solid var(--co
   .home-reading-rail .section-heading > a { font-size: .75rem; }
   .home-intro { grid-template-columns: minmax(0, 1fr) 180px; gap: 1rem; }
   .intro-art { width: 180px; }
-  .home-intro h2 { font-size: 1.55rem; }
+  .home-intro h2 { font-size: clamp(1.65rem, 4.6vw, 2.2rem); }
 }
 @media (max-width: 600px) {
   .header { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "brand brand" "menu tools"; gap: .7rem .4rem; }
@@ -184,7 +183,7 @@ footer { margin-top: 2.8rem; padding-top: 1.5rem; border-top: 1px solid var(--co
   #theme-toggle { font-size: .65rem; }
   .home-page { --header-top-gap: 1.5rem; --header-bottom-gap: 1rem; }
   .home-intro { grid-template-columns: minmax(0, 1fr); padding: .75rem 0 1.75rem; }
-  .home-intro h2 { font-size: clamp(1.4rem, 5.8vw, 1.75rem); line-height: 1.65; }
+  .home-intro h2 { font-size: clamp(1.45rem, 7vw, 2.2rem); }
   .home-intro p { font-size: .85rem; }
   .intro-art { display: none; }
   .home-start { margin-bottom: 2rem; padding-top: 1rem; }

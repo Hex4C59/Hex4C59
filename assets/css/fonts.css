@@ -1,3 +1,12 @@
+/* Home introduction: local Long Cang subset; source and OFL in /fonts/handwriting/. */
+@font-face {
+  font-family: "Hex Handwriting";
+  src: url("/fonts/handwriting/long-cang-intro.woff") format("woff");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
 /* Anthrosevka Mono web subsets; provenance and OFL in /fonts/anthrosevka/. */
 @font-face {
   font-family: "Hex Mono";
