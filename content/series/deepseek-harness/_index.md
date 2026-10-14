@@ -1,7 +1,7 @@
 ---
 title: "DeepSeek Harness"
 description: "按源码与调用链研究 DeepSeek Harness：从插件运行时、模型与工具，到会话、权限、多 Agent、界面及工程验证。"
-lastmod: 2026-10-12
+lastmod: 2026-10-14
 series_start: "/agent/deepseek-harness-agent-engineering/"
 series_status: "连载中"
 ---
@@ -10,7 +10,7 @@ series_status: "连载中"
 
 ## 从这里开始
 
-[开篇：从代码补全到仓库级 Agent](/agent/deepseek-harness-agent-engineering/)已经发布。接下来研究“一次用户请求如何经过整个 dsh 系统”，将输入、模型、工具、日志和输出串起来。
+从[开篇：从代码补全到仓库级 Agent](/agent/deepseek-harness-agent-engineering/)了解 Harness 的职责，再读[第二篇：一次用户请求如何经过整个 dsh 系统](/articles/deepseek-harness-request-lifecycle/)，沿输入、模型、工具、日志和输出追踪完整链路。
 
 ## 阅读路线
 

@@ -1,0 +1,81 @@
+---
+config:
+  theme: base
+  fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, system-ui, Segoe UI, PingFang SC, sans-serif'
+  themeVariables:
+    primaryColor: '#eeedfe'
+    primaryTextColor: '#3c3489'
+    primaryBorderColor: '#534ab7'
+    lineColor: '#73726c'
+    actorBkg: '#f1efe8'
+    actorBorder: '#a3a097'
+    actorTextColor: '#444441'
+    actorLineColor: '#c8c5bc'
+    signalColor: '#5f5e5a'
+    signalTextColor: '#444441'
+    noteBkgColor: '#e6f1fb'
+    noteBorderColor: '#8cb9df'
+    noteTextColor: '#0c447c'
+    labelBoxBkgColor: '#f1efe8'
+    labelBoxBorderColor: '#c8c5bc'
+    labelTextColor: '#444441'
+    loopTextColor: '#444441'
+    activationBkgColor: '#eeedfe'
+    activationBorderColor: '#534ab7'
+  sequence:
+    mirrorActors: false
+    useMaxWidth: false
+    actorMargin: 52
+    width: 140
+    height: 48
+    boxMargin: 16
+    boxTextMargin: 8
+    noteMargin: 18
+    messageMargin: 38
+    diagramMarginX: 24
+    diagramMarginY: 24
+---
+sequenceDiagram
+    accTitle: 一次 dsh 请求的提交与执行时序
+    accDescr: Web 普通会话 queue 模式的一条成功路径示意。输入先入队，提交确认与执行可以交错；模型提出工具调用后，工具结果进入下一 Step，最终通过已建立的会话订阅展示。
+    participant UI as 浏览器
+    participant Host as Host API
+    participant Agent as Agent Loop
+    participant Model as 模型
+    participant Tool as 工具
+
+    %% follow/control 订阅在提交前已建立；仅示意一个工具批次。
+    UI->>Host: prompt(requestId, content, queue)
+    Host->>Agent: 校验后 followup()
+    Note over Agent: 写入持久 Inbox 事件<br/>此时尚未成为模型 user/message
+
+    %% par 表达无固定先后；accepted 不是模型执行的前置屏障。
+    par 提交确认
+        Host-->>UI: accepted：输入已接收
+    and Agent 开始执行
+        Agent->>Agent: Turn → pre-step → Step
+    end
+
+    rect rgb(244, 243, 255)
+        Note over Agent,Model: Step 1：准备请求后，输入进入模型历史
+        Agent->>Model: 冻结的历史、工具定义与配置
+        Model-->>Agent: 流式响应与工具调用
+        Note over Agent: 结算 assistant/message
+    end
+
+    rect rgb(253, 246, 234)
+        Agent->>Tool: 调度 → 策略检查 → 执行
+        Tool-->>Agent: 返回工具结果
+        Note over Agent: 按调用顺序提交 tool/result
+    end
+
+    rect rgb(237, 248, 244)
+        Note over Agent,Model: Step 2：工具结果进入下一次请求
+        Agent->>Model: 包含工具结果的模型历史
+        Model-->>Agent: 最终回答，本例无新工具调用
+        Agent->>Agent: 结算回答 → step/end → turn/end
+    end
+
+    Agent--)Host: 实时帧、日志与状态更新
+    Host--)UI: 经已建立的 follow/control 下行
+    Note over UI,Agent: 下行贯穿执行过程；此处合并绘制<br/>日志提交与磁盘 flush 分别处理

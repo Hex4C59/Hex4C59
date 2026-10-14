@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><title>dsh：工具结果怎样进入下一次请求</title><style>
+* { box-sizing:border-box; }
+:root { color-scheme:light dark; --paper:#faf9f6; --ink:#242320; --muted:#66635d; --line:#dedbd3; --surface:#f1f0ec; --model:#6044ab; --model-tint:#ece5fa; --agent:#126d61; --agent-tint:#dceee7; --tool:#96511e; --tool-tint:#f8e4cf; --session:#a03861; --session-tint:#f7e1e9; --sans:'PingFang SC','Hiragino Sans GB',system-ui,sans-serif; --serif:'Songti SC',Georgia,serif; --mono:'SFMono-Regular','Menlo',ui-monospace,Consolas,monospace; --motion-hold:1200ms; --motion-step:240ms; --motion-total:7200ms; --motion-ease:cubic-bezier(.2,.8,.2,1); }
+@media (prefers-color-scheme:dark) { :root { --paper:#242320; --ink:#f4f0e8; --muted:#c2beb5; --line:#555149; --surface:#302e29; --model:#c3b1f8; --model-tint:#332a47; --agent:#8cd9cd; --agent-tint:#203c37; --tool:#e8b47d; --tool-tint:#453225; --session:#f1aac4; --session-tint:#472d39; } }
+html,body { margin:0; color:var(--ink); background:var(--paper); font-family:var(--sans); }
+body { padding:8px 0 0; }
+main { max-width:800px; min-width:0; margin:0 auto; }
+h1,h2,p { margin:0; }
+.eyebrow { display:flex; gap:12px; align-items:center; margin-bottom:12px; color:var(--muted); font:11px/1.4 var(--mono); letter-spacing:.06em; }
+.palette { display:flex; gap:3px; }
+.palette i { width:12px; height:12px; border-radius:2px; background:var(--model); }
+.palette i:nth-child(2) { background:var(--agent); }.palette i:nth-child(3){background:var(--tool)}.palette i:nth-child(4){background:var(--session)}
+h1 { font:500 28px/1.35 var(--serif); letter-spacing:.015em; }
+.dek { color:var(--muted); font-size:13px; line-height:1.8; margin-top:10px; }
+.figure-head { padding:0 2px 14px; }
+.diagram-container { overflow-x:auto; overscroll-behavior-x:contain; width:100%; border-bottom:1px solid var(--line); }
+.diagram-container svg { display:block; width:720px; min-width:720px; height:432px; margin-inline:auto; }
+.diagram-container text { font-family:var(--sans); fill:var(--ink); }
+.diagram-container .mono { font-family:var(--mono); }
+.diagram-container .small { font-size:12px; fill:var(--muted); }
+.diagram-container .node-title { font-size:20px; font-weight:600; }
+.diagram-container .role { font:500 11px var(--mono); letter-spacing:1px; }
+.model { --owner:var(--model); --tint:var(--model-tint); }.agent { --owner:var(--agent); --tint:var(--agent-tint); }.tool { --owner:var(--tool); --tint:var(--tool-tint); }.session { --owner:var(--session); --tint:var(--session-tint); }
+.node rect.surface { fill:var(--tint); stroke:var(--owner); stroke-width:1.2; }
+.node .role,.node .micro { fill:var(--owner); }
+.node .micro { font:12px var(--sans); }
+.node .divider { stroke:var(--owner); stroke-opacity:.22; }
+.route { fill:none; stroke:var(--owner); stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+.route-label rect { fill:var(--paper); }
+.route-label text { fill:var(--owner); font:12px var(--mono); }
+.port { fill:var(--paper); stroke:var(--owner); stroke-width:1.8; }
+.flow-token { fill:var(--owner); stroke:var(--paper); stroke-width:2; opacity:0; pointer-events:none; }
+.node-link { color:var(--owner); font:12px/24px var(--sans); cursor:pointer; text-decoration:underline; text-underline-offset:3px; }
+.node-link:hover { text-decoration-thickness:2px; }
+.scroll-hint { display:none; color:var(--muted); font-size:11px; margin:8px 0 0; }
+[data-motion-controls] { display:none; gap:8px; align-items:center; padding:14px 0; }
+.motion-ready [data-motion-controls] { display:flex; }
+[data-motion-controls][hidden] { display:none !important; }
+button { font:500 13px/1.2 var(--sans); cursor:pointer; color:var(--ink); background:transparent; border:1px solid var(--line); border-radius:5px; min-height:40px; padding:8px 12px; }
+button:hover { border-color:var(--agent); }
+button:disabled { opacity:.38; cursor:default; }
+button[data-motion-action="play"] { color:var(--paper); background:var(--agent); border-color:var(--agent); padding-inline:16px; }
+button[data-motion-action="pause"] { display:none; }
+.is-playing button[data-motion-action="play"] { display:none; }.is-playing button[data-motion-action="pause"] { display:block; color:var(--paper); background:var(--agent); border-color:var(--agent); padding-inline:16px; }
+.progress-count { margin-left:auto; color:var(--muted); font:12px/1 var(--mono); }
+.trace { display:grid; grid-template-columns:repeat(6,1fr); list-style:none; margin:0; padding:0; border-bottom:1px solid var(--line); }
+.trace li { border-top:3px solid var(--owner); padding:9px 0 12px; transition:opacity 240ms; }
+.trace .num { display:block; margin-bottom:5px; color:var(--owner); font:12px var(--mono); }
+.trace .trace-name { font-size:12px; }
+.motion-ready .trace li:not(.is-visible) { border-top-color:var(--line); }
+.motion-ready .trace li:not(.is-visible) .num,.motion-ready .trace li:not(.is-visible) .trace-name { color:var(--muted); }
+.motion-ready .trace li.is-current .trace-name { color:var(--owner); font-weight:600; }
+.stage-note { padding:16px 0; min-height:100px; }
+.stage-note .stage-title { font-size:16px; font-weight:600; margin-bottom:6px; }
+.stage-note .stage-body { color:var(--muted); font-size:13px; line-height:1.85; max-width:56em; }
+.snapshot { display:none; }.snapshot[data-phase="6"] { display:block; }
+.view-tabs { display:flex; align-items:center; gap:24px; padding:0; margin:0; border:0; border-bottom:1px solid var(--line); }
+.view-tabs legend { position:absolute; clip-path:inset(50%); width:1px; height:1px; overflow:hidden; }
+.view-tabs label { color:var(--muted); cursor:pointer; font-size:13px; padding:12px 0; border-bottom:2px solid transparent; }
+.view-tabs .sr-only { position:absolute; width:1px; height:1px; margin:-1px; overflow:hidden; clip-path:inset(50%); }
+input:checked + label { color:var(--ink); font-weight:600; border-color:var(--agent); }
+input:focus-visible + label, button:focus-visible, summary:focus-visible { outline:2px solid var(--agent); outline-offset:4px; }
+.inspect-content { height:276px; overflow:auto; padding:16px 0 12px; scrollbar-gutter:stable; }
+.panel { display:none; }
+main:has(#view-messages:checked) #messages-panel, main:has(#view-events:checked) #events-panel, main:has(#view-implementation:checked) #implementation-panel { display:block; }
+.panel-caption { color:var(--muted); font-size:11px; line-height:1.8; margin-bottom:12px; }
+.message-list { display:grid; grid-template-columns:74px minmax(0,1fr); gap:0 12px; font-size:13px; line-height:1.75; }
+.message-list dt { margin:0; font:11px/1.8 var(--mono); padding:10px 0; color:var(--owner); }
+.message-list dd { margin:0; padding:10px 0; border-top:1px solid var(--line); }
+.message-list dt:first-child + dd { border-top:0; }
+.call-code { font:12px/1.75 var(--mono); overflow-wrap:anywhere; color:var(--model); }
+.message-list .tool-output { background:var(--tool-tint); color:var(--ink); border-left:3px solid var(--tool); padding:8px 12px; margin-top:6px; }
+.not-yet { color:var(--muted); font-size:12px; }
+.request-state { display:flex; align-items:center; gap:7px; margin:12px 0 0; font-size:11px; color:var(--agent); }
+.request-state:before { content:''; width:6px; height:6px; border-radius:50%; background:currentColor; }
+.events details { border-top:1px solid var(--line); }
+.events details:last-of-type { border-bottom:1px solid var(--line); }
+.events summary { cursor:pointer; display:flex; align-items:center; gap:12px; padding:12px 3px; color:var(--owner); font:12px/1.6 var(--mono); list-style:none; }
+.events summary:before { content:'+'; color:var(--muted); font:16px/1 var(--mono); }
+.events details[open] summary:before { content:'−'; }
+.event-state { margin-left:auto; font:11px var(--sans); color:var(--muted); }
+.state-ready { display:none; }.state-pending { display:inline; }
+pre { margin:0 0 12px; padding:12px; background:var(--surface); border-radius:4px; color:var(--ink); font:11px/1.8 var(--mono); overflow-x:auto; }
+.implementation { display:grid; grid-template-columns:1fr 1fr; gap:16px 24px; }
+.implementation section h3 { font-size:12px; margin:0 0 8px; color:var(--owner); }
+.implementation section p { font-size:12px; line-height:1.8; color:var(--muted); }
+.implementation code { font:11px/1.7 var(--mono); color:var(--ink); overflow-wrap:anywhere; }
+.provenance { margin-top:14px; padding-top:12px; border-top:1px solid var(--line); font-size:10px; line-height:1.9; color:var(--muted); }
+.provenance span { font-family:var(--mono); }
+.sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; border:0; }
+.motion-ready .flow-token.is-current { opacity:1; offset-rotate:0deg; animation:travel var(--motion-hold) linear both; animation-play-state:paused; }
+.motion-ready.is-playing .flow-token.is-current { animation-play-state:running; }
+.motion-ready[data-frame="end"] .flow-token { opacity:0; }
+@keyframes travel { from { offset-distance:0%; } to { offset-distance:100%; } }
+html[data-motion="static"] [data-motion-controls],html[data-motion="static"] [data-motion-decorative],html[data-motion="step"] [data-motion-controls],html[data-motion="step"] [data-motion-decorative] { display:none !important; }
+html[data-motion="static"] [data-motion-item] { opacity:1 !important; animation:none !important; transition:none !important; }
+html[data-motion="step"] [data-motion-item] { animation:none !important; transition:none !important; }
+@media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none !important; transition:none !important; scroll-behavior:auto !important; } [data-motion-item] { opacity:1 !important; } [data-motion-decorative],[data-motion-controls] { display:none !important; } }
+@media (max-width:660px) { h1 { font-size:24px; }.scroll-hint{display:block}.figure-head{padding-bottom:8px}.trace { grid-template-columns:repeat(3,1fr); }.trace li{padding-bottom:9px}.trace li:nth-child(n+4){border-top-width:1px} .stage-note { min-height:132px; } .view-tabs { gap:22px; } .inspect-content { height:296px; } .implementation { grid-template-columns:1fr; gap:14px; } button { padding:8px 9px; min-height:44px; } .progress-count { font-size:11px; } }
+@media print { .diagram-container { overflow:visible; } .diagram-container svg { width:100%; min-width:0; height:auto; } [data-motion-controls],[data-motion-decorative],.view-tabs { display:none !important; } .inspect-content { height:auto; overflow:visible; }.panel { display:block !important; } [data-motion-item] { opacity:1 !important; } }
+
+.token-1 { offset-path:path("M208 128 H268"); }
+.motion-ready[data-step-current="1"] .route-1 { stroke-width:3; }
+
+.token-2 { offset-path:path("M312 192 V304"); }
+.motion-ready[data-step-current="2"] .route-2 { stroke-width:3; }
+
+.token-3 { offset-path:path("M452 128 H512"); }
+.motion-ready[data-step-current="3"] .route-3 { stroke-width:3; }
+
+.token-4 { offset-path:path("M604 192 V256 Q604 264 596 264 H548 Q540 264 540 272 V304"); }
+.motion-ready[data-step-current="4"] .route-4 { stroke-width:3; }
+
+.token-5 { offset-path:path("M408 304 V192"); }
+.motion-ready[data-step-current="5"] .route-5 { stroke-width:3; }
+
+.token-6 { offset-path:path("M360 72 V36 Q360 28 352 28 H124 Q116 28 116 36 V72"); }
+.motion-ready[data-step-current="6"] .route-6 { stroke-width:3; }
+
+.motion-ready[data-step-current="0"] .snapshot { display:none; }
+.motion-ready[data-step-current="0"] .snapshot[data-phase="0"] { display:block; }
+
+.motion-ready[data-step-current="1"] .snapshot { display:none; }
+.motion-ready[data-step-current="1"] .snapshot[data-phase="1"] { display:block; }
+
+.motion-ready[data-step-current="2"] .snapshot { display:none; }
+.motion-ready[data-step-current="2"] .snapshot[data-phase="2"] { display:block; }
+
+.motion-ready[data-step-current="3"] .snapshot { display:none; }
+.motion-ready[data-step-current="3"] .snapshot[data-phase="3"] { display:block; }
+
+.motion-ready[data-step-current="4"] .snapshot { display:none; }
+.motion-ready[data-step-current="4"] .snapshot[data-phase="4"] { display:block; }
+
+.motion-ready[data-step-current="5"] .snapshot { display:none; }
+.motion-ready[data-step-current="5"] .snapshot[data-phase="5"] { display:block; }
+
+.motion-ready[data-step-current="6"] .snapshot { display:none; }
+.motion-ready[data-step-current="6"] .snapshot[data-phase="6"] { display:block; }
+
+main:not(.motion-ready) .event-assistant .state-ready { display:inline; } main:not(.motion-ready) .event-assistant .state-pending { display:none; }
+.motion-ready[data-step-current="1"] .event-assistant .state-ready { display:inline; } .motion-ready[data-step-current="1"] .event-assistant .state-pending { display:none; }
+.motion-ready[data-step-current="2"] .event-assistant .state-ready { display:inline; } .motion-ready[data-step-current="2"] .event-assistant .state-pending { display:none; }
+.motion-ready[data-step-current="3"] .event-assistant .state-ready { display:inline; } .motion-ready[data-step-current="3"] .event-assistant .state-pending { display:none; }
+.motion-ready[data-step-current="4"] .event-assistant .state-ready { display:inline; } .motion-ready[data-step-current="4"] .event-assistant .state-pending { display:none; }
+.motion-ready[data-step-current="5"] .event-assistant .state-ready { display:inline; } .motion-ready[data-step-current="5"] .event-assistant .state-pending { display:none; }
+.motion-ready[data-step-current="6"] .event-assistant .state-ready { display:inline; } .motion-ready[data-step-current="6"] .event-assistant .state-pending { display:none; }
+
+main:not(.motion-ready) .event-call .state-ready { display:inline; } main:not(.motion-ready) .event-call .state-pending { display:none; }
+.motion-ready[data-step-current="2"] .event-call .state-ready { display:inline; } .motion-ready[data-step-current="2"] .event-call .state-pending { display:none; }
+.motion-ready[data-step-current="3"] .event-call .state-ready { display:inline; } .motion-ready[data-step-current="3"] .event-call .state-pending { display:none; }
+.motion-ready[data-step-current="4"] .event-call .state-ready { display:inline; } .motion-ready[data-step-current="4"] .event-call .state-pending { display:none; }
+.motion-ready[data-step-current="5"] .event-call .state-ready { display:inline; } .motion-ready[data-step-current="5"] .event-call .state-pending { display:none; }
+.motion-ready[data-step-current="6"] .event-call .state-ready { display:inline; } .motion-ready[data-step-current="6"] .event-call .state-pending { display:none; }
+
+main:not(.motion-ready) .event-result .state-ready { display:inline; } main:not(.motion-ready) .event-result .state-pending { display:none; }
+.motion-ready[data-step-current="4"] .event-result .state-ready { display:inline; } .motion-ready[data-step-current="4"] .event-result .state-pending { display:none; }
+.motion-ready[data-step-current="5"] .event-result .state-ready { display:inline; } .motion-ready[data-step-current="5"] .event-result .state-pending { display:none; }
+.motion-ready[data-step-current="6"] .event-result .state-ready { display:inline; } .motion-ready[data-step-current="6"] .event-result .state-pending { display:none; }
+.motion-ready[data-step-current="1"] .node.model rect.surface { stroke-width:2.2; }
+.motion-ready[data-step-current="2"] .node.session rect.surface { stroke-width:2.2; }
+.motion-ready[data-step-current="3"] .node.tool rect.surface { stroke-width:2.2; }
+.motion-ready[data-step-current="4"] .node.session rect.surface { stroke-width:2.2; }
+.motion-ready[data-step-current="5"] .node.agent rect.surface { stroke-width:2.2; }
+.motion-ready[data-step-current="6"] .node.model rect.surface { stroke-width:2.2; }
+
+.drawing { position:relative; width:720px; min-width:720px; margin-inline:auto; }
+.diagram-container .compact-diagram { display:none; width:360px; min-width:360px; height:456px; }
+.flow-token { position:absolute; display:block; left:0; top:0; width:10px; height:10px; background:var(--owner); border:2px solid var(--paper); border-radius:50%; offset-anchor:center; }
+@media(max-width:719px) {
+ .drawing { width:360px; min-width:360px; }
+ .diagram-container .desktop-diagram { display:none; }
+ .diagram-container .compact-diagram { display:block; }
+ .compact-diagram .node-title { font-size:16px; }
+ .compact-diagram .role { font-size:10px; letter-spacing:.7px; }
+ .compact-diagram .small { font-size:11px; }
+ .compact-diagram .route-label text { font-size:11px; }
+ .compact-diagram .node-link { font-size:11px; }
+ .scroll-hint { display:none; }
+.token-1 { offset-path:path("M164 96 H196"); }
+.token-2 { offset-path:path("M196 136 H180 Q172 136 172 144 V232 Q172 240 164 240 H128 Q120 240 120 248 V276"); }
+.token-3 { offset-path:path("M272 156 V300"); }
+.token-4 { offset-path:path("M272 416 V432 Q272 440 264 440 H96 Q88 440 88 432 V416"); }
+.token-5 { offset-path:path("M164 304 H180 Q188 304 188 296 V216 Q188 208 196 208 H220 Q228 208 228 200 V156"); }
+.token-6 { offset-path:path("M272 56 V28 Q272 20 264 20 H96 Q88 20 88 28 V56"); }
+}
+@media(max-width:359px){.scroll-hint{display:block}}
+@media print{.drawing{width:100%;min-width:0}.diagram-container .compact-diagram{display:none}.diagram-container .desktop-diagram{display:block}}
+main:focus-visible{outline:2px solid var(--agent);outline-offset:4px}
+</style></head>
+<body><main tabindex="0" data-motion-root data-motion-mode="step" data-step-count="6" data-step-current="6" data-frame="static" data-static-frame="complete">
+<header class="figure-head"><div class="eyebrow"><span class="palette" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span>DSH / TOOL FEEDBACK</span></div><h1>一次工具结果，怎样进入下一轮上下文</h1><p class="dek">同一个 c1，连接模型的调用意图、工具的返回值与后续请求。</p><p class="scroll-hint">↔ 左右滑动查看完整回路，文字保持可读大小</p></header>
+<div class="diagram-container"><div class="drawing"><svg class="desktop-diagram" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 432" role="img" aria-labelledby="dsh-feedback-title dsh-feedback-desc"><title id="dsh-feedback-title">dsh 工具反馈回路</title><desc id="dsh-feedback-desc">模型响应经 Agent 调度工具，调用与结果追加到 Session，下一 Step 派生并冻结包含工具结果的消息，再发给模型。</desc><defs><marker id="feedback-arrow-model" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1 L7 4 L1 7" fill="none" stroke="var(--model)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></marker><marker id="feedback-arrow-agent" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1 L7 4 L1 7" fill="none" stroke="var(--agent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></marker><marker id="feedback-arrow-tool" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1 L7 4 L1 7" fill="none" stroke="var(--tool)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></marker><marker id="feedback-arrow-session" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1 L7 4 L1 7" fill="none" stroke="var(--session)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></marker></defs><path class="route route-1 model" d="M208 128 H268" marker-end="url(#feedback-arrow-model)" /><path class="route route-2 agent" d="M312 192 V304" marker-end="url(#feedback-arrow-agent)" /><path class="route route-3 agent" d="M452 128 H512" marker-end="url(#feedback-arrow-agent)" /><path class="route route-4 tool" d="M604 192 V256 Q604 264 596 264 H548 Q540 264 540 272 V304" marker-end="url(#feedback-arrow-tool)" /><path class="route route-5 session" d="M408 304 V192" marker-end="url(#feedback-arrow-session)" /><path class="route route-6 agent" d="M360 72 V36 Q360 28 352 28 H124 Q116 28 116 36 V72" marker-end="url(#feedback-arrow-agent)" />
+<g class="route-label agent"><rect x="200" y="8" width="120" height="24" rx="3"/><text x="260" y="24" text-anchor="middle">messages → stream</text></g>
+<g class="route-label model"><rect x="216" y="138" width="44" height="24" rx="3"/><text x="238" y="154" text-anchor="middle" style="font-family:var(--sans)">响应</text></g>
+<g class="route-label agent"><rect x="460" y="138" width="44" height="24" rx="3"/><text x="482" y="154" text-anchor="middle" style="font-family:var(--sans)">执行</text></g>
+<g class="route-label agent"><rect x="220" y="228" width="84" height="24" rx="3"/><text x="292" y="244" text-anchor="end">tool/call</text></g>
+<g class="route-label session"><rect x="416" y="224" width="88" height="40" rx="3"/><text x="424" y="240">messages</text><text x="424" y="256" style="font-family:var(--sans);font-size:11px">下一 Step 派生</text></g>
+<g class="route-label tool"><rect x="612" y="212" width="100" height="24" rx="3"/><text x="620" y="228">tool/result</text></g>
+
+<g class="node model"><rect class="surface" x="24" y="72" width="184" height="120" rx="8"/><text class="role" x="44" y="96">MODEL</text><text class="node-title" x="44" y="128">模型</text><text class="small mono" x="44" y="152">read · id = c1</text><foreignObject x="44" y="160" width="136" height="24"><label xmlns="http://www.w3.org/1999/xhtml" class="node-link" for="view-messages" aria-hidden="true">查看消息形态 ↗</label></foreignObject></g>
+<g class="node agent"><rect class="surface" x="268" y="72" width="184" height="120" rx="8"/><text class="role" x="288" y="96">AGENT LOOP</text><text class="node-title" x="288" y="128">Agent</text><text class="small mono" x="288" y="152">Step n → Step n+1</text><foreignObject x="288" y="160" width="148" height="24"><label xmlns="http://www.w3.org/1999/xhtml" class="node-link" for="view-implementation" aria-hidden="true">查看循环边界 ↗</label></foreignObject></g>
+<g class="node tool"><rect class="surface" x="512" y="72" width="184" height="120" rx="8"/><text class="role" x="532" y="96">TOOL RUNTIME</text><text class="node-title" x="532" y="128">工具运行时</text><text class="small mono" x="532" y="152">read(README.md)</text><foreignObject x="532" y="160" width="144" height="24"><label xmlns="http://www.w3.org/1999/xhtml" class="node-link" for="view-implementation" aria-hidden="true">查看执行职责 ↗</label></foreignObject></g>
+<g class="node session"><rect class="surface" x="112" y="304" width="496" height="112" rx="8"/><text class="role" x="132" y="328">SESSION · EVENT LOG</text><text class="node-title" x="132" y="356">会话记录</text><text class="small" x="272" y="356">追加事件 → 更新表面 → 派生消息</text><line class="divider" x1="132" y1="372" x2="588" y2="372"/><text class="small mono" x="132" y="396">callId: c1</text><text class="small mono" x="256" y="396">sourceEventSeqs: [42]</text><foreignObject x="452" y="380" width="136" height="24"><label xmlns="http://www.w3.org/1999/xhtml" class="node-link" for="view-events" aria-hidden="true">展开事件载荷 ↗</label></foreignObject></g>
+<circle class="port model" cx="208" cy="128" r="3"/><circle class="port agent" cx="312" cy="192" r="3"/><circle class="port agent" cx="452" cy="128" r="3"/><circle class="port tool" cx="604" cy="192" r="3"/><circle class="port session" cx="408" cy="304" r="3"/><circle class="port agent" cx="360" cy="72" r="3"/></svg><svg class="compact-diagram" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 456" role="img" aria-labelledby="dsh-feedback-compact-title dsh-feedback-compact-desc"><title id="dsh-feedback-compact-title">dsh 工具反馈回路：紧凑布局</title><desc id="dsh-feedback-compact-desc">模型响应经 Agent 调度工具，调用与返回值进入会话记录，下一 Step 派生消息并发送给模型。</desc><defs><marker id="feedback-compact-arrow-model" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1 L7 4 L1 7" fill="none" stroke="var(--model)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></marker><marker id="feedback-compact-arrow-agent" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1 L7 4 L1 7" fill="none" stroke="var(--agent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></marker><marker id="feedback-compact-arrow-tool" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1 L7 4 L1 7" fill="none" stroke="var(--tool)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></marker><marker id="feedback-compact-arrow-session" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1 L7 4 L1 7" fill="none" stroke="var(--session)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></marker></defs><path class="route route-1 model" d="M164 96 H196" marker-end="url(#feedback-compact-arrow-model)" /><path class="route route-2 agent" d="M196 136 H180 Q172 136 172 144 V232 Q172 240 164 240 H128 Q120 240 120 248 V276" marker-end="url(#feedback-compact-arrow-agent)" /><path class="route route-3 agent" d="M272 156 V300" marker-end="url(#feedback-compact-arrow-agent)" /><path class="route route-4 tool" d="M272 416 V432 Q272 440 264 440 H96 Q88 440 88 432 V416" marker-end="url(#feedback-compact-arrow-tool)" /><path class="route route-5 session" d="M164 304 H180 Q188 304 188 296 V216 Q188 208 196 208 H220 Q228 208 228 200 V156" marker-end="url(#feedback-compact-arrow-session)" /><path class="route route-6 agent" d="M272 56 V28 Q272 20 264 20 H96 Q88 20 88 28 V56" marker-end="url(#feedback-compact-arrow-agent)" /><g class="route-label agent"><rect x="136" y="0" width="92" height="24" rx="3"/><text x="180" y="16" text-anchor="middle">messages</text></g>
+<g class="route-label agent"><rect x="96" y="188" width="68" height="24" rx="3"/><text x="156" y="204" text-anchor="end">tool/call</text></g>
+<g class="route-label agent"><rect x="280" y="212" width="72" height="24" rx="3"/><text x="288" y="228">execute</text></g>
+<g class="route-label session"><rect x="196" y="236" width="140" height="40" rx="3"/><text x="204" y="252">messages</text><text x="204" y="268" style="font-family:var(--sans);font-size:11px">下一 Step 派生</text></g>
+<g class="route-label tool"><rect x="136" y="424" width="100" height="24" rx="3"/><text x="184" y="440" text-anchor="middle">tool/result</text></g><g class="node model"><rect class="surface" x="16" y="56" width="148" height="100" rx="8"/><text class="role" x="32" y="80">MODEL</text><text class="node-title" x="32" y="104">模型</text><text class="small mono" x="32" y="124">read · id = c1</text><foreignObject x="32" y="128" width="120" height="24"><label xmlns="http://www.w3.org/1999/xhtml" class="node-link" for="view-messages" aria-hidden="true">查看消息 ↗</label></foreignObject></g>
+<g class="node agent"><rect class="surface" x="196" y="56" width="148" height="100" rx="8"/><text class="role" x="212" y="80">AGENT LOOP</text><text class="node-title" x="212" y="104">Agent</text><text class="small mono" x="212" y="124">Step n → n+1</text><foreignObject x="212" y="128" width="120" height="24"><label xmlns="http://www.w3.org/1999/xhtml" class="node-link" for="view-implementation" aria-hidden="true">查看循环 ↗</label></foreignObject></g>
+<g class="node tool"><rect class="surface" x="196" y="300" width="148" height="116" rx="8"/><text class="role" x="212" y="324">TOOL RUNTIME</text><text class="node-title" x="212" y="352">工具运行时</text><text class="small mono" x="212" y="376">read(README.md)</text><foreignObject x="212" y="384" width="120" height="24"><label xmlns="http://www.w3.org/1999/xhtml" class="node-link" for="view-implementation" aria-hidden="true">查看执行 ↗</label></foreignObject></g>
+<g class="node session"><rect class="surface" x="16" y="276" width="148" height="140" rx="8"/><text class="role" x="32" y="300">SESSION</text><text class="node-title" x="32" y="328">会话记录</text><text class="small" x="32" y="348">追加 → 更新表面</text><text class="small" x="32" y="368">→ 派生消息</text><text class="small mono" x="32" y="388">c1 ↔ seq 42</text><foreignObject x="32" y="392" width="120" height="24"><label xmlns="http://www.w3.org/1999/xhtml" class="node-link" for="view-events" aria-hidden="true">事件载荷 ↗</label></foreignObject></g><circle class="port model" cx="164" cy="96" r="3"/><circle class="port agent" cx="196" cy="136" r="3"/><circle class="port agent" cx="272" cy="156" r="3"/><circle class="port tool" cx="272" cy="416" r="3"/><circle class="port session" cx="164" cy="304" r="3"/><circle class="port agent" cx="272" cy="56" r="3"/></svg><i class="flow-token token-1 model" data-motion-item data-step="1" data-motion-decorative aria-hidden="true" focusable="false"></i><i class="flow-token token-2 agent" data-motion-item data-step="2" data-motion-decorative aria-hidden="true" focusable="false"></i><i class="flow-token token-3 agent" data-motion-item data-step="3" data-motion-decorative aria-hidden="true" focusable="false"></i><i class="flow-token token-4 tool" data-motion-item data-step="4" data-motion-decorative aria-hidden="true" focusable="false"></i><i class="flow-token token-5 session" data-motion-item data-step="5" data-motion-decorative aria-hidden="true" focusable="false"></i><i class="flow-token token-6 agent" data-motion-item data-step="6" data-motion-decorative aria-hidden="true" focusable="false"></i></div></div>
+<div data-motion-controls role="group" aria-label="播放工具反馈链路"><button type="button" data-motion-action="play" aria-pressed="false">▶ 播放链路</button><button type="button" data-motion-action="pause" aria-pressed="true">Ⅱ 暂停</button><button type="button" data-motion-action="prev" aria-label="上一步">←</button><button type="button" data-motion-action="next" aria-label="下一步">→</button><button type="button" data-motion-action="replay">重播</button><span class="progress-count">阶段 <span data-motion-step-label>6</span> / 6</span></div>
+<p class="sr-only" lang="en" data-motion-status role="status" aria-live="polite" aria-atomic="true"></p>
+<ol class="trace" aria-label="反馈链路阶段"><li class="model" data-motion-item data-step="1" aria-label="模型响应结算"><span class="num">01</span><span class="trace-name">模型响应结算</span></li><li class="agent" data-motion-item data-step="2" aria-label="登记工具调用"><span class="num">02</span><span class="trace-name">登记工具调用</span></li><li class="agent" data-motion-item data-step="3" aria-label="执行工具"><span class="num">03</span><span class="trace-name">执行工具</span></li><li class="tool" data-motion-item data-step="4" aria-label="提交工具结果"><span class="num">04</span><span class="trace-name">提交工具结果</span></li><li class="session" data-motion-item data-step="5" aria-label="派生消息历史"><span class="num">05</span><span class="trace-name">派生消息历史</span></li><li class="model" data-motion-item data-step="6" aria-label="发送下一轮"><span class="num">06</span><span class="trace-name">发送下一轮</span></li></ol><div class="stage-note"><div class="snapshot" data-phase="0"><p class="stage-title">从一条 read 调用开始</p><p class="stage-body">点击播放，观察调用与返回值如何闭合这条回路。下方三个视角会随阶段变化；也可以点图中的链接切换视角。</p></div><div class="snapshot" data-phase="1"><p class="stage-title">模型给出调用意图</p><p class="stage-body">assistant/message 已记录 read 调用。c1 是这次调用的标识；文件内容还没有返回。</p></div><div class="snapshot" data-phase="2"><p class="stage-title">先留下调用记录</p><p class="stage-body">调度器先追加 tool/call，并保留它的事件序号。后续结果将引用这个序号。</p></div><div class="snapshot" data-phase="3"><p class="stage-title">运行时接手执行</p><p class="stage-body">工具运行时按 prepare、策略检查、执行与结果处理的路径调用 read。图中只展开正常读取路径。</p></div><div class="snapshot" data-phase="4"><p class="stage-title">返回值成为会话事件</p><p class="stage-body">tool/result 携带工具消息，并用 sourceEventSeqs 引用先前的 tool/call。Session 先提交到内存记录。</p></div><div class="snapshot" data-phase="5"><p class="stage-title">下一 Step 读取会话表面</p><p class="stage-body">正常继续路径进入下一 Step。prepareRequest() 调用 session.deriveMessages()，得到包含工具结果的消息历史。</p></div><div class="snapshot" data-phase="6"><p class="stage-title">冻结请求，再交给模型</p><p class="stage-body">边界消息和请求被冻结，随后交给 adapter.stream()。模型这次获得了 read 的返回内容。</p></div></div>
+<fieldset class="view-tabs"><legend>选择观察视角</legend><input class="sr-only" type="radio" name="view" id="view-messages" checked><label for="view-messages">消息历史</label><input class="sr-only" type="radio" name="view" id="view-events"><label for="view-events">事件载荷</label><input class="sr-only" type="radio" name="view" id="view-implementation"><label for="view-implementation">执行职责</label></fieldset>
+<div class="inspect-content"><section class="panel" id="messages-panel" aria-label="消息历史"><div class="snapshot" data-phase="0"><p class="panel-caption">仅展示 user / assistant / tool；省略 system、developer 与 provider 包装。</p><dl class="message-list"><dt class="agent">user</dt><dd>读取 README.md，并概述这个项目。</dd><dt class="model">assistant</dt><dd class="not-yet">尚未结算；预期为带 c1 的 read 调用。</dd><dt class="tool">tool</dt><dd class="not-yet">结果尚未进入会话历史。</dd></dl><p class="request-state">尚未收到模型响应；下一轮请求未构造。</p></div><div class="snapshot" data-phase="1"><p class="panel-caption">仅展示 user / assistant / tool；省略 system、developer 与 provider 包装。</p><dl class="message-list"><dt class="agent">user</dt><dd>读取 README.md，并概述这个项目。</dd><dt class="model">assistant</dt><dd><span class="call-code">read · c1 · {"file_path":"README.md"}</span><br><span class="not-yet">工具调用块；不是文件内容。</span></dd><dt class="tool">tool</dt><dd class="not-yet">结果尚未进入会话历史。</dd></dl><p class="request-state">助手调用已结算；工具还没有执行。</p></div><div class="snapshot" data-phase="2"><p class="panel-caption">仅展示 user / assistant / tool；省略 system、developer 与 provider 包装。</p><dl class="message-list"><dt class="agent">user</dt><dd>读取 README.md，并概述这个项目。</dd><dt class="model">assistant</dt><dd><span class="call-code">read · c1 · {"file_path":"README.md"}</span><br><span class="not-yet">工具调用块；不是文件内容。</span></dd><dt class="tool">tool</dt><dd class="not-yet">结果尚未进入会话历史。</dd></dl><p class="request-state">tool/call 已提交；等待运行时返回。</p></div><div class="snapshot" data-phase="3"><p class="panel-caption">仅展示 user / assistant / tool；省略 system、developer 与 provider 包装。</p><dl class="message-list"><dt class="agent">user</dt><dd>读取 README.md，并概述这个项目。</dd><dt class="model">assistant</dt><dd><span class="call-code">read · c1 · {"file_path":"README.md"}</span><br><span class="not-yet">工具调用块；不是文件内容。</span></dd><dt class="tool">tool</dt><dd class="not-yet">结果尚未进入会话历史。</dd></dl><p class="request-state">工具已进入运行时；等待结果提交。</p></div><div class="snapshot" data-phase="4"><p class="panel-caption">仅展示 user / assistant / tool；省略 system、developer 与 provider 包装。此处预览已提交记录的消息形态，尚未调用 deriveMessages()。</p><dl class="message-list"><dt class="agent">user</dt><dd>读取 README.md，并概述这个项目。</dd><dt class="model">assistant</dt><dd><span class="call-code">read · c1 · {"file_path":"README.md"}</span><br><span class="not-yet">工具调用块；不是文件内容。</span></dd><dt class="tool">tool</dt><dd>toolCallId = c1<div class="tool-output"># DeepSeek Harness<br>用于组织模型、工具和会话的软件框架。<span class="not-yet">（示例文件内容）</span></div></dd></dl><p class="request-state">结果已进入会话；下一 Step 尚未派生消息。</p></div><div class="snapshot" data-phase="5"><p class="panel-caption">仅展示 user / assistant / tool；省略 system、developer 与 provider 包装。</p><dl class="message-list"><dt class="agent">user</dt><dd>读取 README.md，并概述这个项目。</dd><dt class="model">assistant</dt><dd><span class="call-code">read · c1 · {"file_path":"README.md"}</span><br><span class="not-yet">工具调用块；不是文件内容。</span></dd><dt class="tool">tool</dt><dd>toolCallId = c1<div class="tool-output"># DeepSeek Harness<br>用于组织模型、工具和会话的软件框架。<span class="not-yet">（示例文件内容）</span></div></dd></dl><p class="request-state">消息已派生；下一轮请求尚未冻结。</p></div><div class="snapshot" data-phase="6"><p class="panel-caption">仅展示 user / assistant / tool；省略 system、developer 与 provider 包装。</p><dl class="message-list"><dt class="agent">user</dt><dd>读取 README.md，并概述这个项目。</dd><dt class="model">assistant</dt><dd><span class="call-code">read · c1 · {"file_path":"README.md"}</span><br><span class="not-yet">工具调用块；不是文件内容。</span></dd><dt class="tool">tool</dt><dd>toolCallId = c1<div class="tool-output"># DeepSeek Harness<br>用于组织模型、工具和会话的软件框架。<span class="not-yet">（示例文件内容）</span></div></dd></dl><p class="request-state">消息与请求已冻结；交给 adapter.stream()。</p></div></section><section class="panel events" id="events-panel" aria-label="事件载荷"><p class="panel-caption">可展开载荷。序号 41–43 为演示值；未提交项展示计划载荷，已省略完整 Schema 的其他字段。</p><details class="event-assistant model"><summary><span>41</span><span>assistant/message</span><span class="event-state"><span class="state-pending">尚未提交</span><span class="state-ready">已提交</span></span></summary><pre>{
+  &quot;type&quot;: &quot;assistant/message&quot;,
+  &quot;message&quot;: {
+    &quot;role&quot;: &quot;assistant&quot;,
+    &quot;content&quot;: [{ &quot;type&quot;: &quot;tool-call&quot;, &quot;id&quot;: &quot;c1&quot;,
+      &quot;name&quot;: &quot;read&quot;,
+      &quot;arguments&quot;: &quot;{\&quot;file_path\&quot;:\&quot;README.md\&quot;}&quot; }]
+  }
+}</pre></details><details class="event-call agent"><summary><span>42</span><span>tool/call</span><span class="event-state"><span class="state-pending">尚未提交</span><span class="state-ready">已提交</span></span></summary><pre>{
+  &quot;type&quot;: &quot;tool/call&quot;,
+  &quot;callId&quot;: &quot;c1&quot;,
+  &quot;name&quot;: &quot;read&quot;,
+  &quot;arguments&quot;: &quot;{\&quot;file_path\&quot;:\&quot;README.md\&quot;}&quot;
+}</pre></details><details class="event-result tool"><summary><span>43</span><span>tool/result</span><span class="event-state"><span class="state-pending">尚未提交</span><span class="state-ready">已提交</span></span></summary><pre>{
+  &quot;type&quot;: &quot;tool/result&quot;,
+  &quot;message&quot;: { &quot;role&quot;: &quot;tool&quot;, &quot;toolCallId&quot;: &quot;c1&quot;,
+    &quot;content&quot;: [{ &quot;type&quot;: &quot;text&quot;,
+      &quot;text&quot;: &quot;# DeepSeek Harness…（示例文件内容）&quot; }] },
+  &quot;sourceEventSeqs&quot;: [42]
+}</pre></details></section><section class="panel" id="implementation-panel" aria-label="执行职责"><p class="panel-caption">颜色标记数据与职责的归属；下一 Step 只展示正常获准继续的路径。</p><div class="implementation"><section class="model"><h3>模型 · 产生调用意图</h3><p><code>assistant/message</code> 结算后提取工具调用。模型提供名称、调用 ID 与参数；文件读取由工具运行时执行。</p></section><section class="agent"><h3>Agent · 组织下一 Step</h3><p><code>executeToolCalls()</code> 调度本轮工具；正常继续时，<code>prepareRequest()</code> 派生并冻结下一轮消息。</p></section><section class="tool"><h3>工具 · 返回执行结果</h3><p>调度受执行模式与屏障约束。<code>commitReady()</code> 按模型调用顺序提交结果，完成顺序可以不同。</p></section><section class="session"><h3>Session · 保存事件并派生表面</h3><p><code>tool/result</code> 引用 <code>tool/call</code> 的序号；<code>deriveMessages()</code> 将会话表面投影为消息历史。提交与刷盘分开。</p></section></div></section></div>
+<footer class="provenance">源码 <span>d743267</span> · 原生 read 路径 · 文件内容、序号和时序为教学示意，未运行 dsh。移动标记只提示方向。<br>播放启用时：← / → 切换阶段；空格播放或暂停；R 重播。支持完整静态图与减少动画设置。</footer>
+<noscript><p class="provenance">JavaScript 未启用，当前展示完整回路及最终消息形态；观察视角和事件展开仍可使用。</p></noscript>
+</main><script data-diagram-controls>
+    (() => {
+      const params = new URLSearchParams(location.search);
+      const staticOverride = params.get('motion') === 'static' || document.documentElement.dataset.motion === 'static';
+      const requestedStep = params.get('step');
+      const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+      document.fonts.ready.then(() => { document.documentElement.dataset.fontsReady = 'true'; });
+
+      document.querySelectorAll('[data-motion-root]').forEach((root) => {
+        const count = Number(root.dataset.stepCount);
+        const hold = parseFloat(getComputedStyle(root).getPropertyValue('--motion-hold')) || 720;
+        const parsedStep = requestedStep !== null && /^\d+$/.test(requestedStep) ? Number(requestedStep) : null;
+        const exactStep = params.get('motion') === 'step' && Number.isSafeInteger(parsedStep) && parsedStep >= 0 && parsedStep <= count ? parsedStep : null;
+        const items = [...root.querySelectorAll('[data-motion-item]')];
+        const labels = Array.from({ length: count + 1 }, (_, index) => index === 0
+          ? 'Ready'
+          : items.filter((item) => !item.hasAttribute('data-motion-decorative') && Number(item.dataset.step) === index)
+              .map((item) => item.getAttribute('aria-label')).join('; '));
+        const controls = root.querySelector('[data-motion-controls]');
+        const status = root.querySelector('[data-motion-status]');
+        const visibleStep = root.querySelector('[data-motion-step-label]');
+        let step = count;
+        let timer = 0;
+        let playing = false;
+        let stepBeforeReduce = 0;
+        let resumeAfterReduce = root.dataset.motionMode === 'reveal';
+
+        const buttons = (action) => controls.querySelector(`[data-motion-action="${action}"]`);
+        const clearClock = () => { window.clearTimeout(timer); timer = 0; };
+        const announce = () => { status.textContent = `Step ${step} of ${count}: ${labels[step] || 'Complete'}`; };
+        const setControlsAvailable = (available) => {
+          controls.hidden = !available;
+          controls.setAttribute('aria-hidden', String(!available));
+          controls.dataset.playbackDisabled = String(!available);
+          controls.querySelectorAll('button').forEach((control) => { control.disabled = !available; });
+        };
+
+        function render(next, userInitiated = false) {
+          step = Math.max(0, Math.min(count, next));
+          root.dataset.stepCurrent = String(step);
+          root.dataset.frame = step === count ? 'end' : step === 0 ? 'start' : 'step';
+          items.forEach((item) => {
+            const itemStep = Number(item.dataset.step);
+            item.classList.toggle('is-visible', itemStep <= step);
+            item.classList.toggle('is-current', itemStep === step);
+          });
+          if (visibleStep) visibleStep.textContent = String(step);
+          const unavailable = controls.dataset.playbackDisabled === 'true';
+          buttons('prev').disabled = unavailable || step === 0;
+          buttons('next').disabled = unavailable || step === count;
+          if (userInitiated) announce();
+        }
+
+        function pause(userInitiated = false) {
+          clearClock();
+          playing = false;
+          root.classList.remove('is-playing');
+          buttons('play').setAttribute('aria-pressed', 'false');
+          buttons('pause').setAttribute('aria-pressed', 'true');
+          if (userInitiated) status.textContent = `Paused at step ${step} of ${count}`;
+        }
+
+        function finish() {
+          pause(false);
+          root.dataset.frame = 'end';
+          status.textContent = `Complete · step ${count} of ${count}`;
+        }
+
+        function tick() {
+          if (!playing) return;
+          if (step >= count) { finish(); return; }
+          render(step + 1, false);
+          if (step >= count) { finish(); return; }
+          timer = window.setTimeout(tick, hold);
+        }
+
+        function play(fromStart = false, userInitiated = false) {
+          clearClock();
+          if (fromStart || step >= count) render(0, userInitiated);
+          playing = true;
+          root.classList.add('is-playing');
+          buttons('play').setAttribute('aria-pressed', 'true');
+          buttons('pause').setAttribute('aria-pressed', 'false');
+          timer = window.setTimeout(tick, hold);
+        }
+
+        controls.addEventListener('click', (event) => {
+          const button = event.target.closest('[data-motion-action]');
+          if (!button) return;
+          const action = button.dataset.motionAction;
+          if (action === 'play') play(false, true);
+          if (action === 'pause') pause(true);
+          if (action === 'replay') play(true, true);
+          if (action === 'prev') { pause(false); render(step - 1, true); }
+          if (action === 'next') { pause(false); render(step + 1, true); }
+        });
+
+        root.addEventListener('keydown', (event) => {
+          if (event.target.matches('input, textarea, select, a[href]')) return;
+          const keys = { ArrowLeft: step - 1, ArrowRight: step + 1, Home: 0, End: count };
+          if (event.code === 'Space' && !event.target.closest('button')) {
+            event.preventDefault();
+            playing ? pause(true) : play(false, true);
+            return;
+          }
+          if (!event.ctrlKey && !event.metaKey && !event.altKey && event.key.toLowerCase() === 'r') {
+            event.preventDefault();
+            play(true, true);
+            return;
+          }
+          if (!(event.key in keys)) return;
+          event.preventDefault();
+          pause(false);
+          render(keys[event.key], true);
+        });
+
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'hidden' && playing) pause(false);
+        });
+        reduce.addEventListener('change', (event) => {
+          if (event.matches && root.dataset.motionState !== 'reduced') {
+            stepBeforeReduce = step;
+            resumeAfterReduce = playing;
+          }
+          pause(false);
+          if (event.matches) {
+            setControlsAvailable(false);
+            render(count, false);
+            root.dataset.frame = 'static';
+            root.dataset.motionState = 'reduced';
+            status.textContent = 'Reduced motion · complete static frame · playback controls unavailable';
+          } else if (staticOverride || root.dataset.motionMode === 'none') {
+            setControlsAvailable(false);
+            render(count, false);
+            root.dataset.frame = 'static';
+            root.dataset.motionState = 'static';
+            status.textContent = 'Static frame · complete diagram · playback controls unavailable';
+          } else {
+            delete root.dataset.motionState;
+            if (exactStep !== null) {
+              setControlsAvailable(false);
+              render(exactStep, false);
+              root.dataset.frame = 'step';
+              root.dataset.motionState = 'test';
+              status.textContent = `Test frame · step ${step} of ${count} · playback controls unavailable`;
+            } else {
+              setControlsAvailable(true);
+              render(stepBeforeReduce, false);
+              status.textContent = `Ready · step ${step} of ${count}`;
+              if (resumeAfterReduce && root.dataset.motionMode === 'reveal') {
+                play(false, false);
+              }
+            }
+            resumeAfterReduce = false;
+          }
+        });
+
+        if (staticOverride) {
+          document.documentElement.dataset.motion = 'static';
+          pause(false);
+          setControlsAvailable(false);
+          render(count, false);
+          root.dataset.frame = 'static';
+          root.dataset.motionState = 'static';
+          status.textContent = 'Static frame · complete diagram · playback controls unavailable';
+        } else if (reduce.matches || root.dataset.motionMode === 'none') {
+          pause(false);
+          setControlsAvailable(false);
+          render(count, false);
+          root.dataset.frame = 'static';
+          root.dataset.motionState = reduce.matches ? 'reduced' : 'static';
+          status.textContent = reduce.matches
+            ? 'Reduced motion · complete static frame · playback controls unavailable'
+            : 'Static frame · complete diagram · playback controls unavailable';
+        } else if (exactStep !== null) {
+          document.documentElement.dataset.motion = 'step';
+          pause(false);
+          setControlsAvailable(false);
+          render(exactStep, false);
+          root.dataset.frame = 'step';
+          root.dataset.motionState = 'test';
+          status.textContent = `Test frame · step ${step} of ${count} · playback controls unavailable`;
+        } else if (root.dataset.motionMode === 'reveal') {
+          setControlsAvailable(true);
+          render(0, false);
+          play(false, false);
+        } else {
+          pause(false);
+          setControlsAvailable(true);
+          render(0, false);
+          status.textContent = `Ready · step 0 of ${count}`;
+        }
+        root.classList.add('motion-ready');
+      });
+    })();
+  </script></body></html>
