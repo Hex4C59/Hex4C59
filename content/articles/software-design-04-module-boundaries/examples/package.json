@@ -1,0 +1,11 @@
+{
+  "name": "software-design-04-examples",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test contracts.test.mjs",
+    "demo": "node demo.mjs",
+    "compare": "node compare.mjs"
+  }
+}
