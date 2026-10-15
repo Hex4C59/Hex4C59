@@ -1,0 +1,10 @@
+{
+  "name": "software-design-07-examples",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test planning.test.mjs waiting.test.mjs contracts.test.mjs file.test.mjs",
+    "faults": "node fault-demo.mjs"
+  }
+}
