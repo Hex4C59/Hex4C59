@@ -1,0 +1,7 @@
+{
+  "name": "software-design-06-examples",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": { "test": "node --test async.test.mjs file.test.mjs" }
+}
