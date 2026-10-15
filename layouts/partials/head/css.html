@@ -1,8 +1,13 @@
+{{- $introFont := resources.Get "fonts/handwriting/long-cang-intro.woff" -}}
+{{- /* Keep the original URL available for cached stylesheets. */ -}}
+{{- $introFont.Publish -}}
+{{- $introFontURL := ($introFont | fingerprint).RelPermalink -}}
+{{- $fontStyles := resources.Get "css/fonts.css" | resources.ExecuteAsTemplate "css/fonts.css" (dict "IntroFontURL" $introFontURL) -}}
 {{- $styles := slice
   (resources.Get "css/reset.css")
   (resources.Get "css/vars.css")
   (resources.Get "css/utils.css")
-  (resources.Get "css/fonts.css")
+  $fontStyles
   (resources.Get "css/syntax-highlighting.css")
   (resources.Get "css/main.css")
   (resources.Get "css/custom.css")

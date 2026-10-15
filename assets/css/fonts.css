@@ -1,7 +1,7 @@
 /* Home introduction: local Long Cang subset; source and OFL in /fonts/handwriting/. */
 @font-face {
   font-family: "Hex Handwriting";
-  src: url("/fonts/handwriting/long-cang-intro.woff") format("woff");
+  src: url("{{ .IntroFontURL }}") format("woff");
   font-style: normal;
   font-weight: 400;
   font-display: swap;

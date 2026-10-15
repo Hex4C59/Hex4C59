@@ -1,7 +1,7 @@
 # Home introduction lettering
 
-`long-cang-intro.woff` is a local WOFF subset of Long Cang Regular, used only
-for the Chinese handwritten introduction on the home page. The GitHub profile
+`assets/fonts/handwriting/long-cang-intro.woff` is a local WOFF subset of
+Long Cang Regular, used only for the Chinese handwritten introduction on the home page. The GitHub profile
 lettering uses Caveat, which does not include the Chinese characters in this quote.
 
 - Source: [Google Fonts / Long Cang](https://github.com/google/fonts/tree/main/ofl/longcang)
@@ -12,12 +12,15 @@ lettering uses Caveat, which does not include the Chinese characters in this quo
 - Subset text: `文章本天成，妙手偶得之`
 
 The subset was generated with fontTools, preserving the font's naming and
-license metadata. If the introduction text changes, regenerate the subset
-from the original font to include any new characters:
+license metadata. Hugo fingerprints the font and inserts its content-hashed URL
+into the bundled CSS, so changing the quote cannot reuse a cached older subset.
+The original font URL is also published for previously cached stylesheets.
+If the introduction text changes, regenerate the subset from the original font
+to include any new characters:
 
 ```sh
 pyftsubset LongCang-Regular.ttf \
   --text='文章本天成，妙手偶得之' \
   --flavor=woff \
-  --output-file=long-cang-intro.woff
+  --output-file=assets/fonts/handwriting/long-cang-intro.woff
 ```
