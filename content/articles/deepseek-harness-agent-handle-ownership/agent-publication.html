@@ -1,0 +1,226 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Agent 创建、公告与回滚</title><style>
+:root{color-scheme:light dark;--paper:#faf9f6;--surface:#f1f0ec;--ink:#242320;--muted:#66635d;--line:#c2beb5;--teal:#126d61;--teal-bg:#dceee7;--amber:#96511e;--amber-bg:#f8e4cf;--purple:#6044ab;--purple-bg:#ece5fa;--rose:#a03861;--rose-bg:#f7e1e9;--motion-fast:160ms;--motion-step:480ms;--motion-hold:720ms;--motion-total:4320ms;--motion-ease:cubic-bezier(.2,.8,.2,1)}
+@media(prefers-color-scheme:dark){:root{--paper:#242320;--surface:#302e29;--ink:#faf9f6;--muted:#c2beb5;--line:#6d6962;--teal:#8cd9cd;--teal-bg:#203c37;--amber:#e8b47d;--amber-bg:#453225;--purple:#c3b1f8;--purple-bg:#332a47;--rose:#f1aac4;--rose-bg:#472d39}}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:14px/1.8 'PingFang SC',system-ui,sans-serif}main{max-width:860px;padding:20px;margin:0 auto;--c:var(--teal);--bg:var(--teal-bg)}header{border-top:3px solid var(--teal);padding-top:16px}.eyebrow{font:11px/1.7 ui-monospace,Menlo,monospace;letter-spacing:.08em;color:var(--muted)}.eyebrow b{color:var(--teal);font-size:14px;margin-right:10px}h1{font:500 29px/1.4 'Songti SC',Georgia,serif;margin:10px 0}h2{font-size:20px;line-height:1.5;margin:18px 0 6px}p{margin:7px 0}.intro,.description{color:var(--muted)}.caption{font-size:11px;letter-spacing:.05em;color:var(--muted);margin:18px 0 8px}.radio{position:absolute;width:1px;height:1px;clip-path:inset(50%);overflow:hidden}.cases{display:grid;gap:8px;border-bottom:1px solid var(--line)}.cases label{cursor:pointer;background:var(--surface);border-top:3px solid var(--line);padding:10px 12px;min-width:0}.cases b{display:block;font-size:14px}.cases small{font-size:11px;color:var(--muted)}.panel,.variant{display:none}.canvas{width:100%;overflow-x:auto}svg{display:block;width:100%;min-width:680px}svg text{font-family:'PingFang SC',system-ui,sans-serif;fill:var(--ink)}svg .name{font-size:14px;font-weight:600;fill:var(--c)}svg .sub{font-size:12px;fill:var(--muted);font-family:'SFMono-Regular',ui-monospace,Menlo,'PingFang SC',monospace}svg .label{font-size:13px;font-weight:500;fill:var(--c)}svg .serial{font:11px ui-monospace,Menlo,monospace;fill:var(--muted)}.edge{fill:none;stroke:var(--c);stroke-width:1.5}.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--muted);padding:8px 0 12px}.legend span:before{content:'';display:inline-block;width:7px;height:7px;background:var(--c);margin-right:5px}.note{border-left:3px solid var(--c);background:var(--bg);padding:11px 14px;margin:10px 0;font-size:13px}.note strong{color:var(--c);font-weight:600}.inspector{margin-top:18px;border-top:2px solid var(--teal);padding-top:12px}.inspector h3{font-size:14px;margin:0}.views{display:flex;gap:5px;border-bottom:1px solid var(--line);margin:10px 0}.views label{cursor:pointer;font-size:12px;padding:6px 11px}.view{display:none}pre{font:12px/1.85 'SFMono-Regular',ui-monospace,Menlo,monospace;white-space:pre-wrap;overflow-wrap:anywhere;background:var(--surface);padding:14px;margin:0;min-height:170px}table{border-collapse:collapse;width:100%;font-size:13px}td,th{text-align:left;vertical-align:top;padding:10px 8px;border-bottom:1px solid var(--line)}th{font-size:12px;font-weight:500;color:var(--muted)}code{font-family:ui-monospace,Menlo,monospace;font-size:.9em;overflow-wrap:anywhere}.paths{display:none}.paths p{padding:12px;background:var(--surface);border-left:3px solid var(--c);font-size:13px;margin:8px 0}.paths b{display:block;color:var(--c);font-size:13px}.paths small{font-size:12px;color:var(--muted)}details{font-size:12px;color:var(--muted);border-top:1px solid var(--line);margin-top:16px;padding-top:10px}summary{cursor:pointer;color:var(--ink)}footer{border-top:1px solid var(--line);padding-top:12px;margin-top:18px;color:var(--muted);font-size:11px;line-height:1.9}.sr-only{position:absolute;width:1px;height:1px;clip-path:inset(50%);overflow:hidden}.snapshots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0}.snapshot{background:var(--bg);border-left:3px solid var(--c);padding:8px 10px}.snapshot span{font-size:11px;color:var(--muted);display:block}.snapshot b{font-size:12px;font-weight:500;color:var(--c)}
+@media(max-width:719px){main{padding:20px 16px}h1{font-size:25px}h2{font-size:19px}.canvas,.legend{display:none}.paths{display:block}.cases label{padding:8px 9px}.cases b{font-size:13px}.cases small{font-size:10px}.description{font-size:13px}.snapshots{grid-template-columns:1fr}.snapshot{display:flex;justify-content:space-between;gap:8px}.snapshot b{text-align:right}pre{font-size:12px}.views label{padding:6px 9px}.note{padding:10px 12px}.eyebrow{font-size:10px;letter-spacing:.04em}}
+@media(max-width:359px){h1{font-size:23px}.cases{grid-template-columns:1fr!important}.cases label{display:flex;gap:8px;align-items:center;justify-content:space-between}.cases small{font-size:10px}.views label{padding:6px 8px}pre{font-size:11px}td,th{padding:9px 5px}.snapshot b{font-size:11px}}
+@media print{.canvas{overflow-x:visible}svg{min-width:0}pre{min-height:0}}
+.cases{grid-template-columns:repeat(2,minmax(0,1fr))}.description{min-height:54px}.motion-controls{display:none;gap:6px;align-items:center;flex-wrap:wrap;margin:16px 0}.motion-ready .motion-controls{display:flex}.motion-controls[hidden]{display:none!important}.motion-controls button{border:1px solid var(--line);border-radius:3px;background:var(--paper);color:var(--ink);font:12px/1.6 'PingFang SC',system-ui,sans-serif;padding:7px 12px;cursor:pointer}.motion-controls button:disabled{opacity:.4;cursor:default}.motion-controls button[data-motion-action=play]{background:var(--teal);color:var(--paper);border-color:var(--teal)}.motion-controls button:focus-visible{outline:2px solid var(--purple);outline-offset:3px}.step-count{margin-left:auto;font:12px ui-monospace,Menlo,monospace;color:var(--muted)}.lifeline{stroke:var(--line);stroke-width:1;stroke-dasharray:3 4}.trace{display:none;list-style:none;padding:0;margin:10px 0}.trace li{display:grid;grid-template-columns:26px 1fr;gap:10px;padding:12px 0;border-bottom:1px solid var(--line)}.trace b{font-size:14px}.trace p{font-size:13px;color:var(--muted);margin:3px 0}.trace .number{color:var(--teal);font:600 13px/1.9 ui-monospace,Menlo,monospace}.trace .route{font-size:11px;color:var(--teal)}.phase{display:none}.phase.start{display:block}.phase p{font-size:13px;margin:0}.phase-explain{min-height:94px;margin:12px 0;padding:12px 14px;background:var(--surface);border-left:3px solid var(--teal)}.phase strong{font-size:14px;display:block;margin-bottom:3px}.motion-ready .phase.start{display:none}.motion-ready [data-motion-item]{opacity:.18;transition:opacity var(--motion-step) var(--motion-ease)}.motion-ready [data-motion-item].is-visible,.motion-ready[data-step-current="0"] [data-motion-item],.motion-ready[data-frame=end] [data-motion-item],.motion-ready[data-frame=static] [data-motion-item]{opacity:1}.is-current .edge{stroke-width:3}.is-current .label-mask{fill:var(--surface)}.trace li.is-current{background:var(--teal-bg);padding-left:7px;padding-right:7px}.trace li.is-current p{color:var(--ink)}
+@media(max-width:719px){.description{min-height:0}.phase-explain{display:none}.trace{display:block}.motion-controls{gap:5px}.motion-controls button{padding:7px 10px}.step-count{font-size:11px}}
+@media(max-width:359px){.motion-controls button{font-size:11px;padding:7px 9px}.step-count{margin-left:0;width:100%}}
+@media(prefers-reduced-motion:reduce){[data-motion-item]{opacity:1!important;transition:none!important}.motion-controls,[data-motion-decorative]{display:none!important}}
+@media print{.motion-controls{display:none!important}[data-motion-item]{opacity:1!important;transition:none!important}}
+html[data-motion=static] .motion-controls,html[data-motion=step] .motion-controls{display:none!important}html[data-motion=static] [data-motion-item]{opacity:1!important;transition:none!important}
+#pub-success:checked ~ .cases label[for="pub-success"]{background:var(--teal-bg);border-color:var(--teal);color:var(--teal)}#pub-success:checked ~ .publication .panel-success{display:block}#pub-success:checked ~ .publication .variant-success{display:inline}#pub-success:focus-visible ~ .cases label[for="pub-success"]{outline:2px solid var(--purple);outline-offset:3px}#pub-failure:checked ~ .cases label[for="pub-failure"]{background:var(--rose-bg);border-color:var(--rose);color:var(--rose)}#pub-failure:checked ~ .publication .panel-failure{display:block}#pub-failure:checked ~ .publication .variant-failure{display:inline}#pub-failure:focus-visible ~ .cases label[for="pub-failure"]{outline:2px solid var(--purple);outline-offset:3px}.motion-ready[data-step-current="0"] .phase-0{display:block}.motion-ready[data-step-current="1"] .phase-1{display:block}.motion-ready[data-step-current="2"] .phase-2{display:block}.motion-ready[data-step-current="3"] .phase-3{display:block}.motion-ready[data-step-current="4"] .phase-4{display:block}.motion-ready[data-step-current="5"] .phase-5{display:block}.motion-ready[data-step-current="6"] .phase-6{display:block}#pub-view-trace:checked ~ .views label[for="pub-view-trace"]{background:var(--teal-bg);color:var(--teal)}#pub-view-trace:checked ~ .view-trace{display:block}#pub-view-trace:focus-visible ~ .views label[for="pub-view-trace"]{outline:2px solid var(--purple);outline-offset:3px}#pub-view-result:checked ~ .views label[for="pub-view-result"]{background:var(--teal-bg);color:var(--teal)}#pub-view-result:checked ~ .view-result{display:block}#pub-view-result:focus-visible ~ .views label[for="pub-view-result"]{outline:2px solid var(--purple);outline-offset:3px}</style></head><body><main><header><div class="eyebrow"><b>10B</b> AGENT / PUBLICATION</div><h1>创建成功，落在哪个时间点？</h1><p class="intro">六步比较正常创建与监听器失败。切换场景保留当前步骤，重播从头观察；图中的间距不表示耗时。</p></header><section aria-label="选择创建结果"><p class="caption">01 / 公告结果</p><input class="radio" type="radio" name="publication-case" id="pub-success" aria-label="正常创建" checked><input class="radio" type="radio" name="publication-case" id="pub-failure" aria-label="监听器失败" ><nav class="cases" aria-label="创建成功或失败"><label for="pub-success"><b>正常创建</b><small>监听器全部完成</small></label><label for="pub-failure"><b>监听器失败</b><small>已开始公告，再回滚</small></label></nav><div class="publication" data-motion-root data-motion-mode="step" data-step-count="6" data-step-current="6" data-frame="static" data-static-frame="complete" tabindex="0" aria-label="Agent 创建时序演示"><div class="panel panel-success"><h2>两个对象已可查，还要等公告完成</h2><p class="description">setup 与 commit 在未发布阶段完成。两个 Registry 插入后，创建监听器按序执行，最后才把 handle 交回调用方。</p></div><div class="panel panel-failure"><h2>已经送达的 created，需要配对 disposal</h2><p class="description">示例在第一个 agent/created 监听器抛错。后续监听器跳过，工厂完成清理并撤回登记，原创建 Promise 拒绝。</p></div><div data-motion-controls class="motion-controls" role="group" aria-label="创建时序播放控制"><button type="button" data-motion-action="play" aria-pressed="false">播放</button><button type="button" data-motion-action="pause" aria-pressed="true">暂停</button><button type="button" data-motion-action="prev">上一步</button><button type="button" data-motion-action="next">下一步</button><button type="button" data-motion-action="replay">重播</button><span class="step-count" data-motion-status-visible aria-hidden="true">步骤 <span data-motion-step-label>6</span> / 6</span></div><p class="sr-only" data-motion-status role="status" aria-live="polite" aria-atomic="true"></p><div class="canvas"><svg viewBox="0 0 680 540" role="img" aria-labelledby="pub10-title pub10-desc"><title id="pub10-title">Agent 创建与公告回滚的六步时序</title><desc id="pub10-desc">时间从上向下。调用方、工厂、组合回调和两个活 Registry 之间依次准备、setup、插入、公告、等待和返回；失败场景最后清理并拒绝。setup 与 created 是不同回调，合并在同一参与者栏表示部署组合代码。</desc><defs><marker id="pub10-arrow-teal" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M0 0 L8 3 L0 6 Z" fill="var(--teal)"/></marker><marker id="pub10-arrow-purple" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M0 0 L8 3 L0 6 Z" fill="var(--purple)"/></marker><marker id="pub10-arrow-amber" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M0 0 L8 3 L0 6 Z" fill="var(--amber)"/></marker><marker id="pub10-arrow-rose" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M0 0 L8 3 L0 6 Z" fill="var(--rose)"/></marker></defs><line class="lifeline" x1="100" y1="112" x2="100" y2="504"/><line class="lifeline" x1="260" y1="112" x2="260" y2="504"/><line class="lifeline" x1="420" y1="112" x2="420" y2="504"/><line class="lifeline" x1="580" y1="112" x2="580" y2="504"/><g data-motion-item data-step="1" aria-label="步骤 1，检查当前创建路径的动作和完成条件"><g class="variant variant-success" style="--c:var(--teal)"><line class="edge" x1="100" y1="164" x2="260" y2="164" marker-end="url(#pub10-arrow-teal)" /><rect class="label-mask" x="124.5" y="135" width="111" height="22" fill="var(--paper)"/><text class="label" x="180" y="151" text-anchor="middle">请求创建与准备</text><text class="serial" x="24" y="168">01</text></g><g class="variant variant-failure" style="--c:var(--teal)"><line class="edge" x1="100" y1="164" x2="260" y2="164" marker-end="url(#pub10-arrow-teal)" /><rect class="label-mask" x="124.5" y="135" width="111" height="22" fill="var(--paper)"/><text class="label" x="180" y="151" text-anchor="middle">请求创建与准备</text><text class="serial" x="24" y="168">01</text></g></g><g data-motion-item data-step="2" aria-label="步骤 2，检查当前创建路径的动作和完成条件"><g class="variant variant-success" style="--c:var(--purple)"><line class="edge" x1="260" y1="228" x2="420" y2="228" marker-end="url(#pub10-arrow-purple)" /><rect class="label-mask" x="239" y="199" width="202" height="22" fill="var(--paper)"/><text class="label" x="340" y="215" text-anchor="middle">setup / commit</text><text class="serial" x="24" y="232">02</text></g><g class="variant variant-failure" style="--c:var(--purple)"><line class="edge" x1="260" y1="228" x2="420" y2="228" marker-end="url(#pub10-arrow-purple)" /><rect class="label-mask" x="239" y="199" width="202" height="22" fill="var(--paper)"/><text class="label" x="340" y="215" text-anchor="middle">setup / commit</text><text class="serial" x="24" y="232">02</text></g></g><g data-motion-item data-step="3" aria-label="步骤 3，检查当前创建路径的动作和完成条件"><g class="variant variant-success" style="--c:var(--purple)"><line class="edge" x1="260" y1="292" x2="580" y2="292" marker-end="url(#pub10-arrow-purple)" /><rect class="label-mask" x="325.5" y="263" width="189" height="22" fill="var(--paper)"/><text class="label" x="420" y="279" text-anchor="middle">插入并公告 Session</text><text class="serial" x="24" y="296">03</text></g><g class="variant variant-failure" style="--c:var(--purple)"><line class="edge" x1="260" y1="292" x2="580" y2="292" marker-end="url(#pub10-arrow-purple)" /><rect class="label-mask" x="325.5" y="263" width="189" height="22" fill="var(--paper)"/><text class="label" x="420" y="279" text-anchor="middle">插入并公告 Session</text><text class="serial" x="24" y="296">03</text></g></g><g data-motion-item data-step="4" aria-label="步骤 4，检查当前创建路径的动作和完成条件"><g class="variant variant-success" style="--c:var(--rose)"><line class="edge" x1="580" y1="356" x2="420" y2="356" marker-end="url(#pub10-arrow-rose)" /><rect class="label-mask" x="418.5" y="327" width="163" height="22" fill="var(--paper)"/><text class="label" x="500" y="343" text-anchor="middle">串行 Agent 公告</text><text class="serial" x="24" y="360">04</text></g><g class="variant variant-failure" style="--c:var(--rose)"><line class="edge" x1="580" y1="356" x2="420" y2="356" marker-end="url(#pub10-arrow-rose)" /><rect class="label-mask" x="418.5" y="327" width="163" height="22" fill="var(--paper)"/><text class="label" x="500" y="343" text-anchor="middle">Agent 监听器失败</text><text class="serial" x="24" y="360">04</text></g></g><g data-motion-item data-step="5" aria-label="步骤 5，检查当前创建路径的动作和完成条件"><g class="variant variant-success" style="--c:var(--amber)"><line class="edge" x1="420" y1="420" x2="260" y2="420" marker-end="url(#pub10-arrow-amber)" stroke-dasharray="5 4"/><rect class="label-mask" x="284.5" y="391" width="111" height="22" fill="var(--paper)"/><text class="label" x="340" y="407" text-anchor="middle">全部监听器完成</text><text class="serial" x="24" y="424">05</text></g><g class="variant variant-failure" style="--c:var(--amber)"><line class="edge" x1="420" y1="420" x2="260" y2="420" marker-end="url(#pub10-arrow-amber)" stroke-dasharray="5 4"/><rect class="label-mask" x="291" y="391" width="98" height="22" fill="var(--paper)"/><text class="label" x="340" y="407" text-anchor="middle">传播创建错误</text><text class="serial" x="24" y="424">05</text></g></g><g data-motion-item data-step="6" aria-label="步骤 6，检查当前创建路径的动作和完成条件"><g class="variant variant-success" style="--c:var(--purple)"><line class="edge" x1="260" y1="484" x2="100" y2="484" marker-end="url(#pub10-arrow-purple)" stroke-dasharray="5 4"/><rect class="label-mask" x="79" y="455" width="202" height="22" fill="var(--paper)"/><text class="label" x="180" y="471" text-anchor="middle">交回 AgentHandle</text><text class="serial" x="24" y="488">06</text></g><g class="variant variant-failure" style="--c:var(--purple)"><line class="edge" x1="260" y1="484" x2="100" y2="484" marker-end="url(#pub10-arrow-purple)" stroke-dasharray="5 4"/><rect class="label-mask" x="124.5" y="455" width="111" height="22" fill="var(--paper)"/><text class="label" x="180" y="471" text-anchor="middle">清理后拒绝创建</text><text class="serial" x="24" y="488">06</text></g></g><g class="node" style="--c:var(--teal);--bg:var(--teal-bg)"><rect x="40" y="40" width="120" height="72" rx="3" fill="var(--paper)"/><rect x="40" y="40" width="120" height="72" rx="3" fill="var(--bg)" stroke="var(--c)"/><text class="name" x="100" y="69" text-anchor="middle">调用方</text><text class="sub" x="100" y="93" text-anchor="middle">ownerCtx</text></g><g class="node" style="--c:var(--purple);--bg:var(--purple-bg)"><rect x="200" y="40" width="120" height="72" rx="3" fill="var(--paper)"/><rect x="200" y="40" width="120" height="72" rx="3" fill="var(--bg)" stroke="var(--c)"/><text class="name" x="260" y="69" text-anchor="middle">AgentLoop</text><text class="sub" x="260" y="93" text-anchor="middle">factory</text></g><g class="node" style="--c:var(--amber);--bg:var(--amber-bg)"><rect x="360" y="40" width="120" height="72" rx="3" fill="var(--paper)"/><rect x="360" y="40" width="120" height="72" rx="3" fill="var(--bg)" stroke="var(--c)"/><text class="name" x="420" y="69" text-anchor="middle">组合回调</text><text class="sub" x="420" y="93" text-anchor="middle">setup / 事件</text></g><g class="node" style="--c:var(--rose);--bg:var(--rose-bg)"><rect x="520" y="40" width="120" height="72" rx="3" fill="var(--paper)"/><rect x="520" y="40" width="120" height="72" rx="3" fill="var(--bg)" stroke="var(--c)"/><text class="name" x="580" y="69" text-anchor="middle">活 Registry</text><text class="sub" x="580" y="93" text-anchor="middle">live entries</text></g></svg></div><div class="legend"><span style="--c:var(--teal)">调用方</span><span style="--c:var(--purple)">AgentLoop</span><span style="--c:var(--amber)">组合回调</span><span style="--c:var(--rose)">活 Registry</span></div><div class="phase-explain"><div class="phase start phase-0"><strong>先看完整路径，再播放比较</strong><p>setup、Registry 插入、公告与 handle 交付是不同时间点。无 JavaScript 与静态模式保留全部连线。</p></div><div class="phase phase-1"><div class="panel panel-success"><strong>01 / 请求创建与准备</strong><p>工厂准备 Session、驱动器和预先登记的清理入口。</p></div><div class="panel panel-failure"><strong>01 / 请求创建与准备</strong><p>新 Session 和驱动器先处于未发布状态。</p></div></div><div class="phase phase-2"><div class="panel panel-success"><strong>02 / setup / commit</strong><p>回调完成时，两份 Registry 仍查不到新实例。</p></div><div class="panel panel-failure"><strong>02 / setup / commit</strong><p>这一步成功，不代表后面的公告也会成功。</p></div></div><div class="phase phase-3"><div class="panel panel-success"><strong>03 / 插入并公告 Session</strong><p>Session 和 Agent 都入库，随后发出 session/created。</p></div><div class="panel panel-failure"><strong>03 / 插入并公告 Session</strong><p>两个对象都已入库，Session 公告已经开始。</p></div></div><div class="phase phase-4"><div class="panel panel-success"><strong>04 / 串行 Agent 公告</strong><p>agent/created 监听器开始执行；外层 create 仍未完成。</p></div><div class="panel panel-failure"><strong>04 / Agent 监听器失败</strong><p>第一个 created 监听器抛错；后续监听器不再执行。</p></div></div><div class="phase phase-5"><div class="panel panel-success"><strong>05 / 全部监听器完成</strong><p>串行派发结束，初始化维护任务可以收尾。</p></div><div class="panel panel-failure"><strong>05 / 传播创建错误</strong><p>已经观察到创建的消费者仍需要看到配对 disposal。</p></div></div><div class="phase phase-6"><div class="panel panel-success"><strong>06 / 交回 AgentHandle</strong><p>调用方拿到 agent 与 dispose，之后再驱动普通工作。</p></div><div class="panel panel-failure"><strong>06 / 清理后拒绝创建</strong><p>停止活动、释放 Scope 与写 handle、解除登记，再拒绝调用方。</p></div></div></div><ol class="trace"><li data-motion-item data-step="1" aria-label="观察创建步骤 1"><span class="number">01</span><div><div class="panel panel-success"><b>请求创建与准备</b><div class="route">调用方 → AgentLoop</div><p>工厂准备 Session、驱动器和预先登记的清理入口。</p></div><div class="panel panel-failure"><b>请求创建与准备</b><div class="route">调用方 → AgentLoop</div><p>新 Session 和驱动器先处于未发布状态。</p></div></div></li><li data-motion-item data-step="2" aria-label="观察创建步骤 2"><span class="number">02</span><div><div class="panel panel-success"><b>setup / commit</b><div class="route">AgentLoop → 组合回调</div><p>回调完成时，两份 Registry 仍查不到新实例。</p></div><div class="panel panel-failure"><b>setup / commit</b><div class="route">AgentLoop → 组合回调</div><p>这一步成功，不代表后面的公告也会成功。</p></div></div></li><li data-motion-item data-step="3" aria-label="观察创建步骤 3"><span class="number">03</span><div><div class="panel panel-success"><b>插入并公告 Session</b><div class="route">AgentLoop → 活 Registry</div><p>Session 和 Agent 都入库，随后发出 session/created。</p></div><div class="panel panel-failure"><b>插入并公告 Session</b><div class="route">AgentLoop → 活 Registry</div><p>两个对象都已入库，Session 公告已经开始。</p></div></div></li><li data-motion-item data-step="4" aria-label="观察创建步骤 4"><span class="number">04</span><div><div class="panel panel-success"><b>串行 Agent 公告</b><div class="route">活 Registry → 组合回调</div><p>agent/created 监听器开始执行；外层 create 仍未完成。</p></div><div class="panel panel-failure"><b>Agent 监听器失败</b><div class="route">活 Registry → 组合回调</div><p>第一个 created 监听器抛错；后续监听器不再执行。</p></div></div></li><li data-motion-item data-step="5" aria-label="观察创建步骤 5"><span class="number">05</span><div><div class="panel panel-success"><b>全部监听器完成</b><div class="route">组合回调 → AgentLoop</div><p>串行派发结束，初始化维护任务可以收尾。</p></div><div class="panel panel-failure"><b>传播创建错误</b><div class="route">组合回调 → AgentLoop</div><p>已经观察到创建的消费者仍需要看到配对 disposal。</p></div></div></li><li data-motion-item data-step="6" aria-label="观察创建步骤 6"><span class="number">06</span><div><div class="panel panel-success"><b>交回 AgentHandle</b><div class="route">AgentLoop → 调用方</div><p>调用方拿到 agent 与 dispose，之后再驱动普通工作。</p></div><div class="panel panel-failure"><b>清理后拒绝创建</b><div class="route">AgentLoop → 调用方</div><p>停止活动、释放 Scope 与写 handle、解除登记，再拒绝调用方。</p></div></div></li></ol><section class="inspector" aria-label="对照创建结果"><h3>02 / 完成后检查</h3><p class="description">固定实验轨迹，不是实时运行的 dsh。</p><input class="radio" type="radio" name="publication-view" id="pub-view-trace" aria-label="创建 · 事件顺序" checked><input class="radio" type="radio" name="publication-view" id="pub-view-result" aria-label="创建 · 调用方结果" ><nav class="views" aria-label="检查创建结果"><label for="pub-view-trace">事件顺序</label><label for="pub-view-result">调用方结果</label></nav><div class="view view-trace"><div class="panel panel-success"><pre>准备 → setup → commit
+→ Session / Agent 入库
+→ session/created
+→ agent/created 全部完成
+→ create 返回</pre></div><div class="panel panel-failure"><pre>准备 → setup → commit
+→ Session / Agent 入库
+→ session/created
+→ agent/created:first 抛错
+→ agent/disposed → session/disposed
+→ create 拒绝</pre></div></div><div class="view view-result"><div class="panel panel-success"><pre>AgentRegistry：可查
+SessionStore：可查
+调用方：持有 AgentHandle
+
+还没有自动发出模型请求。</pre></div><div class="panel panel-failure"><pre>AgentRegistry：已撤回
+SessionStore：已撤回
+调用方：没有拿到成功 handle
+
+外部消费者已收到的通知无法倒带。</pre></div></div></section><details><summary>查看来源与省略的路径</summary><p>真实实验 03、08 的正常 / 监听器失败轨迹。图中合并了持久化获取、取消检查和清理内部步骤；setup 失败、Session 公告失败及 owner 卸载见正文实验。</p><code>agent-loop/src/index.ts:650–666, 789–834 · agent/src/index.ts:537–559</code></details></div></section><noscript><p>当前显示完整静态路径，场景和数据视角仍可切换；播放需要 JavaScript。</p></noscript><footer>固定源码 d743267388641bc76f17c45ce8b4c231aed1d32c。实线为处理调用，虚线为结果返回；六步是解释用观察点，不是性能采样。减少动画、无脚本与打印时保留完整时序，失败回滚不会撤销任意外部副作用。</footer></main><script data-diagram-controls>
+    (() => {
+      const params = new URLSearchParams(location.search);
+      const staticOverride = params.get('motion') === 'static' || document.documentElement.dataset.motion === 'static';
+      const requestedStep = params.get('step');
+      const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+      document.fonts.ready.then(() => { document.documentElement.dataset.fontsReady = 'true'; });
+
+      document.querySelectorAll('[data-motion-root]').forEach((root) => {
+        const count = Number(root.dataset.stepCount);
+        const hold = parseFloat(getComputedStyle(root).getPropertyValue('--motion-hold')) || 720;
+        const parsedStep = requestedStep !== null && /^\d+$/.test(requestedStep) ? Number(requestedStep) : null;
+        const exactStep = params.get('motion') === 'step' && Number.isSafeInteger(parsedStep) && parsedStep >= 0 && parsedStep <= count ? parsedStep : null;
+        const items = [...root.querySelectorAll('[data-motion-item]')];
+        const labels = Array.from({ length: count + 1 }, (_, index) => index === 0
+          ? 'Ready'
+          : items.filter((item) => !item.hasAttribute('data-motion-decorative') && Number(item.dataset.step) === index)
+              .map((item) => item.getAttribute('aria-label')).join('; '));
+        const controls = root.querySelector('[data-motion-controls]');
+        const status = root.querySelector('[data-motion-status]');
+        const visibleStep = root.querySelector('[data-motion-step-label]');
+        let step = count;
+        let timer = 0;
+        let playing = false;
+        let stepBeforeReduce = 0;
+        let resumeAfterReduce = root.dataset.motionMode === 'reveal';
+
+        const buttons = (action) => controls.querySelector(`[data-motion-action="${action}"]`);
+        const clearClock = () => { window.clearTimeout(timer); timer = 0; };
+        const announce = () => { status.textContent = `Step ${step} of ${count}: ${labels[step] || 'Complete'}`; };
+        const setControlsAvailable = (available) => {
+          controls.hidden = !available;
+          controls.setAttribute('aria-hidden', String(!available));
+          controls.dataset.playbackDisabled = String(!available);
+          controls.querySelectorAll('button').forEach((control) => { control.disabled = !available; });
+        };
+
+        function render(next, userInitiated = false) {
+          step = Math.max(0, Math.min(count, next));
+          root.dataset.stepCurrent = String(step);
+          root.dataset.frame = step === count ? 'end' : step === 0 ? 'start' : 'step';
+          items.forEach((item) => {
+            const itemStep = Number(item.dataset.step);
+            item.classList.toggle('is-visible', itemStep <= step);
+            item.classList.toggle('is-current', itemStep === step);
+          });
+          if (visibleStep) visibleStep.textContent = String(step);
+          const unavailable = controls.dataset.playbackDisabled === 'true';
+          buttons('prev').disabled = unavailable || step === 0;
+          buttons('next').disabled = unavailable || step === count;
+          if (userInitiated) announce();
+        }
+
+        function pause(userInitiated = false) {
+          clearClock();
+          playing = false;
+          root.classList.remove('is-playing');
+          buttons('play').setAttribute('aria-pressed', 'false');
+          buttons('pause').setAttribute('aria-pressed', 'true');
+          if (userInitiated) status.textContent = `Paused at step ${step} of ${count}`;
+        }
+
+        function finish() {
+          pause(false);
+          root.dataset.frame = 'end';
+          status.textContent = `Complete · step ${count} of ${count}`;
+        }
+
+        function tick() {
+          if (!playing) return;
+          if (step >= count) { finish(); return; }
+          render(step + 1, false);
+          if (step >= count) { finish(); return; }
+          timer = window.setTimeout(tick, hold);
+        }
+
+        function play(fromStart = false, userInitiated = false) {
+          clearClock();
+          if (fromStart || step >= count) render(0, userInitiated);
+          playing = true;
+          root.classList.add('is-playing');
+          buttons('play').setAttribute('aria-pressed', 'true');
+          buttons('pause').setAttribute('aria-pressed', 'false');
+          timer = window.setTimeout(tick, hold);
+        }
+
+        controls.addEventListener('click', (event) => {
+          const button = event.target.closest('[data-motion-action]');
+          if (!button) return;
+          const action = button.dataset.motionAction;
+          if (action === 'play') play(false, true);
+          if (action === 'pause') pause(true);
+          if (action === 'replay') play(true, true);
+          if (action === 'prev') { pause(false); render(step - 1, true); }
+          if (action === 'next') { pause(false); render(step + 1, true); }
+        });
+
+        root.addEventListener('keydown', (event) => {
+          if (event.target.matches('input, textarea, select, a[href]')) return;
+          const keys = { ArrowLeft: step - 1, ArrowRight: step + 1, Home: 0, End: count };
+          if (event.code === 'Space' && !event.target.closest('button')) {
+            event.preventDefault();
+            playing ? pause(true) : play(false, true);
+            return;
+          }
+          if (!event.ctrlKey && !event.metaKey && !event.altKey && event.key.toLowerCase() === 'r') {
+            event.preventDefault();
+            play(true, true);
+            return;
+          }
+          if (!(event.key in keys)) return;
+          event.preventDefault();
+          pause(false);
+          render(keys[event.key], true);
+        });
+
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'hidden' && playing) pause(false);
+        });
+        reduce.addEventListener('change', (event) => {
+          if (event.matches && root.dataset.motionState !== 'reduced') {
+            stepBeforeReduce = step;
+            resumeAfterReduce = playing;
+          }
+          pause(false);
+          if (event.matches) {
+            setControlsAvailable(false);
+            render(count, false);
+            root.dataset.frame = 'static';
+            root.dataset.motionState = 'reduced';
+            status.textContent = 'Reduced motion · complete static frame · playback controls unavailable';
+          } else if (staticOverride || root.dataset.motionMode === 'none') {
+            setControlsAvailable(false);
+            render(count, false);
+            root.dataset.frame = 'static';
+            root.dataset.motionState = 'static';
+            status.textContent = 'Static frame · complete diagram · playback controls unavailable';
+          } else {
+            delete root.dataset.motionState;
+            if (exactStep !== null) {
+              setControlsAvailable(false);
+              render(exactStep, false);
+              root.dataset.frame = 'step';
+              root.dataset.motionState = 'test';
+              status.textContent = `Test frame · step ${step} of ${count} · playback controls unavailable`;
+            } else {
+              setControlsAvailable(true);
+              render(stepBeforeReduce, false);
+              status.textContent = `Ready · step ${step} of ${count}`;
+              if (resumeAfterReduce && root.dataset.motionMode === 'reveal') {
+                play(false, false);
+              }
+            }
+            resumeAfterReduce = false;
+          }
+        });
+
+        if (staticOverride) {
+          document.documentElement.dataset.motion = 'static';
+          pause(false);
+          setControlsAvailable(false);
+          render(count, false);
+          root.dataset.frame = 'static';
+          root.dataset.motionState = 'static';
+          status.textContent = 'Static frame · complete diagram · playback controls unavailable';
+        } else if (reduce.matches || root.dataset.motionMode === 'none') {
+          pause(false);
+          setControlsAvailable(false);
+          render(count, false);
+          root.dataset.frame = 'static';
+          root.dataset.motionState = reduce.matches ? 'reduced' : 'static';
+          status.textContent = reduce.matches
+            ? 'Reduced motion · complete static frame · playback controls unavailable'
+            : 'Static frame · complete diagram · playback controls unavailable';
+        } else if (exactStep !== null) {
+          document.documentElement.dataset.motion = 'step';
+          pause(false);
+          setControlsAvailable(false);
+          render(exactStep, false);
+          root.dataset.frame = 'step';
+          root.dataset.motionState = 'test';
+          status.textContent = `Test frame · step ${step} of ${count} · playback controls unavailable`;
+        } else if (root.dataset.motionMode === 'reveal') {
+          setControlsAvailable(true);
+          render(0, false);
+          play(false, false);
+        } else {
+          pause(false);
+          setControlsAvailable(true);
+          render(0, false);
+          status.textContent = `Ready · step 0 of ${count}`;
+        }
+        root.classList.add('motion-ready');
+      });
+    })();
+  </script></body></html>

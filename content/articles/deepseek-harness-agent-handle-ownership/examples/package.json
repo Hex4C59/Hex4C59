@@ -1,0 +1,7 @@
+{
+  "name": "dsh-agent-ownership-experiments",
+  "private": true,
+  "type": "module",
+  "scripts": { "verify": "node run.mjs" },
+  "dependencies": { "typescript": "6.0.3", "zod": "4.4.3" }
+}
