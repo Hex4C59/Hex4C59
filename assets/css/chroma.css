@@ -59,8 +59,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .home-page { --main-width: 1120px; --header-top-gap: 1.8rem; --header-bottom-gap: 1rem; }
 .home-intro { display: grid; grid-template-columns: minmax(0, 1fr) 260px; align-items: center; gap: 2rem; padding: 1.2rem 0 1.6rem; }
 .home-page .intro { margin: 0; }
-.home-intro h2 { font-family: "Hex Handwriting", var(--font-body); font-weight: 400; font-size: clamp(2rem, 3.3vw, 2.85rem); line-height: 1.55; letter-spacing: 0; color: var(--accent); margin: 0 0 1rem; }
-.home-intro h2 > span { display: block; }
+.home-intro h2 { white-space: nowrap; font-family: "Hex Handwriting", var(--font-body); font-weight: 400; font-size: clamp(2rem, 3.3vw, 2.85rem); line-height: 1.55; letter-spacing: 0; color: var(--accent); margin: 0 0 1rem; }
 .home-intro p { max-width: 34rem; margin: 0; font-size: .9rem; line-height: 1.9; }
 .intro-art { width: 260px; justify-self: end; color: var(--content-primary); }
 .intro-art svg { display: block; width: 100%; height: auto; }
