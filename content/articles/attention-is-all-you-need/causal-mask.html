@@ -1,0 +1,354 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>为什么训练能并行，生成却要逐词？</title><style>
+*{box-sizing:border-box}
+:root{color-scheme:light dark;--color-paper:#faf9f6;--color-ink:#242320;--color-muted:#66635d;--color-soft:#6d6962;--color-accent:#126d61;--color-rule:#c2beb5;--surface:#f1f0ec;--q:#6044ab;--qt:#ece5fa;--k:#126d61;--kt:#dceee7;--v:#96511e;--vt:#f8e4cf;--mask:#a03861;--mt:#f7e1e9;--font-sans:system-ui,-apple-system,"PingFang SC",sans-serif;--font-serif:"Songti SC",Georgia,serif;--font-mono:ui-monospace,"SFMono-Regular",monospace;--motion-fast:160ms;--motion-step:480ms;--motion-hold:1200ms;--motion-total:7200ms;--motion-ease:cubic-bezier(.2,.8,.2,1)}
+@media(prefers-color-scheme:dark){:root{--color-paper:#242320;--color-ink:#faf9f6;--color-muted:#c2beb5;--color-soft:#b4aea2;--color-accent:#8cd9cd;--color-rule:#807c74;--surface:#302e29;--q:#c3b1f8;--qt:#332a47;--k:#8cd9cd;--kt:#203c37;--v:#e8b47d;--vt:#453225;--mask:#f1aac4;--mt:#472d39}}
+body{margin:0;padding:16px 8px;color:var(--color-ink);background:var(--color-paper);font-family:var(--font-sans)}
+main{max-width:704px;min-width:0;margin:auto}h1{margin:0 0 10px;font:500 25px/1.45 var(--font-serif)}
+.intro,.foot{font-size:14px;line-height:1.8;color:var(--color-muted);margin:8px 0 14px}.foot{font-size:13px}
+.diagram-container{width:100%;overflow-x:auto}svg{display:block;width:680px;min-width:680px;margin:auto}.compact{display:none}
+.card{fill:var(--color-paper);stroke:var(--color-rule);stroke-width:1}.node-title{fill:var(--color-ink);font:500 16px var(--font-sans);letter-spacing:.02em}.label{fill:var(--color-ink);font:400 14px var(--font-sans)}.caption{fill:var(--color-muted);font:400 13px var(--font-sans)}
+.math-line{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--color-ink);line-height:1.2;overflow:visible;font-weight:400}
+.math-line math{margin:0;font-family:"STIX Two Math","Cambria Math","Latin Modern Math",math;font-size:inherit;font-weight:400;line-height:normal}
+.q{fill:var(--q);color:var(--q)}.k{fill:var(--k);color:var(--k)}.v{fill:var(--v);color:var(--v)}.mask{fill:var(--mask);color:var(--mask)}.muted{color:var(--color-muted)}
+.arrow{fill:none;stroke:var(--color-muted);stroke-width:1.4}.memory-route{stroke:var(--k)}.zone{fill:none;stroke:var(--color-muted);stroke-dasharray:5 4}.cell{fill:var(--surface);stroke:var(--color-rule)}.allowed{fill:var(--kt);stroke:var(--k)}.blocked{fill:var(--mt);stroke:var(--mask)}
+@media(max-width:719px){.wide{display:none}.compact{display:block;width:360px;min-width:360px}h1{font-size:23px}.compact .node-title{font-size:14px}.compact .label{font-size:13px}.compact .caption{font-size:12px}}
+@media print{body{padding:0}.wide{display:block;width:100%;min-width:0}.compact{display:none}}
+
+    /* Static source is complete. Only an initialized enhancement hides items. */
+    .motion-ready [data-motion-item] {
+      opacity: .12;
+      transform: translateY(8px);
+      transform-box: fill-box;
+      transform-origin: center;
+      transition: opacity var(--motion-step) var(--motion-ease),
+                  transform var(--motion-step) var(--motion-ease);
+    }
+    .motion-ready [data-motion-item].is-visible,
+    .motion-ready[data-frame="end"] [data-motion-item],
+    .motion-ready[data-frame="static"] [data-motion-item] {
+      opacity: 1;
+      transform: none;
+    }
+    .draw-path {
+      fill: none;
+      stroke: var(--color-accent);
+      stroke-width: 3;
+      stroke-dasharray: 1;
+      stroke-dashoffset: 1;
+      pointer-events: none;
+    }
+    .motion-ready .draw-path.is-visible {
+      animation: draw-path var(--motion-step) linear forwards;
+    }
+    .flow-token { opacity: 0; pointer-events: none; }
+    .motion-ready.is-playing .flow-token.is-visible {
+      opacity: 1;
+      animation: token-flow 3.2s linear 1 forwards;
+    }
+    .motion-ready[data-motion-mode="loop"].is-playing .flow-token.is-visible {
+      animation-iteration-count: infinite;
+    }
+    @keyframes draw-path { to { stroke-dashoffset: 0; } }
+    @keyframes token-flow {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(240px); }
+    }
+
+    [data-motion-controls] {
+      display: none;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--color-rule);
+    }
+    .motion-ready [data-motion-controls] { display: flex; }
+    [data-motion-controls][hidden] { display: none !important; }
+    [data-motion-controls] button {
+      min-width: 44px;
+      min-height: 44px;
+      padding: 8px 12px;
+      border: 1px solid var(--color-muted);
+      border-radius: 4px;
+      color: var(--color-ink);
+      background: var(--color-paper);
+      font: 600 12px/1 var(--font-sans);
+      cursor: pointer;
+    }
+    [data-motion-controls] button:hover { border-color: var(--color-accent); }
+    [data-motion-controls] button:focus-visible {
+      outline: 3px solid var(--color-accent);
+      outline-offset: 2px;
+    }
+    [data-motion-controls] button:disabled { cursor: not-allowed; opacity: .45; }
+    [data-motion-status-visible] {
+      margin-left: auto;
+      color: var(--color-muted);
+      font: 500 12px/1.4 var(--font-mono);
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0,0,0,0);
+      white-space: nowrap;
+      border: 0;
+    }
+    noscript p {
+      margin: 12px 0 0;
+      color: var(--color-muted);
+      font: 500 12px/1.4 var(--font-mono);
+    }
+
+    html[data-motion="static"] [data-motion-controls],
+    html[data-motion="static"] [data-motion-decorative] { display: none !important; }
+    html[data-motion="static"] [data-motion-item] {
+      opacity: 1 !important;
+      transform: none !important;
+      animation: none !important;
+      transition: none !important;
+    }
+    html[data-motion="step"] [data-motion-controls],
+    html[data-motion="step"] [data-motion-decorative] { display: none !important; }
+    html[data-motion="step"] [data-motion-item] {
+      animation: none !important;
+      transition: none !important;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: .001ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: .001ms !important;
+      }
+      [data-motion-item] { opacity: 1 !important; transform: none !important; }
+      [data-motion-decorative] { display: none !important; }
+      [data-motion-controls] { display: none !important; }
+    }
+    @media print {
+      /* Paper has no scrollbar, so the local scroller would clip instead of
+         scroll. Let the diagram scale down to the sheet: smaller but whole
+         beats sharp but cut off. */
+      .diagram-container { overflow-x: visible; }
+      svg { min-width: 0; }
+      [data-motion-controls], [data-motion-decorative] { display: none !important; }
+      [data-motion-item] {
+        opacity: 1 !important;
+        transform: none !important;
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+
+
+.motion-ready[data-frame="start"] [data-motion-item]{opacity:1;transform:none}
+.motion-ready [data-motion-item].is-current .card{stroke:var(--color-accent);stroke-width:1.6}
+[data-motion-controls]{margin:12px 0 24px;padding-top:12px;gap:8px}
+[data-motion-controls] button{font:500 13px/1.2 var(--font-sans);padding:9px 12px;border-color:var(--color-rule)}
+[data-motion-status-visible]{font:400 12px var(--font-sans)}
+</style></head><body><main data-motion-root data-motion-mode="step" data-step-count="6" data-step-current="6" data-frame="static" data-static-frame="complete"><h1>为什么训练能并行，生成却要逐词？</h1><p class="intro">用目标句子“我 爱 猫”加结束符作示意。BOS / EOS 表示起始符和结束符；图中的“×”表示不可见。</p><div data-motion-controls aria-label="动画播放控制">
+<button type="button" data-motion-action="play" aria-pressed="false">播放</button>
+<button type="button" data-motion-action="pause" aria-pressed="true">暂停</button>
+<button type="button" data-motion-action="replay">重播</button>
+<button type="button" data-motion-action="prev">上一步</button>
+<button type="button" data-motion-action="next">下一步</button>
+<span data-motion-status-visible aria-hidden="true">步骤 <span data-motion-step-label>6</span> / 6</span></div><div class="diagram-container"><svg class="wide" viewBox="0 0 680 704" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="causal-mask-wide-title causal-mask-wide-desc"><title id="causal-mask-wide-title">右移目标与因果掩码</title><desc id="causal-mask-wide-desc">右移输入与目标标签逐列对应，三角掩码遮挡未来位置，每一行的注意力权重独立归一化。</desc><defs><marker id="causal-mask-wide-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M0 0 L8 3 L0 6 Z" fill="var(--color-muted)"/></marker></defs><g data-motion-item data-step="1" aria-label="输入与预测标签按列错开一位"><rect x="16" y="16" width="648" height="112" rx="6" class="card" /><text x="340.0" y="44" class="node-title " text-anchor="middle">目标输入右移一位</text><text x="40" y="80" class="label" text-anchor="start">输入</text><text x="40" y="108" class="label" text-anchor="start">标签</text><foreignObject x="198" y="60" width="52" height="28"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line " style="font-size:18px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi mathvariant="normal">B</mi><mi mathvariant="normal">O</mi><mi mathvariant="normal">S</mi></mrow><annotation encoding="application/x-tex">\mathrm{BOS}</annotation></semantics></math></div></foreignObject><foreignObject x="198" y="88" width="52" height="28"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line " style="font-size:18px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>我</mtext></mrow><annotation encoding="application/x-tex">\text{我}</annotation></semantics></math></div></foreignObject><foreignObject x="302" y="60" width="52" height="28"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line " style="font-size:18px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>我</mtext></mrow><annotation encoding="application/x-tex">\text{我}</annotation></semantics></math></div></foreignObject><foreignObject x="302" y="88" width="52" height="28"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line " style="font-size:18px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>爱</mtext></mrow><annotation encoding="application/x-tex">\text{爱}</annotation></semantics></math></div></foreignObject><foreignObject x="406" y="60" width="52" height="28"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line " style="font-size:18px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>爱</mtext></mrow><annotation encoding="application/x-tex">\text{爱}</annotation></semantics></math></div></foreignObject><foreignObject x="406" y="88" width="52" height="28"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line " style="font-size:18px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>猫</mtext></mrow><annotation encoding="application/x-tex">\text{猫}</annotation></semantics></math></div></foreignObject><foreignObject x="510" y="60" width="52" height="28"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line " style="font-size:18px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>猫</mtext></mrow><annotation encoding="application/x-tex">\text{猫}</annotation></semantics></math></div></foreignObject><foreignObject x="510" y="88" width="52" height="28"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line " style="font-size:18px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi mathvariant="normal">E</mi><mi mathvariant="normal">O</mi><mi mathvariant="normal">S</mi></mrow><annotation encoding="application/x-tex">\mathrm{EOS}</annotation></semantics></math></div></foreignObject></g><g data-motion-item data-step="2" aria-label="每行代表一个查询，每列代表一个可读键"><text x="192" y="176" class="node-title" text-anchor="middle">行：查询位置　列：键位置</text><text x="106" y="216" class="label" text-anchor="middle">BOS</text><text x="162" y="216" class="label" text-anchor="middle">我</text><text x="218" y="216" class="label" text-anchor="middle">爱</text><text x="274" y="216" class="label" text-anchor="middle">猫</text><text x="66" y="264" class="label" text-anchor="end">BOS</text><rect x="80" y="232" width="52" height="52" rx="6" class="cell" /><rect x="136" y="232" width="52" height="52" rx="6" class="cell" /><rect x="192" y="232" width="52" height="52" rx="6" class="cell" /><rect x="248" y="232" width="52" height="52" rx="6" class="cell" /><text x="66" y="320" class="label" text-anchor="end">我</text><rect x="80" y="288" width="52" height="52" rx="6" class="cell" /><rect x="136" y="288" width="52" height="52" rx="6" class="cell" /><rect x="192" y="288" width="52" height="52" rx="6" class="cell" /><rect x="248" y="288" width="52" height="52" rx="6" class="cell" /><text x="66" y="376" class="label" text-anchor="end">爱</text><rect x="80" y="344" width="52" height="52" rx="6" class="cell" /><rect x="136" y="344" width="52" height="52" rx="6" class="cell" /><rect x="192" y="344" width="52" height="52" rx="6" class="cell" /><rect x="248" y="344" width="52" height="52" rx="6" class="cell" /><text x="66" y="432" class="label" text-anchor="end">猫</text><rect x="80" y="400" width="52" height="52" rx="6" class="cell" /><rect x="136" y="400" width="52" height="52" rx="6" class="cell" /><rect x="192" y="400" width="52" height="52" rx="6" class="cell" /><rect x="248" y="400" width="52" height="52" rx="6" class="cell" /></g><g data-motion-item data-step="3" aria-label="掩码使未来位置的权重变为零"><rect x="136" y="232" width="52" height="52" rx="6" class="blocked" /><text x="162" y="256" class="mask label" text-anchor="middle">×</text><foreignObject x="144" y="260" width="36" height="20"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line muted" style="font-size:15px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mn>0</mn></mrow><annotation encoding="application/x-tex">0</annotation></semantics></math></div></foreignObject><rect x="192" y="232" width="52" height="52" rx="6" class="blocked" /><text x="218" y="256" class="mask label" text-anchor="middle">×</text><foreignObject x="200" y="260" width="36" height="20"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line muted" style="font-size:15px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mn>0</mn></mrow><annotation encoding="application/x-tex">0</annotation></semantics></math></div></foreignObject><rect x="248" y="232" width="52" height="52" rx="6" class="blocked" /><text x="274" y="256" class="mask label" text-anchor="middle">×</text><foreignObject x="256" y="260" width="36" height="20"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line muted" style="font-size:15px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mn>0</mn></mrow><annotation encoding="application/x-tex">0</annotation></semantics></math></div></foreignObject><rect x="192" y="288" width="52" height="52" rx="6" class="blocked" /><text x="218" y="312" class="mask label" text-anchor="middle">×</text><foreignObject x="200" y="316" width="36" height="20"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line muted" style="font-size:15px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mn>0</mn></mrow><annotation encoding="application/x-tex">0</annotation></semantics></math></div></foreignObject><rect x="248" y="288" width="52" height="52" rx="6" class="blocked" /><text x="274" y="312" class="mask label" text-anchor="middle">×</text><foreignObject x="256" y="316" width="36" height="20"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line muted" style="font-size:15px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mn>0</mn></mrow><annotation encoding="application/x-tex">0</annotation></semantics></math></div></foreignObject><rect x="248" y="344" width="52" height="52" rx="6" class="blocked" /><text x="274" y="368" class="mask label" text-anchor="middle">×</text><foreignObject x="256" y="372" width="36" height="20"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line muted" style="font-size:15px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mn>0</mn></mrow><annotation encoding="application/x-tex">0</annotation></semantics></math></div></foreignObject><text x="500.0" y="268" class="node-title mask" text-anchor="middle">屏蔽未来位置</text><foreignObject x="356" y="280" width="288" height="40"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line mask" style="font-size:20px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>j</mi><mo>&gt;</mo><mi>t</mi><mspace width="1em"/><mo>⇒</mo><mspace width="1em"/><msub><mi>A</mi><mrow><mi>t</mi><mi>j</mi></mrow></msub><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">j&gt;t\quad\Rightarrow\quad A_{tj}=0</annotation></semantics></math></div></foreignObject><text x="500.0" y="338" class="caption" text-anchor="middle">先加负无穷，再做 softmax</text></g><g data-motion-item data-step="4" aria-label="每一行允许区域内的权重之和为一"><rect x="80" y="232" width="52" height="52" rx="6" class="allowed" /><foreignObject x="84" y="240" width="44" height="40"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line " style="font-size:20px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mn>1.0</mn></mrow><annotation encoding="application/x-tex">1.0</annotation></semantics></math></div></foreignObject><rect x="80" y="288" width="52" height="52" rx="6" class="allowed" /><foreignObject x="84" y="296" width="44" height="40"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line " style="font-size:20px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mn>0.4</mn></mrow><annotation encoding="application/x-tex">0.4</annotation></semantics></math></div></foreignObject><rect x="136" y="288" width="52" height="52" rx="6" class="allowed" /><foreignObject x="140" y="296" width="44" height="40"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line " style="font-size:20px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mn>0.6</mn></mrow><annotation encoding="application/x-tex">0.6</annotation></semantics></math></div></foreignObject><rect x="80" y="344" width="52" height="52" rx="6" class="allowed" /><foreignObject x="84" y="352" width="44" height="40"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line " style="font-size:20px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mn>0.2</mn></mrow><annotation encoding="application/x-tex">0.2</annotation></semantics></math></div></foreignObject><rect x="136" y="344" width="52" height="52" rx="6" class="allowed" /><foreignObject x="140" y="352" width="44" height="40"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line " style="font-size:20px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mn>0.3</mn></mrow><annotation encoding="application/x-tex">0.3</annotation></semantics></math></div></foreignObject><rect x="192" y="344" width="52" height="52" rx="6" class="allowed" /><foreignObject x="196" y="352" width="44" height="40"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line " style="font-size:20px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mn>0.5</mn></mrow><annotation encoding="application/x-tex">0.5</annotation></semantics></math></div></foreignObject><rect x="80" y="400" width="52" height="52" rx="6" class="allowed" /><foreignObject x="84" y="408" width="44" height="40"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line " style="font-size:20px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mn>0.1</mn></mrow><annotation encoding="application/x-tex">0.1</annotation></semantics></math></div></foreignObject><rect x="136" y="400" width="52" height="52" rx="6" class="allowed" /><foreignObject x="140" y="408" width="44" height="40"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line " style="font-size:20px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mn>0.2</mn></mrow><annotation encoding="application/x-tex">0.2</annotation></semantics></math></div></foreignObject><rect x="192" y="400" width="52" height="52" rx="6" class="allowed" /><foreignObject x="196" y="408" width="44" height="40"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line " style="font-size:20px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mn>0.3</mn></mrow><annotation encoding="application/x-tex">0.3</annotation></semantics></math></div></foreignObject><rect x="248" y="400" width="52" height="52" rx="6" class="allowed" /><foreignObject x="252" y="408" width="44" height="40"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line " style="font-size:20px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mn>0.4</mn></mrow><annotation encoding="application/x-tex">0.4</annotation></semantics></math></div></foreignObject><text x="500.0" y="400" class="node-title k" text-anchor="middle">每行独立归一化</text><foreignObject x="356" y="408" width="288" height="56"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line k" style="font-size:23px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><munder><mo>∑</mo><mi>j</mi></munder><msub><mi>A</mi><mrow><mi>t</mi><mi>j</mi></mrow></msub><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">\sum_j A_{tj}=1</annotation></semantics></math></div></foreignObject><text x="500.0" y="484" class="caption" text-anchor="middle">数字是教学示意权重</text></g><g data-motion-item data-step="5" aria-label="训练时可同时计算所有目标位置"><rect x="16" y="536" width="312" height="120" rx="6" class="card" style="stroke:var(--k)"/><text x="172.0" y="564" class="node-title k" text-anchor="middle">训练时：同时计算各行</text><foreignObject x="28" y="576" width="144.0" height="38"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line " style="font-size:18px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mrow><mi mathvariant="normal">B</mi><mi mathvariant="normal">O</mi><mi mathvariant="normal">S</mi></mrow><mo>→</mo><mtext>我</mtext></mrow><annotation encoding="application/x-tex">\mathrm{BOS}\to\text{我}</annotation></semantics></math></div></foreignObject><foreignObject x="172.0" y="576" width="144.0" height="38"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line " style="font-size:18px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>我</mtext><mo>→</mo><mtext>爱</mtext></mrow><annotation encoding="application/x-tex">\text{我}\to\text{爱}</annotation></semantics></math></div></foreignObject><foreignObject x="28" y="612" width="144.0" height="32"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line " style="font-size:18px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>爱</mtext><mo>→</mo><mtext>猫</mtext></mrow><annotation encoding="application/x-tex">\text{爱}\to\text{猫}</annotation></semantics></math></div></foreignObject><foreignObject x="172.0" y="612" width="144.0" height="32"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line " style="font-size:18px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>猫</mtext><mo>→</mo><mrow><mi mathvariant="normal">E</mi><mi mathvariant="normal">O</mi><mi mathvariant="normal">S</mi></mrow></mrow><annotation encoding="application/x-tex">\text{猫}\to\mathrm{EOS}</annotation></semantics></math></div></foreignObject></g><g data-motion-item data-step="6" aria-label="生成时需要逐步增加目标前缀"><rect x="352" y="536" width="312" height="112" rx="6" class="card" style="stroke:var(--q)"/><text x="508.0" y="564" class="node-title q" text-anchor="middle">生成时：逐步扩展前缀</text><foreignObject x="364" y="576" width="288" height="40"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line " style="font-size:17px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mrow><mi mathvariant="normal">B</mi><mi mathvariant="normal">O</mi><mi mathvariant="normal">S</mi></mrow><mo>→</mo><mtext>我</mtext><mo>→</mo><mtext>爱</mtext><mo>→</mo><mtext>猫</mtext><mo>→</mo><mrow><mi mathvariant="normal">E</mi><mi mathvariant="normal">O</mi><mi mathvariant="normal">S</mi></mrow></mrow><annotation encoding="application/x-tex">\mathrm{BOS}\to\text{我}\to\text{爱}\to\text{猫}\to\mathrm{EOS}</annotation></semantics></math></div></foreignObject><text x="508.0" y="634" class="caption" text-anchor="middle">下一步取决于刚选出的 token</text></g></svg><svg class="compact" viewBox="0 0 360 1008" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="causal-mask-compact-title causal-mask-compact-desc"><title id="causal-mask-compact-title">右移目标与因果掩码</title><desc id="causal-mask-compact-desc">右移输入与目标标签逐列对应，三角掩码遮挡未来位置，每一行的注意力权重独立归一化。</desc><defs><marker id="causal-mask-compact-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M0 0 L8 3 L0 6 Z" fill="var(--color-muted)"/></marker></defs><g data-motion-item data-step="1" aria-label="输入与预测标签按列错开一位"><rect x="16" y="16" width="328" height="112" rx="6" class="card" /><text x="180.0" y="44" class="node-title " text-anchor="middle">目标输入右移一位</text><text x="40" y="80" class="label" text-anchor="start">输入</text><text x="40" y="108" class="label" text-anchor="start">标签</text><foreignObject x="86" y="60" width="52" height="28"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line " style="font-size:18px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi mathvariant="normal">B</mi><mi mathvariant="normal">O</mi><mi mathvariant="normal">S</mi></mrow><annotation encoding="application/x-tex">\mathrm{BOS}</annotation></semantics></math></div></foreignObject><foreignObject x="86" y="88" width="52" height="28"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line " style="font-size:18px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>我</mtext></mrow><annotation encoding="application/x-tex">\text{我}</annotation></semantics></math></div></foreignObject><foreignObject x="150" y="60" width="52" height="28"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line " style="font-size:18px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>我</mtext></mrow><annotation encoding="application/x-tex">\text{我}</annotation></semantics></math></div></foreignObject><foreignObject x="150" y="88" width="52" height="28"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line " style="font-size:18px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>爱</mtext></mrow><annotation encoding="application/x-tex">\text{爱}</annotation></semantics></math></div></foreignObject><foreignObject x="214" y="60" width="52" height="28"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line " style="font-size:18px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>爱</mtext></mrow><annotation encoding="application/x-tex">\text{爱}</annotation></semantics></math></div></foreignObject><foreignObject x="214" y="88" width="52" height="28"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line " style="font-size:18px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>猫</mtext></mrow><annotation encoding="application/x-tex">\text{猫}</annotation></semantics></math></div></foreignObject><foreignObject x="278" y="60" width="52" height="28"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line " style="font-size:18px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>猫</mtext></mrow><annotation encoding="application/x-tex">\text{猫}</annotation></semantics></math></div></foreignObject><foreignObject x="278" y="88" width="52" height="28"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line " style="font-size:18px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi mathvariant="normal">E</mi><mi mathvariant="normal">O</mi><mi mathvariant="normal">S</mi></mrow><annotation encoding="application/x-tex">\mathrm{EOS}</annotation></semantics></math></div></foreignObject></g><g data-motion-item data-step="2" aria-label="每行代表一个查询，每列代表一个可读键"><text x="180" y="172" class="node-title" text-anchor="middle">行：查询位置　列：键位置</text><text x="114" y="212" class="label" text-anchor="middle">BOS</text><text x="170" y="212" class="label" text-anchor="middle">我</text><text x="226" y="212" class="label" text-anchor="middle">爱</text><text x="282" y="212" class="label" text-anchor="middle">猫</text><text x="74" y="260" class="label" text-anchor="end">BOS</text><rect x="88" y="228" width="52" height="52" rx="6" class="cell" /><rect x="144" y="228" width="52" height="52" rx="6" class="cell" /><rect x="200" y="228" width="52" height="52" rx="6" class="cell" /><rect x="256" y="228" width="52" height="52" rx="6" class="cell" /><text x="74" y="316" class="label" text-anchor="end">我</text><rect x="88" y="284" width="52" height="52" rx="6" class="cell" /><rect x="144" y="284" width="52" height="52" rx="6" class="cell" /><rect x="200" y="284" width="52" height="52" rx="6" class="cell" /><rect x="256" y="284" width="52" height="52" rx="6" class="cell" /><text x="74" y="372" class="label" text-anchor="end">爱</text><rect x="88" y="340" width="52" height="52" rx="6" class="cell" /><rect x="144" y="340" width="52" height="52" rx="6" class="cell" /><rect x="200" y="340" width="52" height="52" rx="6" class="cell" /><rect x="256" y="340" width="52" height="52" rx="6" class="cell" /><text x="74" y="428" class="label" text-anchor="end">猫</text><rect x="88" y="396" width="52" height="52" rx="6" class="cell" /><rect x="144" y="396" width="52" height="52" rx="6" class="cell" /><rect x="200" y="396" width="52" height="52" rx="6" class="cell" /><rect x="256" y="396" width="52" height="52" rx="6" class="cell" /></g><g data-motion-item data-step="3" aria-label="掩码使未来位置的权重变为零"><rect x="144" y="228" width="52" height="52" rx="6" class="blocked" /><text x="170" y="252" class="mask label" text-anchor="middle">×</text><foreignObject x="152" y="256" width="36" height="20"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line muted" style="font-size:15px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mn>0</mn></mrow><annotation encoding="application/x-tex">0</annotation></semantics></math></div></foreignObject><rect x="200" y="228" width="52" height="52" rx="6" class="blocked" /><text x="226" y="252" class="mask label" text-anchor="middle">×</text><foreignObject x="208" y="256" width="36" height="20"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line muted" style="font-size:15px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mn>0</mn></mrow><annotation encoding="application/x-tex">0</annotation></semantics></math></div></foreignObject><rect x="256" y="228" width="52" height="52" rx="6" class="blocked" /><text x="282" y="252" class="mask label" text-anchor="middle">×</text><foreignObject x="264" y="256" width="36" height="20"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line muted" style="font-size:15px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mn>0</mn></mrow><annotation encoding="application/x-tex">0</annotation></semantics></math></div></foreignObject><rect x="200" y="284" width="52" height="52" rx="6" class="blocked" /><text x="226" y="308" class="mask label" text-anchor="middle">×</text><foreignObject x="208" y="312" width="36" height="20"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line muted" style="font-size:15px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mn>0</mn></mrow><annotation encoding="application/x-tex">0</annotation></semantics></math></div></foreignObject><rect x="256" y="284" width="52" height="52" rx="6" class="blocked" /><text x="282" y="308" class="mask label" text-anchor="middle">×</text><foreignObject x="264" y="312" width="36" height="20"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line muted" style="font-size:15px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mn>0</mn></mrow><annotation encoding="application/x-tex">0</annotation></semantics></math></div></foreignObject><rect x="256" y="340" width="52" height="52" rx="6" class="blocked" /><text x="282" y="364" class="mask label" text-anchor="middle">×</text><foreignObject x="264" y="368" width="36" height="20"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line muted" style="font-size:15px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mn>0</mn></mrow><annotation encoding="application/x-tex">0</annotation></semantics></math></div></foreignObject><text x="180.0" y="512" class="node-title mask" text-anchor="middle">屏蔽未来位置</text><foreignObject x="24" y="524" width="312" height="40"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line mask" style="font-size:20px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>j</mi><mo>&gt;</mo><mi>t</mi><mspace width="1em"/><mo>⇒</mo><mspace width="1em"/><msub><mi>A</mi><mrow><mi>t</mi><mi>j</mi></mrow></msub><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">j&gt;t\quad\Rightarrow\quad A_{tj}=0</annotation></semantics></math></div></foreignObject><text x="180.0" y="582" class="caption" text-anchor="middle">先加负无穷，再做 softmax</text></g><g data-motion-item data-step="4" aria-label="每一行允许区域内的权重之和为一"><rect x="88" y="228" width="52" height="52" rx="6" class="allowed" /><foreignObject x="92" y="236" width="44" height="40"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line " style="font-size:20px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mn>1.0</mn></mrow><annotation encoding="application/x-tex">1.0</annotation></semantics></math></div></foreignObject><rect x="88" y="284" width="52" height="52" rx="6" class="allowed" /><foreignObject x="92" y="292" width="44" height="40"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line " style="font-size:20px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mn>0.4</mn></mrow><annotation encoding="application/x-tex">0.4</annotation></semantics></math></div></foreignObject><rect x="144" y="284" width="52" height="52" rx="6" class="allowed" /><foreignObject x="148" y="292" width="44" height="40"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line " style="font-size:20px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mn>0.6</mn></mrow><annotation encoding="application/x-tex">0.6</annotation></semantics></math></div></foreignObject><rect x="88" y="340" width="52" height="52" rx="6" class="allowed" /><foreignObject x="92" y="348" width="44" height="40"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line " style="font-size:20px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mn>0.2</mn></mrow><annotation encoding="application/x-tex">0.2</annotation></semantics></math></div></foreignObject><rect x="144" y="340" width="52" height="52" rx="6" class="allowed" /><foreignObject x="148" y="348" width="44" height="40"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line " style="font-size:20px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mn>0.3</mn></mrow><annotation encoding="application/x-tex">0.3</annotation></semantics></math></div></foreignObject><rect x="200" y="340" width="52" height="52" rx="6" class="allowed" /><foreignObject x="204" y="348" width="44" height="40"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line " style="font-size:20px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mn>0.5</mn></mrow><annotation encoding="application/x-tex">0.5</annotation></semantics></math></div></foreignObject><rect x="88" y="396" width="52" height="52" rx="6" class="allowed" /><foreignObject x="92" y="404" width="44" height="40"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line " style="font-size:20px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mn>0.1</mn></mrow><annotation encoding="application/x-tex">0.1</annotation></semantics></math></div></foreignObject><rect x="144" y="396" width="52" height="52" rx="6" class="allowed" /><foreignObject x="148" y="404" width="44" height="40"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line " style="font-size:20px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mn>0.2</mn></mrow><annotation encoding="application/x-tex">0.2</annotation></semantics></math></div></foreignObject><rect x="200" y="396" width="52" height="52" rx="6" class="allowed" /><foreignObject x="204" y="404" width="44" height="40"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line " style="font-size:20px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mn>0.3</mn></mrow><annotation encoding="application/x-tex">0.3</annotation></semantics></math></div></foreignObject><rect x="256" y="396" width="52" height="52" rx="6" class="allowed" /><foreignObject x="260" y="404" width="44" height="40"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line " style="font-size:20px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mn>0.4</mn></mrow><annotation encoding="application/x-tex">0.4</annotation></semantics></math></div></foreignObject><text x="180.0" y="624" class="node-title k" text-anchor="middle">每行独立归一化</text><foreignObject x="24" y="632" width="312" height="56"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line k" style="font-size:23px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><munder><mo>∑</mo><mi>j</mi></munder><msub><mi>A</mi><mrow><mi>t</mi><mi>j</mi></mrow></msub><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">\sum_j A_{tj}=1</annotation></semantics></math></div></foreignObject><text x="180.0" y="708" class="caption" text-anchor="middle">数字是教学示意权重</text></g><g data-motion-item data-step="5" aria-label="训练时可同时计算所有目标位置"><rect x="16" y="720" width="328" height="120" rx="6" class="card" style="stroke:var(--k)"/><text x="180.0" y="748" class="node-title k" text-anchor="middle">训练时：同时计算各行</text><foreignObject x="28" y="760" width="152.0" height="38"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line " style="font-size:18px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mrow><mi mathvariant="normal">B</mi><mi mathvariant="normal">O</mi><mi mathvariant="normal">S</mi></mrow><mo>→</mo><mtext>我</mtext></mrow><annotation encoding="application/x-tex">\mathrm{BOS}\to\text{我}</annotation></semantics></math></div></foreignObject><foreignObject x="180.0" y="760" width="152.0" height="38"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line " style="font-size:18px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>我</mtext><mo>→</mo><mtext>爱</mtext></mrow><annotation encoding="application/x-tex">\text{我}\to\text{爱}</annotation></semantics></math></div></foreignObject><foreignObject x="28" y="796" width="152.0" height="32"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line " style="font-size:18px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>爱</mtext><mo>→</mo><mtext>猫</mtext></mrow><annotation encoding="application/x-tex">\text{爱}\to\text{猫}</annotation></semantics></math></div></foreignObject><foreignObject x="180.0" y="796" width="152.0" height="32"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line " style="font-size:18px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>猫</mtext><mo>→</mo><mrow><mi mathvariant="normal">E</mi><mi mathvariant="normal">O</mi><mi mathvariant="normal">S</mi></mrow></mrow><annotation encoding="application/x-tex">\text{猫}\to\mathrm{EOS}</annotation></semantics></math></div></foreignObject></g><g data-motion-item data-step="6" aria-label="生成时需要逐步增加目标前缀"><rect x="16" y="864" width="328" height="112" rx="6" class="card" style="stroke:var(--q)"/><text x="180.0" y="892" class="node-title q" text-anchor="middle">生成时：逐步扩展前缀</text><foreignObject x="28" y="904" width="304" height="40"><div xmlns="http://www.w3.org/1999/xhtml" class="math-line " style="font-size:17px"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mrow><mi mathvariant="normal">B</mi><mi mathvariant="normal">O</mi><mi mathvariant="normal">S</mi></mrow><mo>→</mo><mtext>我</mtext><mo>→</mo><mtext>爱</mtext><mo>→</mo><mtext>猫</mtext><mo>→</mo><mrow><mi mathvariant="normal">E</mi><mi mathvariant="normal">O</mi><mi mathvariant="normal">S</mi></mrow></mrow><annotation encoding="application/x-tex">\mathrm{BOS}\to\text{我}\to\text{爱}\to\text{猫}\to\mathrm{EOS}</annotation></semantics></math></div></foreignObject><text x="180.0" y="962" class="caption" text-anchor="middle">下一步取决于刚选出的 token</text></g></svg></div><p class="sr-only" data-motion-status role="status" aria-live="polite" aria-atomic="true"></p><p class="foot">读图重点：右上角被屏蔽，主对角线可见。矩阵数字仅示意归一化结果，不来自前文的三 token 演算；允许区域同时用边框、数字和位置表达。</p><p class="foot">播放控件显示当前步骤。键盘 ← / → 切换步骤，Home / End 查看起点和终点。</p><noscript><p>当前显示完整静态图，启用 JavaScript 后可以播放。</p></noscript></main><script data-diagram-controls>
+    (() => {
+      const params = new URLSearchParams(location.search);
+      const staticOverride = params.get('motion') === 'static' || document.documentElement.dataset.motion === 'static';
+      const requestedStep = params.get('step');
+      const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+      document.fonts.ready.then(() => { document.documentElement.dataset.fontsReady = 'true'; });
+
+      document.querySelectorAll('[data-motion-root]').forEach((root) => {
+        const count = Number(root.dataset.stepCount);
+        const hold = parseFloat(getComputedStyle(root).getPropertyValue('--motion-hold')) || 720;
+        const parsedStep = requestedStep !== null && /^\d+$/.test(requestedStep) ? Number(requestedStep) : null;
+        const exactStep = params.get('motion') === 'step' && Number.isSafeInteger(parsedStep) && parsedStep >= 0 && parsedStep <= count ? parsedStep : null;
+        const items = [...root.querySelectorAll('[data-motion-item]')];
+        const labels = Array.from({ length: count + 1 }, (_, index) => index === 0
+          ? 'Ready'
+          : items.filter((item) => !item.hasAttribute('data-motion-decorative') && Number(item.dataset.step) === index)
+              .map((item) => item.getAttribute('aria-label')).join('; '));
+        const controls = root.querySelector('[data-motion-controls]');
+        const status = root.querySelector('[data-motion-status]');
+        const visibleStep = root.querySelector('[data-motion-step-label]');
+        let step = count;
+        let timer = 0;
+        let playing = false;
+        let stepBeforeReduce = 0;
+        let resumeAfterReduce = root.dataset.motionMode === 'reveal';
+
+        const buttons = (action) => controls.querySelector(`[data-motion-action="${action}"]`);
+        const clearClock = () => { window.clearTimeout(timer); timer = 0; };
+        const announce = () => { status.textContent = `Step ${step} of ${count}: ${labels[step] || 'Complete'}`; };
+        const setControlsAvailable = (available) => {
+          controls.hidden = !available;
+          controls.setAttribute('aria-hidden', String(!available));
+          controls.dataset.playbackDisabled = String(!available);
+          controls.querySelectorAll('button').forEach((control) => { control.disabled = !available; });
+        };
+
+        function render(next, userInitiated = false) {
+          step = Math.max(0, Math.min(count, next));
+          root.dataset.stepCurrent = String(step);
+          root.dataset.frame = step === count ? 'end' : step === 0 ? 'start' : 'step';
+          items.forEach((item) => {
+            const itemStep = Number(item.dataset.step);
+            item.classList.toggle('is-visible', itemStep <= step);
+            item.classList.toggle('is-current', itemStep === step);
+          });
+          if (visibleStep) visibleStep.textContent = String(step);
+          const unavailable = controls.dataset.playbackDisabled === 'true';
+          buttons('prev').disabled = unavailable || step === 0;
+          buttons('next').disabled = unavailable || step === count;
+          if (userInitiated) announce();
+        }
+
+        function pause(userInitiated = false) {
+          clearClock();
+          playing = false;
+          root.classList.remove('is-playing');
+          buttons('play').setAttribute('aria-pressed', 'false');
+          buttons('pause').setAttribute('aria-pressed', 'true');
+          if (userInitiated) status.textContent = `Paused at step ${step} of ${count}`;
+        }
+
+        function finish() {
+          pause(false);
+          root.dataset.frame = 'end';
+          status.textContent = `Complete · step ${count} of ${count}`;
+        }
+
+        function tick() {
+          if (!playing) return;
+          if (step >= count) { finish(); return; }
+          render(step + 1, false);
+          if (step >= count) { finish(); return; }
+          timer = window.setTimeout(tick, hold);
+        }
+
+        function play(fromStart = false, userInitiated = false) {
+          clearClock();
+          if (fromStart || step >= count) render(0, userInitiated);
+          playing = true;
+          root.classList.add('is-playing');
+          buttons('play').setAttribute('aria-pressed', 'true');
+          buttons('pause').setAttribute('aria-pressed', 'false');
+          timer = window.setTimeout(tick, hold);
+        }
+
+        controls.addEventListener('click', (event) => {
+          const button = event.target.closest('[data-motion-action]');
+          if (!button) return;
+          const action = button.dataset.motionAction;
+          if (action === 'play') play(false, true);
+          if (action === 'pause') pause(true);
+          if (action === 'replay') play(true, true);
+          if (action === 'prev') { pause(false); render(step - 1, true); }
+          if (action === 'next') { pause(false); render(step + 1, true); }
+        });
+
+        root.addEventListener('keydown', (event) => {
+          if (event.target.matches('input, textarea, select, a[href]')) return;
+          const keys = { ArrowLeft: step - 1, ArrowRight: step + 1, Home: 0, End: count };
+          if (event.code === 'Space' && !event.target.closest('button')) {
+            event.preventDefault();
+            playing ? pause(true) : play(false, true);
+            return;
+          }
+          if (!event.ctrlKey && !event.metaKey && !event.altKey && event.key.toLowerCase() === 'r') {
+            event.preventDefault();
+            play(true, true);
+            return;
+          }
+          if (!(event.key in keys)) return;
+          event.preventDefault();
+          pause(false);
+          render(keys[event.key], true);
+        });
+
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'hidden' && playing) pause(false);
+        });
+        reduce.addEventListener('change', (event) => {
+          if (event.matches && root.dataset.motionState !== 'reduced') {
+            stepBeforeReduce = step;
+            resumeAfterReduce = playing;
+          }
+          pause(false);
+          if (event.matches) {
+            setControlsAvailable(false);
+            render(count, false);
+            root.dataset.frame = 'static';
+            root.dataset.motionState = 'reduced';
+            status.textContent = 'Reduced motion · complete static frame · playback controls unavailable';
+          } else if (staticOverride || root.dataset.motionMode === 'none') {
+            setControlsAvailable(false);
+            render(count, false);
+            root.dataset.frame = 'static';
+            root.dataset.motionState = 'static';
+            status.textContent = 'Static frame · complete diagram · playback controls unavailable';
+          } else {
+            delete root.dataset.motionState;
+            if (exactStep !== null) {
+              setControlsAvailable(false);
+              render(exactStep, false);
+              root.dataset.frame = 'step';
+              root.dataset.motionState = 'test';
+              status.textContent = `Test frame · step ${step} of ${count} · playback controls unavailable`;
+            } else {
+              setControlsAvailable(true);
+              render(stepBeforeReduce, false);
+              status.textContent = `Ready · step ${step} of ${count}`;
+              if (resumeAfterReduce && root.dataset.motionMode === 'reveal') {
+                play(false, false);
+              }
+            }
+            resumeAfterReduce = false;
+          }
+        });
+
+        if (staticOverride) {
+          document.documentElement.dataset.motion = 'static';
+          pause(false);
+          setControlsAvailable(false);
+          render(count, false);
+          root.dataset.frame = 'static';
+          root.dataset.motionState = 'static';
+          status.textContent = 'Static frame · complete diagram · playback controls unavailable';
+        } else if (reduce.matches || root.dataset.motionMode === 'none') {
+          pause(false);
+          setControlsAvailable(false);
+          render(count, false);
+          root.dataset.frame = 'static';
+          root.dataset.motionState = reduce.matches ? 'reduced' : 'static';
+          status.textContent = reduce.matches
+            ? 'Reduced motion · complete static frame · playback controls unavailable'
+            : 'Static frame · complete diagram · playback controls unavailable';
+        } else if (exactStep !== null) {
+          document.documentElement.dataset.motion = 'step';
+          pause(false);
+          setControlsAvailable(false);
+          render(exactStep, false);
+          root.dataset.frame = 'step';
+          root.dataset.motionState = 'test';
+          status.textContent = `Test frame · step ${step} of ${count} · playback controls unavailable`;
+        } else if (root.dataset.motionMode === 'reveal') {
+          setControlsAvailable(true);
+          render(0, false);
+          play(false, false);
+        } else {
+          pause(false);
+          setControlsAvailable(true);
+          render(0, false);
+          status.textContent = `Ready · step 0 of ${count}`;
+        }
+        root.classList.add('motion-ready');
+      });
+    })();
+  </script></body></html>
