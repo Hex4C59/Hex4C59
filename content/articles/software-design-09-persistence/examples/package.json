@@ -1,0 +1,11 @@
+{
+  "name": "software-design-09-examples",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test owner.test.mjs codec.test.mjs store.test.mjs replace.test.mjs process.test.mjs",
+    "restart": "node restart-demo.mjs",
+    "failures": "node failure-demo.mjs"
+  }
+}
