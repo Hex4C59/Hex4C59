@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.base.json",
+  "files": [
+    "src/with-contract.ts",
+    "src/conflicting-contract.ts"
+  ],
+  "include": []
+}
