@@ -8,6 +8,7 @@ summary = "翻译 arXiv:2609.36054v1 的正文、补充材料与注释，保留�
 tags = ["人工智能", "智能爆炸", "AI 治理"]
 categories = ["ai"]
 source_kind = "translation"
+series = ["ai-papers"]
 original_title = "What if automating AI R&D triggers an intelligence explosion?"
 original_url = "https://arxiv.org/abs/2609.36054v1"
 original_author = "Alan Chan, Christoph Winter, Andrew Barto, Jakub Pachocki, Geoffrey Hinton, Eric Horvitz, Yoshua Bengio, Dawn Song, Jack Clark, Hilary Greaves, Anton Korinek, Samuel Hammond, Thore Graepel, Ben Bariach, Philip H. S. Torr, Sheila A. McIlraith, Jeff Clune, Sam Manning, Girish Sastry, Tom Davidson, Daniel Eth, Sören Mindermann"
