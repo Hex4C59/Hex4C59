@@ -106,6 +106,14 @@ related_reading = [
 
 需要数学公式的文章在 front matter 中填写 `math = true`，支持 `$…$` 和 `$$…$$`。未开启的页面不加载 KaTeX。连续阅读布局同时考虑当前展示章节与目录文章的设置。
 
+## 划线讨论
+
+文章页可以通过自定义侧栏连接现有 GitHub Discussions。选中文字后，读者先查看附近的话题，再加入已有讨论或发起新话题；回复保持一级结构。正文按段落显示已加载的话题数，只突出当前引用。手机使用底部面板，桌面在打开讨论时收起左侧目录。
+
+服务代码、部署步骤和数据边界见 [评论服务说明](../services/comments/README.md)。`hugo.toml` 的 `[params.comments.annotations]` 控制开关，API 地址优先读取 `HUGO_COMMENTS_API_URL`，其次读取 `apiURL`。未配置 API 时继续使用原有 Giscus 评论。生产构建通过 GitHub Actions 的仓库变量 `COMMENTS_API_URL` 传入服务地址。
+
+本地测试可以把 `HUGO_COMMENTS_API_URL` 设为本地评论服务地址，再执行 `hugo server -D`。现有评论保持原来的 pathname 映射；新划线作为带引用和原文链接的普通顶层评论保存，回复仍在同一篇文章的 Discussion 中。退出登录与取消操作不会发布评论；发送失败时保留草稿，读者可以核对后重试。
+
 ## 搜索引擎收录
 
 Hugo 自动生成 `sitemap.xml`，`layouts/robots.txt` 会用本次构建的站点地址声明站点地图。首页描述取自 `hugo.toml`；其他页面优先使用自己的 `description`，文章未填写时使用去掉 HTML 的摘要，最后回退到站点描述。正式文章仍应填写准确、具体的描述。
@@ -124,7 +132,7 @@ Hugo 自动生成 `sitemap.xml`，`layouts/robots.txt` 会用本次构建的站�
 
 ## 预览与发布检查
 
-Hugo 固定为 `.hugo-version` 中的版本。本地和 CI 读取同一个版本文件；升级时一起运行以下检查，不单独修改工作流中的版本号。验证工具只使用 Python 3.9 及以上的标准库，无需安装 npm、Go 或 Dart Sass 工具链。
+Hugo 固定为 `.hugo-version` 中的版本。本地和 CI 读取同一个版本文件；升级时一起运行以下检查，不单独修改工作流中的版本号。站点构建检查只使用 Python 3.9 及以上的标准库，无需安装 npm、Go 或 Dart Sass 工具链。评论服务与文本定位的测试使用 Node.js 24 内置测试工具，不需要安装第三方测试依赖。
 
 ```sh
 hugo version
@@ -135,6 +143,7 @@ hugo server -D
 
 ```sh
 python3 -m unittest discover -s scripts/tests -v
+node --test services/comments/tests/*.test.mjs
 python3 scripts/build.py
 git diff --check
 ```

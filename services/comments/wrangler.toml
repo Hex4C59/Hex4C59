@@ -1,0 +1,25 @@
+name = "hex4c59-comments"
+main = "worker.mjs"
+compatibility_date = "2026-10-15"
+workers_dev = true
+
+[vars]
+SITE_URL = "https://hex4c59.cc/"
+REPO = "Hex4C59/Hex4C59"
+REPO_ID = "R_kgDOPvFwkg"
+CATEGORY = "Comments"
+CATEGORY_ID = "DIC_kwDOPvFwks4C5BOF"
+OWNER = "Hex4C59"
+
+[[durable_objects.bindings]]
+name = "ARTICLES"
+class_name = "ArticleComments"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["ArticleComments"]
+
+[[ratelimits]]
+name = "WRITE_LIMITER"
+namespace_id = "19591015"
+simple = { limit = 10, period = 60 }

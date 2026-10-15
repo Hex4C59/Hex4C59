@@ -38,3 +38,6 @@ venv/
 !/.agents/content/
 /.agents/content/*
 !/.agents/content/section-routing.md
+
+# 评论服务本地运行缓存
+/.wrangler/

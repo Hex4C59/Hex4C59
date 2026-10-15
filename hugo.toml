@@ -83,6 +83,12 @@ buildExpired = false
     themeLight = "light"
     themeDark = "dark"
 
+  [params.comments.annotations]
+    enabled = true
+    # Set HUGO_COMMENTS_API_URL locally or COMMENTS_API_URL in GitHub Actions.
+    # With no API configured, the existing Giscus comments remain available.
+    apiURL = ""
+
   [params.analytics.cloudflare]
     enabled = true
     # Read the site beacon token from HUGO_CLOUDFLARE_WEB_ANALYTICS_TOKEN at build time.

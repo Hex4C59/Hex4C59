@@ -1,0 +1,33 @@
+{{- $owner := index (strings.Split site.Params.comments.repo "/") 0 -}}
+{{- $settings := site.Params.comments.annotations | default dict -}}
+{{- $api := os.Getenv "HUGO_COMMENTS_API_URL" | default $settings.apiURL -}}
+{{- if and ($settings.enabled | default false) $api -}}
+<section class="post-comments annotations" id="article-discussions" data-annotations
+  data-site-url="{{ site.BaseURL }}" data-api="{{ $api }}" data-path="{{ .RelPermalink }}" data-page-url="{{ .Permalink }}" data-owner="{{ $owner }}">
+  <h2 class="post-comments-title">一起讨论</h2>
+  <p class="post-comments-intro">选中正文中的文字，可以针对这段内容发起讨论。</p>
+  <div class="annotation-entry-actions">
+    <button type="button" data-open-all>查看全部讨论<span data-total></span></button>
+    <button type="button" data-write-general>评论这篇文章</button>
+    <button type="button" data-toggle-markers aria-pressed="true">隐藏段落标记</button>
+  </div>
+  <p class="annotation-status" data-status role="status" aria-live="polite">正在读取讨论…</p>
+  <p class="annotation-fallback"><a href="https://github.com/{{ site.Params.comments.repo }}/discussions/categories/{{ site.Params.comments.category | urlize }}" target="_blank" rel="noopener noreferrer">在 GitHub 查看与管理讨论 ↗</a></p>
+  <dialog class="annotation-panel" data-panel aria-labelledby="annotation-panel-title">
+    <div class="annotation-panel-header">
+      <div class="annotation-panel-top"><button type="button" data-back hidden>← 话题列表</button><button type="button" data-close aria-label="关闭讨论并继续阅读">关闭</button></div>
+      <h2 id="annotation-panel-title" tabindex="-1">文章讨论</h2>
+      <div class="annotation-account" data-account></div>
+    </div>
+    <div class="annotation-panel-scroll" data-panel-scroll>
+      <div data-pending></div>
+      <div data-panel-body></div>
+    </div>
+  </dialog>
+  <div class="annotation-selection" data-selection-toolbar hidden role="toolbar" aria-label="选中文字的操作"><button type="button" data-comment-selection>评论选中文字</button></div>
+  <noscript><p>启用 JavaScript 后可以划线评论，也可以直接前往 GitHub 参与讨论。</p></noscript>
+</section>
+{{- with resources.Get "js/annotations.mjs" | js.Build (dict "targetPath" "js/annotations.js" "minify" hugo.IsProduction "target" "es2022") | fingerprint -}}
+<script type="module" src="{{ .RelPermalink }}" integrity="{{ .Data.Integrity }}"></script>
+{{- end -}}
+{{- end -}}

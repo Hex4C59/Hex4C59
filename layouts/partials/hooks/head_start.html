@@ -10,3 +10,24 @@
   document.documentElement.dataset.motion = motion === 'off' || matchMedia('(prefers-reduced-motion: reduce)').matches ? 'off' : 'on';
 })();
 </script>
+
+{{- $annotations := site.Params.comments.annotations | default dict -}}
+{{- if and (site.Params.comments.enabled | default false) (eq site.Params.comments.provider "giscus") ($annotations.enabled | default false) (os.Getenv "HUGO_COMMENTS_API_URL" | default $annotations.apiURL) -}}
+<script>
+(() => {
+  const url = new URL(location.href);
+  const session = url.searchParams.get('giscus');
+  if (!session) return;
+  try {
+    const pending = JSON.parse(sessionStorage.getItem('annotation-login-pending') || 'null');
+    if (pending?.nonce === url.searchParams.get('annotation_login') && pending.expires > Date.now() && session.length <= 16000) {
+      localStorage.setItem('giscus-session', JSON.stringify(session));
+    }
+    sessionStorage.removeItem('annotation-login-pending');
+  } catch (_) {}
+  url.searchParams.delete('giscus');
+  url.searchParams.delete('annotation_login');
+  history.replaceState(history.state, '', url);
+})();
+</script>
+{{- end -}}

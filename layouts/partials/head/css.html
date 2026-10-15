@@ -9,6 +9,7 @@
   (resources.Get (printf "css/colors/%s.css" (site.Params.colorPalette | default "default")))
   (resources.Get "css/site.css")
   (resources.Get "css/chroma.css")
+  (resources.Get "css/annotations.css")
 -}}
 {{- with $styles | resources.Concat "css/site-bundle.css" | minify | fingerprint }}
 <link rel="stylesheet" href="{{ .RelPermalink }}" integrity="{{ .Data.Integrity }}" media="all">

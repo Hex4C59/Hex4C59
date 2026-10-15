@@ -40,6 +40,12 @@ jobs:
           echo "${HOME}/.local/hugo" >> "${GITHUB_PATH}"
       - name: Check validation tools
         run: python3 -m unittest discover -s scripts/tests -v
+      - name: Setup Node for comment service checks
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Check comment service and text anchoring
+        run: node --test services/comments/tests/*.test.mjs
       - name: Cache restore
         id: cache-restore
         uses: actions/cache/restore@v4
@@ -50,6 +56,7 @@ jobs:
             hugo-${{ hashFiles('.hugo-version') }}-
       - name: Build and validate site
         env:
+          HUGO_COMMENTS_API_URL: ${{ vars.COMMENTS_API_URL }}
           HUGO_GOOGLE_SITE_VERIFICATION: ${{ vars.GOOGLE_SITE_VERIFICATION }}
           HUGO_BING_SITE_VERIFICATION: ${{ vars.BING_SITE_VERIFICATION }}
           HUGO_BAIDU_SITE_VERIFICATION: ${{ vars.BAIDU_SITE_VERIFICATION }}

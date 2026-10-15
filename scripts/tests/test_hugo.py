@@ -5,6 +5,7 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -62,6 +63,34 @@ class HugoContentTest(unittest.TestCase):
         path.parent.mkdir(parents=True)
         path.write_text('+++\ntitle = "Course"\nseries_start = "/tutorials/one/"\n+++\n')
         return path
+
+    def test_annotations_keep_giscus_when_api_is_not_configured(self):
+        self.article(section="articles")
+        with patch.dict("os.environ", {"HUGO_COMMENTS_API_URL": ""}):
+            self.build()
+        html = (self.output / "articles/lesson/index.html").read_text()
+        self.assertIn("giscus.app/client.js", html)
+        self.assertNotIn("data-annotations", html)
+
+    def test_annotations_enable_native_ui_and_login_callback_cleanup(self):
+        self.article(section="articles")
+        with patch.dict("os.environ", {"HUGO_COMMENTS_API_URL": "https://comments.example/"}):
+            self.build()
+        html = (self.output / "articles/lesson/index.html").read_text()
+        self.assertIn("data-annotations", html)
+        self.assertIn("data-owner=Hex4C59", html)
+        self.assertIn("annotation-login-pending", html)
+        self.assertIn("comments.example", html)
+        self.assertNotIn("giscus.app/client.js", html)
+        self.assertRegex(html, r'src=/js/annotations\.[^ >]+\.js')
+
+    def test_annotations_respect_article_comment_opt_out(self):
+        self.article(section="articles", fields="comments = false")
+        with patch.dict("os.environ", {"HUGO_COMMENTS_API_URL": "https://comments.example/"}):
+            self.build()
+        html = (self.output / "articles/lesson/index.html").read_text()
+        self.assertNotIn("data-annotations", html)
+        self.assertNotRegex(html, r'src=/js/annotations\.')
 
     def test_interactive_diagram_publishes_bundle_html_and_assets(self):
         article = self.article(section="articles", body='{{< interactive-diagram src="diagram.html" assets="flow.css,flow.js" title="Flow" >}}')

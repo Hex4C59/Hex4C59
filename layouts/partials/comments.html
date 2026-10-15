@@ -17,6 +17,11 @@
     {{- $lightTheme := $comments.themeLight | default "light" }}
     {{- $darkTheme := $comments.themeDark | default "dark" }}
 
+    {{- $annotations := $comments.annotations | default dict -}}
+    {{- $annotationAPI := os.Getenv "HUGO_COMMENTS_API_URL" | default $annotations.apiURL -}}
+    {{- if and ($annotations.enabled | default false) $annotationAPI -}}
+      {{- partial "reader/annotations.html" . -}}
+    {{- else -}}
     <section class="post-comments comments-giscus">
       <h2 class="post-comments-title">评论</h2>
       {{- if and $repo $repoId $category $categoryId }}
@@ -77,6 +82,7 @@
         </div>
       {{- end }}
     </section>
+    {{- end -}}
   {{- else if eq $provider "utterances" }}
     {{- $repo := $comments.repo | default "" }}
     {{- $issueTerm := $comments.issueTerm | default "pathname" }}
