@@ -29,7 +29,7 @@
     <section class="home-start" aria-labelledby="start-title">
       <div class="section-heading"><h2 id="start-title">第一次来？</h2></div>
       <div class="start-links">
-        {{ range . }}<a href="{{ .Start.RelPermalink }}" data-series-key="{{ .Key }}"><span class="muted">{{ .Kind }}</span><strong>{{ .Title }}</strong><span>{{ .Start.Params.series_label | default .Start.Title }} <span aria-hidden="true">→</span></span></a>{{ end }}
+        {{ range . }}<a href="{{ .Start.RelPermalink }}" data-series-key="{{ .Key }}"><span class="muted">{{ partial "series/kind-label.html" . }}</span><strong>{{ .Title }}</strong><span>{{ .Start.Params.series_label | default .Start.Title }} <span aria-hidden="true">→</span></span></a>{{ end }}
       </div>
       <a class="home-all-series" href="{{ "series/" | relURL }}">浏览全部系列 <span aria-hidden="true">→</span></a>
     </section>

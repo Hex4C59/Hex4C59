@@ -35,7 +35,7 @@
       {{- if gt (len $sequence) (len $chapters) -}}{{- $count = printf "导读 + %s" $count -}}{{- end -}}
     {{- end -}}
     {{- if $supplements -}}{{- $count = printf "%s · %d 篇配套资料" $count (len $supplements) -}}{{- end -}}
-    {{- $result = dict "Hub" . "Title" (.Params.series_title | default $name) "Members" $members "Pages" $sequence "Supplements" $supplements "SupportGroups" $supportGroups "Groups" $groups "Chapters" $chapters "Minutes" $minutes "CountLabel" $count "Kind" (index site.Data.series_kinds $kind).label -}}
+    {{- $result = dict "Hub" . "Title" (.Params.series_title | default $name) "Members" $members "Pages" $sequence "Supplements" $supplements "SupportGroups" $supportGroups "Groups" $groups "Chapters" $chapters "Minutes" $minutes "CountLabel" $count "KindKey" $kind "Kind" (index site.Data.series_kinds $kind).label -}}
   {{- end -}}
 {{- end -}}
 {{- return $result -}}

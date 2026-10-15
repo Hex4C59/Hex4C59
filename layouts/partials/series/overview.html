@@ -14,7 +14,7 @@
   {{ $page := . }}
   {{ range where $catalog "Key" .Data.Term }}
     {{ $series := . }}
-    <div class="series-overview-meta"><span>{{ .Kind }}</span><span>{{ .CountLabel }}</span><span>约 {{ .Minutes }} 分钟</span><span>更新于 <time datetime="{{ .Updated.Format "2006-01-02" }}">{{ .Updated.Format "2006-01-02" }}</time></span>{{ with .Status }}<span>{{ . }}</span>{{ end }}</div>
+    <div class="series-overview-meta"><span>{{ partial "series/kind-label.html" . }}</span><span>{{ .CountLabel }}</span><span>约 {{ .Minutes }} 分钟</span><span>更新于 <time datetime="{{ .Updated.Format "2006-01-02" }}">{{ .Updated.Format "2006-01-02" }}</time></span>{{ with .Status }}<span>{{ . }}</span>{{ end }}</div>
     {{ with partial "topics/memberships.html" $page }}<nav class="single-topics" aria-label="所属专题"><span>所属专题</span>{{ range . }}<a href="{{ .Page.RelPermalink }}">{{ .Title }} <span aria-hidden="true">→</span></a>{{ end }}</nav>{{ end }}
     <div class="series-start">
       <span class="series-start-label">{{ if .Reader }}从序言开始{{ else }}推荐起点{{ end }}</span>

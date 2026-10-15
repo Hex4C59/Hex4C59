@@ -44,7 +44,7 @@
       <article class="post-line collection-entry{{ if $series }} post-line-series{{ end }}" data-mode="{{ $mode }}"{{ if or (and (not $expand) (eq $mode "member")) (and $expand (eq $mode "hub")) }} hidden{{ end }} data-filters="{{ $attributes | jsonify }}" data-title="{{ .Title | lower }}{{ with $series }}{{ range .Members }} {{ .Title | lower }}{{ end }}{{ end }}" data-date="{{ .Date.Unix }}" data-lastmod="{{ $updated.Unix }}" data-difficulty="{{ .Params.difficulty | default "unknown" | lower }}">
         <time class="line-date" datetime="{{ $updated.Format "2006-01-02" }}">{{ $updated.Format "2006-01-02" }}</time>
         <div class="line-body">
-          {{ with $series }}<p class="series-entry-label">{{ .Kind }} · {{ .CountLabel }}</p>{{ end }}
+          {{ with $series }}<p class="series-entry-label">{{ partial "series/kind-label.html" . }} · {{ .CountLabel }}</p>{{ end }}
           {{ if and $reader (not $series) }}<p class="series-entry-label">{{ $reader.Title }} · {{ with .Params.series_role }}{{ (index site.Data.series_roles .).label }}{{ else }}正文{{ end }}</p>{{ end }}
           <h3 class="line-title"><a href="{{ .RelPermalink }}">{{ with $series }}{{ .Title }}{{ else }}{{ $entry.Title }}{{ end }}</a></h3>
           <p class="line-summary">{{ .Description | default .Summary | plainify | htmlUnescape | truncate 110 }}</p>

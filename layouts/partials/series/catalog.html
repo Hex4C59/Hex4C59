@@ -49,8 +49,9 @@
         {{- $groups = $groups | append (dict "Title" $title "Pages" $remaining) -}}
       {{- end -}}
     {{- end -}}
-    {{- $kind := "文章合集" -}}
-    {{- if $reader -}}{{- $kind = $reader.Kind -}}{{- else -}}{{- with $term.Params.series_kind -}}{{- $kind = (index site.Data.series_kinds .).label -}}{{- end -}}{{- end -}}
+    {{- $kindKey := $term.Params.series_kind | default "collection" -}}
+    {{- with $reader -}}{{- $kindKey = .KindKey -}}{{- end -}}
+    {{- $kind := (index site.Data.series_kinds $kindKey).label -}}
     {{- $status := $term.Params.series_status | default "" -}}
     {{- if not $status -}}{{- with $reader -}}{{- $status = .Hub.Params.series_status | default "" -}}{{- end -}}{{- end -}}
     {{- $countLabel := printf "%d 篇" (len $members) -}}
@@ -59,7 +60,7 @@
     {{- if not $description -}}
       {{- with $reader -}}{{- $description = .Hub.Description -}}{{- end -}}
     {{- end -}}
-    {{- $catalog = $catalog | append (dict "Key" $term.Data.Term "Page" $term "Title" $term.Title "Description" $description "Pages" $ordered "Start" $start "Updated" $updated "Minutes" $minutes "Sections" (uniq $sections) "Groups" $groups "Reader" $reader "Kind" $kind "Status" $status "CountLabel" $countLabel) -}}
+    {{- $catalog = $catalog | append (dict "Key" $term.Data.Term "Page" $term "Title" $term.Title "Description" $description "Pages" $ordered "Start" $start "Updated" $updated "Minutes" $minutes "Sections" (uniq $sections) "Groups" $groups "Reader" $reader "KindKey" $kindKey "Kind" $kind "Status" $status "CountLabel" $countLabel) -}}
   {{- end -}}
 {{- end -}}
 {{- return (sort $catalog "Updated" "desc") -}}

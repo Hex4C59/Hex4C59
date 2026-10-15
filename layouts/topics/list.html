@@ -16,7 +16,7 @@
         {{ end }}
       </div>
       <aside class="topic-aside" aria-label="专题资料">
-        {{ with .Series }}<section><h2>专题内的系列</h2><ul class="topic-series-list">{{ range . }}<li><a href="{{ .Page.RelPermalink }}">{{ .Title }}</a><p>{{ .Kind }} · {{ .CountLabel }}</p></li>{{ end }}</ul></section>{{ end }}
+        {{ with .Series }}<section><h2>专题内的系列</h2><ul class="topic-series-list">{{ range . }}<li><a href="{{ .Page.RelPermalink }}">{{ .Title }}</a><p>{{ partial "series/kind-label.html" . }} · {{ .CountLabel }}</p></li>{{ end }}</ul></section>{{ end }}
         {{ with .Further }}<section><h2>延伸阅读</h2><ul class="topic-further-list">{{ range . }}<li><a href="{{ .Page.RelPermalink }}">{{ .Page.Title }}</a>{{ with .Reason }}<p>{{ . }}</p>{{ end }}<span>{{ (index site.Data.article_sources (partial "site/source.html" .Page)).label }}</span></li>{{ end }}</ul></section>{{ end }}
         <a class="topic-overview-link" href="{{ "topics/" | relURL }}">浏览其他专题 <span aria-hidden="true">→</span></a>
       </aside>

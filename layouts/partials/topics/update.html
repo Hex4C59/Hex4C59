@@ -1,7 +1,7 @@
 <article class="post-line home-update"{{ with .Series }} data-update-series="{{ .Key }}"{{ end }}>
   <time class="line-date" datetime="{{ .Updated.Format "2006-01-02" }}">{{ .Updated.Format "2006-01-02" }}</time>
   <div class="line-body">
-    {{ with .Series }}<p class="series-entry-label">{{ .Kind }} · {{ .CountLabel }}</p>{{ end }}
+    {{ with .Series }}<p class="series-entry-label">{{ partial "series/kind-label.html" . }} · {{ .CountLabel }}</p>{{ end }}
     <h3 class="line-title"><a href="{{ .Page.RelPermalink }}">{{ .Title }}</a></h3>
     {{ if .Series }}
       <p class="home-update-latest"><span>最近更新</span><a href="{{ .Latest.RelPermalink }}">{{ .Latest.Params.series_label | default .Latest.Title }} <span aria-hidden="true">→</span></a></p>

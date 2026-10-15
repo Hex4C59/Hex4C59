@@ -88,7 +88,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .home-recent .line-summary { margin: .5rem 0 .7rem; font-size: .84rem; line-height: 1.9; }
 .line-meta a { color: var(--entry-accent); }
 .home-recent .line-meta { font-size: .7rem; }
-.home-recent .series-entry-label { color: var(--entry-accent); font-size: .68rem; margin-bottom: .25rem; }
+.home-recent .series-entry-label { font-size: .68rem; margin-bottom: .25rem; }
 .home-reading-rail { min-width: 0; padding-left: 1.6rem; border-left: 1px solid var(--code-border); }
 .home-reading-rail .section-heading { gap: .5rem; }
 .home-reading-rail .section-heading h2 { font-size: 1rem; }
@@ -97,7 +97,11 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .series-feature { --entry-accent: var(--accent); --entry-soft: var(--accent-soft); }
 .series-feature[data-series-key="rust-from-zero"] { --entry-accent: var(--green); --entry-soft: var(--green-soft); }
 .series-feature[data-series-key="智能体工程模式"] { --entry-accent: var(--blue); --entry-soft: var(--blue-soft); }
-.series-feature-kind { color: var(--entry-accent); }
+/* Series type labels share these colors across every entry point. */
+.series-kind-label { color: var(--content-secondary); }
+.series-kind-label[data-series-kind="collection"] { color: var(--accent); }
+.series-kind-label[data-series-kind="translation"] { color: var(--blue); }
+.series-kind-label[data-series-kind="course"] { color: var(--green); }
 .series-feature-title a:hover { color: var(--entry-accent); }
 .series-feature-links a:first-child { color: var(--entry-accent); }
 .series-feature-links a > span[aria-hidden], .start-links a > span:last-child > span { display: inline-block; }

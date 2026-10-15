@@ -2,7 +2,7 @@
 {{ $topics := partial "topics/memberships.html" $page }}
 <article class="reader-article">
   <header class="single-intro-container">
-    {{ with $series }}<p class="series-eyebrow">{{ if $page.Params.series_index }}{{ .Kind }} · 系列目录{{ else }}{{ with $page.Params.series_number }}第 {{ printf "%02d" (int .) }} 篇{{ else }}{{ with $page.Params.series_role }}{{ (index site.Data.series_roles .).label }}{{ else }}导读{{ end }}{{ end }}{{ end }}</p>{{ end }}
+    {{ with $series }}<p class="series-eyebrow">{{ if $page.Params.series_index }}{{ partial "series/kind-label.html" . }} · 系列目录{{ else }}{{ with $page.Params.series_number }}第 {{ printf "%02d" (int .) }} 篇{{ else }}{{ with $page.Params.series_role }}{{ (index site.Data.series_roles .).label }}{{ else }}导读{{ end }}{{ end }}{{ end }}</p>{{ end }}
     <h1 class="single-title">{{ if and $series $page.Params.series_index }}{{ $series.Title }}{{ else }}{{ if $series }}{{ $page.Params.series_label | default $page.Title }}{{ else }}{{ $page.Title }}{{ end }}{{ end }}</h1>
     {{ with $page.Description | default $page.Params.summary }}<p class="single-summary">{{ . | markdownify }}</p>{{ end }}
     <p class="single-date">
