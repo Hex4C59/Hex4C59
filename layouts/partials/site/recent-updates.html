@@ -1,0 +1,14 @@
+{{- /* Collapse both open collections and courses only on the home update feed. */ -}}
+{{- $entries := slice -}}{{- $members := slice -}}
+{{- range partialCached "series/catalog.html" site -}}
+  {{- $pages := .Pages -}}{{- with .Reader -}}{{- $pages = .Members -}}{{- end -}}
+  {{- range $pages -}}{{- $members = $members | append .RelPermalink -}}{{- end -}}
+  {{- $latest := index (sort $pages "Lastmod" "desc") 0 -}}
+  {{- $entries = $entries | append (dict "Page" .Page "Title" .Title "Series" . "Latest" $latest "Updated" .Updated) -}}
+{{- end -}}
+{{- range partialCached "site/articles.html" site -}}
+  {{- if and (not .Params.series_index) (not (in $members .RelPermalink)) -}}
+    {{- $entries = $entries | append (dict "Page" . "Title" .Title "Updated" .Lastmod) -}}
+  {{- end -}}
+{{- end -}}
+{{- return (sort $entries "Updated" "desc") -}}

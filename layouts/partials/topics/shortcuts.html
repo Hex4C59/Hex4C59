@@ -1,0 +1,3 @@
+{{ with partialCached "topics/catalog.html" site }}
+<nav class="topic-shortcuts" aria-label="按专题浏览"><span>按专题浏览</span>{{ range . }}<a href="{{ .Page.RelPermalink }}">{{ .Title }}</a>{{ end }}<a href="{{ "topics/" | relURL }}">全部专题 <span aria-hidden="true">→</span></a></nav>
+{{ end }}

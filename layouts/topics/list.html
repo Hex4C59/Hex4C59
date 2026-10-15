@@ -1,0 +1,31 @@
+{{ define "main" }}
+{{ partial "breadcrumbs.html" . }}
+{{ if .Params.topic_key }}
+  {{ range where (partialCached "topics/catalog.html" site) "Key" .Params.topic_key }}
+    <header class="topic-intro"><h1>{{ .Title }}</h1><p class="page-description">{{ .Description }}</p><p class="topic-meta">{{ len .Articles }} 篇正文{{ with .Series }} · {{ len . }} 个系列{{ end }} · 更新于 <time datetime="{{ .Updated.Format "2006-01-02" }}">{{ .Updated.Format "2006-01-02" }}</time></p></header>
+    <section class="topic-start" aria-labelledby="topic-start-title"><h2 id="topic-start-title">从这里开始</h2><a href="{{ .Start.RelPermalink }}">{{ .Start.Params.series_label | default .Start.Title }} <span aria-hidden="true">→</span></a>{{ with .Start.Description }}<p>{{ . }}</p>{{ end }}</section>
+    <div class="topic-layout">
+      <div class="topic-main">
+        <div class="section-heading"><h2 id="topic-routes-title">推荐阅读路线</h2><a href="#topic-all-articles">全部文章 <span aria-hidden="true">↓</span></a></div>
+        <p class="topic-route-intro">可以沿路线选读；需要逐章学习时，进入对应系列的完整目录。</p>
+        {{ range $index, $route := .Routes }}
+        <section class="topic-route" aria-labelledby="topic-route-{{ $index }}"><div class="topic-route-heading"><span class="topic-route-number" aria-hidden="true">{{ printf "%02d" (add $index 1) }}</span><h3 id="topic-route-{{ $index }}">{{ .Title }}</h3></div>{{ with .Description }}<p class="topic-route-description">{{ . }}</p>{{ end }}
+          <ol class="topic-reading-list">{{ range .Pages }}<li><a href="{{ .RelPermalink }}">{{ .Params.series_label | default .Title }}</a><span>{{ (index site.Data.article_sources (partial "site/source.html" .)).label }} · {{ .ReadingTime }} 分钟</span></li>{{ end }}</ol>
+          {{ with .Series }}<a class="topic-route-series" href="{{ .Page.RelPermalink }}">完整系列：{{ .Title }} <span aria-hidden="true">→</span></a>{{ end }}
+        </section>
+        {{ end }}
+      </div>
+      <aside class="topic-aside" aria-label="专题资料">
+        {{ with .Series }}<section><h2>专题内的系列</h2><ul class="topic-series-list">{{ range . }}<li><a href="{{ .Page.RelPermalink }}">{{ .Title }}</a><p>{{ .Kind }} · {{ .CountLabel }}</p></li>{{ end }}</ul></section>{{ end }}
+        {{ with .Further }}<section><h2>延伸阅读</h2><ul class="topic-further-list">{{ range . }}<li><a href="{{ .Page.RelPermalink }}">{{ .Page.Title }}</a>{{ with .Reason }}<p>{{ . }}</p>{{ end }}<span>{{ (index site.Data.article_sources (partial "site/source.html" .Page)).label }}</span></li>{{ end }}</ul></section>{{ end }}
+        <a class="topic-overview-link" href="{{ "topics/" | relURL }}">浏览其他专题 <span aria-hidden="true">→</span></a>
+      </aside>
+    </div>
+    <section class="topic-all-articles" aria-labelledby="topic-all-title"><details><summary id="topic-all-title">专题全部文章 <span>{{ len .Articles }} 篇</span></summary><ul class="topic-article-index" id="topic-all-articles">{{ range sort .Articles "Lastmod" "desc" }}<li><a href="{{ .RelPermalink }}">{{ .Title }}</a><span>{{ (index site.Data.article_sources (partial "site/source.html" .)).label }}</span></li>{{ end }}</ul></details></section>
+  {{ end }}
+{{ else }}
+  <h1>{{ .Title }}</h1><p class="page-description">{{ .Description }}</p>
+  <div class="topic-directory">{{ range partialCached "topics/catalog.html" site }}{{ partial "topics/entry.html" (merge . (dict "Heading" "h2")) }}{{ end }}</div>
+  <div class="topic-directory-follow"><a href="{{ "series/" | relURL }}">查看全部系列 <span aria-hidden="true">→</span></a><a href="{{ "articles/" | relURL }}">查找单篇文章 <span aria-hidden="true">→</span></a></div>
+{{ end }}
+{{ end }}

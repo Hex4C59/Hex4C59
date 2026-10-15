@@ -1,0 +1,8 @@
+<article class="topic-entry" data-topic="{{ .Key }}">
+  <a class="topic-entry-link" href="{{ .Page.RelPermalink }}" aria-labelledby="topic-title-{{ .Key }}">
+  {{ $heading := .Heading | default "h3" }}
+  {{ printf "<%s>" $heading | safeHTML }}<span id="topic-title-{{ .Key }}">{{ .Title }}</span> <span aria-hidden="true">→</span>{{ printf "</%s>" $heading | safeHTML }}
+  <p>{{ .Description }}</p>
+  {{ with .Label }}<p class="topic-entry-label">{{ . }}</p>{{ end }}
+  </a>
+</article>

@@ -42,10 +42,12 @@ class HugoContentTest(unittest.TestCase):
                         'tags = []\ncategories = ["ai"]\n' + fields + '\n+++\n' + body)
         return path
 
-    def build(self, error=None, include_drafts=False):
+    def build(self, error=None, include_drafts=False, base_url=None):
         command = ["hugo", "--gc", "--minify", "--source", str(self.root)]
         if include_drafts:
             command.append("--buildDrafts")
+        if base_url:
+            command.extend(["--baseURL", base_url])
         result = subprocess.run(command,
                                 capture_output=True, text=True)
         output = result.stdout + result.stderr
@@ -428,6 +430,68 @@ class HugoContentTest(unittest.TestCase):
         self.assertIn('文章合集', html)
         self.assertIn('/articles/first/', html)
         self.assertIn('/articles/second/', html)
+
+    def topic(self, fields='include_categories = ["ai"]', start='/articles/first/'):
+        path = self.content / 'topics/ai/_index.md'
+        path.parent.mkdir(parents=True)
+        (self.content / 'topics/_index.md').write_text('+++\ntitle = "专题"\ndescription = "阅读路线"\n+++\n')
+        path.write_text('+++\ntitle = "Agent 专题"\ndescription = "从概念到实践"\n'
+                        'topic_key = "ai"\nweight = 10\ntopic_start = "' + start + '"\n' + fields + '\n'
+                        '[[reading_routes]]\ntitle = "从这里读起"\npages = ["' + start + '"]\n+++\n')
+        return path
+
+    def test_topic_preserves_old_urls_and_excludes_drafts_and_search_chrome(self):
+        import json
+        self.article(section='articles', slug='first', fields='url = "/old-first/"')
+        draft = self.article(section='articles', slug='unfinished')
+        draft.write_text(draft.read_text().replace('draft = false', 'draft = true'))
+        self.topic()
+        self.build(base_url='https://example.org/blog/')
+        topic = (self.output / 'topics/ai/index.html').read_text()
+        article = (self.output / 'old-first/index.html').read_text()
+        self.assertIn('1 篇正文', topic)
+        self.assertIn('href=/blog/old-first/', topic)
+        self.assertNotIn('unfinished', topic)
+        self.assertIn('aria-label=所属专题', article)
+        self.assertIn('href=/blog/topics/ai/', article)
+        self.assertIn('aria-label=返回专题阅读路线', article)
+        entries = json.loads((self.output / 'index.json').read_text())
+        self.assertEqual(len(entries), 1)
+        self.assertNotIn('推荐阅读路线', entries[0]['content'])
+        home = (self.output / 'index.html').read_text()
+        self.assertLess(home.index('id=home-topics-title'), home.index('id=recent-title'))
+
+    def test_home_groups_open_series_without_hiding_standalone_articles(self):
+        self.article(section='articles', slug='first', fields='series = ["notes"]\nlastmod = 2026-10-14')
+        self.article(section='articles', slug='second', fields='series = ["notes"]\nlastmod = 2026-10-15')
+        self.article(section='articles', slug='standalone')
+        self.topic('include_series = ["notes"]\ninclude_categories = ["ai"]')
+        self.build()
+        home = (self.output / 'index.html').read_text()
+        self.assertEqual(home.count('data-update-series=notes'), 1)
+        updates = re.search(r'<section class="?list-container home-recent.*?</section>', home, re.S).group()
+        self.assertIn('href=/articles/second/', updates)
+        self.assertNotIn('href=/articles/first/', updates)
+        self.assertIn('href=/articles/standalone/', updates)
+        topic = (self.output / 'topics/ai/index.html').read_text()
+        self.assertIn('3 篇正文', topic)
+        series = (self.output / 'series/notes/index.html').read_text()
+        self.assertIn('href=/topics/ai/', series)
+
+    def test_topic_rejects_unpublished_or_missing_reading_start(self):
+        self.article(section='articles', slug='first')
+        draft = self.article(section='articles', slug='unfinished')
+        draft.write_text(draft.read_text().replace('draft = false', 'draft = true'))
+        path = self.topic(start='/articles/missing/')
+        for start in ('/articles/missing/', '/articles/unfinished/'):
+            with self.subTest(start=start):
+                path.write_text(path.read_text().replace('/articles/missing/', start))
+                self.build('must resolve to a published article content path')
+
+    def test_topic_rejects_unknown_series(self):
+        self.article(section='articles', slug='first')
+        self.topic('include_series = ["missing"]')
+        self.build('unknown series')
 
     def test_reader_membership_can_follow_an_open_collection(self):
         self.series()

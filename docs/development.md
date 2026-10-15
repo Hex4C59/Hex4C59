@@ -50,7 +50,7 @@ tags = ["Rust", "所有权", "借用"]
 
 `categories` 使用数据文件中的稳定主题键；`article_type` 可选。技术文章按需设置学习难度、公式或示例，其他文章无需这些字段。
 
-新增主题时只需在 `data/categories.toml` 增加名称、说明和顺序，然后把键填写到文章中。分类页、文章筛选和首页主题入口会自动出现。改名优先调整显示名称，保持主题键与网址稳定。没有文章的主题不显示在浏览入口。
+新增主题时只需在 `data/categories.toml` 增加名称、说明和顺序，然后把键填写到文章中。分类页、文章筛选和首页的分类入口会自动出现。改名优先调整显示名称，保持主题键与网址稳定。没有文章的主题不显示在浏览入口。
 
 每篇文章最多填写 3 个标签，使用具体、统一且贴合正文主题的名称。构建时会检查标签数量。归并旧标签时，在新标签的 `content/tags/<slug>/_index.md` 中设置旧地址的 `aliases`。普通标签无需建立单独的内容文件。
 
@@ -80,7 +80,38 @@ series_role = "appendix"
 
 系列起点 `series_start` 使用源路径，例如 `/tutorials/rust-00-learning-guide/`；正文链接使用公开网址。首页和文章页把连续系列合并到目录入口，更新日期包含附录。文章列表可展开成员，标签页默认展开；搜索和归档保留全部内容页。
 
-首页的推荐起点由 `hugo.toml` 中的 `startSeries` 选择，精选系列由 `featuredSeries` 选择。内容主题变化时调整这些选择，不修改首页模板。
+首页的推荐起点由 `hugo.toml` 中的 `startSeries` 选择。最近更新同时合并连续课程和开放合集，每个系列只显示一次，并链接到最近更新的成员；独立文章正常显示。文章列表、搜索和归档继续提供单篇入口。
+
+## 专题导览
+
+专题位于 `content/topics/`，用于说明从哪篇开始、接着读什么。它引用已有文章和系列，不保存正文副本，也不改变文章的源路径与公开网址。首页先展示专题，系列页提供按专题浏览的入口；文章头部标明所属专题，末尾可以返回阅读路线。分类仍按文章主题收录，专题负责整理推荐顺序。
+
+专题总览由 `content/topics/_index.md` 提供。每个专题使用一个子目录及 `_index.md`，在 front matter 中设置标题、描述、显示顺序和文章选择条件。例如：
+
+```toml
+topic_key = "ai"
+weight = 10
+topic_label = "机制 · 实战 · 源码分析"
+topic_start = "/agent/what-is-agent/"
+include_categories = ["ai"]
+include_series = ["agent-engineering", "DeepSeek Harness"]
+
+[[reading_routes]]
+title = "先理解执行机制"
+description = "从执行循环进入工具与状态管理。"
+series = "agent-engineering"
+pages = ["/agent/what-is-agent/", "/agent/react-paradigm/"]
+
+[[further_reading]]
+ref = "/translations/demystifying-evals-for-ai-agents/"
+reason = "了解执行记录与任务结果怎样参与评测。"
+```
+
+`include_categories`、`include_series`、`include_tags` 和 `include_pages` 取并集；阅读路线、推荐起点及延伸阅读中引用的文章也会收录。重复引用只计一篇，系列目录不计入正文数量。系列新增成员后会自动进入专题的全部文章列表；推荐路线按维护者填写的顺序显示，不随更新时间变化。
+
+`topic_start`、`pages`、`ref` 和 `include_pages` 使用 Hugo 源内容路径。模板读取目标页面的公开网址，因此 Rust 等历史地址继续保留。引用不存在、标记为草稿或不属于文章目录的页面，以及拼错系列名称，都会使构建失败。专题页面不进入文章搜索、文章 RSS 或文章阅读工具；它们仍出现在站点地图中。
+
+页面模板位于 `layouts/topics/list.html`，内容选择和归属计算位于 `layouts/partials/topics/`。新增同样结构的专题时只需添加内容与配置；已有文章无需增加专题字段。
 
 ## 样式与脚本
 

@@ -4,7 +4,7 @@
 <head>{{ partial "head.html" . }}</head>
 {{ $series := partial "series/data.html" . }}
 {{ $isArticle := and .IsPage (in (partialCached "site/article-sections.html" site) .Section) }}
-<body id="top"{{ if $series }} class="series-page reader-page"{{ else if $isArticle }} class="article-page reader-page"{{ else if .IsHome }} class="home-page"{{ else if eq .Section "series" }} class="series-directory-page"{{ end }}>
+<body id="top"{{ if $series }} class="series-page reader-page"{{ else if $isArticle }} class="article-page reader-page"{{ else if .IsHome }} class="home-page"{{ else if eq .Section "series" }} class="series-directory-page"{{ else if eq .Section "topics" }} class="topic-page"{{ end }}>
   <script>document.body.classList.add(document.documentElement.dataset.theme);</script>
   <a class="skip-link" href="{{ if $series }}#series-article-content{{ else if $isArticle }}#article-content{{ else }}#main-content{{ end }}">跳到正文</a>
   <div class="content">

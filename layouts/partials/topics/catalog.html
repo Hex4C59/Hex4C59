@@ -1,0 +1,62 @@
+{{- /* Topic guides reference existing articles; they do not create article copies. */ -}}
+{{- $catalog := slice -}}
+{{- $seriesCatalog := partialCached "series/catalog.html" site -}}
+{{- $articles := where (partialCached "site/articles.html" site) "Draft" false -}}
+{{- $articles = where $articles "Params.series_index" "ne" true -}}
+{{- with site.GetPage "/topics" -}}
+  {{- range .Sections.ByWeight -}}
+    {{- $page := . -}}
+    {{- $key := .Params.topic_key -}}
+    {{- if not $key -}}{{- errorf "%s: topic_key is required" .File.Path -}}{{- end -}}
+    {{- if in (apply $catalog "index" "." "Key") $key -}}{{- errorf "topics: duplicate topic_key %q" $key -}}{{- end -}}
+    {{- $seriesKeys := .Params.include_series | default slice -}}
+    {{- $series := slice -}}
+    {{- range $seriesKeys -}}
+      {{- $matches := where $seriesCatalog "Key" . -}}
+      {{- if not $matches -}}{{- errorf "topic %q: unknown series %q" $key . -}}{{- end -}}
+      {{- range $matches -}}{{- $series = $series | append . -}}{{- end -}}
+    {{- end -}}
+    {{- $selected := partial "topics/resolve-pages.html" (dict "Paths" (.Params.include_pages | default slice) "Topic" $key) -}}
+    {{- range $articles -}}
+      {{- if or (intersect (.Params.series | default slice) $seriesKeys) (intersect (.Params.categories | default slice) ($page.Params.include_categories | default slice)) (intersect (.Params.tags | default slice) ($page.Params.include_tags | default slice)) -}}
+        {{- $selected = $selected | append . -}}
+      {{- end -}}
+    {{- end -}}
+    {{- $selected = uniq $selected -}}
+    {{- $start := false -}}
+    {{- with .Params.topic_start -}}
+      {{- range partial "topics/resolve-pages.html" (dict "Paths" (slice .) "Topic" $key) -}}{{- $start = . -}}{{- end -}}
+    {{- end -}}
+    {{- if not $start -}}{{- errorf "topic %q: topic_start is required" $key -}}{{- end -}}
+    {{- $routes := slice -}}
+    {{- range .Params.reading_routes -}}
+      {{- $routePages := partial "topics/resolve-pages.html" (dict "Paths" .pages "Topic" $key) -}}
+      {{- $routeSeries := false -}}
+      {{- with .series -}}
+        {{- $matches := where $series "Key" . -}}
+        {{- if not $matches -}}{{- errorf "topic %q: route series %q must be included in include_series" $key . -}}{{- end -}}
+        {{- range $matches -}}{{- $routeSeries = . -}}{{- end -}}
+      {{- end -}}
+      {{- if not (and .title $routePages) -}}{{- errorf "topic %q: each reading route requires a title and published pages" $key -}}{{- end -}}
+      {{- $routes = $routes | append (dict "Title" .title "Description" .description "Pages" $routePages "Series" $routeSeries) -}}
+      {{- range $routePages -}}{{- $selected = $selected | append . -}}{{- end -}}
+    {{- end -}}
+    {{- $further := slice -}}
+    {{- range .Params.further_reading -}}
+      {{- $reason := .reason -}}
+      {{- range partial "topics/resolve-pages.html" (dict "Paths" (slice .ref) "Topic" $key) -}}
+        {{- $further = $further | append (dict "Page" . "Reason" $reason) -}}
+        {{- $selected = $selected | append . -}}
+      {{- end -}}
+    {{- end -}}
+    {{- with $start -}}{{- $selected = $selected | append . -}}{{- end -}}
+    {{- $selected = where (uniq $selected) "Params.series_index" "ne" true -}}
+    {{- $urls := slice -}}{{- $updated := .Lastmod -}}
+    {{- range $selected -}}
+      {{- $urls = $urls | append .RelPermalink -}}
+      {{- if .Lastmod.After $updated -}}{{- $updated = .Lastmod -}}{{- end -}}
+    {{- end -}}
+    {{- $catalog = $catalog | append (dict "Key" $key "Page" $page "Title" .Title "Description" .Description "Label" .Params.topic_label "Start" $start "Articles" $selected "URLs" $urls "Series" $series "SeriesKeys" $seriesKeys "Routes" $routes "Further" $further "Updated" $updated) -}}
+  {{- end -}}
+{{- end -}}
+{{- return $catalog -}}

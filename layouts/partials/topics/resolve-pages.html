@@ -1,0 +1,11 @@
+{{- $pages := slice -}}
+{{- $sections := partialCached "site/article-sections.html" site -}}
+{{- range .Paths -}}
+  {{- $page := site.GetPage . -}}
+  {{- if and $page $page.IsPage (in $sections $page.Section) (not $page.Draft) -}}
+    {{- $pages = $pages | append $page -}}
+  {{- else -}}
+    {{- errorf "topic %q: %q must resolve to a published article content path" $.Topic . -}}
+  {{- end -}}
+{{- end -}}
+{{- return $pages -}}

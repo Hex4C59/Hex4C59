@@ -1,0 +1,7 @@
+{{- $page := . -}}{{- $topics := slice -}}
+{{- range partialCached "topics/catalog.html" site -}}
+  {{- $matches := or (in .URLs $page.RelPermalink) (intersect .SeriesKeys ($page.Params.series | default slice)) -}}
+  {{- if and (eq $page.Section "series") (eq $page.Kind "term") -}}{{- $matches = or $matches (in .SeriesKeys $page.Data.Term) -}}{{- end -}}
+  {{- if $matches -}}{{- $topics = $topics | append . -}}{{- end -}}
+{{- end -}}
+{{- return $topics -}}

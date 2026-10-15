@@ -30,9 +30,8 @@ buildExpired = false
   theme = "auto"
   colorPalette = "default"
   homeIntroTitle = "好的想法需要地方降落，否则它们只会飘走!"
-  homeIntroContent = "这里记录我的学习、实践与思考。可以从一篇文章开始，也可以沿着系列慢慢读。"
+  homeIntroContent = "这里记录我的学习、实践与思考。选一个专题，沿着问题慢慢读。"
   paginationSize = 8
-  featuredSeries = ["rust-from-zero", "agent-engineering", "智能体工程模式"]
   startSeries = ["agent-engineering", "rust-from-zero"]
   listDateFormat = "2006-01-02"
   singleDateFormat = "2006-01-02"
@@ -46,6 +45,9 @@ buildExpired = false
     showCurrentPage = false
     home = "首页"
 
+  [[params.utilityMenu]]
+    name = "专题"
+    url = "/topics/"
   [[params.utilityMenu]]
     name = "分类"
     url = "/categories/"

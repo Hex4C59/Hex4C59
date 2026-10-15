@@ -26,6 +26,13 @@ articles = false
 comments = false
 
 [[sections]]
+key = "topics"
+label = "专题"
+url = "/topics/"
+articles = false
+comments = false
+
+[[sections]]
 key = "tutorials"
 label = "教程"
 url = "/tutorials/"

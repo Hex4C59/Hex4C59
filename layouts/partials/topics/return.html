@@ -1,0 +1,3 @@
+{{ with . }}
+<nav class="topic-return" aria-label="返回专题阅读路线"><span>继续按专题阅读</span>{{ range . }}<a href="{{ .Page.RelPermalink }}">返回 {{ .Title }} <span aria-hidden="true">→</span></a>{{ end }}</nav>
+{{ end }}

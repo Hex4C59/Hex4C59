@@ -1,7 +1,7 @@
 {{ define "main" }}
-{{ $articles := partialCached "site/articles.html" site }}
-{{ $pages := partial "series/recent-pages.html" $articles }}
+{{ $updates := partialCached "site/recent-updates.html" site }}
 {{ $catalog := partialCached "series/catalog.html" site }}
+{{ $topics := partialCached "topics/catalog.html" site }}
 <section class="intro home-intro" aria-labelledby="intro-title">
   <div class="intro-copy">
     <h2 id="intro-title">{{ $lines := split site.Params.homeIntroTitle "，" }}{{ range $index, $line := $lines }}<span>{{ $line }}{{ if lt $index (sub (len $lines) 1) }}，{{ end }}</span>{{ end }}</h2>
@@ -10,34 +10,32 @@
   <div class="intro-art" aria-hidden="true">{{ with resources.Get "profile/reader.svg" }}{{ .Content | safeHTML }}{{ end }}</div>
 </section>
 
-{{ $starts := slice }}
-{{ range site.Params.startSeries }}{{ range where $catalog "Key" . }}{{ $starts = $starts | append . }}{{ end }}{{ end }}
-{{ with $starts }}
-<section class="home-start" aria-labelledby="start-title">
-  <div class="section-heading"><h2 id="start-title">从这里开始</h2><a href="{{ "about/" | relURL }}">关于博客 <span aria-hidden="true">↗</span></a></div>
-  <div class="start-links">
-    {{ range . }}<a href="{{ .Start.RelPermalink }}" data-series-key="{{ .Key }}"><span class="muted">{{ .Kind }}</span><strong>{{ .Title }}</strong><span>{{ .Start.Params.series_label | default .Start.Title }} <span aria-hidden="true">→</span></span></a>{{ end }}
-  </div>
+{{ with $topics }}
+<section class="home-topics" aria-labelledby="home-topics-title">
+  <div class="section-heading"><h2 id="home-topics-title">从一个专题开始</h2><a href="{{ "topics/" | relURL }}">全部专题 <span aria-hidden="true">→</span></a></div>
+  <div class="topic-directory">{{ range . }}{{ partial "topics/entry.html" . }}{{ end }}</div>
 </section>
 {{ end }}
 
 <div class="home-reading-layout">
   <section class="list-container home-recent" aria-labelledby="recent-title">
     <div class="section-heading"><h2 id="recent-title">最近更新</h2><a href="{{ "articles/" | relURL }}">全部文章 <span aria-hidden="true">↗</span></a></div>
-    {{ range first site.Params.paginationSize $pages }}{{ partial "post-entry.html" (dict "Page" . "Updated" (partial "series/updated.html" .)) }}{{ end }}
+    {{ range first site.Params.paginationSize $updates }}{{ partial "topics/update.html" . }}{{ end }}
   </section>
   <div class="home-reading-rail">
-    {{ $featured := slice }}
-    {{ range site.Params.featuredSeries }}{{ range where $catalog "Key" . }}{{ $featured = $featured | append . }}{{ end }}{{ end }}
-    {{ if not $featured }}{{ $featured = first 3 $catalog }}{{ end }}
-    {{ with $featured }}
-    <section class="home-series" aria-labelledby="featured-series-title">
-      <div class="section-heading"><h2 id="featured-series-title">精选系列</h2><a href="{{ "series/" | relURL }}">全部系列 <span aria-hidden="true">↗</span></a></div>
-      <div class="series-directory">{{ range . }}{{ partial "series/entry.html" (dict "Series" .) }}{{ end }}</div>
+    {{ $starts := slice }}
+    {{ range site.Params.startSeries }}{{ range where $catalog "Key" . }}{{ $starts = $starts | append . }}{{ end }}{{ end }}
+    {{ with $starts }}
+    <section class="home-start" aria-labelledby="start-title">
+      <div class="section-heading"><h2 id="start-title">第一次来？</h2></div>
+      <div class="start-links">
+        {{ range . }}<a href="{{ .Start.RelPermalink }}" data-series-key="{{ .Key }}"><span class="muted">{{ .Kind }}</span><strong>{{ .Title }}</strong><span>{{ .Start.Params.series_label | default .Start.Title }} <span aria-hidden="true">→</span></span></a>{{ end }}
+      </div>
+      <a class="home-all-series" href="{{ "series/" | relURL }}">浏览全部系列 <span aria-hidden="true">→</span></a>
     </section>
     {{ end }}
     <section class="home-subjects" aria-labelledby="subject-title">
-      <div class="section-heading"><h2 id="subject-title">按主题阅读</h2><a href="{{ "categories/" | relURL }}">全部分类 <span aria-hidden="true">↗</span></a></div>
+      <div class="section-heading"><h2 id="subject-title">按分类浏览</h2><a href="{{ "categories/" | relURL }}">全部分类 <span aria-hidden="true">↗</span></a></div>
       <div class="home-subject-links">
         {{ $subjects := slice }}
         {{ range site.Taxonomies.categories }}{{ $config := index site.Data.categories .Page.Data.Term }}{{ $subjects = $subjects | append (dict "Page" .Page "Label" $config.label "Order" $config.order "Count" (len (partial "series/list-pages.html" .Pages))) }}{{ end }}

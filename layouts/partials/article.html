@@ -1,4 +1,5 @@
 {{ $page := .Page }}{{ $series := .Series }}
+{{ $topics := partial "topics/memberships.html" $page }}
 <article class="reader-article">
   <header class="single-intro-container">
     {{ with $series }}<p class="series-eyebrow">{{ if $page.Params.series_index }}{{ .Kind }} · 系列目录{{ else }}{{ with $page.Params.series_number }}第 {{ printf "%02d" (int .) }} 篇{{ else }}{{ with $page.Params.series_role }}{{ (index site.Data.series_roles .).label }}{{ else }}导读{{ end }}{{ end }}{{ end }}</p>{{ end }}
@@ -14,6 +15,7 @@
       <p class="single-classification">{{ partial "site/article-meta.html" $page }}</p>
       {{ if $page.Param "showTags" }}{{ with $page.GetTerms "tags" }}<div class="single-tags">{{ range . }}<a href="{{ .RelPermalink }}">#{{ .LinkTitle }}</a>{{ end }}</div>{{ end }}{{ end }}
     </div>
+    {{ with $topics }}<nav class="single-topics" aria-label="所属专题"><span>所属专题</span>{{ range . }}<a href="{{ .Page.RelPermalink }}">{{ .Title }} <span aria-hidden="true">→</span></a>{{ end }}</nav>{{ end }}
     {{ if and $series $page.Params.series_index }}<p class="course-start"><span>{{ $series.CountLabel }}</span>{{ with index $series.Pages 0 }}<a href="{{ .RelPermalink }}">开始阅读 →</a>{{ end }}</p>{{ end }}
     {{ if not $series }}
       {{ $catalog := partialCached "series/catalog.html" site }}
@@ -23,6 +25,7 @@
   </header>
   <div class="single-content" data-reader-content>{{ $page.Content }}</div>
   {{ with $series }}{{ partial "series/navigation.html" (dict "Page" $page "Series" .) }}{{ else }}{{ partial "reader/related.html" $page }}{{ end }}
+  {{ partial "topics/return.html" $topics }}
 </article>
 {{ if $page.Store.Get "hasMermaid" }}
 <script defer type="module" id="mermaid_script" data-light-theme="default" data-dark-theme="dark" src="{{ "js/mermaid.js" | relURL }}"></script>

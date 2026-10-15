@@ -3,6 +3,7 @@
 {{ with .Description }}<p class="page-description">{{ . }}</p>{{ end }}
 {{ $catalog := partialCached "series/catalog.html" site }}
 {{ if eq .Kind "taxonomy" }}
+  {{ partial "topics/shortcuts.html" . }}
   {{ with $catalog }}
     <p class="series-directory-count muted">{{ len . }} 个系列 · 按最近更新排列</p>
     <div class="series-directory">{{ range . }}{{ partial "series/entry.html" (dict "Series" . "Heading" "h2") }}{{ end }}</div>
@@ -14,6 +15,7 @@
   {{ range where $catalog "Key" .Data.Term }}
     {{ $series := . }}
     <div class="series-overview-meta"><span>{{ .Kind }}</span><span>{{ .CountLabel }}</span><span>约 {{ .Minutes }} 分钟</span><span>更新于 <time datetime="{{ .Updated.Format "2006-01-02" }}">{{ .Updated.Format "2006-01-02" }}</time></span>{{ with .Status }}<span>{{ . }}</span>{{ end }}</div>
+    {{ with partial "topics/memberships.html" $page }}<nav class="single-topics" aria-label="所属专题"><span>所属专题</span>{{ range . }}<a href="{{ .Page.RelPermalink }}">{{ .Title }} <span aria-hidden="true">→</span></a>{{ end }}</nav>{{ end }}
     <div class="series-start">
       <span class="series-start-label">{{ if .Reader }}从序言开始{{ else }}推荐起点{{ end }}</span>
       <a href="{{ .Start.RelPermalink }}">{{ .Start.Params.series_label | default .Start.Title }} <span aria-hidden="true">→</span></a>
