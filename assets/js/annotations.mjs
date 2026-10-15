@@ -307,6 +307,7 @@ function initialize(root) {
       button.textContent = count + (state.more ? '+' : '');
       button.setAttribute('aria-label', `本段${state.more ? '至少' : '有'} ${count} 条讨论，点击查看`);
       button.setAttribute('aria-expanded', String(state.open && state.block === index));
+      button.classList.toggle('is-selecting', !toolbar.hidden && selectionAnchor?.block === index);
       button.style.top = `${blocks[index].el.getBoundingClientRect().top - origin.top}px`;
       existing.delete(index);
     });
@@ -326,7 +327,7 @@ function initialize(root) {
     switchingMode = false;
   }
   function open({ view = 'list', block = null, anchor = null, id = null, opener = document.activeElement } = {}) {
-    toolbar.hidden = true;
+    hideSelection();
     state.opener = opener; returnPosition = { y: window.scrollY, block, top: block === null ? null : blocks[block]?.el.getBoundingClientRect().top };
     state.open = true; state.view = view; state.block = block; state.anchor = anchor; state.threadId = id;
     state.limit = 5; state.replyLimit = 8; state.error = '';
@@ -337,7 +338,7 @@ function initialize(root) {
   }
   function close() {
     if (!state.open || switchingMode) return;
-    state.open = false; toolbar.hidden = true;
+    state.open = false; hideSelection();
     document.body.classList.remove('annotations-open', 'annotations-modal');
     if (panel.open) panel.close();
     CSS.highlights?.delete('annotation-active'); activeRange = null; highlightLayer.replaceChildren();
@@ -355,23 +356,31 @@ function initialize(root) {
     render(); panelScroll.scrollTop = 0; focusTitle(); saveUI();
     if (item.location && !mobile.matches) blocks[item.location.index].el.scrollIntoView({ block: 'center', behavior: 'instant' });
   }
+  function hideSelection() {
+    toolbar.hidden = true;
+    markerLayer.querySelectorAll('.is-selecting').forEach(marker => marker.classList.remove('is-selecting'));
+  }
   function showSelection() {
     if (state.open && mobile.matches) return;
     blocks.forEach(block => { block.text = block.el.textContent; });
     const selection = window.getSelection();
-    if (!selection?.rangeCount || selection.isCollapsed) { toolbar.hidden = true; return; }
+    if (!selection?.rangeCount || selection.isCollapsed) { hideSelection(); return; }
     const range = selection.getRangeAt(0);
     const index = blocks.findIndex(block => block.el.contains(range.startContainer) && block.el.contains(range.endContainer));
-    if (index < 0 || selection.toString().trim().length < 2) { toolbar.hidden = true; return; }
+    if (index < 0 || selection.toString().trim().length < 2) { hideSelection(); return; }
     const prefix = range.cloneRange(); prefix.selectNodeContents(blocks[index].el); prefix.setEnd(range.startContainer, range.startOffset);
     const start = prefix.toString().length;
     const text = selection.toString();
-    if (text.length > MAX_QUOTE) { toolbar.hidden = true; announce(`一次可以引用最多 ${MAX_QUOTE} 字，请缩小选区。`); return; }
+    if (text.length > MAX_QUOTE) { hideSelection(); announce(`一次可以引用最多 ${MAX_QUOTE} 字，请缩小选区。`); return; }
     selectionAnchor = makeAnchor(blocks[index].text, index, start, start + text.length);
-    if (selectionAnchor.quote !== text) { toolbar.hidden = true; return; }
-    const rect = range.getBoundingClientRect(); toolbar.hidden = false;
-    toolbar.style.left = `${Math.max(8, Math.min(innerWidth - toolbar.offsetWidth - 8, rect.left + rect.width / 2 - toolbar.offsetWidth / 2))}px`;
-    toolbar.style.top = `${Math.max(8, rect.top - toolbar.offsetHeight - 9)}px`;
+    if (selectionAnchor.quote !== text) { hideSelection(); return; }
+    const rect = Array.from(range.getClientRects()).find(rect => rect.width && rect.height) || range.getBoundingClientRect();
+    const bounds = content.getBoundingClientRect();
+    toolbar.hidden = false;
+    // The reading column reserves a right gutter, so the action never covers text.
+    toolbar.style.left = `${Math.max(8, Math.min(innerWidth - toolbar.offsetWidth - 8, bounds.right - toolbar.offsetWidth))}px`;
+    toolbar.style.top = `${Math.max(8, Math.min(innerHeight - toolbar.offsetHeight - 8, rect.top + (rect.height - toolbar.offsetHeight) / 2))}px`;
+    markerLayer.querySelectorAll('button').forEach(marker => marker.classList.toggle('is-selecting', Number(marker.dataset.block) === index));
   }
 
   async function login() {
@@ -467,13 +476,13 @@ function initialize(root) {
   toolbar.addEventListener('pointerdown', event => event.preventDefault());
   content.addEventListener('pointerup', () => setTimeout(showSelection, 0));
   document.addEventListener('selectionchange', () => { if (document.activeElement?.closest('.annotation-panel')) return; showSelection(); });
-  document.addEventListener('scroll', () => { toolbar.hidden = true; }, { passive: true });
-  document.addEventListener('keydown', event => { if (event.key === 'Escape' && state.open && !state.modal) { event.preventDefault(); close(); } else if (event.key === 'Escape') toolbar.hidden = true; });
+  document.addEventListener('scroll', () => { hideSelection(); }, { passive: true });
+  document.addEventListener('keydown', event => { if (event.key === 'Escape' && state.open && !state.modal) { event.preventDefault(); close(); } else if (event.key === 'Escape') hideSelection(); });
   panel.addEventListener('cancel', event => { event.preventDefault(); close(); });
   panel.addEventListener('close', () => { if (!switchingMode && !panel.open) close(); });
   panel.addEventListener('click', event => { if (state.modal && event.target === panel) { const bounds = panel.getBoundingClientRect(); if (event.clientY < bounds.top || event.clientX < bounds.left || event.clientX > bounds.right) close(); } });
   mobile.addEventListener('change', () => { if (state.open) { applyMode(); focusTitle(); scheduleLayout(); } });
-  window.addEventListener('resize', () => { toolbar.hidden = true; scheduleLayout(); });
+  window.addEventListener('resize', () => { hideSelection(); scheduleLayout(); });
   if ('ResizeObserver' in window) new ResizeObserver(scheduleLayout).observe(content);
   document.fonts?.ready.then(scheduleLayout);
   setInterval(async () => {

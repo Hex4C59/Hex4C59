@@ -1,10 +1,11 @@
 /* Quiet paragraph markers and one discussion surface, using the reader palette. */
 .annotations { font-family: var(--font-body); }
-.annotation-content { position: relative; padding-right: 2.3rem; }
+.annotation-content { position: relative; padding-right: 3rem; }
 .annotation-markers { position: absolute; inset: 0 0 0 auto; width: 2.2rem; pointer-events: none; }
 .annotation-marker { position: absolute; right: 0; min-width: 2rem; min-height: 2rem; padding: .2rem; border: 0; background: var(--background); color: var(--content-secondary); font: 400 .65rem/1.5 var(--font-mono); cursor: pointer; pointer-events: auto; }
 .annotation-marker::before { content: "↳"; margin-right: .2rem; }
 .annotation-marker:hover, .annotation-marker[aria-expanded="true"] { color: var(--accent-strong); }
+.annotation-marker.is-selecting { visibility: hidden; }
 ::highlight(annotation-active) { background: color-mix(in srgb, var(--accent) 22%, transparent); color: var(--content-primary); }
 .annotation-highlight-layer { position: absolute; inset: 0; pointer-events: none; }
 .annotation-highlight-layer span { position: absolute; background: color-mix(in srgb, var(--accent) 18%, transparent); border-radius: 2px; }
@@ -64,8 +65,9 @@
 .annotation-notice, .annotation-error { font: 400 .72rem/1.9 var(--font-body); margin: .8rem 0; }
 .annotation-notice { color: var(--content-secondary); }
 .annotation-error { color: var(--content-primary); padding-left: .7rem; border-left: 2px solid var(--accent); }
-.annotation-selection { position: fixed; z-index: 45; background: var(--content-primary); color: var(--background); border-radius: 4px; padding: .2rem .7rem; box-shadow: 0 4px 16px #0002; max-width: calc(100vw - 16px); }
-.annotation-selection button, .annotation-selection button:hover { color: inherit; }
+.annotation-selection { position: fixed; z-index: 45; background: var(--background); color: var(--accent-strong); border: 1px solid var(--code-border); border-radius: 5px; padding: 0; box-shadow: 0 1px 6px #00000008; }
+.annotation-selection button { display: block; width: 2rem; min-height: 2rem; padding: .25rem 0; color: inherit; font: 500 .72rem/1.5 var(--font-body); text-align: center; border-radius: 4px; }
+.annotation-selection button:hover, .annotation-selection button:focus-visible { color: var(--accent-strong); background: var(--accent-soft); }
 .annotations-modal { overflow: hidden; }
 @media (min-width: 1060px) {
   .annotations-open .article-workspace, .annotations-open .series-workspace { display: block; padding-right: 400px; }
@@ -82,7 +84,8 @@
 @media (pointer: coarse) {
   .annotation-marker { min-width: 44px; min-height: 44px; right: -.2rem; }
   .annotation-entry-actions button, .annotation-panel button, .annotation-selection button { min-height: 44px; }
-  .annotation-content { padding-right: 2.8rem; }
+  .annotation-selection button { width: 44px; }
+  .annotation-content { padding-right: 3.25rem; }
 }
 @media (prefers-reduced-motion: no-preference) {
   .annotation-marker, .annotation-panel button { transition: color .16s ease, background-color .16s ease; }

@@ -24,7 +24,7 @@
       <div data-panel-body></div>
     </div>
   </dialog>
-  <div class="annotation-selection" data-selection-toolbar hidden role="toolbar" aria-label="选中文字的操作"><button type="button" data-comment-selection>评论选中文字</button></div>
+  <div class="annotation-selection" data-selection-toolbar hidden role="toolbar" aria-label="选中文字的操作"><button type="button" data-comment-selection aria-label="评论选中文字">评论</button></div>
   <noscript><p>启用 JavaScript 后可以划线评论，也可以直接前往 GitHub 参与讨论。</p></noscript>
 </section>
 {{- with resources.Get "js/annotations.mjs" | js.Build (dict "targetPath" "js/annotations.js" "minify" hugo.IsProduction "target" "es2022") | fingerprint -}}
