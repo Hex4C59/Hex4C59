@@ -106,6 +106,22 @@ related_reading = [
 
 需要数学公式的文章在 front matter 中填写 `math = true`，支持 `$…$` 和 `$$…$$`。未开启的页面不加载 KaTeX。连续阅读布局同时考虑当前展示章节与目录文章的设置。
 
+## 搜索引擎收录
+
+Hugo 自动生成 `sitemap.xml`，`layouts/robots.txt` 会用本次构建的站点地址声明站点地图。首页描述取自 `hugo.toml`；其他页面优先使用自己的 `description`，文章未填写时使用去掉 HTML 的摘要，最后回退到站点描述。正式文章仍应填写准确、具体的描述。
+
+在 Google Search Console、Bing Webmaster Tools 或百度搜索资源平台完成站点验证后，提交 `https://hex4c59.cc/sitemap.xml`。Google 的网域资源使用 DNS TXT 验证，无需修改页面。验证记录由站长平台针对当前账号生成，添加后应保留；不能用示例值代替真实记录。
+
+选择 HTML 标签验证时，将平台给出的 `content` 值填写到 GitHub 仓库的 Settings → Secrets and variables → Actions → Variables，随后重新部署：
+
+| 平台 | GitHub Actions 仓库变量 | 本地构建环境变量 |
+| --- | --- | --- |
+| Google | `GOOGLE_SITE_VERIFICATION` | `HUGO_GOOGLE_SITE_VERIFICATION` |
+| Bing | `BING_SITE_VERIFICATION` | `HUGO_BING_SITE_VERIFICATION` |
+| 百度 | `BAIDU_SITE_VERIFICATION` | `HUGO_BAIDU_SITE_VERIFICATION` |
+
+只填写标签中的 `content` 值，不填整个 `<meta>` 标签。构建会把已配置的验证标签加入首页；未配置的平台不输出标签。站长平台的登录凭据、API 密钥和 DNS 控制台凭据不能填入这些变量。验证成功只代表已确认站点归属，收录与搜索表现需要在对应后台继续查看。
+
 ## 预览与发布检查
 
 Hugo 固定为 `.hugo-version` 中的版本。本地和 CI 读取同一个版本文件；升级时一起运行以下检查，不单独修改工作流中的版本号。验证工具只使用 Python 3.9 及以上的标准库，无需安装 npm、Go 或 Dart Sass 工具链。

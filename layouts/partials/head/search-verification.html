@@ -1,0 +1,13 @@
+{{- if .IsHome -}}
+  {{- $providers := slice
+    (dict "name" "google-site-verification" "env" "HUGO_GOOGLE_SITE_VERIFICATION")
+    (dict "name" "msvalidate.01" "env" "HUGO_BING_SITE_VERIFICATION")
+    (dict "name" "baidu-site-verification" "env" "HUGO_BAIDU_SITE_VERIFICATION")
+  -}}
+  {{- range $providers -}}
+    {{- $name := .name -}}
+    {{- with os.Getenv .env | strings.TrimSpace }}
+<meta name="{{ $name }}" content="{{ . }}">
+    {{- end -}}
+  {{- end -}}
+{{- end -}}

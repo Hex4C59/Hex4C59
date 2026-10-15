@@ -50,6 +50,9 @@ jobs:
             hugo-${{ hashFiles('.hugo-version') }}-
       - name: Build and validate site
         env:
+          HUGO_GOOGLE_SITE_VERIFICATION: ${{ vars.GOOGLE_SITE_VERIFICATION }}
+          HUGO_BING_SITE_VERIFICATION: ${{ vars.BING_SITE_VERIFICATION }}
+          HUGO_BAIDU_SITE_VERIFICATION: ${{ vars.BAIDU_SITE_VERIFICATION }}
           HUGO_CLOUDFLARE_WEB_ANALYTICS_TOKEN: ${{ vars.CLOUDFLARE_WEB_ANALYTICS_TOKEN }}
         run: |
           python3 scripts/build.py \

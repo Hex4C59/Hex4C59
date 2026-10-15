@@ -1,6 +1,8 @@
 {{- $title := .Title -}}{{- $description := .Description -}}
 {{- if and (eq .Kind "term") (eq .Section "categories") -}}{{- with index site.Data.categories .Data.Term -}}{{- $title = .label -}}{{- $description = .description -}}{{- end -}}{{- end -}}
 {{- if and (eq .Kind "term") (eq .Section "tags") -}}{{- $title = partial "collection/filter-label.html" (dict "Key" "tags" "Value" .Data.Term) -}}{{- end -}}
+{{- if and (not $description) .IsPage -}}{{- $description = .Summary -}}{{- end -}}
+{{- $description = $description | default site.Params.description | plainify | htmlUnescape | replaceRE `\s+` " " | strings.TrimSpace -}}
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width">
 
@@ -19,11 +21,8 @@
 {{ printf `<link rel=%q type=%q href=%q title=%q>` .Rel .MediaType.Type .Permalink site.Title | safeHTML }}
 {{ end }}
 
-{{- if .IsHome -}}
-<meta name="description" content="{{ site.Params.Description }}"/>
-{{- else -}}
 <meta name="description" content="{{ $description }}"/>
-{{- end }}
+{{ partial "head/search-verification.html" . }}
 
 {{ if .Param "fediverse" }}
 <meta name="fediverse:creator" content="{{ .Params.Fediverse }}">
