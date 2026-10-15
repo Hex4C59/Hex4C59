@@ -11,3 +11,8 @@ order = 2
 label = "软件工程"
 description = "开发方法、测试、代码维护、性能与应用界面。"
 order = 3
+
+[backend-data]
+label = "后端与数据系统"
+description = "业务服务、数据库建模与查询、事务及数据系统实践。"
+order = 4
