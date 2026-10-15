@@ -1,0 +1,11 @@
+{
+  "name": "software-design-08-examples",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test behavior.test.mjs map.test.mjs file.test.mjs faults.test.mjs",
+    "stages": "node stages-demo.mjs",
+    "faults": "node fault-demo.mjs"
+  }
+}
