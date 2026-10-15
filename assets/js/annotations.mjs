@@ -307,7 +307,6 @@ function initialize(root) {
       button.textContent = count + (state.more ? '+' : '');
       button.setAttribute('aria-label', `本段${state.more ? '至少' : '有'} ${count} 条讨论，点击查看`);
       button.setAttribute('aria-expanded', String(state.open && state.block === index));
-      button.classList.toggle('is-selecting', !toolbar.hidden && selectionAnchor?.block === index);
       button.style.top = `${blocks[index].el.getBoundingClientRect().top - origin.top}px`;
       existing.delete(index);
     });
@@ -358,7 +357,6 @@ function initialize(root) {
   }
   function hideSelection() {
     toolbar.hidden = true;
-    markerLayer.querySelectorAll('.is-selecting').forEach(marker => marker.classList.remove('is-selecting'));
   }
   function showSelection() {
     if (state.open && mobile.matches) return;
@@ -374,13 +372,21 @@ function initialize(root) {
     if (text.length > MAX_QUOTE) { hideSelection(); announce(`一次可以引用最多 ${MAX_QUOTE} 字，请缩小选区。`); return; }
     selectionAnchor = makeAnchor(blocks[index].text, index, start, start + text.length);
     if (selectionAnchor.quote !== text) { hideSelection(); return; }
-    const rect = Array.from(range.getClientRects()).find(rect => rect.width && rect.height) || range.getBoundingClientRect();
-    const bounds = content.getBoundingClientRect();
+    const rects = Array.from(range.getClientRects()).filter(rect => rect.width && rect.height);
+    let rect = rects[0] || range.getBoundingClientRect();
     toolbar.hidden = false;
-    // The reading column reserves a right gutter, so the action never covers text.
-    toolbar.style.left = `${Math.max(8, Math.min(innerWidth - toolbar.offsetWidth - 8, bounds.right - toolbar.offsetWidth))}px`;
-    toolbar.style.top = `${Math.max(8, Math.min(innerHeight - toolbar.offsetHeight - 8, rect.top + (rect.height - toolbar.offsetHeight) / 2))}px`;
-    markerLayer.querySelectorAll('button').forEach(marker => marker.classList.toggle('is-selecting', Number(marker.dataset.block) === index));
+    let top = rect.top - toolbar.offsetHeight - 8;
+    toolbar.dataset.placement = 'above';
+    if (top < 8) {
+      rect = rects.at(-1) || rect;
+      top = rect.bottom + 8;
+      toolbar.dataset.placement = 'below';
+    }
+    const anchorX = rect.left + rect.width / 2;
+    const left = Math.max(8, Math.min(innerWidth - toolbar.offsetWidth - 8, anchorX - toolbar.offsetWidth / 2));
+    toolbar.style.left = `${left}px`;
+    toolbar.style.top = `${Math.max(8, Math.min(innerHeight - toolbar.offsetHeight - 8, top))}px`;
+    toolbar.style.setProperty('--annotation-arrow-left', `${Math.max(10, Math.min(toolbar.offsetWidth - 10, anchorX - left))}px`);
   }
 
   async function login() {
