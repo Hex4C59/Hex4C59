@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="zh-CN"><head>
+<!-- Project diagram skin: system font fallbacks, native radio controls, no scripts. -->
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>传输能力与排队等待</title>
+<style>
+:root{color-scheme:light dark;--paper:#faf9f6;--paper2:#f1f0ec;--ink:#242320;--muted:#66635d;--original:#6044ab;--reduced:#126d61;--rule:rgba(36,35,32,.14)}
+@media(prefers-color-scheme:dark){:root{--paper:#242320;--paper2:#302e29;--ink:#faf9f6;--muted:#c2beb5;--original:#c3b1f8;--reduced:#8cd9cd;--rule:rgba(250,249,246,.18)}}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.65 "PingFang SC",system-ui,sans-serif}main{max-width:800px;margin:0 auto;padding:20px 12px}h1{font:400 28px/1.4 "Songti SC",Georgia,serif;margin:0 0 12px}p{margin:8px 0;color:var(--muted)}fieldset{border:0;margin:20px 0 0;padding:0;min-width:0}legend{font-weight:600;padding:0;margin-bottom:12px}input[type=radio]{position:absolute;width:1px;height:1px;clip-path:inset(50%);overflow:hidden}label{display:inline-block;width:calc(25% - 8px);margin:0 4px 12px 0;padding:8px 4px;text-align:center;border-bottom:2px solid var(--muted);cursor:pointer;font-variant-numeric:tabular-nums}input:checked+label{background:var(--paper2);color:var(--reduced);border-color:var(--reduced);font-weight:600}input:focus-visible+label{outline:2px solid var(--reduced);outline-offset:3px}.scenario{display:none}#capacity32:checked~.results #scenario-32,#capacity40:checked~.results #scenario-40,#capacity48:checked~.results #scenario-48,#capacity64:checked~.results #scenario-64{display:block}.scroll{overflow-x:auto;max-width:100%}svg{display:block;fill:var(--ink);font-family:"PingFang SC",system-ui,sans-serif}.wide{width:720px;min-width:720px;margin:auto}.compact{display:none;width:320px;min-width:320px;margin:auto}.axis-name{font-size:14px;fill:var(--muted)}.tick{font-size:14px;fill:var(--muted);font-variant-numeric:tabular-nums}.grid{stroke:var(--rule);stroke-width:1}.original,.reduced{fill:none;stroke-width:2.5;stroke-linejoin:round}.original{stroke:var(--original)}.reduced{stroke:var(--reduced);stroke-dasharray:7 4}.reduced.merged{stroke-dasharray:none}.original-dot{fill:var(--original)}.reduced-dot{fill:var(--reduced)}.legend{display:flex;flex-wrap:wrap;gap:8px 24px;border-top:1px solid var(--rule);padding:12px 0;font-size:15px}.key{display:inline-block;width:22px;margin-right:8px;vertical-align:middle;border-top:3px solid var(--original)}.key.reduced-key{border-top-color:var(--reduced);border-top-style:dashed}.readout{margin:12px 0 8px;color:var(--ink);font-size:17px}.interpretation{min-height:3.3em}footer{margin-top:12px;color:var(--muted);font-size:14px}
+@media(max-width:743px){.wide{display:none}.compact{display:block}h1{font-size:25px}label{width:calc(50% - 8px)}}
+@media print{label{border-color:var(--muted)}body{background:#fff}}
+</style></head><body><main>
+<h1>数据一直来，等待怎样长起来</h1>
+<p>每 20 毫秒一包，固定 40 字节报头；两组都从空队列开始。选择假设的瓶颈能力，比较前 50 包开始传输前的等待。</p>
+<fieldset><legend>假设传输能力（IP 层）</legend>
+<input id="capacity32" type="radio" name="capacity" value="32" aria-controls="scenario-32"><label for="capacity32">32 kbit/s</label>
+<input id="capacity40" type="radio" name="capacity" value="40" aria-controls="scenario-40" checked><label for="capacity40">40 kbit/s</label>
+<input id="capacity48" type="radio" name="capacity" value="48" aria-controls="scenario-48"><label for="capacity48">48 kbit/s</label>
+<input id="capacity64" type="radio" name="capacity" value="64" aria-controls="scenario-64"><label for="capacity64">64 kbit/s</label>
+<div class="results"><section class="scenario" id="scenario-32" aria-label="32 kbit/s的结果"><div class="scroll"><svg class="plot wide" viewBox="0 0 720 344" role="img" aria-labelledby="queue-32-wide-title queue-32-wide-desc">
+<title id="queue-32-wide-title">传输能力32 kbit/s时，前50包的等待</title>
+<desc id="queue-32-wide-desc">32 kbit/s固定能力下，编码32 kbit/s使第50包等待490毫秒，编码16 kbit/s时等待为零。两组从空队列开始，每20毫秒一包，固定40字节报头；不含本包传输时间。</desc>
+<text x="64" y="20" class="axis-name">等待（毫秒）</text>
+<line x1="64" x2="688" y1="284.000" y2="284.000" class="grid"/><text x="52" y="289.000" text-anchor="end" class="tick">0</text>
+<line x1="64" x2="688" y1="234.400" y2="234.400" class="grid"/><text x="52" y="239.400" text-anchor="end" class="tick">100</text>
+<line x1="64" x2="688" y1="184.800" y2="184.800" class="grid"/><text x="52" y="189.800" text-anchor="end" class="tick">200</text>
+<line x1="64" x2="688" y1="135.200" y2="135.200" class="grid"/><text x="52" y="140.200" text-anchor="end" class="tick">300</text>
+<line x1="64" x2="688" y1="85.600" y2="85.600" class="grid"/><text x="52" y="90.600" text-anchor="end" class="tick">400</text>
+<line x1="64" x2="688" y1="36.000" y2="36.000" class="grid"/><text x="52" y="41.000" text-anchor="end" class="tick">500</text>
+<text x="64.000" y="308" text-anchor="middle" class="tick">1</text>
+<text x="369.633" y="308" text-anchor="middle" class="tick">25</text>
+<text x="688.000" y="308" text-anchor="middle" class="tick">50</text>
+<text x="688" y="340" text-anchor="end" class="axis-name">包序号</text>
+<polyline class="original" points="64.000,284.000 178.612,239.360 305.959,189.760 433.306,140.160 560.653,90.560 688.000,40.960"/><circle class="original-dot" cx="688" cy="40.960" r="4"/>
+<polyline class="reduced" points="64.000,284.000 178.612,284.000 305.959,284.000 433.306,284.000 560.653,284.000 688.000,284.000"/><circle class="reduced-dot" cx="688" cy="284" r="4"/>
+</svg>
+<svg class="plot compact" viewBox="0 0 320 300" role="img" aria-labelledby="queue-32-compact-title queue-32-compact-desc">
+<title id="queue-32-compact-title">传输能力32 kbit/s时，前50包的等待</title>
+<desc id="queue-32-compact-desc">32 kbit/s固定能力下，编码32 kbit/s使第50包等待490毫秒，编码16 kbit/s时等待为零。两组从空队列开始，每20毫秒一包，固定40字节报头；不含本包传输时间。</desc>
+<text x="48" y="20" class="axis-name">等待（毫秒）</text>
+<line x1="48" x2="296" y1="244.000" y2="244.000" class="grid"/><text x="36" y="249.000" text-anchor="end" class="tick">0</text>
+<line x1="48" x2="296" y1="202.400" y2="202.400" class="grid"/><text x="36" y="207.400" text-anchor="end" class="tick">100</text>
+<line x1="48" x2="296" y1="160.800" y2="160.800" class="grid"/><text x="36" y="165.800" text-anchor="end" class="tick">200</text>
+<line x1="48" x2="296" y1="119.200" y2="119.200" class="grid"/><text x="36" y="124.200" text-anchor="end" class="tick">300</text>
+<line x1="48" x2="296" y1="77.600" y2="77.600" class="grid"/><text x="36" y="82.600" text-anchor="end" class="tick">400</text>
+<line x1="48" x2="296" y1="36.000" y2="36.000" class="grid"/><text x="36" y="41.000" text-anchor="end" class="tick">500</text>
+<text x="48.000" y="268" text-anchor="middle" class="tick">1</text>
+<text x="169.469" y="268" text-anchor="middle" class="tick">25</text>
+<text x="296.000" y="268" text-anchor="middle" class="tick">50</text>
+<text x="296" y="296" text-anchor="end" class="axis-name">包序号</text>
+<polyline class="original" points="48.000,244.000 93.551,206.560 144.163,164.960 194.776,123.360 245.388,81.760 296.000,40.160"/><circle class="original-dot" cx="296" cy="40.160" r="4"/>
+<polyline class="reduced" points="48.000,244.000 93.551,244.000 144.163,244.000 194.776,244.000 245.388,244.000 296.000,244.000"/><circle class="reduced-dot" cx="296" cy="244" r="4"/>
+</svg></div><p class="readout">第 50 包：原方案等待 <strong>490 毫秒</strong>；降码率方案等待 <strong>0 毫秒</strong>。</p><p class="interpretation">原方案持续积压；降码率方案恰好匹配能力。</p></section>
+<section class="scenario" id="scenario-40" aria-label="40 kbit/s的结果"><div class="scroll"><svg class="plot wide" viewBox="0 0 720 344" role="img" aria-labelledby="queue-40-wide-title queue-40-wide-desc">
+<title id="queue-40-wide-title">传输能力40 kbit/s时，前50包的等待</title>
+<desc id="queue-40-wide-desc">40 kbit/s固定能力下，编码32 kbit/s使第50包等待196毫秒，编码16 kbit/s时等待为零。两组从空队列开始，每20毫秒一包，固定40字节报头；不含本包传输时间。</desc>
+<text x="64" y="20" class="axis-name">等待（毫秒）</text>
+<line x1="64" x2="688" y1="284.000" y2="284.000" class="grid"/><text x="52" y="289.000" text-anchor="end" class="tick">0</text>
+<line x1="64" x2="688" y1="234.400" y2="234.400" class="grid"/><text x="52" y="239.400" text-anchor="end" class="tick">100</text>
+<line x1="64" x2="688" y1="184.800" y2="184.800" class="grid"/><text x="52" y="189.800" text-anchor="end" class="tick">200</text>
+<line x1="64" x2="688" y1="135.200" y2="135.200" class="grid"/><text x="52" y="140.200" text-anchor="end" class="tick">300</text>
+<line x1="64" x2="688" y1="85.600" y2="85.600" class="grid"/><text x="52" y="90.600" text-anchor="end" class="tick">400</text>
+<line x1="64" x2="688" y1="36.000" y2="36.000" class="grid"/><text x="52" y="41.000" text-anchor="end" class="tick">500</text>
+<text x="64.000" y="308" text-anchor="middle" class="tick">1</text>
+<text x="369.633" y="308" text-anchor="middle" class="tick">25</text>
+<text x="688.000" y="308" text-anchor="middle" class="tick">50</text>
+<text x="688" y="340" text-anchor="end" class="axis-name">包序号</text>
+<polyline class="original" points="64.000,284.000 178.612,266.144 305.959,246.304 433.306,226.464 560.653,206.624 688.000,186.784"/><circle class="original-dot" cx="688" cy="186.784" r="4"/>
+<polyline class="reduced" points="64.000,284.000 178.612,284.000 305.959,284.000 433.306,284.000 560.653,284.000 688.000,284.000"/><circle class="reduced-dot" cx="688" cy="284" r="4"/>
+</svg>
+<svg class="plot compact" viewBox="0 0 320 300" role="img" aria-labelledby="queue-40-compact-title queue-40-compact-desc">
+<title id="queue-40-compact-title">传输能力40 kbit/s时，前50包的等待</title>
+<desc id="queue-40-compact-desc">40 kbit/s固定能力下，编码32 kbit/s使第50包等待196毫秒，编码16 kbit/s时等待为零。两组从空队列开始，每20毫秒一包，固定40字节报头；不含本包传输时间。</desc>
+<text x="48" y="20" class="axis-name">等待（毫秒）</text>
+<line x1="48" x2="296" y1="244.000" y2="244.000" class="grid"/><text x="36" y="249.000" text-anchor="end" class="tick">0</text>
+<line x1="48" x2="296" y1="202.400" y2="202.400" class="grid"/><text x="36" y="207.400" text-anchor="end" class="tick">100</text>
+<line x1="48" x2="296" y1="160.800" y2="160.800" class="grid"/><text x="36" y="165.800" text-anchor="end" class="tick">200</text>
+<line x1="48" x2="296" y1="119.200" y2="119.200" class="grid"/><text x="36" y="124.200" text-anchor="end" class="tick">300</text>
+<line x1="48" x2="296" y1="77.600" y2="77.600" class="grid"/><text x="36" y="82.600" text-anchor="end" class="tick">400</text>
+<line x1="48" x2="296" y1="36.000" y2="36.000" class="grid"/><text x="36" y="41.000" text-anchor="end" class="tick">500</text>
+<text x="48.000" y="268" text-anchor="middle" class="tick">1</text>
+<text x="169.469" y="268" text-anchor="middle" class="tick">25</text>
+<text x="296.000" y="268" text-anchor="middle" class="tick">50</text>
+<text x="296" y="296" text-anchor="end" class="axis-name">包序号</text>
+<polyline class="original" points="48.000,244.000 93.551,229.024 144.163,212.384 194.776,195.744 245.388,179.104 296.000,162.464"/><circle class="original-dot" cx="296" cy="162.464" r="4"/>
+<polyline class="reduced" points="48.000,244.000 93.551,244.000 144.163,244.000 194.776,244.000 245.388,244.000 296.000,244.000"/><circle class="reduced-dot" cx="296" cy="244" r="4"/>
+</svg></div><p class="readout">第 50 包：原方案等待 <strong>196 毫秒</strong>；降码率方案等待 <strong>0 毫秒</strong>。</p><p class="interpretation">原方案持续积压；降码率方案有余量。</p></section>
+<section class="scenario" id="scenario-48" aria-label="48 kbit/s的结果"><div class="scroll"><svg class="plot wide" viewBox="0 0 720 344" role="img" aria-labelledby="queue-48-wide-title queue-48-wide-desc">
+<title id="queue-48-wide-title">传输能力48 kbit/s时，前50包的等待</title>
+<desc id="queue-48-wide-desc">48 kbit/s固定能力下，编码32 kbit/s使第50包等待0毫秒，编码16 kbit/s时等待为零。两组从空队列开始，每20毫秒一包，固定40字节报头；不含本包传输时间。两线重合，合并显示。</desc>
+<text x="64" y="20" class="axis-name">等待（毫秒）</text>
+<line x1="64" x2="688" y1="284.000" y2="284.000" class="grid"/><text x="52" y="289.000" text-anchor="end" class="tick">0</text>
+<line x1="64" x2="688" y1="234.400" y2="234.400" class="grid"/><text x="52" y="239.400" text-anchor="end" class="tick">100</text>
+<line x1="64" x2="688" y1="184.800" y2="184.800" class="grid"/><text x="52" y="189.800" text-anchor="end" class="tick">200</text>
+<line x1="64" x2="688" y1="135.200" y2="135.200" class="grid"/><text x="52" y="140.200" text-anchor="end" class="tick">300</text>
+<line x1="64" x2="688" y1="85.600" y2="85.600" class="grid"/><text x="52" y="90.600" text-anchor="end" class="tick">400</text>
+<line x1="64" x2="688" y1="36.000" y2="36.000" class="grid"/><text x="52" y="41.000" text-anchor="end" class="tick">500</text>
+<text x="64.000" y="308" text-anchor="middle" class="tick">1</text>
+<text x="369.633" y="308" text-anchor="middle" class="tick">25</text>
+<text x="688.000" y="308" text-anchor="middle" class="tick">50</text>
+<text x="688" y="340" text-anchor="end" class="axis-name">包序号</text>
+<polyline class="reduced merged" points="64.000,284.000 178.612,284.000 305.959,284.000 433.306,284.000 560.653,284.000 688.000,284.000"/><circle class="reduced-dot" cx="688" cy="284" r="4"/>
+</svg>
+<svg class="plot compact" viewBox="0 0 320 300" role="img" aria-labelledby="queue-48-compact-title queue-48-compact-desc">
+<title id="queue-48-compact-title">传输能力48 kbit/s时，前50包的等待</title>
+<desc id="queue-48-compact-desc">48 kbit/s固定能力下，编码32 kbit/s使第50包等待0毫秒，编码16 kbit/s时等待为零。两组从空队列开始，每20毫秒一包，固定40字节报头；不含本包传输时间。两线重合，合并显示。</desc>
+<text x="48" y="20" class="axis-name">等待（毫秒）</text>
+<line x1="48" x2="296" y1="244.000" y2="244.000" class="grid"/><text x="36" y="249.000" text-anchor="end" class="tick">0</text>
+<line x1="48" x2="296" y1="202.400" y2="202.400" class="grid"/><text x="36" y="207.400" text-anchor="end" class="tick">100</text>
+<line x1="48" x2="296" y1="160.800" y2="160.800" class="grid"/><text x="36" y="165.800" text-anchor="end" class="tick">200</text>
+<line x1="48" x2="296" y1="119.200" y2="119.200" class="grid"/><text x="36" y="124.200" text-anchor="end" class="tick">300</text>
+<line x1="48" x2="296" y1="77.600" y2="77.600" class="grid"/><text x="36" y="82.600" text-anchor="end" class="tick">400</text>
+<line x1="48" x2="296" y1="36.000" y2="36.000" class="grid"/><text x="36" y="41.000" text-anchor="end" class="tick">500</text>
+<text x="48.000" y="268" text-anchor="middle" class="tick">1</text>
+<text x="169.469" y="268" text-anchor="middle" class="tick">25</text>
+<text x="296.000" y="268" text-anchor="middle" class="tick">50</text>
+<text x="296" y="296" text-anchor="end" class="axis-name">包序号</text>
+<polyline class="reduced merged" points="48.000,244.000 93.551,244.000 144.163,244.000 194.776,244.000 245.388,244.000 296.000,244.000"/><circle class="reduced-dot" cx="296" cy="244" r="4"/>
+</svg></div><p class="readout">第 50 包：原方案等待 <strong>0 毫秒</strong>；降码率方案等待 <strong>0 毫秒</strong>。</p><p class="interpretation">两线重合在零线上，合并显示。原方案恰好匹配能力；这里没有初始积压。</p></section>
+<section class="scenario" id="scenario-64" aria-label="64 kbit/s的结果"><div class="scroll"><svg class="plot wide" viewBox="0 0 720 344" role="img" aria-labelledby="queue-64-wide-title queue-64-wide-desc">
+<title id="queue-64-wide-title">传输能力64 kbit/s时，前50包的等待</title>
+<desc id="queue-64-wide-desc">64 kbit/s固定能力下，编码32 kbit/s使第50包等待0毫秒，编码16 kbit/s时等待为零。两组从空队列开始，每20毫秒一包，固定40字节报头；不含本包传输时间。两线重合，合并显示。</desc>
+<text x="64" y="20" class="axis-name">等待（毫秒）</text>
+<line x1="64" x2="688" y1="284.000" y2="284.000" class="grid"/><text x="52" y="289.000" text-anchor="end" class="tick">0</text>
+<line x1="64" x2="688" y1="234.400" y2="234.400" class="grid"/><text x="52" y="239.400" text-anchor="end" class="tick">100</text>
+<line x1="64" x2="688" y1="184.800" y2="184.800" class="grid"/><text x="52" y="189.800" text-anchor="end" class="tick">200</text>
+<line x1="64" x2="688" y1="135.200" y2="135.200" class="grid"/><text x="52" y="140.200" text-anchor="end" class="tick">300</text>
+<line x1="64" x2="688" y1="85.600" y2="85.600" class="grid"/><text x="52" y="90.600" text-anchor="end" class="tick">400</text>
+<line x1="64" x2="688" y1="36.000" y2="36.000" class="grid"/><text x="52" y="41.000" text-anchor="end" class="tick">500</text>
+<text x="64.000" y="308" text-anchor="middle" class="tick">1</text>
+<text x="369.633" y="308" text-anchor="middle" class="tick">25</text>
+<text x="688.000" y="308" text-anchor="middle" class="tick">50</text>
+<text x="688" y="340" text-anchor="end" class="axis-name">包序号</text>
+<polyline class="reduced merged" points="64.000,284.000 178.612,284.000 305.959,284.000 433.306,284.000 560.653,284.000 688.000,284.000"/><circle class="reduced-dot" cx="688" cy="284" r="4"/>
+</svg>
+<svg class="plot compact" viewBox="0 0 320 300" role="img" aria-labelledby="queue-64-compact-title queue-64-compact-desc">
+<title id="queue-64-compact-title">传输能力64 kbit/s时，前50包的等待</title>
+<desc id="queue-64-compact-desc">64 kbit/s固定能力下，编码32 kbit/s使第50包等待0毫秒，编码16 kbit/s时等待为零。两组从空队列开始，每20毫秒一包，固定40字节报头；不含本包传输时间。两线重合，合并显示。</desc>
+<text x="48" y="20" class="axis-name">等待（毫秒）</text>
+<line x1="48" x2="296" y1="244.000" y2="244.000" class="grid"/><text x="36" y="249.000" text-anchor="end" class="tick">0</text>
+<line x1="48" x2="296" y1="202.400" y2="202.400" class="grid"/><text x="36" y="207.400" text-anchor="end" class="tick">100</text>
+<line x1="48" x2="296" y1="160.800" y2="160.800" class="grid"/><text x="36" y="165.800" text-anchor="end" class="tick">200</text>
+<line x1="48" x2="296" y1="119.200" y2="119.200" class="grid"/><text x="36" y="124.200" text-anchor="end" class="tick">300</text>
+<line x1="48" x2="296" y1="77.600" y2="77.600" class="grid"/><text x="36" y="82.600" text-anchor="end" class="tick">400</text>
+<line x1="48" x2="296" y1="36.000" y2="36.000" class="grid"/><text x="36" y="41.000" text-anchor="end" class="tick">500</text>
+<text x="48.000" y="268" text-anchor="middle" class="tick">1</text>
+<text x="169.469" y="268" text-anchor="middle" class="tick">25</text>
+<text x="296.000" y="268" text-anchor="middle" class="tick">50</text>
+<text x="296" y="296" text-anchor="end" class="axis-name">包序号</text>
+<polyline class="reduced merged" points="48.000,244.000 93.551,244.000 144.163,244.000 194.776,244.000 245.388,244.000 296.000,244.000"/><circle class="reduced-dot" cx="296" cy="244" r="4"/>
+</svg></div><p class="readout">第 50 包：原方案等待 <strong>0 毫秒</strong>；降码率方案等待 <strong>0 毫秒</strong>。</p><p class="interpretation">两线重合在零线上，合并显示。两组都有余量；这里没有初始积压。</p></section></div>
+</fieldset>
+<div class="legend"><span><i class="key" aria-hidden="true"></i>编码 32，总加入 48 kbit/s</span><span><i class="key reduced-key" aria-hidden="true"></i>编码 16，总加入 32 kbit/s</span></div>
+<footer>纵轴固定 0—500 毫秒，取第 1、10、20、30、40、50 包，折线未做平滑。不含本包传输、传播、解码和播放；不模拟中途调整与初始积压。结果由正文的固定速率模型算得。</footer>
+</main></body></html>
