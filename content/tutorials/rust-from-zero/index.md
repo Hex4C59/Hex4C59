@@ -2,11 +2,11 @@
 url = "/posts/rust-from-zero/"
 title = "Rust 从零开始：教材目录与配套源码"
 date = 2026-10-12T09:00:00+08:00
-lastmod = 2026-10-13T09:00:00+08:00
+lastmod = 2026-10-15
 draft = false
 author = "Hex4C59"
-description = "面向第一次学习 Rust 的中文教材。18 章讲解、完整代码、练习和参考答案，从基础语法到待办工具，再学习 JSON 迁移、备份恢复、clap 和本机 HTTP 请求。"
-summary = "从安装和基础语法开始，学习所有权、集合、错误处理、测试、泛型和迭代器，再完成 JSON 存储、备份恢复、命令行接口和 HTTP 请求项目。"
+description = "面向第一次学习 Rust 的中文教材。已发布 18 章基础讲解、练习和配套源码；后续以 Web Server 为综合项目，逐步学习 TCP、HTTP、路由、静态文件、线程池与服务关闭。"
+summary = "从基础语法、所有权与错误处理入门，先用命令行工具和 HTTP 客户端练习，再以 Web Server 为后续综合项目，把连接、请求处理、并发与资源管理串起来。"
 tags = ["Rust", "学习路线", "项目实践"]
 categories = ["programming"]
 series = ["rust-from-zero"]
@@ -14,8 +14,8 @@ series_order = 0
 layout = "series"
 series_index = true
 series_title = "Rust 从零开始"
-series_status = "18 章教材与配套项目已发布"
-series_intro = "从第一个能运行的程序开始，通过练习学会使用 Rust，做出能保存数据的命令行工具，再学习依赖管理、备份和 HTTP 请求。"
+series_status = "18 章已发布；后续 Web Server 项目已规划"
+series_intro = "从第一个程序开始学习 Rust，用命令行与 HTTP 客户端练习基础，再逐步完成一个支持静态文件、JSON 路由和线程池的 Web Server。"
 ShowToc = true
 source_kind = "original"
 article_type = "tutorial"
@@ -24,7 +24,7 @@ series_kind = "course"
 
 [开始阅读：学习指南](/posts/rust-00-learning-guide/) · [下载配套源码](course.zip)
 
-## 全部章节
+## 已发布章节 {#全部章节}
 
 - [Rust 从零开始：怎么使用这套教材](/posts/rust-00-learning-guide/)
 - [Rust 入门 01：安装工具，运行第一个程序](/posts/rust-01-setup/)
@@ -45,6 +45,37 @@ series_kind = "course"
 - [Rust 入门 16：备份任务数据，恢复到新文件](/posts/rust-16-backup/)
 - [Rust 入门 17：用 clap 整理命令行接口](/posts/rust-17-clap/)
 - [Rust 入门 18：请求本机 HTTP 服务，读取 JSON 响应](/posts/rust-18-http/)
+
+## 后续综合项目：Web Server {#webserver-project}
+
+前十八章打好语法、文件操作和 HTTP 客户端的基础，接下来的综合项目是从空 Cargo 项目实现一个 Web Server（Web 服务器）：接收浏览器或客户端的 HTTP 请求，再返回网页、文件或 JSON。命令行待办工具作为前置练习，后续项目围绕服务器展开。
+
+目标程序暂定名为 `rust-webserver`，默认只监听本机地址 `127.0.0.1`。完成后应能访问首页 `/`、健康检查 `/health`、课程数据 `/lesson.json` 和静态资源 `/static/`；第十八章的客户端可以请求其中的课程数据，检查服务器是否返回了正确的响应。
+
+下面是后续章节的写作安排，正文和项目源码尚未发布。先用标准库讲清连接、协议和并发；异步 Rust、Tokio 与 Web 框架作为完成这个项目后的扩展。
+
+| 拟定章节 | 项目推进 | 要讲透的 Rust 规则与问题 |
+| --- | --- | --- |
+| 19：接收第一个 TCP 连接 | 监听本机端口，接收连接并读写字节 | `TcpListener`、`TcpStream`、`Read`、`Write`；谁拥有连接，离开作用域后由谁释放 |
+| 20：解析请求，构造响应 | 定义请求与响应类型，处理完整请求头和字节长度 | `&[u8]`、`&str` 与 `String` 的边界；借用何时结束，`Result` 如何保留解析错误 |
+| 21：路由与 JSON 接口 | 实现首页、健康检查和课程数据路由 | 用枚举和 `match` 分派请求；函数、闭包与处理器的参数和返回值 |
+| 22：提供静态文件 | 读取文档目录中的文件，处理不存在和越界路径 | `Path` 与 `PathBuf`、所有权与文件句柄；把 I/O 错误转换为明确响应 |
+| 23：让多个连接同时工作 | 从单线程处理过渡到多线程，观察慢请求的影响 | `move` 闭包、`Send` 与 `'static` 约束；为何借用局部数据的任务不能直接交给工作线程 |
+| 24：实现固定线程池 | 用工作线程和有界队列分配连接，定义队列满时的行为 | channel、`Arc`、`Mutex`、`Box<dyn FnOnce() + Send + 'static>`；锁保护什么，何时释放 |
+| 25：关闭服务并完成验收 | 配置地址与目录，限制请求大小和等待时间，停止接收后回收线程 | `Drop`、`Option::take`、资源释放顺序与 `JoinHandle`；单元测试和本机集成测试 |
+
+首版按教学用的 HTTP/1.1 子集实现：支持 `GET` 和 `HEAD`，每条连接只处理一个请求，响应声明 `Connection: close`。请求头必须有大小和时间限制，静态文件只能来自配置的文档目录。请求体、长连接、TLS 和公网部署留在扩展范围中；具体拒绝规则会随协议章节和测试一起写清。
+
+项目验收包含以下行为：
+
+- 浏览器能打开首页；客户端能解析课程 JSON；`HEAD` 返回与对应 `GET` 一致的响应元信息，但不发送响应体。
+- 不存在的资源、非法请求、不支持的方法和目录越界都有明确处理；对应行为有自动测试。
+- 工作线程数量和等待队列有上限，慢连接不会无限占用资源；测试覆盖队列满、超时和客户端中途断开的情况。
+- 关闭过程能停止接收新连接，处理或明确取消已接收的任务并回收工作线程。能够解释连接、任务和共享状态的所有权，以及释放它们的先后顺序。
+
+每章仍会配最小语法例子、预期编译失败的对照和独立练习。项目完成与否同时检查运行行为和对语言规则的解释。
+
+参考资料：[《Rust 程序设计语言》的多线程 Web Server 项目](https://doc.rust-lang.org/book/ch21-00-final-project-a-web-server.html)、[标准库 `TcpListener` 文档](https://doc.rust-lang.org/std/net/struct.TcpListener.html)。资料核对日期：2026-10-15。
 
 ## 语法规则阅读路线 {#syntax-route}
 
