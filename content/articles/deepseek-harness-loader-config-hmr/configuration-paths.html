@@ -1,0 +1,273 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>配置变化的四条路径 · DeepSeek Harness 09</title><style>
+:root{color-scheme:light dark;--paper:#faf9f6;--surface:#f1f0ec;--ink:#242320;--muted:#66635d;--line:#c2beb5;--teal:#126d61;--teal-bg:#dceee7;--amber:#96511e;--amber-bg:#f8e4cf;--purple:#6044ab;--purple-bg:#ece5fa;--rose:#a03861;--rose-bg:#f7e1e9;--blue:#315c96;--blue-bg:#dce8f7;--motion-fast:160ms;--motion-step:480ms;--motion-hold:720ms;--motion-total:4320ms;--motion-ease:cubic-bezier(.2,.8,.2,1)}
+@media(prefers-color-scheme:dark){:root{--paper:#242320;--surface:#302e29;--ink:#faf9f6;--muted:#c2beb5;--line:#6d6962;--teal:#8cd9cd;--teal-bg:#203c37;--amber:#e8b47d;--amber-bg:#453225;--purple:#c3b1f8;--purple-bg:#332a47;--rose:#f1aac4;--rose-bg:#472d39;--blue:#adc9fb;--blue-bg:#27354a}}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:14px/1.75 'PingFang SC',system-ui,sans-serif}main{max-width:860px;margin:0 auto;padding:20px}header{border-top:3px solid var(--teal);padding-top:16px}.eyebrow{display:flex;gap:12px;align-items:center;color:var(--muted);font-size:11px;letter-spacing:.1em}.eyebrow b{color:var(--teal);font:600 14px ui-monospace,Menlo,monospace}h1{font:500 30px/1.4 'Songti SC',Georgia,serif;margin:10px 0}p{margin:8px 0}.intro,.description{color:var(--muted);line-height:1.85}.caption{font-size:11px;letter-spacing:.07em;color:var(--muted);margin:20px 0 8px}.radio{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}.case-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-bottom:1px solid var(--line);gap:8px}.case-tabs label{cursor:pointer;padding:12px 10px;border-top:3px solid var(--line);background:var(--surface);min-width:0}.case-tabs b{font-size:14px;color:var(--c)}.case-tabs small{display:block;font-size:11px;color:var(--muted);margin-top:3px}.case-panel{display:none;--c:var(--teal);--bg:var(--teal-bg)}h2{font-size:20px;line-height:1.5;margin:20px 0 6px;font-weight:600}.description{min-height:54px}.provenance{display:inline-block;color:var(--c);background:var(--bg);font-size:11px;padding:3px 7px;margin-top:4px}.motion-controls{display:none;gap:6px;align-items:center;flex-wrap:wrap;margin:18px 0 14px}.motion-ready .motion-controls{display:flex}.motion-controls[hidden]{display:none!important}button{font:inherit;font-size:12px;border:1px solid var(--line);color:var(--ink);background:var(--paper);padding:7px 12px;cursor:pointer;border-radius:3px}button:hover{border-color:var(--c)}button:disabled{opacity:.4;cursor:default}button[data-motion-action=play]{background:var(--c);border-color:var(--c);color:var(--paper)}button:focus-visible,label:focus-visible{outline:2px solid var(--blue);outline-offset:3px}.step-count{font:12px ui-monospace,Menlo,monospace;margin-left:auto;color:var(--muted)}.canvas{width:100%;overflow-x:auto}.sequence{width:100%;min-width:680px;display:block}.sequence text{fill:var(--ink);font-family:'PingFang SC',system-ui,sans-serif}.sequence .actor-name{font-size:14px;font-weight:600}.sequence .actor-sub{font-size:12px;fill:var(--muted)}.sequence .message-name{font-size:13px;fill:var(--c);font-weight:500}.sequence .serial{font-size:11px;font-family:ui-monospace,Menlo,monospace;fill:var(--muted)}.lifeline{stroke:var(--line);stroke-width:1;stroke-dasharray:3 4}.message-path{stroke:var(--c);stroke-width:1.5;fill:none}.motion-ready [data-motion-item]{opacity:.18;transition:opacity var(--motion-step) var(--motion-ease)}.motion-ready [data-motion-item].is-visible,.motion-ready[data-frame=end] [data-motion-item],.motion-ready[data-frame=static] [data-motion-item],.motion-ready[data-step-current="0"] [data-motion-item]{opacity:1}.sequence .is-current .message-path{stroke-width:3}.sequence .is-current .label-mask{fill:var(--bg)}.trace{list-style:none;margin:4px 0 14px;padding:0;border-top:1px solid var(--line)}.trace li{display:grid;grid-template-columns:28px 1fr;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}.trace .number{color:var(--c);font:600 13px/1.9 ui-monospace,Menlo,monospace}.trace b{font-size:13px;font-weight:600}.trace p{color:var(--muted);font-size:12px;margin:1px 0 0}.trace .route{display:none;font-size:11px;color:var(--c)}.trace li.is-current{background:var(--bg);padding-left:8px;padding-right:8px}.inspector{border-top:2px solid var(--c);margin-top:18px;padding-top:12px}.inspector-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px}.inspector h3{margin:0;font-size:14px}.inspector-head span{font-size:11px;color:var(--muted)}.views{display:flex;border-bottom:1px solid var(--line);gap:6px;margin:12px 0}.views label{cursor:pointer;font-size:12px;padding:6px 10px}.view{display:none}pre{margin:0;background:var(--surface);padding:14px;white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.9 'SFMono-Regular',ui-monospace,Menlo,monospace;min-height:150px}.snapshots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:12px 0}.snapshot{border-left:3px solid var(--c);padding:9px 10px;background:var(--bg)}.snapshot span{display:block;font-size:11px;color:var(--muted)}.snapshot strong{font-weight:500;font-size:12px;line-height:1.6;color:var(--c)}details{border-top:1px solid var(--line);padding-top:10px;font-size:12px;margin-top:16px;color:var(--muted)}summary{cursor:pointer;color:var(--ink)}details code{overflow-wrap:anywhere;font-size:11px}footer{border-top:1px solid var(--line);margin-top:20px;padding-top:12px;font-size:11px;line-height:1.9;color:var(--muted)}.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--muted);padding:6px 0 12px}.legend span:before{content:'';display:inline-block;width:7px;height:7px;background:var(--c);margin-right:5px}.sr-only{position:absolute;clip-path:inset(50%);height:1px;width:1px;overflow:hidden}
+@media(max-width:719px){main{padding:20px 16px}.case-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}.case-tabs label{padding:8px 10px}.canvas,.legend{display:none}h1{font-size:25px}h2{font-size:19px}.description{min-height:0}.trace{margin-top:12px}.trace li{padding:12px 0}.trace p{font-size:13px;line-height:1.8}.trace .route{display:block}.trace b{font-size:14px}.snapshots{grid-template-columns:1fr;gap:7px}.snapshot{display:flex;justify-content:space-between;gap:8px;padding:9px 10px}.snapshot strong{text-align:right}.motion-controls{gap:5px}button{padding:7px 10px}.step-count{font-size:11px}.inspector-head{display:block}.inspector-head span{display:block;margin-top:3px}pre{min-height:160px}.description{font-size:13px}}
+@media(max-width:359px){h1{font-size:23px}.case-tabs small{font-size:10px}.motion-controls button{font-size:11px;padding:7px 9px}.step-count{width:100%;margin-left:0}.views label{padding:6px 8px}.eyebrow{letter-spacing:.04em;font-size:10px}pre{font-size:11px}.snapshot strong{font-size:11px}}
+@media(prefers-reduced-motion:reduce){[data-motion-item]{opacity:1!important;transition:none!important}.motion-controls,[data-motion-decorative]{display:none!important}}
+@media print{.motion-controls{display:none!important}[data-motion-item]{opacity:1!important;transition:none!important}.canvas{overflow-x:visible}.sequence{min-width:0}.case-panel{break-inside:avoid}pre{min-height:0}}
+html[data-motion=static] .motion-controls,html[data-motion=step] .motion-controls{display:none!important}html[data-motion=static] [data-motion-item]{opacity:1!important;transition:none!important}
+#case-ordinary:checked ~ .case-tabs label[for="case-ordinary"]{background:var(--amber-bg);border-color:var(--amber)}#case-ordinary:focus-visible ~ .case-tabs label[for="case-ordinary"]{outline:2px solid var(--blue);outline-offset:3px}#case-ordinary:checked ~ .panels .case-ordinary{display:block}
+#view-ordinary-config:checked ~ .views label[for="view-ordinary-config"]{color:var(--c);background:var(--bg)}#view-ordinary-config:focus-visible ~ .views label[for="view-ordinary-config"]{outline:2px solid var(--blue);outline-offset:2px}#view-ordinary-config:checked ~ .view-config{display:block}
+#view-ordinary-running:checked ~ .views label[for="view-ordinary-running"]{color:var(--c);background:var(--bg)}#view-ordinary-running:focus-visible ~ .views label[for="view-ordinary-running"]{outline:2px solid var(--blue);outline-offset:2px}#view-ordinary-running:checked ~ .view-running{display:block}
+#view-ordinary-events:checked ~ .views label[for="view-ordinary-events"]{color:var(--c);background:var(--bg)}#view-ordinary-events:focus-visible ~ .views label[for="view-ordinary-events"]{outline:2px solid var(--blue);outline-offset:2px}#view-ordinary-events:checked ~ .view-events{display:block}
+#case-volatile:checked ~ .case-tabs label[for="case-volatile"]{background:var(--teal-bg);border-color:var(--teal)}#case-volatile:focus-visible ~ .case-tabs label[for="case-volatile"]{outline:2px solid var(--blue);outline-offset:3px}#case-volatile:checked ~ .panels .case-volatile{display:block}
+#view-volatile-config:checked ~ .views label[for="view-volatile-config"]{color:var(--c);background:var(--bg)}#view-volatile-config:focus-visible ~ .views label[for="view-volatile-config"]{outline:2px solid var(--blue);outline-offset:2px}#view-volatile-config:checked ~ .view-config{display:block}
+#view-volatile-running:checked ~ .views label[for="view-volatile-running"]{color:var(--c);background:var(--bg)}#view-volatile-running:focus-visible ~ .views label[for="view-volatile-running"]{outline:2px solid var(--blue);outline-offset:2px}#view-volatile-running:checked ~ .view-running{display:block}
+#view-volatile-events:checked ~ .views label[for="view-volatile-events"]{color:var(--c);background:var(--bg)}#view-volatile-events:focus-visible ~ .views label[for="view-volatile-events"]{outline:2px solid var(--blue);outline-offset:2px}#view-volatile-events:checked ~ .view-events{display:block}
+#case-invalid:checked ~ .case-tabs label[for="case-invalid"]{background:var(--rose-bg);border-color:var(--rose)}#case-invalid:focus-visible ~ .case-tabs label[for="case-invalid"]{outline:2px solid var(--blue);outline-offset:3px}#case-invalid:checked ~ .panels .case-invalid{display:block}
+#view-invalid-config:checked ~ .views label[for="view-invalid-config"]{color:var(--c);background:var(--bg)}#view-invalid-config:focus-visible ~ .views label[for="view-invalid-config"]{outline:2px solid var(--blue);outline-offset:2px}#view-invalid-config:checked ~ .view-config{display:block}
+#view-invalid-running:checked ~ .views label[for="view-invalid-running"]{color:var(--c);background:var(--bg)}#view-invalid-running:focus-visible ~ .views label[for="view-invalid-running"]{outline:2px solid var(--blue);outline-offset:2px}#view-invalid-running:checked ~ .view-running{display:block}
+#view-invalid-events:checked ~ .views label[for="view-invalid-events"]{color:var(--c);background:var(--bg)}#view-invalid-events:focus-visible ~ .views label[for="view-invalid-events"]{outline:2px solid var(--blue);outline-offset:2px}#view-invalid-events:checked ~ .view-events{display:block}
+#case-hmr:checked ~ .case-tabs label[for="case-hmr"]{background:var(--purple-bg);border-color:var(--purple)}#case-hmr:focus-visible ~ .case-tabs label[for="case-hmr"]{outline:2px solid var(--blue);outline-offset:3px}#case-hmr:checked ~ .panels .case-hmr{display:block}
+#view-hmr-config:checked ~ .views label[for="view-hmr-config"]{color:var(--c);background:var(--bg)}#view-hmr-config:focus-visible ~ .views label[for="view-hmr-config"]{outline:2px solid var(--blue);outline-offset:2px}#view-hmr-config:checked ~ .view-config{display:block}
+#view-hmr-running:checked ~ .views label[for="view-hmr-running"]{color:var(--c);background:var(--bg)}#view-hmr-running:focus-visible ~ .views label[for="view-hmr-running"]{outline:2px solid var(--blue);outline-offset:2px}#view-hmr-running:checked ~ .view-running{display:block}
+#view-hmr-events:checked ~ .views label[for="view-hmr-events"]{color:var(--c);background:var(--bg)}#view-hmr-events:focus-visible ~ .views label[for="view-hmr-events"]{outline:2px solid var(--blue);outline-offset:2px}#view-hmr-events:checked ~ .view-events{display:block}
+
+.variant{display:none}.panels{--c:var(--amber);--bg:var(--amber-bg)}.trace li.is-current p{color:var(--ink)}
+#case-ordinary:checked ~ .panels{--c:var(--amber);--bg:var(--amber-bg)}#case-ordinary:checked ~ .panels .variant-ordinary{display:inline}
+#case-volatile:checked ~ .panels{--c:var(--teal);--bg:var(--teal-bg)}#case-volatile:checked ~ .panels .variant-volatile{display:inline}
+#case-invalid:checked ~ .panels{--c:var(--rose);--bg:var(--rose-bg)}#case-invalid:checked ~ .panels .variant-invalid{display:inline}
+#case-hmr:checked ~ .panels{--c:var(--purple);--bg:var(--purple-bg)}#case-hmr:checked ~ .panels .variant-hmr{display:inline}
+</style></head><body><main><header><div class="eyebrow"><b>09</b> CORDIS / CONFIGURATION IN MOTION</div><h1>一次改动，四条运行路径</h1><p class="intro">沿着四条实现路径，看原始配置、运行值和插件资源怎样变化。切换输入，播放步骤，再检查完成后的结果。切换路径会保留步骤，重播可从头观察。</p></header><section aria-label="选择配置或模块变化"><p class="caption">01 / 选择改动</p><input type="radio" class="radio" name="case" id="case-ordinary" aria-label="普通字段" checked><input type="radio" class="radio" name="case" id="case-volatile" aria-label="volatile 字段" ><input type="radio" class="radio" name="case" id="case-invalid" aria-label="无效候选" ><input type="radio" class="radio" name="case" id="case-hmr" aria-label="模块代码" ><nav class="case-tabs" aria-label="四条变化路径"><label for="case-ordinary" style="--c:var(--amber)"><b>普通字段</b><small>清理 → 再次 apply</small></label><label for="case-volatile" style="--c:var(--teal)"><b>volatile 字段</b><small>原引用 → 新快照</small></label><label for="case-invalid" style="--c:var(--rose)"><b>无效候选</b><small>raw 已变 / 运行值保留</small></label><label for="case-hmr" style="--c:var(--purple)"><b>模块代码</b><small>旧 Fiber → 替换 Fiber</small></label></nav><div class="panels" data-motion-root data-motion-mode="step" data-step-count="6" data-step-current="6" data-frame="static" data-static-frame="complete" tabindex="0" aria-label="配置变化时序演示"><div class="case-panel case-ordinary"><h2>同一个 Fiber，重新执行一次插件</h2><p class="description">fixed 从 A 变成 B。默认 internal/update 末端选择 restart，已登记资源先退出，再按新配置执行。</p><span class="provenance">真实 Loader 实验 03–06</span></div><div class="case-panel case-volatile"><h2>保留插件资源，只替换引用中的快照</h2><p class="description">仅 live、count 改变，普通有效值一致。Loader 完整校验候选后，先提交所有引用，再通知拥有它们的 Fiber。</p><span class="provenance">真实 Loader 实验 07–12</span></div><div class="case-panel case-invalid"><h2>候选没有通过验证，旧运行值继续可用</h2><p class="description">live 声明为字符串，却收到数字 42。这个分支保留原始输入，记录警告，不替换正在运行的引用。</p><span class="provenance">真实 Loader 实验 08</span></div><div class="case-panel case-hmr"><h2>先验证模块能导入，再替换运行实例</h2><p class="description">dsh HMR 在统一队列内分析依赖和缓存。以下是正常替换顺序；失败恢复与权限边界见正文。</p><span class="provenance">固定源码分析 · 本次未运行 HMR</span></div><div data-motion-controls class="motion-controls" role="group" aria-label="时序播放控制"><button type="button" data-motion-action="play" aria-pressed="false">播放</button><button type="button" data-motion-action="pause" aria-pressed="true">暂停</button><button type="button" data-motion-action="prev">上一步</button><button type="button" data-motion-action="next">下一步</button><button type="button" data-motion-action="replay">重播</button><span class="step-count" data-motion-status-visible aria-hidden="true">步骤 <span data-motion-step-label>6</span> / 6</span></div><p class="sr-only" data-motion-status role="status" aria-live="polite" aria-atomic="true"></p><div class="canvas"><svg class="sequence" viewBox="0 0 680 540" role="img" aria-labelledby="cfg-sequence-title cfg-sequence-desc"><title id="cfg-sequence-title">配置变化的四条时序路径</title><desc id="cfg-sequence-desc">时间从上向下。选择普通字段、volatile、无效候选或模块代码，查看配置、运行引用和插件实例之间的处理顺序。六个观察步骤包含处理动作与终点确认；间距不表示耗时。</desc><defs><marker id="cfg-sequence-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M0 0 L8 3 L0 6 Z" fill="var(--c)"/></marker></defs><line class="lifeline" x1="100" y1="112" x2="100" y2="504"/><line class="lifeline" x1="260" y1="112" x2="260" y2="504"/><line class="lifeline" x1="420" y1="112" x2="420" y2="504"/><line class="lifeline" x1="580" y1="112" x2="580" y2="504"/><g data-motion-item data-step="1" aria-label="步骤 1，查看当前路径的处理动作与等待条件"><g class="variant variant-ordinary"><line class="message-path" x1="100" y1="164" x2="260" y2="164" marker-end="url(#cfg-sequence-arrow)" /><rect class="label-mask" x="139.5" y="135" width="81" height="22" fill="var(--paper)"/><text class="message-name" x="180" y="151" text-anchor="middle">提交新配置</text><text class="serial" x="24" y="168">01</text></g><g class="variant variant-volatile"><line class="message-path" x1="100" y1="164" x2="260" y2="164" marker-end="url(#cfg-sequence-arrow)" /><rect class="label-mask" x="133" y="135" width="94" height="22" fill="var(--paper)"/><text class="message-name" x="180" y="151" text-anchor="middle">保存新原始值</text><text class="serial" x="24" y="168">01</text></g><g class="variant variant-invalid"><line class="message-path" x1="100" y1="164" x2="260" y2="164" marker-end="url(#cfg-sequence-arrow)" /><rect class="label-mask" x="126.5" y="135" width="107" height="22" fill="var(--paper)"/><text class="message-name" x="180" y="151" text-anchor="middle">保留新原始输入</text><text class="serial" x="24" y="168">01</text></g><g class="variant variant-hmr"><line class="message-path" x1="100" y1="164" x2="260" y2="164" marker-end="url(#cfg-sequence-arrow)" /><rect class="label-mask" x="126.5" y="135" width="107" height="22" fill="var(--paper)"/><text class="message-name" x="180" y="151" text-anchor="middle">备份并清理缓存</text><text class="serial" x="24" y="168">01</text></g></g><g data-motion-item data-step="2" aria-label="步骤 2，查看当前路径的处理动作与等待条件"><g class="variant variant-ordinary"><line class="message-path" x1="260" y1="228" x2="420" y2="228" marker-end="url(#cfg-sequence-arrow)" /><rect class="label-mask" x="299.5" y="199" width="81" height="22" fill="var(--paper)"/><text class="message-name" x="340" y="215" text-anchor="middle">解析并更新</text><text class="serial" x="24" y="232">02</text></g><g class="variant variant-volatile"><line class="message-path" x1="260" y1="228" x2="420" y2="228" marker-end="url(#cfg-sequence-arrow)" /><rect class="label-mask" x="293" y="199" width="94" height="22" fill="var(--paper)"/><text class="message-name" x="340" y="215" text-anchor="middle">比较原始改动</text><text class="serial" x="24" y="232">02</text></g><g class="variant variant-invalid"><line class="message-path" x1="260" y1="228" x2="420" y2="228" marker-end="url(#cfg-sequence-arrow)" /><rect class="label-mask" x="293" y="199" width="94" height="22" fill="var(--paper)"/><text class="message-name" x="340" y="215" text-anchor="middle">进入候选解析</text><text class="serial" x="24" y="232">02</text></g><g class="variant variant-hmr"><line class="message-path" x1="260" y1="228" x2="100" y2="228" marker-end="url(#cfg-sequence-arrow)" stroke-dasharray="5 4"/><rect class="label-mask" x="133" y="199" width="94" height="22" fill="var(--paper)"/><text class="message-name" x="180" y="215" text-anchor="middle">重新导入入口</text><text class="serial" x="24" y="232">02</text></g></g><g data-motion-item data-step="3" aria-label="步骤 3，查看当前路径的处理动作与等待条件"><g class="variant variant-ordinary"><line class="message-path" x1="420" y1="292" x2="580" y2="292" marker-end="url(#cfg-sequence-arrow)" /><rect class="label-mask" x="453" y="263" width="94" height="22" fill="var(--paper)"/><text class="message-name" x="500" y="279" text-anchor="middle">开始释放资源</text><text class="serial" x="24" y="296">03</text></g><g class="variant variant-volatile"><line class="message-path" x1="260" y1="292" x2="420" y2="292" marker-end="url(#cfg-sequence-arrow)" /><rect class="label-mask" x="286.5" y="263" width="107" height="22" fill="var(--paper)"/><text class="message-name" x="340" y="279" text-anchor="middle">解析并验证候选</text><text class="serial" x="24" y="296">03</text></g><g class="variant variant-invalid"><line class="message-path" x1="420" y1="292" x2="260" y2="292" marker-end="url(#cfg-sequence-arrow)" stroke-dasharray="5 4"/><rect class="label-mask" x="293" y="263" width="94" height="22" fill="var(--paper)"/><text class="message-name" x="340" y="279" text-anchor="middle">候选验证失败</text><text class="serial" x="24" y="296">03</text></g><g class="variant variant-hmr"><line class="message-path" x1="100" y1="292" x2="420" y2="292" marker-end="url(#cfg-sequence-arrow)" /><rect class="label-mask" x="180.5" y="263" width="159" height="22" fill="var(--paper)"/><text class="message-name" x="260" y="279" text-anchor="middle">删除旧 runtime</text><text class="serial" x="24" y="296">03</text></g></g><g data-motion-item data-step="4" aria-label="步骤 4，查看当前路径的处理动作与等待条件"><g class="variant variant-ordinary"><line class="message-path" x1="580" y1="356" x2="420" y2="356" marker-end="url(#cfg-sequence-arrow)" stroke-dasharray="5 4"/><rect class="label-mask" x="446.5" y="327" width="107" height="22" fill="var(--paper)"/><text class="message-name" x="500" y="343" text-anchor="middle">等待旧资源退出</text><text class="serial" x="24" y="360">04</text></g><g class="variant variant-volatile"><line class="message-path" x1="420" y1="356" x2="260" y2="356" marker-end="url(#cfg-sequence-arrow)" stroke-dasharray="5 4"/><rect class="label-mask" x="286.5" y="327" width="107" height="22" fill="var(--paper)"/><text class="message-name" x="340" y="343" text-anchor="middle">检查普通有效值</text><text class="serial" x="24" y="360">04</text></g><g class="variant variant-invalid"><line class="message-path" x1="260" y1="356" x2="420" y2="356" marker-end="url(#cfg-sequence-arrow)" /><rect class="label-mask" x="293" y="327" width="94" height="22" fill="var(--paper)"/><text class="message-name" x="340" y="343" text-anchor="middle">记录校验警告</text><text class="serial" x="24" y="360">04</text></g><g class="variant variant-hmr"><line class="message-path" x1="100" y1="356" x2="580" y2="356" marker-end="url(#cfg-sequence-arrow)" /><rect class="label-mask" x="293" y="327" width="94" height="22" fill="var(--paper)"/><text class="message-name" x="340" y="343" text-anchor="middle">创建替换实例</text><text class="serial" x="24" y="360">04</text></g></g><g data-motion-item data-step="5" aria-label="步骤 5，查看当前路径的处理动作与等待条件"><g class="variant variant-ordinary"><line class="message-path" x1="420" y1="420" x2="580" y2="420" marker-end="url(#cfg-sequence-arrow)" /><rect class="label-mask" x="427" y="391" width="146" height="22" fill="var(--paper)"/><text class="message-name" x="500" y="407" text-anchor="middle">按新配置 apply</text><text class="serial" x="24" y="424">05</text></g><g class="variant variant-volatile"><line class="message-path" x1="260" y1="420" x2="420" y2="420" marker-end="url(#cfg-sequence-arrow)" /><rect class="label-mask" x="293" y="391" width="94" height="22" fill="var(--paper)"/><text class="message-name" x="340" y="407" text-anchor="middle">提交全部快照</text><text class="serial" x="24" y="424">05</text></g><g class="variant variant-invalid"><line class="message-path" x1="260" y1="420" x2="580" y2="420" marker-end="url(#cfg-sequence-arrow)" /><rect class="label-mask" x="373" y="391" width="94" height="22" fill="var(--paper)"/><text class="message-name" x="420" y="407" text-anchor="middle">跳过快照提交</text><text class="serial" x="24" y="424">05</text></g><g class="variant variant-hmr"><line class="message-path" x1="580" y1="420" x2="100" y2="420" marker-end="url(#cfg-sequence-arrow)" stroke-dasharray="5 4"/><rect class="label-mask" x="286.5" y="391" width="107" height="22" fill="var(--paper)"/><text class="message-name" x="340" y="407" text-anchor="middle">等待新实例稳定</text><text class="serial" x="24" y="424">05</text></g></g><g data-motion-item data-step="6" aria-label="步骤 6，查看当前路径的处理动作与等待条件"><g class="variant variant-ordinary"><line class="message-path" x1="580" y1="484" x2="420" y2="484" marker-end="url(#cfg-sequence-arrow)" stroke-dasharray="5 4"/><rect class="label-mask" x="453" y="455" width="94" height="22" fill="var(--paper)"/><text class="message-name" x="500" y="471" text-anchor="middle">生命周期稳定</text><text class="serial" x="24" y="488">06</text></g><g class="variant variant-volatile"><line class="message-path" x1="260" y1="484" x2="580" y2="484" marker-end="url(#cfg-sequence-arrow)" /><rect class="label-mask" x="360" y="455" width="120" height="22" fill="var(--paper)"/><text class="message-name" x="420" y="471" text-anchor="middle">通知 owner</text><text class="serial" x="24" y="488">06</text></g><g class="variant variant-invalid"><line class="message-path" x1="580" y1="484" x2="260" y2="484" marker-end="url(#cfg-sequence-arrow)" stroke-dasharray="5 4"/><rect class="label-mask" x="373" y="455" width="94" height="22" fill="var(--paper)"/><text class="message-name" x="420" y="471" text-anchor="middle">确认运行状态</text><text class="serial" x="24" y="488">06</text></g><g class="variant variant-hmr"><line class="message-path" x1="100" y1="484" x2="260" y2="484" marker-end="url(#cfg-sequence-arrow)" /><rect class="label-mask" x="120" y="455" width="120" height="22" fill="var(--paper)"/><text class="message-name" x="180" y="471" text-anchor="middle">提交命名空间记录</text><text class="serial" x="24" y="488">06</text></g></g><g class="variant variant-ordinary"><g class="actor" style="--c:var(--rose);--bg:var(--rose-bg)"><rect x="40" y="40" width="120" height="72" rx="3" fill="var(--paper)"/><rect x="40" y="40" width="120" height="72" rx="3" fill="var(--bg)" stroke="var(--c)"/><text class="actor-name" x="100" y="69" text-anchor="middle" style="fill:var(--c)">配置树</text><text class="actor-sub" x="100" y="92" text-anchor="middle">raw options</text></g><g class="actor" style="--c:var(--teal);--bg:var(--teal-bg)"><rect x="200" y="40" width="120" height="72" rx="3" fill="var(--paper)"/><rect x="200" y="40" width="120" height="72" rx="3" fill="var(--bg)" stroke="var(--c)"/><text class="actor-name" x="260" y="69" text-anchor="middle" style="fill:var(--c)">Entry</text><text class="actor-sub" x="260" y="92" text-anchor="middle">更新入口</text></g><g class="actor" style="--c:var(--amber);--bg:var(--amber-bg)"><rect x="360" y="40" width="120" height="72" rx="3" fill="var(--paper)"/><rect x="360" y="40" width="120" height="72" rx="3" fill="var(--bg)" stroke="var(--c)"/><text class="actor-name" x="420" y="69" text-anchor="middle" style="fill:var(--c)">Fiber</text><text class="actor-sub" x="420" y="92" text-anchor="middle">同一 uid</text></g><g class="actor" style="--c:var(--purple);--bg:var(--purple-bg)"><rect x="520" y="40" width="120" height="72" rx="3" fill="var(--paper)"/><rect x="520" y="40" width="120" height="72" rx="3" fill="var(--bg)" stroke="var(--c)"/><text class="actor-name" x="580" y="69" text-anchor="middle" style="fill:var(--c)">插件资源</text><text class="actor-sub" x="580" y="92" text-anchor="middle">重新登记</text></g></g><g class="variant variant-volatile"><g class="actor" style="--c:var(--rose);--bg:var(--rose-bg)"><rect x="40" y="40" width="120" height="72" rx="3" fill="var(--paper)"/><rect x="40" y="40" width="120" height="72" rx="3" fill="var(--bg)" stroke="var(--c)"/><text class="actor-name" x="100" y="69" text-anchor="middle" style="fill:var(--c)">原始配置</text><text class="actor-sub" x="100" y="92" text-anchor="middle">live / count</text></g><g class="actor" style="--c:var(--teal);--bg:var(--teal-bg)"><rect x="200" y="40" width="120" height="72" rx="3" fill="var(--paper)"/><rect x="200" y="40" width="120" height="72" rx="3" fill="var(--bg)" stroke="var(--c)"/><text class="actor-name" x="260" y="69" text-anchor="middle" style="fill:var(--c)">Loader</text><text class="actor-sub" x="260" y="92" text-anchor="middle">比较并校验</text></g><g class="actor" style="--c:var(--purple);--bg:var(--purple-bg)"><rect x="360" y="40" width="120" height="72" rx="3" fill="var(--paper)"/><rect x="360" y="40" width="120" height="72" rx="3" fill="var(--bg)" stroke="var(--c)"/><text class="actor-name" x="420" y="69" text-anchor="middle" style="fill:var(--c)">候选与引用</text><text class="actor-sub" x="420" y="92" text-anchor="middle">schema / get()</text></g><g class="actor" style="--c:var(--amber);--bg:var(--amber-bg)"><rect x="520" y="40" width="120" height="72" rx="3" fill="var(--paper)"/><rect x="520" y="40" width="120" height="72" rx="3" fill="var(--bg)" stroke="var(--c)"/><text class="actor-name" x="580" y="69" text-anchor="middle" style="fill:var(--c)">owner Fiber</text><text class="actor-sub" x="580" y="92" text-anchor="middle">局部通知</text></g></g><g class="variant variant-invalid"><g class="actor" style="--c:var(--rose);--bg:var(--rose-bg)"><rect x="40" y="40" width="120" height="72" rx="3" fill="var(--paper)"/><rect x="40" y="40" width="120" height="72" rx="3" fill="var(--bg)" stroke="var(--c)"/><text class="actor-name" x="100" y="69" text-anchor="middle" style="fill:var(--c)">新输入</text><text class="actor-sub" x="100" y="92" text-anchor="middle">live: 42</text></g><g class="actor" style="--c:var(--teal);--bg:var(--teal-bg)"><rect x="200" y="40" width="120" height="72" rx="3" fill="var(--paper)"/><rect x="200" y="40" width="120" height="72" rx="3" fill="var(--bg)" stroke="var(--c)"/><text class="actor-name" x="260" y="69" text-anchor="middle" style="fill:var(--c)">Entry</text><text class="actor-sub" x="260" y="92" text-anchor="middle">保留 raw</text></g><g class="actor" style="--c:var(--amber);--bg:var(--amber-bg)"><rect x="360" y="40" width="120" height="72" rx="3" fill="var(--paper)"/><rect x="360" y="40" width="120" height="72" rx="3" fill="var(--bg)" stroke="var(--c)"/><text class="actor-name" x="420" y="69" text-anchor="middle" style="fill:var(--c)">校验与日志</text><text class="actor-sub" x="420" y="92" text-anchor="middle">验证失败</text></g><g class="actor" style="--c:var(--purple);--bg:var(--purple-bg)"><rect x="520" y="40" width="120" height="72" rx="3" fill="var(--paper)"/><rect x="520" y="40" width="120" height="72" rx="3" fill="var(--bg)" stroke="var(--c)"/><text class="actor-name" x="580" y="69" text-anchor="middle" style="fill:var(--c)">运行引用</text><text class="actor-sub" x="580" y="92" text-anchor="middle">live: one</text></g></g><g class="variant variant-hmr"><g class="actor" style="--c:var(--teal);--bg:var(--teal-bg)"><rect x="40" y="40" width="120" height="72" rx="3" fill="var(--paper)"/><rect x="40" y="40" width="120" height="72" rx="3" fill="var(--bg)" stroke="var(--c)"/><text class="actor-name" x="100" y="69" text-anchor="middle" style="fill:var(--c)">HMR 队列</text><text class="actor-sub" x="100" y="92" text-anchor="middle">同一时刻一项</text></g><g class="actor" style="--c:var(--purple);--bg:var(--purple-bg)"><rect x="200" y="40" width="120" height="72" rx="3" fill="var(--paper)"/><rect x="200" y="40" width="120" height="72" rx="3" fill="var(--bg)" stroke="var(--c)"/><text class="actor-name" x="260" y="69" text-anchor="middle" style="fill:var(--c)">模块缓存</text><text class="actor-sub" x="260" y="92" text-anchor="middle">ESM / CJS</text></g><g class="actor" style="--c:var(--amber);--bg:var(--amber-bg)"><rect x="360" y="40" width="120" height="72" rx="3" fill="var(--paper)"/><rect x="360" y="40" width="120" height="72" rx="3" fill="var(--bg)" stroke="var(--c)"/><text class="actor-name" x="420" y="69" text-anchor="middle" style="fill:var(--c)">旧实例</text><text class="actor-sub" x="420" y="92" text-anchor="middle">保存的 Fiber</text></g><g class="actor" style="--c:var(--rose);--bg:var(--rose-bg)"><rect x="520" y="40" width="120" height="72" rx="3" fill="var(--paper)"/><rect x="520" y="40" width="120" height="72" rx="3" fill="var(--bg)" stroke="var(--c)"/><text class="actor-name" x="580" y="69" text-anchor="middle" style="fill:var(--c)">新实例</text><text class="actor-sub" x="580" y="92" text-anchor="middle">替换 Fiber</text></g></g></svg></div><div class="case-panel case-ordinary"><div class="legend"><span style="--c:var(--rose)">配置树</span><span style="--c:var(--teal)">Entry</span><span style="--c:var(--amber)">Fiber</span><span style="--c:var(--purple)">插件资源</span></div></div><div class="case-panel case-volatile"><div class="legend"><span style="--c:var(--rose)">原始配置</span><span style="--c:var(--teal)">Loader</span><span style="--c:var(--purple)">候选与引用</span><span style="--c:var(--amber)">owner Fiber</span></div></div><div class="case-panel case-invalid"><div class="legend"><span style="--c:var(--rose)">新输入</span><span style="--c:var(--teal)">Entry</span><span style="--c:var(--amber)">校验与日志</span><span style="--c:var(--purple)">运行引用</span></div></div><div class="case-panel case-hmr"><div class="legend"><span style="--c:var(--teal)">HMR 队列</span><span style="--c:var(--purple)">模块缓存</span><span style="--c:var(--amber)">旧实例</span><span style="--c:var(--rose)">新实例</span></div></div><p class="caption">02 / 顺序与等待点</p><ol class="trace"><li data-motion-item data-step="1" aria-label="观察步骤 1 的说明"><span class="number">01</span><div><div class="case-panel case-ordinary"><b>提交新配置</b><span class="route">配置树 → Entry</span><p>Entry 接收 fixed: B，并保留新的原始 options。</p></div><div class="case-panel case-volatile"><b>保存新原始值</b><span class="route">原始配置 → Loader</span><p>Entry 与 Fiber 保留新的原始配置，以供后续激活使用。</p></div><div class="case-panel case-invalid"><b>保留新原始输入</b><span class="route">新输入 → Entry</span><p>Entry.options.config 与 Fiber._config 已保留 live: 42。</p></div><div class="case-panel case-hmr"><b>备份并清理缓存</b><span class="route">HMR 队列 → 模块缓存</span><p>选定受影响模块；保存旧 Fiber、entry 与当前原始配置。</p></div></div></li><li data-motion-item data-step="2" aria-label="观察步骤 2 的说明"><span class="number">02</span><div><div class="case-panel case-ordinary"><b>解析并更新</b><span class="route">Entry → Fiber</span><p>候选配置通过钩子与 schema 后，进入 internal/update。</p></div><div class="case-panel case-volatile"><b>比较原始改动</b><span class="route">Loader → 候选与引用</span><p>只有 config 变化、Fiber ACTIVE、父 Context 未变，才考虑快速路径。</p></div><div class="case-panel case-invalid"><b>进入候选解析</b><span class="route">Entry → 校验与日志</span><p>原始改动符合快速路径条件，开始解析并验证候选。</p></div><div class="case-panel case-hmr"><b>重新导入入口</b><span class="route">模块缓存 → HMR 队列</span><p>所有替换入口先导入；此时尚未删除旧 runtime。</p></div></div></li><li data-motion-item data-step="3" aria-label="观察步骤 3 的说明"><span class="number">03</span><div><div class="case-panel case-ordinary"><b>开始释放资源</b><span class="route">Fiber → 插件资源</span><p>默认 restart 先发起卸载，已登记资源进入清理。</p></div><div class="case-panel case-volatile"><b>解析并验证候选</b><span class="route">Loader → 候选与引用</span><p>执行真实 internal/config 与 schema，得到新的候选运行配置。</p></div><div class="case-panel case-invalid"><b>候选验证失败</b><span class="route">校验与日志 → Entry</span><p>字符串字段收到数字，验证抛出错误，进入 catch 分支。</p></div><div class="case-panel case-hmr"><b>删除旧 runtime</b><span class="route">HMR 队列 → 旧实例</span><p>等待保存下来的旧 Fiber 完成清理。</p></div></div></li><li data-motion-item data-step="4" aria-label="观察步骤 4 的说明"><span class="number">04</span><div><div class="case-panel case-ordinary"><b>等待旧资源退出</b><span class="route">插件资源 → Fiber</span><p>异步清理完成后，才继续本轮装载。</p></div><div class="case-panel case-volatile"><b>检查普通有效值</b><span class="route">候选与引用 → Loader</span><p>普通有效值必须保持相同；否则回到普通更新。</p></div><div class="case-panel case-invalid"><b>记录校验警告</b><span class="route">Entry → 校验与日志</span><p>Loader 记录失败；原始输入不会在这里自动还原。</p></div><div class="case-panel case-hmr"><b>创建替换实例</b><span class="route">HMR 队列 → 新实例</span><p>按原命名空间选择实现，恢复对应 entry 关联。</p></div></div></li><li data-motion-item data-step="5" aria-label="观察步骤 5 的说明"><span class="number">05</span><div><div class="case-panel case-ordinary"><b>按新配置 apply</b><span class="route">Fiber → 插件资源</span><p>插件再次执行，按 fixed: B 登记新的资源。</p></div><div class="case-panel case-volatile"><b>提交全部快照</b><span class="route">Loader → 候选与引用</span><p>live 与 count 的引用身份保持不变，当前值一起更新。</p></div><div class="case-panel case-invalid"><b>跳过快照提交</b><span class="route">Entry → 运行引用</span><p>候选没有提交，运行引用依然返回 one。</p></div><div class="case-panel case-hmr"><b>等待新实例稳定</b><span class="route">新实例 → HMR 队列</span><p>等待新 Fiber 与 Loader；稳定并不一律等于 ACTIVE。</p></div></div></li><li data-motion-item data-step="6" aria-label="观察步骤 6 的说明"><span class="number">06</span><div><div class="case-panel case-ordinary"><b>生命周期稳定</b><span class="route">插件资源 → Fiber</span><p>Fiber 对象与 uid 保持不变，实验轨迹以新 apply 完成为终点。</p></div><div class="case-panel case-volatile"><b>通知 owner</b><span class="route">Loader → owner Fiber</span><p>事件带有字段路径；通知前所有引用已提交，其他实例不接收。</p></div><div class="case-panel case-invalid"><b>确认运行状态</b><span class="route">运行引用 → Entry</span><p>实验终点：Fiber 仍 ACTIVE，没有 volatile 更新事件。</p></div><div class="case-panel case-hmr"><b>提交命名空间记录</b><span class="route">HMR 队列 → 模块缓存</span><p>成功后更新 entry.moduleNamespace，再发 hmr/reload。</p></div></div></li></ol><section class="case-panel case-ordinary"><section class="inspector" aria-label="完成后的数据对照"><div class="inspector-head"><h3>03 / 完成后快照</h3><span>固定示例结果，不是实时应用状态</span></div><div class="snapshots"><div class="snapshot" style="--c:var(--rose);--bg:var(--rose-bg)"><span>原始配置</span><strong>fixed: B</strong></div><div class="snapshot" style="--c:var(--amber);--bg:var(--amber-bg)"><span>实例身份</span><strong>同一 Fiber / uid</strong></div><div class="snapshot" style="--c:var(--purple);--bg:var(--purple-bg)"><span>已登记资源</span><strong>清理 A → 登记 B</strong></div></div><input type="radio" class="radio" name="view-ordinary" id="view-ordinary-config" aria-label="普通字段 · 原始输入" checked><input type="radio" class="radio" name="view-ordinary" id="view-ordinary-running" aria-label="普通字段 · 运行结果" ><input type="radio" class="radio" name="view-ordinary" id="view-ordinary-events" aria-label="普通字段 · 钩子与事件" ><nav class="views" aria-label="检查数据视角"><label for="view-ordinary-config">原始输入</label><label for="view-ordinary-running">运行结果</label><label for="view-ordinary-events">钩子与事件</label></nav><div class="view view-config"><pre>// 前后都由 Entry 保存原始输入
+之前  { fixed: &quot;A&quot;, live: &quot;one&quot; }
+之后  { fixed: &quot;B&quot;, live: &quot;one&quot; }</pre></div><div class="view view-running"><pre>apply(A)
+dispose(A) 完成
+apply(B)
+
+Fiber 与 uid 保持不变；运行配置重新解析。</pre></div><div class="view view-events"><pre>internal/config → schema
+internal/update → next()
+restart → 清理 → apply
+
+省略 next() 的插件可以消费更新。</pre></div></section><details><summary>查看实现依据与边界</summary><p><code>vendor/loader/src/config/entry.ts:117–157 · vendor/cordis/src/fiber.ts:736–752</code></p><p>真实 Loader 实验 03–06。普通更新可被 internal/update 拦截；HMR 回滚不撤销任意外部副作用。完整条件与失败路径见正文。</p></details></section><section class="case-panel case-volatile"><section class="inspector" aria-label="完成后的数据对照"><div class="inspector-head"><h3>03 / 完成后快照</h3><span>固定示例结果，不是实时应用状态</span></div><div class="snapshots"><div class="snapshot" style="--c:var(--purple);--bg:var(--purple-bg)"><span>同一 live 引用</span><strong>one → two</strong></div><div class="snapshot" style="--c:var(--teal);--bg:var(--teal-bg)"><span>资源与 apply</span><strong>不清理 / 不重做</strong></div><div class="snapshot" style="--c:var(--amber);--bg:var(--amber-bg)"><span>事件观察值</span><strong>two 与 2 已提交</strong></div></div><input type="radio" class="radio" name="view-volatile" id="view-volatile-config" aria-label="volatile 字段 · 原始输入" checked><input type="radio" class="radio" name="view-volatile" id="view-volatile-running" aria-label="volatile 字段 · 运行结果" ><input type="radio" class="radio" name="view-volatile" id="view-volatile-events" aria-label="volatile 字段 · 钩子与事件" ><nav class="views" aria-label="检查数据视角"><label for="view-volatile-config">原始输入</label><label for="view-volatile-running">运行结果</label><label for="view-volatile-events">钩子与事件</label></nav><div class="view view-config"><pre>// schema 中 live、count 标为 volatile
+之前  { live: &quot;one&quot;, count: 1 }
+之后  { live: &quot;two&quot;, count: 2 }
+fixed 的有效值保持 A。</pre></div><div class="view view-running"><pre>const reference = config.live
+reference.get()  // &quot;two&quot;
+config.count.get()  // 2
+
+config 和 reference 仍是原对象。</pre></div><div class="view view-events"><pre>loader/volatile-update
+paths: [[&quot;live&quot;], [&quot;count&quot;]]
+
+owner 回调读到 two / 2。
+同插件的另一个实例仍读到 one / 1。</pre></div></section><details><summary>查看实现依据与边界</summary><p><code>vendor/loader/src/config/entry.ts:141–197 · vendor/cosmokit/src/volatile.ts</code></p><p>真实 Loader 实验 07–12。普通更新可被 internal/update 拦截；HMR 回滚不撤销任意外部副作用。完整条件与失败路径见正文。</p></details></section><section class="case-panel case-invalid"><section class="inspector" aria-label="完成后的数据对照"><div class="inspector-head"><h3>03 / 完成后快照</h3><span>固定示例结果，不是实时应用状态</span></div><div class="snapshots"><div class="snapshot" style="--c:var(--rose);--bg:var(--rose-bg)"><span>原始输入</span><strong>live: 42</strong></div><div class="snapshot" style="--c:var(--purple);--bg:var(--purple-bg)"><span>当前 get()</span><strong>仍为 one</strong></div><div class="snapshot" style="--c:var(--amber);--bg:var(--amber-bg)"><span>将来重新激活</span><strong>原始值仍需校验</strong></div></div><input type="radio" class="radio" name="view-invalid" id="view-invalid-config" aria-label="无效候选 · 原始输入" checked><input type="radio" class="radio" name="view-invalid" id="view-invalid-running" aria-label="无效候选 · 运行结果" ><input type="radio" class="radio" name="view-invalid" id="view-invalid-events" aria-label="无效候选 · 钩子与事件" ><nav class="views" aria-label="检查数据视角"><label for="view-invalid-config">原始输入</label><label for="view-invalid-running">运行结果</label><label for="view-invalid-events">钩子与事件</label></nav><div class="view view-config"><pre>Entry.options.config.live  // 42
+Fiber._config.live          // 42
+
+原始输入已变化。</pre></div><div class="view view-running"><pre>config.live.get()  // &quot;one&quot;
+Fiber.state        // ACTIVE
+
+原引用没有替换。
+下次激活仍可能因原始输入失败。</pre></div><div class="view view-events"><pre>候选解析抛出验证错误
+Loader 记录 warning
+无 loader/volatile-update
+
+这不是原始配置的自动回滚。</pre></div></section><details><summary>查看实现依据与边界</summary><p><code>vendor/loader/src/config/entry.ts:149–175</code></p><p>真实 Loader 实验 08。普通更新可被 internal/update 拦截；HMR 回滚不撤销任意外部副作用。完整条件与失败路径见正文。</p></details></section><section class="case-panel case-hmr"><section class="inspector" aria-label="完成后的数据对照"><div class="inspector-head"><h3>03 / 完成后快照</h3><span>固定示例结果，不是实时应用状态</span></div><div class="snapshots"><div class="snapshot" style="--c:var(--amber);--bg:var(--amber-bg)"><span>旧实例</span><strong>清理已等待</strong></div><div class="snapshot" style="--c:var(--rose);--bg:var(--rose-bg)"><span>替换实例</span><strong>新建 Fiber</strong></div><div class="snapshot" style="--c:var(--teal);--bg:var(--teal-bg)"><span>成功通知</span><strong>hmr/reload</strong></div></div><input type="radio" class="radio" name="view-hmr" id="view-hmr-config" aria-label="模块代码 · 原始输入" checked><input type="radio" class="radio" name="view-hmr" id="view-hmr-running" aria-label="模块代码 · 运行结果" ><input type="radio" class="radio" name="view-hmr" id="view-hmr-events" aria-label="模块代码 · 钩子与事件" ><nav class="views" aria-label="检查数据视角"><label for="view-hmr-config">原始输入</label><label for="view-hmr-running">运行结果</label><label for="view-hmr-events">钩子与事件</label></nav><div class="view view-config"><pre>替换前保存：
+entry.options.config
+entry.moduleNamespace
+旧 runtime 的 Fiber 列表
+
+不重新按包名猜旧模块的位置。</pre></div><div class="view view-running"><pre>旧 Fiber 清理完成
+→ 新 Fiber 注册并等待
+→ Loader 稳定
+
+失败时尝试恢复缓存与旧实现，
+不承诺外部副作用被撤销。</pre></div><div class="view view-events"><pre>runExclusive
+→ partialReload
+→ 等待旧 / 新实例
+→ 更新 entry 命名空间
+→ hmr/reload</pre></div></section><details><summary>查看实现依据与边界</summary><p><code>packages/boot/hmr/src/index.ts:603–729</code></p><p>固定源码分析 · 本次未运行 HMR。普通更新可被 internal/update 拦截；HMR 回滚不撤销任意外部副作用。完整条件与失败路径见正文。</p></details></section></div></section><noscript><p>当前展示完整静态轨迹；四条路径和数据视角仍可切换，播放需要 JavaScript。</p></noscript><footer>固定源码 d743267388641bc76f17c45ce8b4c231aed1d32c。前 3 条路径由本文实验核对；HMR 来自源码分析。六个步骤包括处理动作与终点确认，箭头展示处理顺序，间距不表示耗时。减少动画、无 JavaScript 与打印时保留完整轨迹。</footer></main><script data-diagram-controls>
+    (() => {
+      const params = new URLSearchParams(location.search);
+      const staticOverride = params.get('motion') === 'static' || document.documentElement.dataset.motion === 'static';
+      const requestedStep = params.get('step');
+      const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+      document.fonts.ready.then(() => { document.documentElement.dataset.fontsReady = 'true'; });
+
+      document.querySelectorAll('[data-motion-root]').forEach((root) => {
+        const count = Number(root.dataset.stepCount);
+        const hold = parseFloat(getComputedStyle(root).getPropertyValue('--motion-hold')) || 720;
+        const parsedStep = requestedStep !== null && /^\d+$/.test(requestedStep) ? Number(requestedStep) : null;
+        const exactStep = params.get('motion') === 'step' && Number.isSafeInteger(parsedStep) && parsedStep >= 0 && parsedStep <= count ? parsedStep : null;
+        const items = [...root.querySelectorAll('[data-motion-item]')];
+        const labels = Array.from({ length: count + 1 }, (_, index) => index === 0
+          ? 'Ready'
+          : items.filter((item) => !item.hasAttribute('data-motion-decorative') && Number(item.dataset.step) === index)
+              .map((item) => item.getAttribute('aria-label')).join('; '));
+        const controls = root.querySelector('[data-motion-controls]');
+        const status = root.querySelector('[data-motion-status]');
+        const visibleStep = root.querySelector('[data-motion-step-label]');
+        let step = count;
+        let timer = 0;
+        let playing = false;
+        let stepBeforeReduce = 0;
+        let resumeAfterReduce = root.dataset.motionMode === 'reveal';
+
+        const buttons = (action) => controls.querySelector(`[data-motion-action="${action}"]`);
+        const clearClock = () => { window.clearTimeout(timer); timer = 0; };
+        const announce = () => { status.textContent = `Step ${step} of ${count}: ${labels[step] || 'Complete'}`; };
+        const setControlsAvailable = (available) => {
+          controls.hidden = !available;
+          controls.setAttribute('aria-hidden', String(!available));
+          controls.dataset.playbackDisabled = String(!available);
+          controls.querySelectorAll('button').forEach((control) => { control.disabled = !available; });
+        };
+
+        function render(next, userInitiated = false) {
+          step = Math.max(0, Math.min(count, next));
+          root.dataset.stepCurrent = String(step);
+          root.dataset.frame = step === count ? 'end' : step === 0 ? 'start' : 'step';
+          items.forEach((item) => {
+            const itemStep = Number(item.dataset.step);
+            item.classList.toggle('is-visible', itemStep <= step);
+            item.classList.toggle('is-current', itemStep === step);
+          });
+          if (visibleStep) visibleStep.textContent = String(step);
+          const unavailable = controls.dataset.playbackDisabled === 'true';
+          buttons('prev').disabled = unavailable || step === 0;
+          buttons('next').disabled = unavailable || step === count;
+          if (userInitiated) announce();
+        }
+
+        function pause(userInitiated = false) {
+          clearClock();
+          playing = false;
+          root.classList.remove('is-playing');
+          buttons('play').setAttribute('aria-pressed', 'false');
+          buttons('pause').setAttribute('aria-pressed', 'true');
+          if (userInitiated) status.textContent = `Paused at step ${step} of ${count}`;
+        }
+
+        function finish() {
+          pause(false);
+          root.dataset.frame = 'end';
+          status.textContent = `Complete · step ${count} of ${count}`;
+        }
+
+        function tick() {
+          if (!playing) return;
+          if (step >= count) { finish(); return; }
+          render(step + 1, false);
+          if (step >= count) { finish(); return; }
+          timer = window.setTimeout(tick, hold);
+        }
+
+        function play(fromStart = false, userInitiated = false) {
+          clearClock();
+          if (fromStart || step >= count) render(0, userInitiated);
+          playing = true;
+          root.classList.add('is-playing');
+          buttons('play').setAttribute('aria-pressed', 'true');
+          buttons('pause').setAttribute('aria-pressed', 'false');
+          timer = window.setTimeout(tick, hold);
+        }
+
+        controls.addEventListener('click', (event) => {
+          const button = event.target.closest('[data-motion-action]');
+          if (!button) return;
+          const action = button.dataset.motionAction;
+          if (action === 'play') play(false, true);
+          if (action === 'pause') pause(true);
+          if (action === 'replay') play(true, true);
+          if (action === 'prev') { pause(false); render(step - 1, true); }
+          if (action === 'next') { pause(false); render(step + 1, true); }
+        });
+
+        root.addEventListener('keydown', (event) => {
+          if (event.target.matches('input, textarea, select, a[href]')) return;
+          const keys = { ArrowLeft: step - 1, ArrowRight: step + 1, Home: 0, End: count };
+          if (event.code === 'Space' && !event.target.closest('button')) {
+            event.preventDefault();
+            playing ? pause(true) : play(false, true);
+            return;
+          }
+          if (!event.ctrlKey && !event.metaKey && !event.altKey && event.key.toLowerCase() === 'r') {
+            event.preventDefault();
+            play(true, true);
+            return;
+          }
+          if (!(event.key in keys)) return;
+          event.preventDefault();
+          pause(false);
+          render(keys[event.key], true);
+        });
+
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'hidden' && playing) pause(false);
+        });
+        reduce.addEventListener('change', (event) => {
+          if (event.matches && root.dataset.motionState !== 'reduced') {
+            stepBeforeReduce = step;
+            resumeAfterReduce = playing;
+          }
+          pause(false);
+          if (event.matches) {
+            setControlsAvailable(false);
+            render(count, false);
+            root.dataset.frame = 'static';
+            root.dataset.motionState = 'reduced';
+            status.textContent = 'Reduced motion · complete static frame · playback controls unavailable';
+          } else if (staticOverride || root.dataset.motionMode === 'none') {
+            setControlsAvailable(false);
+            render(count, false);
+            root.dataset.frame = 'static';
+            root.dataset.motionState = 'static';
+            status.textContent = 'Static frame · complete diagram · playback controls unavailable';
+          } else {
+            delete root.dataset.motionState;
+            if (exactStep !== null) {
+              setControlsAvailable(false);
+              render(exactStep, false);
+              root.dataset.frame = 'step';
+              root.dataset.motionState = 'test';
+              status.textContent = `Test frame · step ${step} of ${count} · playback controls unavailable`;
+            } else {
+              setControlsAvailable(true);
+              render(stepBeforeReduce, false);
+              status.textContent = `Ready · step ${step} of ${count}`;
+              if (resumeAfterReduce && root.dataset.motionMode === 'reveal') {
+                play(false, false);
+              }
+            }
+            resumeAfterReduce = false;
+          }
+        });
+
+        if (staticOverride) {
+          document.documentElement.dataset.motion = 'static';
+          pause(false);
+          setControlsAvailable(false);
+          render(count, false);
+          root.dataset.frame = 'static';
+          root.dataset.motionState = 'static';
+          status.textContent = 'Static frame · complete diagram · playback controls unavailable';
+        } else if (reduce.matches || root.dataset.motionMode === 'none') {
+          pause(false);
+          setControlsAvailable(false);
+          render(count, false);
+          root.dataset.frame = 'static';
+          root.dataset.motionState = reduce.matches ? 'reduced' : 'static';
+          status.textContent = reduce.matches
+            ? 'Reduced motion · complete static frame · playback controls unavailable'
+            : 'Static frame · complete diagram · playback controls unavailable';
+        } else if (exactStep !== null) {
+          document.documentElement.dataset.motion = 'step';
+          pause(false);
+          setControlsAvailable(false);
+          render(exactStep, false);
+          root.dataset.frame = 'step';
+          root.dataset.motionState = 'test';
+          status.textContent = `Test frame · step ${step} of ${count} · playback controls unavailable`;
+        } else if (root.dataset.motionMode === 'reveal') {
+          setControlsAvailable(true);
+          render(0, false);
+          play(false, false);
+        } else {
+          pause(false);
+          setControlsAvailable(true);
+          render(0, false);
+          status.textContent = `Ready · step 0 of ${count}`;
+        }
+        root.classList.add('motion-ready');
+      });
+    })();
+  </script></body></html>

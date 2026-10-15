@@ -1,0 +1,7 @@
+{
+  "name": "dsh-loader-chapter-experiments",
+  "private": true,
+  "type": "module",
+  "scripts": { "verify": "node run.mjs" },
+  "dependencies": { "typescript": "6.0.3", "js-yaml": "4.1.1" }
+}
