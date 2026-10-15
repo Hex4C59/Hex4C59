@@ -156,7 +156,7 @@ rustc --explain E0382
 
 这些命令应该失败，不要为了让整套教材“零错误”把它们加到正常构建目标中。错误措辞和提示可能因编译器版本而异。
 
-## 最终项目
+## 命令行阶段项目
 
 先运行不读写文件的内存版本：
 
@@ -214,3 +214,29 @@ cargo build -p taskbook --release --offline
 ## 继续练习
 
 先尝试从空项目重写 `taskbook`，再增加只列出未完成任务或关键词搜索。每次只增加一种行为，写清输入、输出和失败条件，再加入对应测试。
+
+## 底层入门实验
+
+`systems/` 保存三个不属于 Cargo 工作区的独立程序：`layout.rs` 观察大小、对齐和字段偏移，`string_move.rs` 区分值与字符串缓冲区，`drop_order.rs` 观察析构顺序。`compile-fail/systems-borrow-drop.rs` 预期因 E0505 编译失败。
+
+在源码根目录用 Rust 2024 edition 单独编译，下面是本次 macOS 终端的运行方式：
+
+```sh
+mkdir -p target/systems
+rustc --edition=2024 -D warnings systems/layout.rs -o target/systems/layout
+./target/systems/layout
+rustc --edition=2024 -D warnings systems/string_move.rs -o target/systems/string_move
+./target/systems/string_move
+rustc --edition=2024 -D warnings systems/drop_order.rs -o target/systems/drop_order
+./target/systems/drop_order
+```
+
+故意失败的例子单独运行，不加入正常构建：
+
+```sh
+rustc --edition=2024 compile-fail/systems-borrow-drop.rs
+```
+
+2026-10-15 在 macOS arm64、rustc 1.99.0、目标 aarch64-apple-darwin 上完成三个程序的调试与 `-O` 优化构建及运行，各自输出在本次环境一致；源码通过 rustfmt 检查，失败例子确认报告 E0505。另检查字段调序、Unicode、空串断言与修正、结束借用和 forget 共六种练习变体，包含一项预期断言失败。大小、偏移和表示的观察不作为跨编译器 ABI 保证。最低工具链与其他系统未在本轮运行。
+
+后续综合项目为 `rust-webserver`，拟定第 19～25 章围绕连接、HTTP、路由、静态文件、线程池与关闭展开。服务器正文和源码尚未提供；现有命令行工具仍作为阶段练习使用。
