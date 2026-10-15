@@ -1,0 +1,347 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>effect 清理函数的持有关系与等待顺序</title><style>
+:root{color-scheme:light dark;--paper:#faf9f6;--ink:#242320;--muted:#66635d;--line:#c2beb5;--surface:#f1f0ec;--teal:#126d61;--teal-bg:#dceee7;--amber:#96511e;--amber-bg:#f8e4cf;--purple:#6044ab;--purple-bg:#ece5fa;--rose:#a03861;--rose-bg:#f7e1e9;--blue:#315c96;--blue-bg:#dce8f7}
+@media(prefers-color-scheme:dark){:root{--paper:#242320;--ink:#f4f0e8;--muted:#c2beb5;--line:#6d6962;--surface:#302e29;--teal:#8cd9cd;--teal-bg:#203c37;--amber:#e8b47d;--amber-bg:#453225;--purple:#c3b1f8;--purple-bg:#332a47;--rose:#f1aac4;--rose-bg:#472d39;--blue:#adc9fb;--blue-bg:#27354a}}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.7 -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif}main{max-width:780px;margin:auto;padding:26px 24px 20px}h1,h2,p{margin:0}h1{font:600 28px/1.4 "Songti SC",Georgia,serif;letter-spacing:.015em;margin:10px 0}h2{font-size:20px;line-height:1.5}code,pre,.mono{font-family:"SFMono-Regular",Menlo,Consolas,monospace}code{overflow-wrap:anywhere}header{padding-bottom:21px;border-bottom:1px solid var(--ink)}.eyebrow{display:flex;align-items:center;gap:12px;color:var(--teal);font:12px/1.5 Menlo,monospace;letter-spacing:.1em}.eyebrow b{background:var(--teal-bg);padding:3px 8px}.intro{color:var(--muted);font-size:14px}.control-title{font-size:12px;letter-spacing:.08em;color:var(--muted);margin:19px 0 9px}.radio{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden}.cases{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.cases label{cursor:pointer;padding:12px;border:1px solid var(--line);border-top:3px solid var(--c);border-radius:3px;transition:background .12s}.cases label b{display:block;font-size:14px}.cases label small{font-size:12px;color:var(--muted)}.cases label:hover{background:var(--bg)}.scope-note{padding:13px 0 16px;border-bottom:1px solid var(--line);font-size:12px;color:var(--muted)}.panel{display:none;padding-top:21px}.case-title{font:12px Menlo,monospace;color:var(--c);margin-bottom:6px}.explain{font-size:14px;color:var(--muted);margin:8px 0 16px;min-height:48px}.steps{display:grid;grid-template-columns:repeat(var(--count),minmax(0,1fr));gap:6px}.steps label{cursor:pointer;border:1px solid var(--line);padding:8px 4px;border-radius:3px;text-align:center;line-height:1.5}.steps label b{display:block;font:12px Menlo,monospace}.steps label span{font-size:11px;white-space:nowrap}.stage{padding:13px 16px;margin:13px 0 17px;background:var(--surface);border-left:3px solid var(--c);min-height:112px}.phase{display:none}.stage .phase{grid-template-columns:1fr;gap:3px}.stage strong{font-size:14px}.stage p{font-size:13px;color:var(--muted)}.stage code{font-size:12px;color:var(--c)}.graph-heading{font-size:11px;color:var(--muted);margin:12px 0 8px}.tree{width:100%;height:auto;display:block;overflow:visible}.edge{fill:none;stroke:var(--muted);stroke-width:1.3}.edge-label{fill:var(--muted);font-size:13px}.mask{fill:var(--paper)}.node rect{fill:var(--bg);stroke:var(--c);stroke-width:1}.node .name{fill:var(--c);font-size:14px;font-weight:600}.node .sub{fill:var(--muted);font-size:13px}.node .phase{fill:var(--c);font-size:13px}.legend{font-size:11px;color:var(--muted);margin:6px 0 16px}.legend i{display:inline-block;width:24px;vertical-align:middle;border-top:1.3px solid var(--muted);margin-right:6px}.mobile-tree{display:none;list-style:none;padding:0;margin:0}.mobile-tree li{border-left:2px solid var(--c);border-bottom:1px solid var(--line);padding:10px 11px;margin:7px 0}.mobile-tree b{font-size:14px;color:var(--c)}.mobile-tree small{display:block;font-size:12px;color:var(--muted);margin:3px 0;overflow-wrap:anywhere}.mobile-tree .phase{font-size:12px;color:var(--c);font-weight:600}.trace-title{display:flex;justify-content:space-between;gap:12px;padding-top:12px;border-top:1px solid var(--line);font-size:11px;color:var(--muted)}.trace{list-style:none;padding:0;margin:7px 0 0;counter-reset:step}.trace li{counter-increment:step;display:flex;gap:12px;align-items:center;padding:6px 8px;border-bottom:1px solid var(--line);font-size:12px}.trace li:before{content:counter(step,decimal-leading-zero);font:11px Menlo,monospace;color:var(--muted)}.trace li code{color:var(--c)}.trace li span{margin-left:auto;color:var(--muted);font-size:11px}details{border-top:1px solid var(--line);padding:11px 0;margin:14px 0 0}summary{cursor:pointer;font-size:12px;font-weight:600}summary::marker{color:var(--c)}.code-note{font-size:12px;color:var(--muted);margin:8px 0}pre{font-size:12px;line-height:1.8;white-space:pre-wrap;overflow-wrap:anywhere;padding:14px;background:var(--surface);border-left:3px solid var(--c);margin:8px 0 16px}details[open]~.tree,details[open]~.mobile-tree,details[open]~.legend{display:none}.code-close{display:none}details[open] .code-close{display:inline}details[open] .code-open{display:none}.source{font-size:11px;color:var(--muted);border-top:1px solid var(--ink);padding-top:14px;margin-top:20px}.source p+p{margin-top:5px}.source a{color:var(--blue);text-underline-offset:3px}summary:focus-visible,a:focus-visible{outline:2px solid var(--blue);outline-offset:3px}
+#case-siblings:checked ~ .cases label[for="case-siblings"]{color:var(--blue);background:var(--blue-bg);border-color:var(--blue)}
+#case-siblings:focus-visible ~ .cases label[for="case-siblings"]{outline:2px solid var(--blue);outline-offset:3px}
+#case-siblings:checked ~ .panels .panel-siblings{display:block}
+#step-siblings-1:checked ~ .stage .phase-1{display:grid}
+#step-siblings-1:checked ~ .tree .phase-1,#step-siblings-1:checked ~ .mobile-tree .phase-1{display:inline}
+#step-siblings-1:checked ~ .steps label[for="step-siblings-1"]{background:var(--bg);border-color:var(--c);color:var(--c)}
+#step-siblings-1:focus-visible ~ .steps label[for="step-siblings-1"]{outline:2px solid var(--blue);outline-offset:3px}
+#step-siblings-1:checked ~ .tree .node-B rect{stroke-width:2.5}
+#step-siblings-1:checked ~ .trace li:nth-child(1){background:var(--bg);font-weight:600}
+#step-siblings-2:checked ~ .stage .phase-2{display:grid}
+#step-siblings-2:checked ~ .tree .phase-2,#step-siblings-2:checked ~ .mobile-tree .phase-2{display:inline}
+#step-siblings-2:checked ~ .steps label[for="step-siblings-2"]{background:var(--bg);border-color:var(--c);color:var(--c)}
+#step-siblings-2:focus-visible ~ .steps label[for="step-siblings-2"]{outline:2px solid var(--blue);outline-offset:3px}
+#step-siblings-2:checked ~ .tree .node-A rect{stroke-width:2.5}
+#step-siblings-2:checked ~ .trace li:nth-child(2){background:var(--bg);font-weight:600}
+#step-siblings-3:checked ~ .stage .phase-3{display:grid}
+#step-siblings-3:checked ~ .tree .phase-3,#step-siblings-3:checked ~ .mobile-tree .phase-3{display:inline}
+#step-siblings-3:checked ~ .steps label[for="step-siblings-3"]{background:var(--bg);border-color:var(--c);color:var(--c)}
+#step-siblings-3:focus-visible ~ .steps label[for="step-siblings-3"]{outline:2px solid var(--blue);outline-offset:3px}
+#step-siblings-3:checked ~ .tree .node-A rect{stroke-width:2.5}
+#step-siblings-3:checked ~ .trace li:nth-child(3){background:var(--bg);font-weight:600}
+#step-siblings-4:checked ~ .stage .phase-4{display:grid}
+#step-siblings-4:checked ~ .tree .phase-4,#step-siblings-4:checked ~ .mobile-tree .phase-4{display:inline}
+#step-siblings-4:checked ~ .steps label[for="step-siblings-4"]{background:var(--bg);border-color:var(--c);color:var(--c)}
+#step-siblings-4:focus-visible ~ .steps label[for="step-siblings-4"]{outline:2px solid var(--blue);outline-offset:3px}
+#step-siblings-4:checked ~ .tree .node-B rect{stroke-width:2.5}
+#step-siblings-4:checked ~ .trace li:nth-child(4){background:var(--bg);font-weight:600}
+#case-exact:checked ~ .cases label[for="case-exact"]{color:var(--teal);background:var(--teal-bg);border-color:var(--teal)}
+#case-exact:focus-visible ~ .cases label[for="case-exact"]{outline:2px solid var(--blue);outline-offset:3px}
+#case-exact:checked ~ .panels .panel-exact{display:block}
+#step-exact-1:checked ~ .stage .phase-1{display:grid}
+#step-exact-1:checked ~ .tree .phase-1,#step-exact-1:checked ~ .mobile-tree .phase-1{display:inline}
+#step-exact-1:checked ~ .steps label[for="step-exact-1"]{background:var(--bg);border-color:var(--c);color:var(--c)}
+#step-exact-1:focus-visible ~ .steps label[for="step-exact-1"]{outline:2px solid var(--blue);outline-offset:3px}
+#step-exact-1:checked ~ .tree .node-B rect{stroke-width:2.5}
+#step-exact-1:checked ~ .trace li:nth-child(1){background:var(--bg);font-weight:600}
+#step-exact-2:checked ~ .stage .phase-2{display:grid}
+#step-exact-2:checked ~ .tree .phase-2,#step-exact-2:checked ~ .mobile-tree .phase-2{display:inline}
+#step-exact-2:checked ~ .steps label[for="step-exact-2"]{background:var(--bg);border-color:var(--c);color:var(--c)}
+#step-exact-2:focus-visible ~ .steps label[for="step-exact-2"]{outline:2px solid var(--blue);outline-offset:3px}
+#step-exact-2:checked ~ .tree .node-scope rect{stroke-width:2.5}
+#step-exact-2:checked ~ .trace li:nth-child(2){background:var(--bg);font-weight:600}
+#step-exact-3:checked ~ .stage .phase-3{display:grid}
+#step-exact-3:checked ~ .tree .phase-3,#step-exact-3:checked ~ .mobile-tree .phase-3{display:inline}
+#step-exact-3:checked ~ .steps label[for="step-exact-3"]{background:var(--bg);border-color:var(--c);color:var(--c)}
+#step-exact-3:focus-visible ~ .steps label[for="step-exact-3"]{outline:2px solid var(--blue);outline-offset:3px}
+#step-exact-3:checked ~ .tree .node-scope rect{stroke-width:2.5}
+#step-exact-3:checked ~ .trace li:nth-child(3){background:var(--bg);font-weight:600}
+#step-exact-4:checked ~ .stage .phase-4{display:grid}
+#step-exact-4:checked ~ .tree .phase-4,#step-exact-4:checked ~ .mobile-tree .phase-4{display:inline}
+#step-exact-4:checked ~ .steps label[for="step-exact-4"]{background:var(--bg);border-color:var(--c);color:var(--c)}
+#step-exact-4:focus-visible ~ .steps label[for="step-exact-4"]{outline:2px solid var(--blue);outline-offset:3px}
+#step-exact-4:checked ~ .tree .node-tail rect{stroke-width:2.5}
+#step-exact-4:checked ~ .trace li:nth-child(4){background:var(--bg);font-weight:600}
+#case-wrapped:checked ~ .cases label[for="case-wrapped"]{color:var(--rose);background:var(--rose-bg);border-color:var(--rose)}
+#case-wrapped:focus-visible ~ .cases label[for="case-wrapped"]{outline:2px solid var(--blue);outline-offset:3px}
+#case-wrapped:checked ~ .panels .panel-wrapped{display:block}
+#step-wrapped-1:checked ~ .stage .phase-1{display:grid}
+#step-wrapped-1:checked ~ .tree .phase-1,#step-wrapped-1:checked ~ .mobile-tree .phase-1{display:inline}
+#step-wrapped-1:checked ~ .steps label[for="step-wrapped-1"]{background:var(--bg);border-color:var(--c);color:var(--c)}
+#step-wrapped-1:focus-visible ~ .steps label[for="step-wrapped-1"]{outline:2px solid var(--blue);outline-offset:3px}
+#step-wrapped-1:checked ~ .tree .node-B rect{stroke-width:2.5}
+#step-wrapped-1:checked ~ .trace li:nth-child(1){background:var(--bg);font-weight:600}
+#step-wrapped-2:checked ~ .stage .phase-2{display:grid}
+#step-wrapped-2:checked ~ .tree .phase-2,#step-wrapped-2:checked ~ .mobile-tree .phase-2{display:inline}
+#step-wrapped-2:checked ~ .steps label[for="step-wrapped-2"]{background:var(--bg);border-color:var(--c);color:var(--c)}
+#step-wrapped-2:focus-visible ~ .steps label[for="step-wrapped-2"]{outline:2px solid var(--blue);outline-offset:3px}
+#step-wrapped-2:checked ~ .tree .node-scope rect{stroke-width:2.5}
+#step-wrapped-2:checked ~ .trace li:nth-child(2){background:var(--bg);font-weight:600}
+#step-wrapped-3:checked ~ .stage .phase-3{display:grid}
+#step-wrapped-3:checked ~ .tree .phase-3,#step-wrapped-3:checked ~ .mobile-tree .phase-3{display:inline}
+#step-wrapped-3:checked ~ .steps label[for="step-wrapped-3"]{background:var(--bg);border-color:var(--c);color:var(--c)}
+#step-wrapped-3:focus-visible ~ .steps label[for="step-wrapped-3"]{outline:2px solid var(--blue);outline-offset:3px}
+#step-wrapped-3:checked ~ .tree .node-B rect{stroke-width:2.5}
+#step-wrapped-3:checked ~ .trace li:nth-child(3){background:var(--bg);font-weight:600}
+#step-wrapped-4:checked ~ .stage .phase-4{display:grid}
+#step-wrapped-4:checked ~ .tree .phase-4,#step-wrapped-4:checked ~ .mobile-tree .phase-4{display:inline}
+#step-wrapped-4:checked ~ .steps label[for="step-wrapped-4"]{background:var(--bg);border-color:var(--c);color:var(--c)}
+#step-wrapped-4:focus-visible ~ .steps label[for="step-wrapped-4"]{outline:2px solid var(--blue);outline-offset:3px}
+#step-wrapped-4:checked ~ .tree .node-tail rect{stroke-width:2.5}
+#step-wrapped-4:checked ~ .trace li:nth-child(4){background:var(--bg);font-weight:600}
+#step-wrapped-5:checked ~ .stage .phase-5{display:grid}
+#step-wrapped-5:checked ~ .tree .phase-5,#step-wrapped-5:checked ~ .mobile-tree .phase-5{display:inline}
+#step-wrapped-5:checked ~ .steps label[for="step-wrapped-5"]{background:var(--bg);border-color:var(--c);color:var(--c)}
+#step-wrapped-5:focus-visible ~ .steps label[for="step-wrapped-5"]{outline:2px solid var(--blue);outline-offset:3px}
+#step-wrapped-5:checked ~ .tree .node-scope rect{stroke-width:2.5}
+#step-wrapped-5:checked ~ .trace li:nth-child(5){background:var(--bg);font-weight:600}
+@media(max-width:719px){main{padding:20px 16px 18px}h1{font-size:24px}.cases label{padding:9px 7px}.cases label b{font-size:13px}.cases label small{font-size:10px}.explain{min-height:0}.tree,.legend{display:none}.mobile-tree{display:block}.stage{min-height:0;padding:11px 12px}.stage p{font-size:13px}.steps label span{display:none}.steps label{padding:9px 3px}.scope-note{line-height:1.8}.graph-heading{font-size:10px}.source{font-size:11px}.trace li span{display:none}.trace li{padding:8px 6px}}@media(max-width:359px){.cases{grid-template-columns:1fr}.cases label{display:flex;align-items:center;justify-content:space-between;gap:8px}.cases label small{font-size:11px}.eyebrow{letter-spacing:.05em;font-size:11px;gap:8px}}@media(prefers-reduced-motion:reduce){*{transition:none!important}}</style></head><body><main><header><div class="eyebrow"><b>08</b> CORDIS / RESOURCE OWNERSHIP</div><h1>清理函数挂在哪一层，会改变等待顺序</h1><p class="intro">同样要释放资源，兄弟项可以重叠，组合项会依次等待。切换登记方式和轨迹阶段，观察谁还在等待。</p></header><section aria-label="选择清理函数的持有方式">
+<input class="radio" type="radio" name="case" id="case-siblings" aria-label="兄弟 effect">
+<input class="radio" type="radio" name="case" id="case-exact" aria-label="确切 disposer" checked>
+<input class="radio" type="radio" name="case" id="case-wrapped" aria-label="新包装函数">
+<p class="control-title">01 / 持有方式</p><nav class="cases" aria-label="三种资源持有方式">
+<label for="case-siblings" style="--c:var(--blue);--bg:var(--blue-bg)"><b>兄弟 effect</b><small>各自在顶层登记</small></label>
+<label for="case-exact" style="--c:var(--teal);--bg:var(--teal-bg)"><b>确切 disposer</b><small>直接 yield 原函数</small></label>
+<label for="case-wrapped" style="--c:var(--rose);--bg:var(--rose-bg)"><b>新包装函数</b><small>yield 一个新函数</small></label>
+</nav><p class="scope-note">图中连线表示清理函数的持有关系。yield 不会重写 Scope 的 Fiber.parent；原 disposer 是否移出顶层名单，取决于同 owner 中的函数身份。</p><div class="panels">
+<section class="panel panel-siblings" style="--c:var(--blue);--bg:var(--blue-bg)" aria-label="兄弟 effect对照"><p class="case-title">兄弟 effect</p><h2>逆序开始，异步清理仍会重叠</h2><p class="explain">A 先登记、B 后登记。Fiber 反转顶层名单后，用 Promise.all 等待各项；A 可以在 B 仍待完成时结束。</p>
+<input class="radio" type="radio" name="phase-siblings" id="step-siblings-1" aria-label="兄弟 effect，阶段 1，B 开始">
+<input class="radio" type="radio" name="phase-siblings" id="step-siblings-2" aria-label="兄弟 effect，阶段 2，A 开始">
+<input class="radio" type="radio" name="phase-siblings" id="step-siblings-3" aria-label="兄弟 effect，阶段 3，A 结束">
+<input class="radio" type="radio" name="phase-siblings" id="step-siblings-4" aria-label="兄弟 effect，阶段 4，B 结束" checked>
+<p class="control-title">02 / 选择轨迹阶段</p><nav class="steps" style="--count:4" aria-label="兄弟 effect的轨迹阶段">
+<label for="step-siblings-1"><b>01</b><span>B 开始</span></label>
+<label for="step-siblings-2"><b>02</b><span>A 开始</span></label>
+<label for="step-siblings-3"><b>03</b><span>A 结束</span></label>
+<label for="step-siblings-4"><b>04</b><span>B 结束</span></label>
+</nav><div class="stage" aria-label="当前阶段说明">
+<div class="phase phase-1"><strong>01 / B 开始</strong><p>B 已开始异步清理，A 尚未进入。</p><code>B:start</code></div>
+<div class="phase phase-2"><strong>02 / A 开始</strong><p>B 尚未完成，A 的清理也已开始。</p><code>A:start</code></div>
+<div class="phase phase-3"><strong>03 / A 结束</strong><p>实验先放行 A；B 仍然等待自己的 Promise。</p><code>A:end</code></div>
+<div class="phase phase-4"><strong>04 / B 结束</strong><p>再放行 B，所有顶层清理结束，Owner 的卸载才完成。</p><code>B:end</code></div>
+</div><p class="graph-heading">清理函数的持有关系 / 手机显示对应持有路径</p><details><summary><span class="code-open">查看本组登记代码</span><span class="code-close">返回持有关系图</span></summary><p class="code-note">登记形状节选，省略具体清理函数与受控 Promise。完整可运行断言见下载包。</p><pre>inner.effect(() =&gt; releaseA)
+inner.effect(() =&gt; releaseB)</pre></details>
+<svg class="tree" viewBox="0 0 680 456" role="img" aria-labelledby="ownership-siblings-title ownership-siblings-desc"><title id="ownership-siblings-title">逆序开始，异步清理仍会重叠</title><desc id="ownership-siblings-desc">A 先登记、B 后登记。Fiber 反转顶层名单后，用 Promise.all 等待各项；A 可以在 B 仍待完成时结束。</desc><defs><marker id="ownership-siblings-arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0L7 3.5L0 7Z" fill="var(--muted)"/></marker></defs>
+<path class="edge" d="M300 100V164H180V252" marker-end="url(#ownership-siblings-arrow)"/><rect class="mask" x="182" y="140" width="68" height="19"/><text class="edge-label" x="190" y="154">顶层持有</text>
+<path class="edge" d="M380 100V188H500V252" marker-end="url(#ownership-siblings-arrow)"/><rect class="mask" x="382" y="164" width="68" height="19"/><text class="edge-label" x="390" y="178">顶层持有</text>
+<g class="node node-owner" style="--c:var(--blue);--bg:var(--blue-bg)"><rect x="252" y="24" width="176" height="76" rx="3"/><text class="name" x="264" y="47">Owner Fiber</text><text class="sub" x="264" y="66">顶层清理名单</text>
+<text class="phase phase-1" x="264" y="87">等待全部顶层项</text>
+<text class="phase phase-2" x="264" y="87">等待全部顶层项</text>
+<text class="phase phase-3" x="264" y="87">等待全部顶层项</text>
+<text class="phase phase-4" x="264" y="87">已等待卸载完成</text>
+</g>
+<g class="node node-A" style="--c:var(--teal);--bg:var(--teal-bg)"><rect x="92" y="252" width="176" height="76" rx="3"/><text class="name" x="104" y="275">effect A</text><text class="sub" x="104" y="294">先登记</text>
+<text class="phase phase-1" x="104" y="315">未开始</text>
+<text class="phase phase-2" x="104" y="315">等待中</text>
+<text class="phase phase-3" x="104" y="315">已结束</text>
+<text class="phase phase-4" x="104" y="315">已结束</text>
+</g>
+<g class="node node-B" style="--c:var(--purple);--bg:var(--purple-bg)"><rect x="412" y="252" width="176" height="76" rx="3"/><text class="name" x="424" y="275">effect B</text><text class="sub" x="424" y="294">后登记</text>
+<text class="phase phase-1" x="424" y="315">等待中</text>
+<text class="phase phase-2" x="424" y="315">等待中</text>
+<text class="phase phase-3" x="424" y="315">等待中</text>
+<text class="phase phase-4" x="424" y="315">已结束</text>
+</g>
+</svg><p class="legend"><i></i>持有清理函数　·　描边加粗：本阶段关注项　·　阶段状态为轨迹示意</p><ul class="mobile-tree" aria-label="清理函数的持有路径">
+<li style="--c:var(--teal)"><b>effect A</b><small>Owner Fiber → effect A</small>
+<span class="phase phase-1">未开始</span>
+<span class="phase phase-2">等待中</span>
+<span class="phase phase-3">已结束</span>
+<span class="phase phase-4">已结束</span>
+</li>
+<li style="--c:var(--purple)"><b>effect B</b><small>Owner Fiber → effect B</small>
+<span class="phase phase-1">等待中</span>
+<span class="phase phase-2">等待中</span>
+<span class="phase phase-3">等待中</span>
+<span class="phase phase-4">已结束</span>
+</li>
+</ul><div class="trace-title"><span>完整实验轨迹</span><span>先后关系，非耗时</span></div><ol class="trace">
+<li><code>B:start</code><span>B 开始</span></li>
+<li><code>A:start</code><span>A 开始</span></li>
+<li><code>A:end</code><span>A 结束</span></li>
+<li><code>B:end</code><span>B 结束</span></li>
+</ol></section>
+<section class="panel panel-exact" style="--c:var(--teal);--bg:var(--teal-bg)" aria-label="确切 disposer对照"><p class="case-title">确切 disposer</p><h2>Scope 纳入组合，tail 会等待它</h2><p class="explain">原 rawDispose 从当前 Fiber 顶层移入组合。组合按逆序清理 B、Scope、tail；Scope 的异步清理结束前，tail 不会运行。</p>
+<input class="radio" type="radio" name="phase-exact" id="step-exact-1" aria-label="确切 disposer，阶段 1，B 结束">
+<input class="radio" type="radio" name="phase-exact" id="step-exact-2" aria-label="确切 disposer，阶段 2，Scope 开始">
+<input class="radio" type="radio" name="phase-exact" id="step-exact-3" aria-label="确切 disposer，阶段 3，Scope 结束">
+<input class="radio" type="radio" name="phase-exact" id="step-exact-4" aria-label="确切 disposer，阶段 4，tail 结束" checked>
+<p class="control-title">02 / 选择轨迹阶段</p><nav class="steps" style="--count:4" aria-label="确切 disposer的轨迹阶段">
+<label for="step-exact-1"><b>01</b><span>B 结束</span></label>
+<label for="step-exact-2"><b>02</b><span>Scope 开始</span></label>
+<label for="step-exact-3"><b>03</b><span>Scope 结束</span></label>
+<label for="step-exact-4"><b>04</b><span>tail 结束</span></label>
+</nav><div class="stage" aria-label="当前阶段说明">
+<div class="phase phase-1"><strong>01 / B 结束</strong><p>B 为本组的同步清理，已经完成；接着才进入 Scope。</p><code>B</code></div>
+<div class="phase phase-2"><strong>02 / Scope 开始</strong><p>Scope 正在等待。tail 由同一组合持有，因此尚未调用。</p><code>scope:start</code></div>
+<div class="phase phase-3"><strong>03 / Scope 结束</strong><p>受控 Promise 放行，Scope 清理已结束；下一项是 tail。</p><code>scope:end</code></div>
+<div class="phase phase-4"><strong>04 / tail 结束</strong><p>最后执行 tail，组合与 Owner 的清理结束。</p><code>tail</code></div>
+</div><p class="graph-heading">清理函数的持有关系 / 手机显示对应持有路径</p><details><summary><span class="code-open">查看本组登记代码</span><span class="code-close">返回持有关系图</span></summary><p class="code-note">登记形状节选，省略具体清理函数与受控 Promise。完整可运行断言见下载包。</p><pre>inner.effect(function* () {
+  yield releaseTail
+  const scope = createScope(inner, key)
+  yield scope.rawDispose
+  yield releaseB
+})</pre></details>
+<svg class="tree" viewBox="0 0 680 456" role="img" aria-labelledby="ownership-exact-title ownership-exact-desc"><title id="ownership-exact-title">Scope 纳入组合，tail 会等待它</title><desc id="ownership-exact-desc">原 rawDispose 从当前 Fiber 顶层移入组合。组合按逆序清理 B、Scope、tail；Scope 的异步清理结束前，tail 不会运行。</desc><defs><marker id="ownership-exact-arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0L7 3.5L0 7Z" fill="var(--muted)"/></marker></defs>
+<path class="edge" d="M340 88V156" marker-end="url(#ownership-exact-arrow)"/><rect class="mask" x="350" y="112" width="68" height="19"/><text class="edge-label" x="358" y="126">顶层持有</text>
+<path class="edge" d="M292 232V276H116V344" marker-end="url(#ownership-exact-arrow)"/>
+<path class="edge" d="M340 232V344" marker-end="url(#ownership-exact-arrow)"/>
+<path class="edge" d="M388 232V316H564V344" marker-end="url(#ownership-exact-arrow)"/>
+<g class="node node-owner" style="--c:var(--blue);--bg:var(--blue-bg)"><rect x="252" y="12" width="176" height="76" rx="3"/><text class="name" x="264" y="35">Owner Fiber</text><text class="sub" x="264" y="54">顶层只保留组合</text>
+<text class="phase phase-1" x="264" y="75">等待全部顶层项</text>
+<text class="phase phase-2" x="264" y="75">等待全部顶层项</text>
+<text class="phase phase-3" x="264" y="75">等待全部顶层项</text>
+<text class="phase phase-4" x="264" y="75">已等待卸载完成</text>
+</g>
+<g class="node node-composite" style="--c:var(--purple);--bg:var(--purple-bg)"><rect x="252" y="156" width="176" height="76" rx="3"/><text class="name" x="264" y="179">组合 effect</text><text class="sub" x="264" y="198">内部按逆序等待</text>
+<text class="phase phase-1" x="264" y="219">清理中</text>
+<text class="phase phase-2" x="264" y="219">清理中</text>
+<text class="phase phase-3" x="264" y="219">清理中</text>
+<text class="phase phase-4" x="264" y="219">已结束</text>
+</g>
+<g class="node node-tail" style="--c:var(--rose);--bg:var(--rose-bg)"><rect x="28" y="344" width="176" height="76" rx="3"/><text class="name" x="40" y="367">releaseTail</text><text class="sub" x="40" y="386">最早提交，最后清理</text>
+<text class="phase phase-1" x="40" y="407">未开始</text>
+<text class="phase phase-2" x="40" y="407">未开始</text>
+<text class="phase phase-3" x="40" y="407">未开始</text>
+<text class="phase phase-4" x="40" y="407">已结束</text>
+</g>
+<g class="node node-scope" style="--c:var(--amber);--bg:var(--amber-bg)"><rect x="252" y="344" width="176" height="76" rx="3"/><text class="name" x="264" y="367">Scope rawDispose</text><text class="sub" x="264" y="386">确切函数被收集</text>
+<text class="phase phase-1" x="264" y="407">未开始</text>
+<text class="phase phase-2" x="264" y="407">等待中</text>
+<text class="phase phase-3" x="264" y="407">已结束</text>
+<text class="phase phase-4" x="264" y="407">已结束</text>
+</g>
+<g class="node node-B" style="--c:var(--teal);--bg:var(--teal-bg)"><rect x="476" y="344" width="176" height="76" rx="3"/><text class="name" x="488" y="367">releaseB</text><text class="sub" x="488" y="386">最后提交，先清理</text>
+<text class="phase phase-1" x="488" y="407">已结束</text>
+<text class="phase phase-2" x="488" y="407">已结束</text>
+<text class="phase phase-3" x="488" y="407">已结束</text>
+<text class="phase phase-4" x="488" y="407">已结束</text>
+</g>
+</svg><p class="legend"><i></i>持有清理函数　·　描边加粗：本阶段关注项　·　阶段状态为轨迹示意</p><ul class="mobile-tree" aria-label="清理函数的持有路径">
+<li style="--c:var(--rose)"><b>releaseTail</b><small>Owner Fiber → 组合 → releaseTail</small>
+<span class="phase phase-1">未开始</span>
+<span class="phase phase-2">未开始</span>
+<span class="phase phase-3">未开始</span>
+<span class="phase phase-4">已结束</span>
+</li>
+<li style="--c:var(--amber)"><b>Scope rawDispose</b><small>Owner Fiber → 组合 → Scope rawDispose</small>
+<span class="phase phase-1">未开始</span>
+<span class="phase phase-2">等待中</span>
+<span class="phase phase-3">已结束</span>
+<span class="phase phase-4">已结束</span>
+</li>
+<li style="--c:var(--teal)"><b>releaseB</b><small>Owner Fiber → 组合 → releaseB</small>
+<span class="phase phase-1">已结束</span>
+<span class="phase phase-2">已结束</span>
+<span class="phase phase-3">已结束</span>
+<span class="phase phase-4">已结束</span>
+</li>
+</ul><div class="trace-title"><span>完整实验轨迹</span><span>先后关系，非耗时</span></div><ol class="trace">
+<li><code>B</code><span>B 结束</span></li>
+<li><code>scope:start</code><span>Scope 开始</span></li>
+<li><code>scope:end</code><span>Scope 结束</span></li>
+<li><code>tail</code><span>tail 结束</span></li>
+</ol></section>
+<section class="panel panel-wrapped" style="--c:var(--rose);--bg:var(--rose-bg)" aria-label="新包装函数对照"><p class="case-title">新包装函数</p><h2>调用目标相同，Scope 仍是顶层兄弟</h2><p class="explain">组合收集的是新包装函数。原 rawDispose 留在 Fiber 顶层，可能在 B 尚未完成时开始；tail 也可能先于 Scope 完成。</p>
+<input class="radio" type="radio" name="phase-wrapped" id="step-wrapped-1" aria-label="新包装函数，阶段 1，B 开始">
+<input class="radio" type="radio" name="phase-wrapped" id="step-wrapped-2" aria-label="新包装函数，阶段 2，Scope 开始">
+<input class="radio" type="radio" name="phase-wrapped" id="step-wrapped-3" aria-label="新包装函数，阶段 3，B 结束">
+<input class="radio" type="radio" name="phase-wrapped" id="step-wrapped-4" aria-label="新包装函数，阶段 4，tail 结束">
+<input class="radio" type="radio" name="phase-wrapped" id="step-wrapped-5" aria-label="新包装函数，阶段 5，Scope 结束" checked>
+<p class="control-title">02 / 选择轨迹阶段</p><nav class="steps" style="--count:5" aria-label="新包装函数的轨迹阶段">
+<label for="step-wrapped-1"><b>01</b><span>B 开始</span></label>
+<label for="step-wrapped-2"><b>02</b><span>Scope 开始</span></label>
+<label for="step-wrapped-3"><b>03</b><span>B 结束</span></label>
+<label for="step-wrapped-4"><b>04</b><span>tail 结束</span></label>
+<label for="step-wrapped-5"><b>05</b><span>Scope 结束</span></label>
+</nav><div class="stage" aria-label="当前阶段说明">
+<div class="phase phase-1"><strong>01 / B 开始</strong><p>组合先等待 B，Scope 的顶层清理任务也已被安排。</p><code>B:start</code></div>
+<div class="phase phase-2"><strong>02 / Scope 开始</strong><p>原 rawDispose 仍由 Fiber 持有，Scope 此时与 B 同时待完成。</p><code>scope:start</code></div>
+<div class="phase phase-3"><strong>03 / B 结束</strong><p>放行 B。Scope 仍然等待，组合将进入自己的新包装函数。</p><code>B:end</code></div>
+<div class="phase phase-4"><strong>04 / tail 结束</strong><p>包装函数再调用已经启动的 rawDispose，得到 undefined；本组 tail 因而先运行。</p><code>tail</code></div>
+<div class="phase phase-5"><strong>05 / Scope 结束</strong><p>再放行 Scope。Owner 顶层仍等待它，整个卸载此时才完成。</p><code>scope:end</code></div>
+</div><p class="graph-heading">清理函数的持有关系 / 手机显示对应持有路径</p><details><summary><span class="code-open">查看本组登记代码</span><span class="code-close">返回持有关系图</span></summary><p class="code-note">登记形状节选，省略具体清理函数与受控 Promise。完整可运行断言见下载包。</p><pre>inner.effect(function* () {
+  yield releaseTail
+  const scope = createScope(inner, key)
+  yield () =&gt; scope.rawDispose()
+  yield releaseB
+})</pre></details>
+<svg class="tree" viewBox="0 0 680 456" role="img" aria-labelledby="ownership-wrapped-title ownership-wrapped-desc"><title id="ownership-wrapped-title">调用目标相同，Scope 仍是顶层兄弟</title><desc id="ownership-wrapped-desc">组合收集的是新包装函数。原 rawDispose 留在 Fiber 顶层，可能在 B 尚未完成时开始；tail 也可能先于 Scope 完成。</desc><defs><marker id="ownership-wrapped-arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0L7 3.5L0 7Z" fill="var(--muted)"/></marker></defs>
+<path class="edge" d="M300 88V120H116V160" marker-end="url(#ownership-wrapped-arrow)"/><rect class="mask" x="156" y="96" width="68" height="19"/><text class="edge-label" x="164" y="110">顶层持有</text>
+<path class="edge" d="M380 88V140H476V160" marker-end="url(#ownership-wrapped-arrow)"/><rect class="mask" x="384" y="116" width="68" height="19"/><text class="edge-label" x="392" y="130">顶层持有</text>
+<path class="edge" d="M420 236V276H116V352" marker-end="url(#ownership-wrapped-arrow)"/>
+<path class="edge" d="M476 236V300H340V352" marker-end="url(#ownership-wrapped-arrow)"/>
+<path class="edge" d="M532 236V324H564V352" marker-end="url(#ownership-wrapped-arrow)"/>
+<g class="node node-owner" style="--c:var(--blue);--bg:var(--blue-bg)"><rect x="252" y="12" width="176" height="76" rx="3"/><text class="name" x="264" y="35">Owner Fiber</text><text class="sub" x="264" y="54">两个顶层持有项</text>
+<text class="phase phase-1" x="264" y="75">等待全部顶层项</text>
+<text class="phase phase-2" x="264" y="75">等待全部顶层项</text>
+<text class="phase phase-3" x="264" y="75">等待全部顶层项</text>
+<text class="phase phase-4" x="264" y="75">等待全部顶层项</text>
+<text class="phase phase-5" x="264" y="75">已等待卸载完成</text>
+</g>
+<g class="node node-scope" style="--c:var(--amber);--bg:var(--amber-bg)"><rect x="28" y="160" width="176" height="76" rx="3"/><text class="name" x="40" y="183">Scope rawDispose</text><text class="sub" x="40" y="202">仍由 Fiber 直接持有</text>
+<text class="phase phase-1" x="40" y="223">未开始</text>
+<text class="phase phase-2" x="40" y="223">等待中</text>
+<text class="phase phase-3" x="40" y="223">等待中</text>
+<text class="phase phase-4" x="40" y="223">等待中</text>
+<text class="phase phase-5" x="40" y="223">已结束</text>
+</g>
+<g class="node node-composite" style="--c:var(--purple);--bg:var(--purple-bg)"><rect x="388" y="160" width="176" height="76" rx="3"/><text class="name" x="400" y="183">组合 effect</text><text class="sub" x="400" y="202">只收集新包装函数</text>
+<text class="phase phase-1" x="400" y="223">清理中</text>
+<text class="phase phase-2" x="400" y="223">清理中</text>
+<text class="phase phase-3" x="400" y="223">清理中</text>
+<text class="phase phase-4" x="400" y="223">已结束</text>
+<text class="phase phase-5" x="400" y="223">已结束</text>
+</g>
+<g class="node node-tail" style="--c:var(--rose);--bg:var(--rose-bg)"><rect x="28" y="352" width="176" height="76" rx="3"/><text class="name" x="40" y="375">releaseTail</text><text class="sub" x="40" y="394">组合中的较早清理</text>
+<text class="phase phase-1" x="40" y="415">未开始</text>
+<text class="phase phase-2" x="40" y="415">未开始</text>
+<text class="phase phase-3" x="40" y="415">未开始</text>
+<text class="phase phase-4" x="40" y="415">已结束</text>
+<text class="phase phase-5" x="40" y="415">已结束</text>
+</g>
+<g class="node node-wrapper" style="--c:var(--blue);--bg:var(--blue-bg)"><rect x="252" y="352" width="176" height="76" rx="3"/><text class="name" x="264" y="375">新包装函数</text><text class="sub" x="264" y="394">() =&gt; scope.rawDispose()</text>
+<text class="phase phase-1" x="264" y="415">未调用</text>
+<text class="phase phase-2" x="264" y="415">未调用</text>
+<text class="phase phase-3" x="264" y="415">未调用</text>
+<text class="phase phase-4" x="264" y="415">已调用</text>
+<text class="phase phase-5" x="264" y="415">已调用</text>
+</g>
+<g class="node node-B" style="--c:var(--teal);--bg:var(--teal-bg)"><rect x="476" y="352" width="176" height="76" rx="3"/><text class="name" x="488" y="375">releaseB</text><text class="sub" x="488" y="394">本组异步清理</text>
+<text class="phase phase-1" x="488" y="415">等待中</text>
+<text class="phase phase-2" x="488" y="415">等待中</text>
+<text class="phase phase-3" x="488" y="415">已结束</text>
+<text class="phase phase-4" x="488" y="415">已结束</text>
+<text class="phase phase-5" x="488" y="415">已结束</text>
+</g>
+</svg><p class="legend"><i></i>持有清理函数　·　描边加粗：本阶段关注项　·　阶段状态为轨迹示意</p><ul class="mobile-tree" aria-label="清理函数的持有路径">
+<li style="--c:var(--amber)"><b>Scope rawDispose</b><small>Owner Fiber → Scope rawDispose</small>
+<span class="phase phase-1">未开始</span>
+<span class="phase phase-2">等待中</span>
+<span class="phase phase-3">等待中</span>
+<span class="phase phase-4">等待中</span>
+<span class="phase phase-5">已结束</span>
+</li>
+<li style="--c:var(--rose)"><b>releaseTail</b><small>Owner Fiber → 组合 → releaseTail</small>
+<span class="phase phase-1">未开始</span>
+<span class="phase phase-2">未开始</span>
+<span class="phase phase-3">未开始</span>
+<span class="phase phase-4">已结束</span>
+<span class="phase phase-5">已结束</span>
+</li>
+<li style="--c:var(--blue)"><b>新包装函数</b><small>Owner Fiber → 组合 → 新包装函数</small>
+<span class="phase phase-1">未调用</span>
+<span class="phase phase-2">未调用</span>
+<span class="phase phase-3">未调用</span>
+<span class="phase phase-4">已调用</span>
+<span class="phase phase-5">已调用</span>
+</li>
+<li style="--c:var(--teal)"><b>releaseB</b><small>Owner Fiber → 组合 → releaseB</small>
+<span class="phase phase-1">等待中</span>
+<span class="phase phase-2">等待中</span>
+<span class="phase phase-3">已结束</span>
+<span class="phase phase-4">已结束</span>
+<span class="phase phase-5">已结束</span>
+</li>
+</ul><div class="trace-title"><span>完整实验轨迹</span><span>先后关系，非耗时</span></div><ol class="trace">
+<li><code>B:start</code><span>B 开始</span></li>
+<li><code>scope:start</code><span>Scope 开始</span></li>
+<li><code>B:end</code><span>B 结束</span></li>
+<li><code>tail</code><span>tail 结束</span></li>
+<li><code>scope:end</code><span>Scope 结束</span></li>
+</ol></section>
+</div></section><footer class="source"><p>三组轨迹均在固定源码的真实 Cordis / dsh-scope 上执行并断言。中间状态依据合成轨迹说明，终点帧包含调用方等待 Owner 卸载完成；它们不是 Fiber.state 的逐条采样。图中省略 Scope 内部登记，业务退出和失败处理见正文。</p><p>源码：<code>fiber.ts · utils.ts · scope/src/index.ts</code>，commit <code>d743267</code>。<a href="resource-lifecycle-examples.zip" target="_blank" rel="noopener">下载 22 组聚焦检查</a></p></footer></main></body></html>

@@ -1,0 +1,14 @@
+{
+  "name": "dsh-cordis-lifecycle-lab",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "verify": "node run.mjs"
+  },
+  "devDependencies": {
+    "typescript": "6.0.3"
+  }
+}
