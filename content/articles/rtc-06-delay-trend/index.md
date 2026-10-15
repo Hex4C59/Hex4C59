@@ -289,7 +289,7 @@ python3 delay_trace.py --case reorder
 
 接下来会把这些媒体路径知识放回建立一通通话的过程：两端怎样交换会话信息、找到能互相到达的路径，再开始双端实验。
 
-[回看第五篇：带宽没跟上，声音为什么越排越晚](/articles/rtc-05-send-queue/) · [系列目录](/articles/rtc-from-zero/)
+[继续第七篇：两端怎样找到能通话的网络路径](/articles/rtc-07-connection-setup/) · [回看第五篇：带宽没跟上，声音为什么越排越晚](/articles/rtc-05-send-queue/) · [系列目录](/articles/rtc-from-zero/)
 
 ## 参考资料
 

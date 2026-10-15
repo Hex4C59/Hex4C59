@@ -1,0 +1,9 @@
+{{- $source := .Get "src" -}}
+{{- if or (ne (path.Ext $source) ".html") (not (.Page.Resources.Get $source)) -}}
+  {{- errorf "html-resource-link: missing HTML page resource %q in %s" $source .Page.File.Path -}}
+{{- else -}}
+  {{- $target := strings.TrimPrefix "/" (path.Join .Page.RelPermalink $source) -}}
+  {{- $html := os.ReadFile (path.Join (path.Dir .Page.File.Filename) $source) -}}
+  {{- $resource := resources.FromString $target $html -}}
+  <a href="{{ $resource.RelPermalink }}"{{ if .Get "download" }} download="{{ path.Base $source }}"{{ end }}>{{ .Get "label" }}</a>
+{{- end -}}

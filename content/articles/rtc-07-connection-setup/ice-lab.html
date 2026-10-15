@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>本机 ICE 观察实验 · RTC 入门 07</title>
+<style>
+:root{--paper:#faf9f6;--ink:#242320;--muted:#66635d;--line:#c2beb5;--accent:#126d61;--link:#6044ab;--error:#a03861;color-scheme:light dark;font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--paper);color:var(--ink)}
+@media(prefers-color-scheme:dark){:root{--paper:#242320;--ink:#faf9f6;--muted:#c2beb5;--line:#6d6962;--accent:#8cd9cd;--link:#c3b1f8;--error:#f1aac4}}
+*{box-sizing:border-box}body{margin:0}main{max-width:880px;padding:36px 24px 64px;margin:auto}h1{font-family:"Songti SC",Georgia,serif;font-size:clamp(28px,5vw,40px);line-height:1.3;margin:12px 0 20px}h2{font-size:20px;margin:32px 0 16px}p,li{line-height:1.8}p{margin:12px 0}.eyebrow{font-size:14px;color:var(--muted)}a{color:var(--link);text-underline-offset:4px}button{font:inherit;min-height:44px;border:1px solid var(--accent);border-radius:4px;padding:8px 16px;background:var(--paper);color:var(--accent);cursor:pointer}button:disabled{border-color:var(--muted);color:var(--muted);cursor:default}button:focus-visible,a:focus-visible{outline:3px solid var(--link);outline-offset:4px}.controls{display:flex;gap:12px;flex-wrap:wrap;margin:24px 0}#status{font-weight:600;color:var(--accent);border-left:3px solid currentColor;padding-left:12px}#status[data-error=true]{color:var(--error)}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:15px}th,td{text-align:left;vertical-align:top;border-bottom:1px solid var(--line);padding:12px 8px;min-width:80px}th:first-child{min-width:154px}code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;overflow-wrap:anywhere}#events{padding-left:24px;font-size:15px}#events li{padding:6px 0;border-bottom:1px solid var(--line);overflow-wrap:anywhere}.note{color:var(--muted);font-size:14px}details{border-top:1px solid var(--line);padding-top:16px}summary{cursor:pointer;line-height:1.7;font-weight:600}@media(max-width:480px){main{padding:24px 16px 48px}th,td{padding:10px 6px;font-size:14px}}
+</style>
+</head>
+<body><main>
+<p class="eyebrow">RTC 入门 07 · 无麦克风、无外部 STUN / TURN</p>
+<h1>从候选出现，到一条消息传通</h1>
+<p>同一页面里的 A、B 会各自创建一个 WebRTC 连接对象。代码搬运完整 Offer / Answer，浏览器检查本地路径，再由数据通道发出 <code>rtc-hello</code> 并回传确认。完整地址与描述不会展示或持久保存。</p>
+<p class="note">仅验证当前浏览器的同机连接。没有音频轨道，没有外部服务配置；浏览器仍会进行本地网络检查。公网直连、TURN 中继和声音输出均不在这个实验范围内。</p>
+<div class="controls"><button id="start" type="button">建立连接并发消息</button><button id="refresh" type="button" disabled>刷新统计</button><button id="stop" type="button" disabled>关闭并清理</button></div>
+<p id="status" role="status">尚未开始。建立连接后观察事件和快照。</p>
+<h2>连接快照</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">观察项</th><th scope="col">A</th><th scope="col">B</th></tr></thead><tbody>
+<tr><th scope="row">候选收集状态</th><td id="a-gather">—</td><td id="b-gather">—</td></tr>
+<tr><th scope="row">ICE 连接状态</th><td id="a-ice">—</td><td id="b-ice">—</td></tr>
+<tr><th scope="row">整体连接状态</th><td id="a-connection">—</td><td id="b-connection">—</td></tr>
+<tr><th scope="row">已收集候选数量</th><td id="a-candidates">—</td><td id="b-candidates">—</td></tr>
+<tr><th scope="row">已选路径：本端 ↔ 远端</th><td id="a-pair">—</td><td id="b-pair">—</td></tr>
+<tr><th scope="row">数据通道状态</th><td id="a-channel">—</td><td id="b-channel">—</td></tr>
+<tr><th scope="row">数据通道消息：发送 / 收到</th><td id="a-count">—</td><td id="b-count">—</td></tr>
+</tbody></table></div>
+<p class="note">快照在状态变化时更新；“已选路径”和消息统计在确认回传后读取，也可手动刷新。若浏览器未提供相应统计字段，会显示“未提供”，不猜测路径。候选计数按本次事件记录。</p>
+<h2>本次事件</h2>
+<ol id="events"><li>等待开始。</li></ol>
+<p class="note">事件编号只表示先后顺序。没有测量口到耳延迟、网络带宽或音频质量。</p>
+<details><summary>怎样解读成功与失败</summary><p>收到 <code>ack:rtc-hello</code> 说明测试文本和应用回传通过。候选收集完成只说明当前收集阶段结束；它不能单独证明连接成功。显示 <code>host ↔ host</code> 也只覆盖本机环境。</p><p>实验在 25 秒内未完成会关闭对象并报告当前阶段。可检查浏览器是否支持或允许 WebRTC、本地网络是否受策略限制；日志不会把一次失败自动归因于 NAT。关闭后可以重新开始。</p></details>
+<p><a href="./">回到第七篇正文</a></p>
+<noscript><p>实验需要 JavaScript 来调用浏览器 WebRTC 接口。正文与示意图不依赖实验运行。</p></noscript>
+</main>
+<script>
+'use strict';
+const ui = Object.fromEntries(['start','refresh','stop','status','events'].map(id => [id, document.getElementById(id)]));
+let active = null;
+function cell(peer, field, value) { document.getElementById(`${peer}-${field}`).textContent = value; }
+function status(text, error = false) { ui.status.textContent = text; ui.status.dataset.error = String(error); }
+function log(run, text) {
+  if (active !== run) return;
+  const item = document.createElement('li'); item.textContent = text; ui.events.append(item);
+}
+function current(run) { if (active !== run || run.controller.signal.aborted) throw run.controller.signal.reason || new Error('本轮已结束'); }
+function waitFor(target, event, predicate, signal) {
+  return new Promise((resolve, reject) => {
+    const clean = () => { target.removeEventListener(event, check); signal.removeEventListener('abort', abort); };
+    const check = () => { if (predicate()) { clean(); resolve(); } };
+    const abort = () => { clean(); reject(signal.reason || new Error('本轮已结束')); };
+    if (signal.aborted) { abort(); return; }
+    target.addEventListener(event, check); signal.addEventListener('abort', abort, { once: true }); check();
+  });
+}
+function update(run) {
+  if (active !== run) return;
+  for (const name of ['a','b']) {
+    const pc = run[name]; if (!pc) continue;
+    cell(name,'gather',pc.iceGatheringState); cell(name,'ice',pc.iceConnectionState); cell(name,'connection',pc.connectionState);
+    const counts = run.counts[name];
+    cell(name,'candidates',Object.entries(counts).map(([type,count]) => `${type}: ${count}`).join(' / ') || '0');
+    cell(name,'channel',run.closed ? '已请求关闭' : run.channels[name]?.readyState || '尚未创建');
+  }
+}
+async function snapshot(run) {
+  current(run); update(run);
+  for (const name of ['a','b']) {
+    const report = await run[name].getStats(); current(run);
+    const selected = [...report.values()].filter(item => item.type === 'transport' && item.selectedCandidatePairId);
+    const descriptions = selected.map(transport => {
+      const pair = report.get(transport.selectedCandidatePairId);
+      const local = pair && report.get(pair.localCandidateId), remote = pair && report.get(pair.remoteCandidateId);
+      return local?.candidateType && remote?.candidateType ? `${local.candidateType} ↔ ${remote.candidateType}` : '关联候选类型未提供';
+    });
+    cell(name,'pair',descriptions.length ? [...new Set(descriptions)].join('；') : '已选路径统计未提供');
+    const channel = [...report.values()].find(item => item.type === 'data-channel' && item.label === 'rtc-check');
+    cell(name,'count',channel && Number.isFinite(channel.messagesSent) && Number.isFinite(channel.messagesReceived) ? `${channel.messagesSent} / ${channel.messagesReceived}` : '未提供');
+  }
+}
+function close(run, reason) {
+  if (!run || run.closed) return;
+  run.closed = true; clearTimeout(run.deadline);
+  run.controller.abort(new Error(reason));
+  for (const channel of Object.values(run.channels)) channel.close();
+  for (const name of ['a','b']) { if (run[name]) run[name].close(); }
+  if (active === run) { update(run); ui.start.disabled = false; ui.start.textContent = '重新建立连接'; ui.stop.disabled = true; ui.refresh.disabled = true; }
+}
+function observe(run, name) {
+  const pc = run[name];
+  pc.addEventListener('icecandidate', event => {
+    if (active !== run || run.closed) return;
+    if (event.candidate && event.candidate.candidate) {
+      const type = event.candidate.type || '未知'; run.counts[name][type] = (run.counts[name][type] || 0) + 1;
+      log(run,`${name.toUpperCase()} 收到 ${type} 候选事件（不显示地址）`);
+    }
+    update(run);
+  });
+  pc.addEventListener('icegatheringstatechange',() => {
+    if (run.closed) return;
+    log(run,`${name.toUpperCase()} 候选收集：${pc.iceGatheringState}`); update(run);
+  });
+  for (const event of ['iceconnectionstatechange','connectionstatechange']) pc.addEventListener(event,() => {
+    if (run.closed || active !== run) return;
+    update(run);
+    const state = event === 'iceconnectionstatechange' ? pc.iceConnectionState : pc.connectionState;
+    log(run,`${name.toUpperCase()} ${event === 'iceconnectionstatechange' ? 'ICE' : '整体连接'}：${state}`);
+    if (state === 'failed') {
+      if (run.stage === '完成') { close(run,'连接在完成后失效'); status('先前消息回传成功；当前连接已失效并关闭，可重新开始。',true); }
+      else run.controller.abort(new Error(`${name.toUpperCase()} 连接状态 failed`));
+    }
+  });
+}
+async function start() {
+  close(active,'开始新一轮');
+  const run = { controller:new AbortController(), channels:{}, counts:{a:{},b:{}}, stage:'创建连接', closed:false, reply:false };
+  active = run; ui.events.replaceChildren(); ui.start.disabled = true; ui.stop.disabled = false; ui.refresh.disabled = true;
+  for (const name of ['a','b']) for (const field of ['gather','ice','connection','candidates','pair','channel','count']) cell(name,field,'—');
+  status('正在建立本机连接……');
+  run.deadline = setTimeout(() => run.controller.abort(new Error(`25 秒内未完成；当前阶段：${run.stage}`)),25000);
+  try {
+    if (!globalThis.RTCPeerConnection) throw new Error('当前环境未提供 RTCPeerConnection');
+    run.a = new RTCPeerConnection({ iceServers:[] }); run.b = new RTCPeerConnection({ iceServers:[] });
+    observe(run,'a'); observe(run,'b');
+    run.b.addEventListener('datachannel', event => {
+      if (run.closed) return;
+      run.channels.b = event.channel; update(run);
+      event.channel.addEventListener('open',() => { log(run,'B 数据通道 open'); update(run); });
+      event.channel.addEventListener('message', message => {
+        if (run.closed) return;
+        log(run,`B 收到：${message.data}`);
+        if (message.data === 'rtc-hello' && event.channel.readyState === 'open') { event.channel.send('ack:rtc-hello'); log(run,'B 已发出应用确认'); }
+      });
+    });
+    run.channels.a = run.a.createDataChannel('rtc-check');
+    run.channels.a.addEventListener('open',() => { log(run,'A 数据通道 open'); update(run); });
+    run.channels.a.addEventListener('message', event => {
+      if (run.closed) return;
+      log(run,`A 收到：${event.data}`); if (event.data === 'ack:rtc-hello') run.reply = true;
+    });
+    log(run,'已创建 A、B；外部 iceServers 为空；A 创建数据通道'); update(run);
+    run.stage = 'A 设置 Offer 并等待候选收集';
+    await run.a.setLocalDescription(await run.a.createOffer()); current(run); log(run,'A 已设置本地 Offer');
+    await waitFor(run.a,'icegatheringstatechange',() => run.a.iceGatheringState === 'complete',run.controller.signal); current(run);
+    run.stage = 'B 应用 Offer 并生成 Answer';
+    await run.b.setRemoteDescription(run.a.localDescription); current(run); log(run,'B 已应用 A 的完整描述（页面代码传递 Offer）');
+    await run.b.setLocalDescription(await run.b.createAnswer()); current(run); log(run,'B 已设置本地 Answer');
+    await waitFor(run.b,'icegatheringstatechange',() => run.b.iceGatheringState === 'complete',run.controller.signal); current(run);
+    run.stage = 'A 应用 Answer 并等待通道';
+    await run.a.setRemoteDescription(run.b.localDescription); current(run); log(run,'A 已应用 B 的完整描述（页面代码传递 Answer）');
+    await waitFor(run.channels.a,'open',() => run.channels.a.readyState === 'open',run.controller.signal); current(run);
+    run.stage = '测试消息及回传'; run.channels.a.send('rtc-hello'); log(run,'A 已发出：rtc-hello');
+    await waitFor(run.channels.a,'message',() => run.reply,run.controller.signal); current(run);
+    clearTimeout(run.deadline); run.stage = '完成';
+    status('确认回传成功：本次数据通道已传通。尚未验证音频。'); log(run,'测试完成，连接保留供观察；请关闭并清理');
+    ui.start.disabled = false; ui.start.textContent = '重新建立连接'; ui.refresh.disabled = false;
+    try { await snapshot(run); } catch (error) { if (active === run && !run.closed) log(run,`统计读取失败：${error.name}；消息回传结果不受影响`); }
+  } catch (error) {
+    if (active !== run || run.closed) return;
+    // 浏览器异常消息可能含候选信息，只展示错误类别；本页自定义错误不含地址。
+    const detail = error instanceof DOMException ? `浏览器报告 ${error.name}` : error.message;
+    log(run,`未完成：${detail}`); close(run,'本轮失败并清理'); status(`未完成：${detail}。对象已关闭，可重新开始。`,true);
+  }
+}
+ui.start.addEventListener('click',start);
+ui.stop.addEventListener('click',() => { const run = active; close(run,'用户关闭'); log(run,'用户关闭：两个连接对象已关闭，本轮不再发送数据'); status('已关闭并清理。可以重新开始。'); });
+ui.refresh.addEventListener('click',async () => { const run = active; if (!run || run.closed) return; try { await snapshot(run); log(run,'已刷新统计'); } catch (error) { if (active === run && !run.closed) log(run,`统计读取失败：${error.name}`); } });
+window.addEventListener('pagehide',() => close(active,'页面离开'));
+</script>
+</body></html>
