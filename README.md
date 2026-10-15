@@ -38,6 +38,6 @@ I write about what I learn along the way, from the first attempt to the lessons 
 [Visit my blog →](https://hex4c59.cc/) for notes on software, experiments, and things I am learning.
 Comments and conversations are always welcome.
 
-> Good ideas need a place to land, or they drift away.
+> 文章本天成，妙手偶得之
 
 Blog maintenance: [development guide](docs/development.md).
