@@ -1,7 +1,7 @@
 ---
 title: "DeepSeek Harness"
 description: "按源码与调用链研究 DeepSeek Harness：从插件运行时、模型与工具，到会话、权限、多 Agent、界面及工程验证。"
-lastmod: 2026-10-15
+lastmod: 2026-10-16
 series_start: "/agent/deepseek-harness-agent-engineering/"
 series_status: "连载中"
 ---
@@ -18,7 +18,13 @@ series_status: "连载中"
 
 [第七篇：五种事件派发怎样执行监听器](/articles/deepseek-harness-event-dispatch/)比较 `emit`、`parallel`、`serial`、`bail` 与 `waterfall` 的执行、等待、返回值和异常处理，再追踪监听器过滤、派发快照与重入，并附固定源码的聚焦实验。
 
+[第八篇：effect、Fiber 与 Scope 怎样清理资源](/articles/deepseek-harness-effect-fiber-scope/)追踪资源登记、逆序释放、Fiber 卸载与 Scope 退出，解释单个 effect 内的等待顺序和多个兄弟 effect 的并行清理。
+
 [第九篇：Loader 怎样把配置变成运行中的插件](/articles/deepseek-harness-loader-config-hmr/)追踪配置树、表达式求值、volatile 引用、服务隔离、Include 读写与 dsh HMR，区分配置已保存、实例已更新和资源已清理，并附 28 组聚焦实验。
+
+[第十篇：Agent、AgentHandle 与实例所有权](/articles/deepseek-harness-agent-handle-ownership/)进入 Agent 生命周期，解释 setup、创建公告、调用方与工厂的清理责任，以及回滚、恢复和迟到资源的处理。
+
+[第十一篇：Preset、Persona 与默认模型怎样生效](/articles/deepseek-harness-presets-persona-model-selection/)区分能力组合、身份提示词和会话模型选择，追踪 Preset 修订保留、空白会话切换与组装快照，并附 30 组真实运行时实验。
 
 ## 阅读路线
 

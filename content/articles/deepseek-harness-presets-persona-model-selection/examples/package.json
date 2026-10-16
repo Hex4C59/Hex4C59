@@ -1,0 +1,13 @@
+{
+  "name": "dsh-presets-persona-model-examples",
+  "private": true,
+  "type": "module",
+  "scripts": { "verify": "node run.mjs" },
+  "devDependencies": {
+    "typescript": "6.0.3",
+    "zod": "4.4.3",
+    "js-yaml": "4.3.2",
+    "semver": "7.8.5",
+    "resolve.exports": "2.0.3"
+  }
+}

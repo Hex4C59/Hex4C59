@@ -1,0 +1,223 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>模型选择与组装快照</title><style>
+:root{color-scheme:light dark;--paper:#faf9f6;--surface:#f1f0ec;--ink:#242320;--muted:#66635d;--line:#c2beb5;--teal:#126d61;--teal-bg:#dceee7;--amber:#96511e;--amber-bg:#f8e4cf;--purple:#6044ab;--purple-bg:#ece5fa;--rose:#a03861;--rose-bg:#f7e1e9;--motion-fast:160ms;--motion-step:480ms;--motion-hold:720ms;--motion-total:4320ms;--motion-ease:cubic-bezier(.2,.8,.2,1)}
+@media(prefers-color-scheme:dark){:root{--paper:#242320;--surface:#302e29;--ink:#faf9f6;--muted:#c2beb5;--line:#6d6962;--teal:#8cd9cd;--teal-bg:#203c37;--amber:#e8b47d;--amber-bg:#453225;--purple:#c3b1f8;--purple-bg:#332a47;--rose:#f1aac4;--rose-bg:#472d39}}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:14px/1.8 'PingFang SC',system-ui,sans-serif}main{max-width:860px;padding:20px;margin:0 auto;--c:var(--teal);--bg:var(--teal-bg)}header{border-top:3px solid var(--teal);padding-top:16px}.eyebrow{font:11px/1.7 ui-monospace,Menlo,monospace;letter-spacing:.08em;color:var(--muted)}.eyebrow b{color:var(--teal);font-size:14px;margin-right:10px}h1{font:500 29px/1.4 'Songti SC',Georgia,serif;margin:10px 0}h2{font-size:20px;line-height:1.5;margin:18px 0 6px}p{margin:7px 0}.intro,.description{color:var(--muted)}.caption{font-size:11px;letter-spacing:.05em;color:var(--muted);margin:18px 0 8px}.radio{position:absolute;width:1px;height:1px;clip-path:inset(50%);overflow:hidden}.cases{display:grid;gap:8px;border-bottom:1px solid var(--line)}.cases label{cursor:pointer;background:var(--surface);border-top:3px solid var(--line);padding:10px 12px;min-width:0}.cases b{display:block;font-size:14px}.cases small{font-size:11px;color:var(--muted)}.panel,.variant{display:none}.canvas{width:100%;overflow-x:auto}svg{display:block;width:100%;min-width:680px}svg text{font-family:'PingFang SC',system-ui,sans-serif;fill:var(--ink)}svg .name{font-size:14px;font-weight:600;fill:var(--c)}svg .sub{font-size:12px;fill:var(--muted);font-family:'SFMono-Regular',ui-monospace,Menlo,'PingFang SC',monospace}svg .label{font-size:13px;font-weight:500;fill:var(--c)}svg .serial{font:11px ui-monospace,Menlo,monospace;fill:var(--muted)}.edge{fill:none;stroke:var(--c);stroke-width:1.5}.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--muted);padding:8px 0 12px}.legend span:before{content:'';display:inline-block;width:7px;height:7px;background:var(--c);margin-right:5px}.note{border-left:3px solid var(--c);background:var(--bg);padding:11px 14px;margin:10px 0;font-size:13px}.note strong{color:var(--c);font-weight:600}.inspector{margin-top:18px;border-top:2px solid var(--teal);padding-top:12px}.inspector h3{font-size:14px;margin:0}.views{display:flex;gap:5px;border-bottom:1px solid var(--line);margin:10px 0}.views label{cursor:pointer;font-size:12px;padding:6px 11px}.view{display:none}pre{font:12px/1.85 'SFMono-Regular',ui-monospace,Menlo,monospace;white-space:pre-wrap;overflow-wrap:anywhere;background:var(--surface);padding:14px;margin:0;min-height:170px}table{border-collapse:collapse;width:100%;font-size:13px}td,th{text-align:left;vertical-align:top;padding:10px 8px;border-bottom:1px solid var(--line)}th{font-size:12px;font-weight:500;color:var(--muted)}code{font-family:ui-monospace,Menlo,monospace;font-size:.9em;overflow-wrap:anywhere}.paths{display:none}.paths p{padding:12px;background:var(--surface);border-left:3px solid var(--c);font-size:13px;margin:8px 0}.paths b{display:block;color:var(--c);font-size:13px}.paths small{font-size:12px;color:var(--muted)}details{font-size:12px;color:var(--muted);border-top:1px solid var(--line);margin-top:16px;padding-top:10px}summary{cursor:pointer;color:var(--ink)}footer{border-top:1px solid var(--line);padding-top:12px;margin-top:18px;color:var(--muted);font-size:11px;line-height:1.9}.sr-only{position:absolute;width:1px;height:1px;clip-path:inset(50%);overflow:hidden}.snapshots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0}.snapshot{background:var(--bg);border-left:3px solid var(--c);padding:8px 10px}.snapshot span{font-size:11px;color:var(--muted);display:block}.snapshot b{font-size:12px;font-weight:500;color:var(--c)}
+@media(max-width:719px){main{padding:20px 16px}h1{font-size:25px}h2{font-size:19px}.canvas,.legend{display:none}.paths{display:block}.cases label{padding:8px 9px}.cases b{font-size:13px}.cases small{font-size:10px}.description{font-size:13px}.snapshots{grid-template-columns:1fr}.snapshot{display:flex;justify-content:space-between;gap:8px}.snapshot b{text-align:right}pre{font-size:12px}.views label{padding:6px 9px}.note{padding:10px 12px}.eyebrow{font-size:10px;letter-spacing:.04em}}
+@media(max-width:359px){h1{font-size:23px}.cases{grid-template-columns:1fr!important}.cases label{display:flex;gap:8px;align-items:center;justify-content:space-between}.cases small{font-size:10px}.views label{padding:6px 8px}pre{font-size:11px}td,th{padding:9px 5px}.snapshot b{font-size:11px}}
+@media print{.canvas{overflow-x:visible}svg{min-width:0}pre{min-height:0}}
+input:focus-visible + label{outline:2px solid var(--purple)}label:focus-within{outline:2px solid var(--purple)}.radio:focus-visible~nav{outline:1px solid var(--purple);outline-offset:4px}.canvas svg{height:auto}.cases{margin-bottom:8px}footer code{font-size:10px}.view{overflow-wrap:anywhere}.cases{grid-template-columns:repeat(2,minmax(0,1fr))}.description{min-height:54px}.motion-controls{display:none;gap:6px;align-items:center;flex-wrap:wrap;margin:16px 0}.motion-ready .motion-controls{display:flex}.motion-controls[hidden]{display:none!important}.motion-controls button{border:1px solid var(--line);border-radius:3px;background:var(--paper);color:var(--ink);font:12px/1.6 'PingFang SC',system-ui,sans-serif;padding:7px 12px;cursor:pointer}.motion-controls button:disabled{opacity:.4;cursor:default}.motion-controls button[data-motion-action=play]{background:var(--teal);color:var(--paper);border-color:var(--teal)}.motion-controls button:focus-visible{outline:2px solid var(--purple);outline-offset:3px}.step-count{margin-left:auto;font:12px ui-monospace,Menlo,monospace;color:var(--muted)}.lifeline{stroke:var(--line);stroke-width:1;stroke-dasharray:3 4}.trace{display:none;list-style:none;padding:0;margin:10px 0}.trace li{display:grid;grid-template-columns:26px 1fr;gap:10px;padding:12px 0;border-bottom:1px solid var(--line)}.trace b{font-size:14px}.trace p{font-size:13px;color:var(--muted);margin:3px 0}.trace .number{color:var(--teal);font:600 13px/1.9 ui-monospace,Menlo,monospace}.trace .route{font-size:11px;color:var(--teal)}.phase{display:none}.phase.start{display:block}.phase p{font-size:13px;margin:0}.phase-explain{min-height:94px;margin:12px 0;padding:12px 14px;background:var(--surface);border-left:3px solid var(--teal)}.phase strong{font-size:14px;display:block;margin-bottom:3px}.motion-ready .phase.start{display:none}.motion-ready [data-motion-item]{opacity:.18;transition:opacity var(--motion-step) var(--motion-ease)}.motion-ready [data-motion-item].is-visible,.motion-ready[data-step-current="0"] [data-motion-item],.motion-ready[data-frame=end] [data-motion-item],.motion-ready[data-frame=static] [data-motion-item]{opacity:1}.is-current .edge{stroke-width:3}.is-current .label-mask{fill:var(--surface)}.trace li.is-current{background:var(--teal-bg);padding-left:7px;padding-right:7px}.trace li.is-current p{color:var(--ink)}
+@media(max-width:719px){.description{min-height:0}.phase-explain{display:none}.trace{display:block}.motion-controls{gap:5px}.motion-controls button{padding:7px 10px}.step-count{font-size:11px}}
+@media(max-width:359px){.motion-controls button{font-size:11px;padding:7px 9px}.step-count{margin-left:0;width:100%}}
+@media(prefers-reduced-motion:reduce){[data-motion-item]{opacity:1!important;transition:none!important}.motion-controls,[data-motion-decorative]{display:none!important}}
+@media print{.motion-controls{display:none!important}[data-motion-item]{opacity:1!important;transition:none!important}}
+html[data-motion=static] .motion-controls,html[data-motion=step] .motion-controls{display:none!important}html[data-motion=static] [data-motion-item]{opacity:1!important;transition:none!important}
+.variant{display:none}.motion-root{outline-offset:4px}.snapshot-table th{width:64%;font-size:13px}.snapshot-table td{font-size:14px}.snapshot-table code{white-space:normal}.phase-explain{min-height:96px}.trace .route{color:var(--purple)}#snap-after:checked~.cases label[for="snap-after"]{background:var(--purple-bg);color:var(--purple);border-color:var(--purple)}#snap-after:checked~.panels .case-after{display:block}#snap-before:checked~.cases label[for="snap-before"]{background:var(--purple-bg);color:var(--purple);border-color:var(--purple)}#snap-before:checked~.panels .case-before{display:block}#snap-view-values:checked~.views label[for="snap-view-values"]{background:var(--teal-bg);color:var(--teal)}#snap-view-values:checked~.view-values{display:block}#snap-view-order:checked~.views label[for="snap-view-order"]{background:var(--teal-bg);color:var(--teal)}#snap-view-order:checked~.view-order{display:block}.motion-ready[data-step-current="1"] .phase-1{display:block}.motion-ready[data-step-current="2"] .phase-2{display:block}.motion-ready[data-step-current="3"] .phase-3{display:block}.motion-ready[data-step-current="4"] .phase-4{display:block}.motion-ready[data-step-current="5"] .phase-5{display:block}.motion-ready[data-step-current="6"] .phase-6{display:block}</style></head><body><main><header><div class="eyebrow"><b>11B</b> MODEL / ASSEMBLY SNAPSHOT</div><h1>改选 B，为什么这次仍然请求 A？</h1><p class="intro">比较改选发生在组装前后。播放沿六个观察点推进，检查 current、assembled、提示词变量和最终请求。</p></header><section aria-label="选择模型切换时点"><p class="caption">01 / 在哪个时间点改选</p><input class="radio" name="snapshot-case" type="radio" id="snap-after" checked><label class="sr-only" for="snap-after">组装后改选 B</label><input class="radio" name="snapshot-case" type="radio" id="snap-before"><label class="sr-only" for="snap-before">组装前已选 B</label><nav class="cases" aria-label="两种切换时点"><label for="snap-after"><b>组装后改选 B</b><small>当前请求仍用 A</small></label><label for="snap-before"><b>组装前已选 B</b><small>本次直接使用 B</small></label></nav><div class="panels"><div class="motion-root" data-motion-root data-motion-mode="step" data-step-count="6" data-step-current="6" data-frame="static" data-static-frame="complete" tabindex="0" role="group" aria-label="模型选择与请求时序演示"><div class="variant case-after"><h2>本次提示词 A → 本次请求 A → 下次组装 B</h2><p class="description">先组装 A 的提示词，再把 current 改成 B。请求监听器读取已捕获的 assembled，因此这次仍用 A。</p></div><div class="variant case-before"><h2>本次提示词 B → 本次请求 B → 下次组装 B</h2><p class="description">在本次组装开始前已经选好 B；current、提示词变量与 assembled 都捕获 B，本次请求也用 B。</p></div><noscript><p class="note">脚本未启用，当前展示完整六步时序。场景、数据视角与折叠说明仍可使用。</p></noscript><div class="motion-controls" data-motion-controls role="group" aria-label="模型选择时序播放控制"><button type="button" data-motion-action="play" aria-pressed="false">播放</button><button type="button" data-motion-action="pause" aria-pressed="true">暂停</button><button type="button" data-motion-action="prev">上一步</button><button type="button" data-motion-action="next">下一步</button><button type="button" data-motion-action="replay">重播</button><span class="step-count">步骤 <span data-motion-step-label>6</span> / 6</span></div><p data-motion-status class="sr-only" role="status" aria-live="polite" aria-atomic="true">完整路径，共六步</p><div class="canvas"><svg viewBox="0 0 680 560" role="img" aria-labelledby="snap11-title snap11-desc"><title id="snap11-title">模型选择捕获与下一次组装的六步时序</title><desc id="snap11-desc">时间从上向下。选择入口写 current，SystemPrompt 捕获它并提交 assembled；入口随后可以改写 current，当前请求仍读取 assembled。箭头标注调用或赋值方向，图中不发真实模型请求。</desc><defs><marker id="snap11-teal" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M0 0 L8 3 L0 6 Z" fill="var(--teal)"/></marker><marker id="snap11-purple" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M0 0 L8 3 L0 6 Z" fill="var(--purple)"/></marker><marker id="snap11-amber" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M0 0 L8 3 L0 6 Z" fill="var(--amber)"/></marker><marker id="snap11-rose" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M0 0 L8 3 L0 6 Z" fill="var(--rose)"/></marker></defs><path class="lifeline" d="M84 104 V536"/><path class="lifeline" d="M256 104 V536"/><path class="lifeline" d="M428 104 V536"/><path class="lifeline" d="M600 104 V536"/><g class="node " style="--c:var(--teal);--bg:var(--teal-bg)"><rect class="node-bg" x="16" y="28" width="136" height="72" rx="3" fill="var(--bg)" stroke="var(--c)"/><text class="name" x="84" y="57" text-anchor="middle">选择入口</text><text class="sub" x="84" y="81" text-anchor="middle">UI / controller</text></g><g class="node " style="--c:var(--purple);--bg:var(--purple-bg)"><rect class="node-bg" x="188" y="28" width="136" height="72" rx="3" fill="var(--bg)" stroke="var(--c)"/><text class="name" x="256" y="57" text-anchor="middle">选择引用</text><text class="sub" x="256" y="81" text-anchor="middle">两份模型字段</text></g><g class="node " style="--c:var(--amber);--bg:var(--amber-bg)"><rect class="node-bg" x="360" y="28" width="136" height="72" rx="3" fill="var(--bg)" stroke="var(--c)"/><text class="name" x="428" y="57" text-anchor="middle">SystemPrompt</text><text class="sub" x="428" y="81" text-anchor="middle">assemble</text></g><g class="node " style="--c:var(--rose);--bg:var(--rose-bg)"><rect class="node-bg" x="532" y="28" width="136" height="72" rx="3" fill="var(--bg)" stroke="var(--c)"/><text class="name" x="600" y="57" text-anchor="middle">请求配置</text><text class="sub" x="600" y="81" text-anchor="middle">agent/request</text></g><g data-motion-item data-step="1" aria-label="步骤 1，观察模型选择与快照"><g class="" style="--c:var(--teal)"><path class="edge" d="M84 148 H256" marker-end="url(#snap11-teal)"/><rect class="label-mask" x="78" y="117" width="184" height="21" fill="var(--paper)"/><text class="label" x="170.0" y="132" text-anchor="middle"><tspan class="variant case-after">写 current = A</tspan><tspan class="variant case-before">写 current = B</tspan></text></g><text class="serial" x="12" y="152">01</text></g><g data-motion-item data-step="2" aria-label="步骤 2，观察模型选择与快照"><g class="" style="--c:var(--amber)"><path class="edge" d="M428 220 H256" marker-end="url(#snap11-amber)"/><rect class="label-mask" x="250" y="189" width="184" height="21" fill="var(--paper)"/><text class="label" x="342.0" y="204" text-anchor="middle"><tspan class="variant case-after">捕获 current = A</tspan><tspan class="variant case-before">捕获 current = B</tspan></text></g><text class="serial" x="12" y="224">02</text></g><g data-motion-item data-step="3" aria-label="步骤 3，观察模型选择与快照"><g class="" style="--c:var(--amber)"><path class="edge" d="M428 292 H256" marker-end="url(#snap11-amber)"/><rect class="label-mask" x="250" y="261" width="184" height="21" fill="var(--paper)"/><text class="label" x="342.0" y="276" text-anchor="middle"><tspan class="variant case-after">提交 assembled = A</tspan><tspan class="variant case-before">提交 assembled = B</tspan></text></g><text class="serial" x="12" y="296">03</text></g><g data-motion-item data-step="4" aria-label="步骤 4，观察模型选择与快照"><g class="" style="--c:var(--teal)"><path class="edge" d="M84 364 H256" marker-end="url(#snap11-teal)"/><rect class="label-mask" x="78" y="333" width="184" height="21" fill="var(--paper)"/><text class="label" x="170.0" y="348" text-anchor="middle"><tspan class="variant case-after">写 current = B</tspan><tspan class="variant case-before">current 保持 B</tspan></text></g><text class="serial" x="12" y="368">04</text></g><g data-motion-item data-step="5" aria-label="步骤 5，观察模型选择与快照"><g class="" style="--c:var(--rose)"><path class="edge" d="M600 436 H256" marker-end="url(#snap11-rose)"/><rect class="label-mask" x="336" y="405" width="184" height="21" fill="var(--paper)"/><text class="label" x="428.0" y="420" text-anchor="middle"><tspan class="variant case-after">读取 assembled = A</tspan><tspan class="variant case-before">读取 assembled = B</tspan></text></g><text class="serial" x="12" y="440">05</text></g><g data-motion-item data-step="6" aria-label="步骤 6，观察模型选择与快照"><g class="" style="--c:var(--amber)"><path class="edge" d="M428 508 H256" marker-end="url(#snap11-amber)"/><rect class="label-mask" x="250" y="477" width="184" height="21" fill="var(--paper)"/><text class="label" x="342.0" y="492" text-anchor="middle"><tspan class="variant case-after">下次捕获 current = B</tspan><tspan class="variant case-before">下次捕获 current = B</tspan></text></g><text class="serial" x="12" y="512">06</text></g></svg></div><div class="legend"><span style="--c:var(--teal)">选择入口</span><span style="--c:var(--purple)">选择引用</span><span style="--c:var(--amber)">SystemPrompt</span><span style="--c:var(--rose)">请求配置</span></div><ol class="trace"><li data-motion-item data-step="1" aria-label="手机文字步骤 1"><span class="number">01</span><div><div class="variant case-after"><b>写 current = A</b><p class="route">选择入口 → 选择引用</p><p>入口选定 A；这里尚未组装提示词。</p></div><div class="variant case-before"><b>写 current = B</b><p class="route">选择入口 → 选择引用</p><p>入口选定 B；这里尚未组装提示词。</p></div></div></li><li data-motion-item data-step="2" aria-label="手机文字步骤 2"><span class="number">02</span><div><div class="variant case-after"><b>捕获 current = A</b><p class="route">SystemPrompt → 选择引用</p><p>组装开始先读 A，随后等待其他组装贡献。</p></div><div class="variant case-before"><b>捕获 current = B</b><p class="route">SystemPrompt → 选择引用</p><p>组装开始先读 B，随后等待其他组装贡献。</p></div></div></li><li data-motion-item data-step="3" aria-label="手机文字步骤 3"><span class="number">03</span><div><div class="variant case-after"><b>提交 assembled = A</b><p class="route">SystemPrompt → 选择引用</p><p>组装完成，变量 provider/model 与快照都采用 A。</p></div><div class="variant case-before"><b>提交 assembled = B</b><p class="route">SystemPrompt → 选择引用</p><p>组装完成，变量 provider/model 与快照都采用 B。</p></div></div></li><li data-motion-item data-step="4" aria-label="手机文字步骤 4"><span class="number">04</span><div><div class="variant case-after"><b>写 current = B</b><p class="route">选择入口 → 选择引用</p><p>改选只更新 current；已经捕获的 assembled 仍为 A。</p></div><div class="variant case-before"><b>current 保持 B</b><p class="route">选择入口 → 选择引用</p><p>改选只更新 current；已经捕获的 assembled 仍为 B。</p></div></div></li><li data-motion-item data-step="5" aria-label="手机文字步骤 5"><span class="number">05</span><div><div class="variant case-after"><b>读取 assembled = A</b><p class="route">请求配置 → 选择引用</p><p>覆盖当前请求 provider/model，得到 A；不是再次读取 current。</p></div><div class="variant case-before"><b>读取 assembled = B</b><p class="route">请求配置 → 选择引用</p><p>覆盖当前请求 provider/model，得到 B；不是再次读取 current。</p></div></div></li><li data-motion-item data-step="6" aria-label="手机文字步骤 6"><span class="number">06</span><div><div class="variant case-after"><b>下次捕获 current = B</b><p class="route">SystemPrompt → 选择引用</p><p>下一次组装从 current 读到 B，后续请求使用新快照。</p></div><div class="variant case-before"><b>下次捕获 current = B</b><p class="route">SystemPrompt → 选择引用</p><p>下一次组装从 current 读到 B，后续请求使用新快照。</p></div></div></li></ol><div class="phase-explain"><div class="phase start"><strong>先看完整关系，再播放检查值</strong><p>阶段是解释用观察点，时间间距不代表耗时；两种路径均使用真实实现的选择规则。</p></div><div class="phase phase-1"><div class="variant case-after"><strong>01 / 写 current = A</strong><p>入口选定 A；这里尚未组装提示词。</p></div><div class="variant case-before"><strong>01 / 写 current = B</strong><p>入口选定 B；这里尚未组装提示词。</p></div></div><div class="phase phase-2"><div class="variant case-after"><strong>02 / 捕获 current = A</strong><p>组装开始先读 A，随后等待其他组装贡献。</p></div><div class="variant case-before"><strong>02 / 捕获 current = B</strong><p>组装开始先读 B，随后等待其他组装贡献。</p></div></div><div class="phase phase-3"><div class="variant case-after"><strong>03 / 提交 assembled = A</strong><p>组装完成，变量 provider/model 与快照都采用 A。</p></div><div class="variant case-before"><strong>03 / 提交 assembled = B</strong><p>组装完成，变量 provider/model 与快照都采用 B。</p></div></div><div class="phase phase-4"><div class="variant case-after"><strong>04 / 写 current = B</strong><p>改选只更新 current；已经捕获的 assembled 仍为 A。</p></div><div class="variant case-before"><strong>04 / current 保持 B</strong><p>改选只更新 current；已经捕获的 assembled 仍为 B。</p></div></div><div class="phase phase-5"><div class="variant case-after"><strong>05 / 读取 assembled = A</strong><p>覆盖当前请求 provider/model，得到 A；不是再次读取 current。</p></div><div class="variant case-before"><strong>05 / 读取 assembled = B</strong><p>覆盖当前请求 provider/model，得到 B；不是再次读取 current。</p></div></div><div class="phase phase-6"><div class="variant case-after"><strong>06 / 下次捕获 current = B</strong><p>下一次组装从 current 读到 B，后续请求使用新快照。</p></div><div class="variant case-before"><strong>06 / 下次捕获 current = B</strong><p>下一次组装从 current 读到 B，后续请求使用新快照。</p></div></div></div></div><div class="inspector"><h3>02 / 对照本次请求的结果</h3><p class="description">数据为固定实验解释；第六步到达后，下一次 assembled 已经变成 B。</p><input class="radio" name="snapshot-view" type="radio" id="snap-view-values" checked><label class="sr-only" for="snap-view-values">模型 · 字段对照</label><input class="radio" name="snapshot-view" type="radio" id="snap-view-order"><label class="sr-only" for="snap-view-order">模型 · 调用顺序</label><nav class="views" aria-label="检查快照数据"><label for="snap-view-values">字段对照</label><label for="snap-view-order">调用顺序</label></nav><div class="view view-values"><div class="variant case-after"><table class="snapshot-table"><tbody><tr><th scope="row">本次捕获值</th><td><code>A</code></td></tr><tr><th scope="row">本次提示词变量</th><td><code>A</code></td></tr><tr><th scope="row">本次请求读取 assembled</th><td><code>A</code></td></tr><tr><th scope="row">改选后的 current</th><td><code>B</code></td></tr><tr><th scope="row">下一次组装快照</th><td><code>B</code></td></tr></tbody></table></div><div class="variant case-before"><table class="snapshot-table"><tbody><tr><th scope="row">本次捕获值</th><td><code>B</code></td></tr><tr><th scope="row">本次提示词变量</th><td><code>B</code></td></tr><tr><th scope="row">本次请求读取 assembled</th><td><code>B</code></td></tr><tr><th scope="row">改选后的 current</th><td><code>B</code></td></tr><tr><th scope="row">下一次组装快照</th><td><code>B</code></td></tr></tbody></table></div></div><div class="view view-order"><div class="variant case-after"><pre>current = A
+assemble() 捕获 A
+assembled = A
+current = B
+agent/request 采用 A
+下一次 assemble() 捕获 B
+
+省略 effort 会清除继承 effort；其他请求字段保留。</pre></div><div class="variant case-before"><pre>current = B
+assemble() 捕获 B
+assembled = B
+current = B
+agent/request 采用 B
+下一次 assemble() 捕获 B
+
+省略 effort 会清除继承 effort；其他请求字段保留。</pre></div></div></div><details><summary>查看来源、操作方式与限制</summary><p>对应 dsh-agent/model-selection.ts 的组装和请求 waterfall，以及 API Session Controller 的会话选择引用。使用原生场景控件；播放器支持播放/暂停、单步和重播，聚焦时可用 Home、End 与左右方向键。</p><p>图只展示一次组装与一次请求的字段关系，未绘制请求重试、adapter 默认值解析、磁盘写入和变化说明消息。阶段 2 捕获 current 的动作发生在等待后续组装之前；后来的选择影响下一次组装。</p></details></div></section><footer>DeepSeek Harness 0.2.1-alpha.2，固定源码 d7432673。实线为读写调用，水平间距不表示数据大小或延迟。无脚本、静态模式、减少动画及打印保留完整关系；A/B 是合成路由，未发送网络请求。</footer></main><script data-diagram-controls>
+    (() => {
+      const params = new URLSearchParams(location.search);
+      const staticOverride = params.get('motion') === 'static' || document.documentElement.dataset.motion === 'static';
+      const requestedStep = params.get('step');
+      const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+      document.fonts.ready.then(() => { document.documentElement.dataset.fontsReady = 'true'; });
+
+      document.querySelectorAll('[data-motion-root]').forEach((root) => {
+        const count = Number(root.dataset.stepCount);
+        const hold = parseFloat(getComputedStyle(root).getPropertyValue('--motion-hold')) || 720;
+        const parsedStep = requestedStep !== null && /^\d+$/.test(requestedStep) ? Number(requestedStep) : null;
+        const exactStep = params.get('motion') === 'step' && Number.isSafeInteger(parsedStep) && parsedStep >= 0 && parsedStep <= count ? parsedStep : null;
+        const items = [...root.querySelectorAll('[data-motion-item]')];
+        const labels = Array.from({ length: count + 1 }, (_, index) => index === 0
+          ? 'Ready'
+          : items.filter((item) => !item.hasAttribute('data-motion-decorative') && Number(item.dataset.step) === index)
+              .map((item) => item.getAttribute('aria-label')).join('; '));
+        const controls = root.querySelector('[data-motion-controls]');
+        const status = root.querySelector('[data-motion-status]');
+        const visibleStep = root.querySelector('[data-motion-step-label]');
+        let step = count;
+        let timer = 0;
+        let playing = false;
+        let stepBeforeReduce = 0;
+        let resumeAfterReduce = root.dataset.motionMode === 'reveal';
+
+        const buttons = (action) => controls.querySelector(`[data-motion-action="${action}"]`);
+        const clearClock = () => { window.clearTimeout(timer); timer = 0; };
+        const announce = () => { status.textContent = `Step ${step} of ${count}: ${labels[step] || 'Complete'}`; };
+        const setControlsAvailable = (available) => {
+          controls.hidden = !available;
+          controls.setAttribute('aria-hidden', String(!available));
+          controls.dataset.playbackDisabled = String(!available);
+          controls.querySelectorAll('button').forEach((control) => { control.disabled = !available; });
+        };
+
+        function render(next, userInitiated = false) {
+          step = Math.max(0, Math.min(count, next));
+          root.dataset.stepCurrent = String(step);
+          root.dataset.frame = step === count ? 'end' : step === 0 ? 'start' : 'step';
+          items.forEach((item) => {
+            const itemStep = Number(item.dataset.step);
+            item.classList.toggle('is-visible', itemStep <= step);
+            item.classList.toggle('is-current', itemStep === step);
+          });
+          if (visibleStep) visibleStep.textContent = String(step);
+          const unavailable = controls.dataset.playbackDisabled === 'true';
+          buttons('prev').disabled = unavailable || step === 0;
+          buttons('next').disabled = unavailable || step === count;
+          if (userInitiated) announce();
+        }
+
+        function pause(userInitiated = false) {
+          clearClock();
+          playing = false;
+          root.classList.remove('is-playing');
+          buttons('play').setAttribute('aria-pressed', 'false');
+          buttons('pause').setAttribute('aria-pressed', 'true');
+          if (userInitiated) status.textContent = `Paused at step ${step} of ${count}`;
+        }
+
+        function finish() {
+          pause(false);
+          root.dataset.frame = 'end';
+          status.textContent = `Complete · step ${count} of ${count}`;
+        }
+
+        function tick() {
+          if (!playing) return;
+          if (step >= count) { finish(); return; }
+          render(step + 1, false);
+          if (step >= count) { finish(); return; }
+          timer = window.setTimeout(tick, hold);
+        }
+
+        function play(fromStart = false, userInitiated = false) {
+          clearClock();
+          if (fromStart || step >= count) render(0, userInitiated);
+          playing = true;
+          root.classList.add('is-playing');
+          buttons('play').setAttribute('aria-pressed', 'true');
+          buttons('pause').setAttribute('aria-pressed', 'false');
+          timer = window.setTimeout(tick, hold);
+        }
+
+        controls.addEventListener('click', (event) => {
+          const button = event.target.closest('[data-motion-action]');
+          if (!button) return;
+          const action = button.dataset.motionAction;
+          if (action === 'play') play(false, true);
+          if (action === 'pause') pause(true);
+          if (action === 'replay') play(true, true);
+          if (action === 'prev') { pause(false); render(step - 1, true); }
+          if (action === 'next') { pause(false); render(step + 1, true); }
+        });
+
+        root.addEventListener('keydown', (event) => {
+          if (event.target.matches('input, textarea, select, a[href]')) return;
+          const keys = { ArrowLeft: step - 1, ArrowRight: step + 1, Home: 0, End: count };
+          if (event.code === 'Space' && !event.target.closest('button')) {
+            event.preventDefault();
+            playing ? pause(true) : play(false, true);
+            return;
+          }
+          if (!event.ctrlKey && !event.metaKey && !event.altKey && event.key.toLowerCase() === 'r') {
+            event.preventDefault();
+            play(true, true);
+            return;
+          }
+          if (!(event.key in keys)) return;
+          event.preventDefault();
+          pause(false);
+          render(keys[event.key], true);
+        });
+
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'hidden' && playing) pause(false);
+        });
+        reduce.addEventListener('change', (event) => {
+          if (event.matches && root.dataset.motionState !== 'reduced') {
+            stepBeforeReduce = step;
+            resumeAfterReduce = playing;
+          }
+          pause(false);
+          if (event.matches) {
+            setControlsAvailable(false);
+            render(count, false);
+            root.dataset.frame = 'static';
+            root.dataset.motionState = 'reduced';
+            status.textContent = 'Reduced motion · complete static frame · playback controls unavailable';
+          } else if (staticOverride || root.dataset.motionMode === 'none') {
+            setControlsAvailable(false);
+            render(count, false);
+            root.dataset.frame = 'static';
+            root.dataset.motionState = 'static';
+            status.textContent = 'Static frame · complete diagram · playback controls unavailable';
+          } else {
+            delete root.dataset.motionState;
+            if (exactStep !== null) {
+              setControlsAvailable(false);
+              render(exactStep, false);
+              root.dataset.frame = 'step';
+              root.dataset.motionState = 'test';
+              status.textContent = `Test frame · step ${step} of ${count} · playback controls unavailable`;
+            } else {
+              setControlsAvailable(true);
+              render(stepBeforeReduce, false);
+              status.textContent = `Ready · step ${step} of ${count}`;
+              if (resumeAfterReduce && root.dataset.motionMode === 'reveal') {
+                play(false, false);
+              }
+            }
+            resumeAfterReduce = false;
+          }
+        });
+
+        if (staticOverride) {
+          document.documentElement.dataset.motion = 'static';
+          pause(false);
+          setControlsAvailable(false);
+          render(count, false);
+          root.dataset.frame = 'static';
+          root.dataset.motionState = 'static';
+          status.textContent = 'Static frame · complete diagram · playback controls unavailable';
+        } else if (reduce.matches || root.dataset.motionMode === 'none') {
+          pause(false);
+          setControlsAvailable(false);
+          render(count, false);
+          root.dataset.frame = 'static';
+          root.dataset.motionState = reduce.matches ? 'reduced' : 'static';
+          status.textContent = reduce.matches
+            ? 'Reduced motion · complete static frame · playback controls unavailable'
+            : 'Static frame · complete diagram · playback controls unavailable';
+        } else if (exactStep !== null) {
+          document.documentElement.dataset.motion = 'step';
+          pause(false);
+          setControlsAvailable(false);
+          render(exactStep, false);
+          root.dataset.frame = 'step';
+          root.dataset.motionState = 'test';
+          status.textContent = `Test frame · step ${step} of ${count} · playback controls unavailable`;
+        } else if (root.dataset.motionMode === 'reveal') {
+          setControlsAvailable(true);
+          render(0, false);
+          play(false, false);
+        } else {
+          pause(false);
+          setControlsAvailable(true);
+          render(0, false);
+          status.textContent = `Ready · step 0 of ${count}`;
+        }
+        root.classList.add('motion-ready');
+      });
+    })();
+  </script></body></html>
