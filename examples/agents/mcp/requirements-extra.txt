@@ -1,0 +1,2 @@
+# SDK v1 API, verified against the matching official source and real subprocess tests.
+mcp==1.30.0

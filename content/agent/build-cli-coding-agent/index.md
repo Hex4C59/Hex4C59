@@ -3,8 +3,8 @@ title = "从零构建 CLI Coding Agent：ReAct 驱动的实战实现"
 date = 2026-03-24T20:00:00+08:00
 draft = false
 author = "Hex4C59"
-description = "用 Python 从零构建一个结构真实的 CLI Coding Agent，涵盖工具注册、ReAct 循环、上下文管理和安全边界的完整实现。"
-summary = "不只是造玩具——这篇文章构建一个结构上真实的 CLI Coding Agent：ReAct 循环驱动多步推理、完整的工具注册机制、上下文窗口管理，以及你在真实工程里必须处理的失败模式。"
+description = "运行一个完整的 Python CLI Coding Agent：默认用固定模型响应驱动真实文件操作和测试命令，支持逐次批准、超时清理与 JSONL 追踪。"
+summary = "从下载、安装到真实测试失败与修复，说明共享模型循环怎样注册工具、检查工作区、等待批准并回传命令结果。离线夹具验证程序流程，live 模式可选；工作区检查不构成操作系统沙箱。"
 tags = ["编程智能体", "CLI", "ReAct"]
 categories = ["ai"]
 series = ["agent-engineering"]
@@ -15,646 +15,156 @@ topics = ["coding-agent", "cli", "tool-use", "react", "state-management"]
 frameworks = ["OpenAI"]
 ShowToc = true
 source_kind = "original"
-lastmod = 2026-03-24T13:39:09+00:00
+lastmod = 2026-10-17
 +++
 
-Claude Code 和 Codex 的出现让"AI 写代码"从概念变成了日常工具。但如果你只是用它们，你并不真正理解它们。
+这篇教程面向会写 Python 函数和循环、希望看懂编程助手如何修改代码的读者。你会运行一个命令行界面（Command Line Interface，CLI）程序：它先执行一个确实会失败的测试，再读取并修改练习代码，最后重新运行测试。
 
-在前面几篇文章里，我们把 Agent 的核心机制逐一拆解清楚了：[ReAct 范式](/agent/react-paradigm/)提供了推理-行动交替的基础结构，[Tool Use](/agent/tool-use-core-of-agent/) 是 Agent 与外部世界连接的接口层，[上下文与记忆](/agent/context-memory-state-management/)解决了长任务中的状态维持问题，[System Prompt 设计](/agent/prompt-design-agent/)决定了 Agent 的行为质量。
+默认演示不需要 API 密钥。只有模型选择动作的回复来自本地固定响应（fixture），文件读写和 Python 测试进程都真实执行。这样可以先检查程序有没有接通，再决定是否接入真实模型；一次固定演示不证明模型会自行发现和修复其他 bug。
 
-这篇文章把这些机制拼在一起，做一件具体的事：**用 Python 从零构建一个结构上真实的 CLI Coding Agent**。
-
-理解一个系统最好的方式，是把它从零构建一遍。
-
----
+[ReAct 范式](/agent/react-paradigm/)解释了“选择动作、执行、读结果、再选择”的循环；[Tool Use](/agent/tool-use-core-of-agent/)解释了模型请求与实际操作的分工。这里提供完整源码、固定依赖、命令入口和离线测试，不再要求读者自行补齐工具路由或凭据配置。
 
 ## 先给结论
 
-1. **Coding Agent 的本质是"上下文即状态"的 ReAct 循环。** 每次工具调用的结果都追加进对话历史，驱动下一轮推理——这是它与普通代码补全工具的根本区别。
-2. **工具的粒度要粗，返回值要丰富。** `read_file` 要同时返回内容和行数，`run_command` 要同时返回 stdout、stderr 和退出码。LLM 获得的信息越完整，决策质量越高。
-3. **System prompt 的"先探索，再行动"原则，解决了 Coding Agent 最常见的失败模式。** 不了解项目结构就直接写代码，是导致路径错误和代码冲突的首要原因。
-4. **每个能控制路径的工具都必须做边界检查。** 任何允许 LLM 控制文件路径的工具，不做路径越界检查就是一个安全漏洞。
-5. **MAX_ITERATIONS 不是可选的。** 没有硬上限的 Agent，遇到推理循环时会不停调用 API 直到账单爆炸。
+1. **先跑通离线演示。** 下载包默认只操作新建的临时项目，不会把博客仓库或用户主目录当练习目录。
+2. **模型回复与命令结果分开看。** `complete` 表示模型循环结束；测试是否通过，要看真实子进程的退出码和输出。
+3. **每次写入和命令都经过批准。** 固定演示只预先批准其列出的操作；live 模式逐次展示并询问，不提供一键批准任意命令的开关。
+4. **文件工具检查工作区，命令仍具有本机权限。** 允许执行的解释器可能读写工作区外的文件；本例不是操作系统沙箱。
+5. **循环与子进程都有上限。** 既限制轮数、工具次数和总时限，也限制单个命令等待时间与保留的输出大小。
 
----
+## 安装与运行
+
+先下载 [CLI Coding Agent 完整示例](/downloads/agent-examples/cli-coding.zip)。需要 Python 3.11 或更新版本；下面在解压后的目录执行：
+
+```sh
+unzip cli-coding.zip -d cli-coding
+cd cli-coding
+python3.11 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+python app.py --trace repair.jsonl
+python app.py --summarize-trace repair.jsonl
+python -m unittest -v
+```
+
+ZIP 内含共享的 `agent_runtime.py` 和固定版本的 `requirements.txt`。从仓库运行时，依赖文件在 `examples/agents/common/requirements.txt`；进入示例目录后，用 `PYTHONPATH=../common python app.py` 即可找到共享运行时。下载包已经把该模块放在入口旁边，不需要设置这个路径。
+
+`--trace` 创建一个新的 JSONL 文件，每行是一条 JSON 事件；若文件已存在，程序会拒绝覆盖。没有指定时，记录随临时目录清理。演示结束后，练习文件也会删除，只有显式指定的 trace 留下。
 
 ## 整体架构
 
-在写任何代码之前，先把架构想清楚。
+程序由三个职责组成：`app.py` 接收命令行选项并构造工具；共享 `run_agent` 请求模型、校验参数和分发调用；工具处理文件和子进程，再把结果交回循环。模型本身不执行文件系统操作。
 
-一个 CLI Coding Agent 由三层组成：用户通过 Shell 界面输入任务，Agent 核心（ReAct 循环）负责推理和调度，工具集是 Agent 与文件系统和操作系统交互的唯一接口。
+本例使用普通的模型响应与结构化工具请求，没有要求模型输出内部思考过程。[System Prompt 设计](/agent/prompt-design-agent/)里的调用条件与失败处理，落实为本例的 `SYSTEM` 指令和执行代码。
 
-![整体架构](architecture.svg)
+![ReAct 循环流程：选择动作、执行工具、回传结果后继续判断](react_loop.svg)
 
-*图 1：CLI Coding Agent 的三层结构。Shell 接口只负责 I/O，Agent 核心只负责推理循环，工具集只负责执行——每一层的职责边界清晰，互不依赖。*
-
-这个结构里最关键的是 **ReAct 循环**。它不是一次性的"输入→输出"，而是一个持续运转的推理引擎：每次行动的结果都作为新的上下文注入，驱动下一步决策。这正是 Coding Agent 与普通代码补全工具的本质区别。
-
----
+*图示说明循环的职责关系。下文运行结果来自本示例，图本身不作为某款产品内部架构的证据。*
 
 ## 项目结构
 
-```
-coding-agent/
-├── agent/
-│   ├── __init__.py
-│   ├── core.py          # ReAct 循环主逻辑
-│   ├── tools.py         # 工具定义与注册
-│   └── prompts.py       # System prompt
-├── cli/
-│   └── main.py          # CLI 入口
-├── requirements.txt
-└── README.md
+```text
+cli-coding/
+├── app.py
+├── test_app.py
+├── README.md
+├── agent_runtime.py    # 下载包中包含；仓库源码位于 ../common/
+└── requirements.txt    # 下载包中的固定依赖
 ```
 
-设计原则：**`core.py` 不依赖 CLI，`tools.py` 不依赖 LLM**。这让每一层都可以独立测试，也方便以后替换任意一层的实现。
+源码只维护一份。下面的完整入口由同一文件渲染，安装与测试使用的也是它：
 
----
+{{< agent-code example="cli-coding" file="app.py" >}}
 
 ## 第一步：定义工具集
 
-工具是 Agent 和外部世界之间的唯一接口。设计工具时有一个反直觉的原则：**工具的粒度要粗，返回值要丰富**。
+`WorkspaceTools` 提供四个入口。`list_files` 最多遍历 200 个条目，跳过符号链接及若干缓存目录；`read_file` 读取不超过 16,384 字节的 UTF-8 普通文件；`write_file` 以临时文件加替换的方式写入，父目录必须存在；`run_command` 接收参数数组，返回标准输出、错误输出、退出码和超时标记。
 
-`read_file` 应该同时返回内容和行数，而不是只返回内容；`run_command` 应该同时返回 stdout、stderr 和退出码，而不是只返回 stdout。LLM 需要的信息越完整，它做出正确决策的概率越高。
+所有文件路径都先交给共享的 `confined_path`：它拒绝绝对路径、父目录跳转和符号链接组件。覆盖已有文件前还必须通过 `read_file` 读过它，避免直接按猜测覆盖原文。新增文件不需要先读取，但仍需批准。
 
-```python
-# agent/tools.py
-import subprocess
-from pathlib import Path
-from typing import Any
+这些检查针对可信本地用户选择的工作区，不防另一个进程同时替换目录。尤其要分清：`run_command` 检查的是工作目录，并没有限制获准程序能访问的所有路径。把 `python` 作为参数数组执行，不会自动约束它里面的代码。
 
-WORKSPACE = Path(".").resolve()
-
-
-def _safe_path(path: str) -> Path:
-    """
-    将相对路径解析为绝对路径，并验证路径在工作区范围内。
-    path: 用户或 LLM 提供的文件路径字符串
-    """
-    target = (WORKSPACE / path).resolve()
-    if not str(target).startswith(str(WORKSPACE)):
-        raise ValueError(f"路径越界：{path}")
-    return target
-
-
-def read_file(path: str) -> dict[str, Any]:
-    """
-    读取文件内容，同时返回行数信息。
-    path: 相对于工作区根目录的文件路径
-    """
-    try:
-        p = _safe_path(path)
-        content = p.read_text(encoding="utf-8")
-        lines = content.splitlines()
-        return {
-            "success": True,
-            "content": content,
-            "lines": len(lines),
-            "path": str(p.relative_to(WORKSPACE)),
-        }
-    except FileNotFoundError:
-        return {"success": False, "error": f"文件不存在：{path}"}
-    except Exception as e:
-        return {"success": False, "error": str(e)}
-
-
-def write_file(path: str, content: str) -> dict[str, Any]:
-    """
-    将内容写入文件，自动创建不存在的父目录。
-    path: 目标文件路径（相对路径）
-    content: 要写入的完整文件内容
-    """
-    try:
-        p = _safe_path(path)
-        p.parent.mkdir(parents=True, exist_ok=True)
-        p.write_text(content, encoding="utf-8")
-        return {
-            "success": True,
-            "path": str(p.relative_to(WORKSPACE)),
-            "bytes_written": len(content.encode()),
-        }
-    except Exception as e:
-        return {"success": False, "error": str(e)}
-
-
-def run_command(command: str, timeout: int = 30) -> dict[str, Any]:
-    """
-    在工作区目录执行 Shell 命令，返回完整的执行结果。
-    command: 要执行的 Shell 命令字符串
-    timeout: 命令超时秒数，超时后强制终止
-    """
-    if is_dangerous(command):
-        return {"success": False, "error": f"拒绝执行危险命令：{command}"}
-    try:
-        result = subprocess.run(
-            command,
-            shell=True,
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-            cwd=str(WORKSPACE),
-        )
-        return {
-            "success": result.returncode == 0,
-            "stdout": result.stdout,
-            "stderr": result.stderr,
-            "returncode": result.returncode,
-        }
-    except subprocess.TimeoutExpired:
-        return {"success": False, "error": f"命令超时（{timeout}s）：{command}"}
-    except Exception as e:
-        return {"success": False, "error": str(e)}
-
-
-def list_dir(path: str = ".") -> dict[str, Any]:
-    """
-    列出目录下的文件和子目录（跳过隐藏文件）。
-    path: 目录路径，默认为工作区根目录
-    """
-    try:
-        p = _safe_path(path)
-        items = []
-        for item in sorted(p.iterdir()):
-            if item.name.startswith("."):
-                continue
-            entry = {
-                "name": item.name,
-                "type": "dir" if item.is_dir() else "file",
-                "path": str(item.relative_to(WORKSPACE)),
-            }
-            if item.is_file():
-                entry["size"] = item.stat().st_size
-            items.append(entry)
-        return {"success": True, "path": str(p.relative_to(WORKSPACE)), "items": items}
-    except Exception as e:
-        return {"success": False, "error": str(e)}
-
-
-DANGEROUS_PATTERNS = ["rm -rf", "sudo", "curl | bash", "wget | sh", "> /dev/"]
-
-
-def is_dangerous(command: str) -> bool:
-    """
-    检测命令是否包含危险操作模式。
-    command: 待检测的命令字符串
-    """
-    return any(p in command for p in DANGEROUS_PATTERNS)
-
-
-# 工具注册表：name → callable
-TOOL_REGISTRY = {
-    "read_file": read_file,
-    "write_file": write_file,
-    "run_command": run_command,
-    "list_dir": list_dir,
-}
-
-# OpenAI function calling 格式：每个工具包裹在 {"type": "function", "function": {...}} 中
-TOOL_SCHEMAS = [
-    {
-        "type": "function",
-        "function": {
-            "name": "read_file",
-            "description": "读取指定路径的文件内容。返回文件内容和行数。",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "path": {"type": "string", "description": "相对于工作区根目录的文件路径"}
-                },
-                "required": ["path"],
-            },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "write_file",
-            "description": "将内容写入指定路径的文件。如果目录不存在，会自动创建。",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "path": {"type": "string", "description": "目标文件路径"},
-                    "content": {"type": "string", "description": "要写入的内容"},
-                },
-                "required": ["path", "content"],
-            },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "run_command",
-            "description": "在工作区目录执行 Shell 命令。返回 stdout、stderr 和退出码。",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "command": {"type": "string", "description": "要执行的 Shell 命令"},
-                    "timeout": {"type": "integer", "description": "超时秒数，默认 30"},
-                },
-                "required": ["command"],
-            },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "list_dir",
-            "description": "列出目录下的文件和子目录。",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "path": {"type": "string", "description": "目录路径，默认为工作区根目录"}
-                },
-            },
-        },
-    },
-]
-```
-
-注意 `_safe_path` 这个函数——任何允许 LLM 控制路径的工具都必须做路径边界检查，防止 Agent 意外（或被诱导）访问工作区以外的文件。`is_dangerous` 也已经内嵌进 `run_command`，在执行前拦截危险命令。
-
----
+每个工具用 JSON Schema 声明必填字段、类型和是否允许额外字段。共享运行时先校验再调用；名称不存在或参数错误时，错误作为工具消息交回模型，不会假装执行成功。
 
 ## 第二步：设计 System Prompt
 
-System prompt 是 Coding Agent 最容易被忽视的部分，但它几乎决定了 Agent 的行为质量。在 [System Prompt 设计那篇](/agent/prompt-design-agent/)里，我们已经讨论了一般性的设计原则。对于 Coding Agent，有几个针对性的约束格外重要。
+`SYSTEM` 要求模型先读文件再替换，并根据命令的 `returncode`、`timed_out` 和输出判断发生了什么。程序还用“读过才能覆盖”和批准回调执行部分要求；提示词本身不能代替这些检查。更长任务的资料选择与进度保存，可结合[上下文与记忆](/agent/context-memory-state-management/)继续设计。
 
-```python
-# agent/prompts.py
-
-SYSTEM_PROMPT = """你是一个运行在命令行的 Coding Agent，帮助用户完成编程任务。
-
-## 能力范围
-你可以读取、创建、修改文件，执行 Shell 命令，并基于执行结果继续推理。
-
-## 工作原则
-
-**先探索，再行动。** 在修改任何文件之前，先用 list_dir 和 read_file 了解项目结构。
-不要假设文件的内容或结构。
-
-**小步执行，验证推进。** 每次只做一件事。写完代码就运行测试。执行命令后检查输出。
-不要一次写完所有代码再测试。
-
-**错误是信息。** 命令返回非零退出码、文件读取失败，都是你需要处理的信息，而不是需要隐藏的问题。
-把错误信息传递给用户。
-
-**保守修改。** 只修改任务要求修改的文件。不要"顺便"优化无关代码。
-
-## 工具使用规范
-- 每次只调用一个工具，等待结果后再决定下一步
-- run_command 执行的命令必须是幂等的，或者你已经理解它的副作用
-- write_file 会完全覆盖目标文件，写入前确认内容正确
-- 路径使用相对路径，相对于工作区根目录
-
-## 完成标准
-当任务完成时，向用户简洁地说明：做了什么、验证结果是什么、有什么需要用户注意的地方。
-"""
-```
-
-这个 system prompt 有几个值得注意的设计决策：
-
-**"先探索，再行动"** 解决了 Coding Agent 最常见的失败模式——在不了解项目结构的情况下直接写代码，导致路径错误或与现有代码冲突。这一条规则能消除大约一半的无效工具调用。
-
-**"小步执行，验证推进"** 对应的是 [ReAct](/agent/react-paradigm/) 的核心思想：每个 Action 之后都应该有 Observation 来验证结果，而不是一次性执行大量操作。
-
-**"错误是信息"** 这一条解决了 Agent 的一个微妙倾向：在遇到错误时倾向于"假装没看见"，绕过错误继续执行，而不是分析并上报。明确说出来可以抑制这种倾向。
-
----
+默认 fixture 的动作顺序写在 `fixture_model` 中。它不会动态分析错误，只是按固定顺序请求工具。因此，这个入口适合验证工具返回是否进入下一轮输入，不适合用来评估模型的编程能力。
 
 ## 第三步：实现 ReAct 循环
 
-这是整个项目的核心。ReAct 循环做的事情很简单：持续调用 LLM，LLM 要么返回工具调用（继续循环），要么返回文本（结束任务）。
+`coding_run` 调用共享 `run_agent`，限制为 8 轮、16 次工具调用和 30 秒。一次响应中的多个工具依次执行，保留读写之间的顺序；结果追加到消息历史，再进入下一轮。
 
-![ReAct 循环流程](react_loop.svg)
-
-*图 2：Coding Agent 的 ReAct 执行循环。每轮循环从 LLM 调用开始；如果 `finish_reason` 是 `tool_calls`，执行工具并将结果注入对话历史；如果是 `stop`，任务完成退出。硬上限 MAX_ITERATIONS 保证循环不会无限进行。*
-
-```python
-# agent/core.py
-import json
-import openai
-from typing import Iterator
-from .tools import TOOL_REGISTRY, TOOL_SCHEMAS
-from .prompts import SYSTEM_PROMPT
-
-# 兼容任意 OpenAI 格式的接口：修改 base_url 即可切换到 DeepSeek、Qwen 等模型
-client = openai.OpenAI(
-    base_url="https://api.openai.com/v1",  # 替换为你的 API 地址
-    api_key="your-api-key",                # 或从环境变量读取
-)
-MODEL = "gpt-4o"
-MAX_ITERATIONS = 30
-
-
-def trim_history(history: list[dict], max_turns: int = 20) -> list[dict]:
-    """
-    截断过长的对话历史，只保留最近 max_turns 轮。
-    history: 当前完整对话历史
-    max_turns: 保留的最大轮次数
-    """
-    if len(history) <= max_turns * 2:
-        return history
-    trimmed = history[-(max_turns * 2):]
-    while trimmed and trimmed[0]["role"] != "user":
-        trimmed = trimmed[1:]
-    return trimmed
-
-
-def run_agent(
-    user_message: str,
-    conversation_history: list[dict],
-) -> Iterator[str]:
-    """
-    运行一轮 Agent 交互，以 generator 形式流式 yield 状态和输出。
-    user_message: 用户本轮输入的任务描述
-    conversation_history: 跨轮次共享的对话历史列表（会被原地修改）
-    """
-    conversation_history.append({"role": "user", "content": user_message})
-
-    for iteration in range(MAX_ITERATIONS):
-        yield f"\n[思考中... 第 {iteration + 1} 轮]\n"
-
-        # system prompt 以第一条消息的形式传入，符合 OpenAI 格式
-        messages = [{"role": "system", "content": SYSTEM_PROMPT}] + trim_history(conversation_history)
-
-        response = client.chat.completions.create(
-            model=MODEL,
-            max_tokens=8096,
-            tools=TOOL_SCHEMAS,
-            messages=messages,
-        )
-
-        choice = response.choices[0]
-        finish_reason = choice.finish_reason
-        message = choice.message
-
-        # 将 assistant 消息（含可能的 tool_calls）追加进历史
-        assistant_msg: dict = {"role": "assistant", "content": message.content}
-        if message.tool_calls:
-            assistant_msg["tool_calls"] = [
-                {
-                    "id": tc.id,
-                    "type": "function",
-                    "function": {"name": tc.function.name, "arguments": tc.function.arguments},
-                }
-                for tc in message.tool_calls
-            ]
-        conversation_history.append(assistant_msg)
-
-        if message.content:
-            yield message.content
-
-        if finish_reason == "stop":
-            yield "\n[✓ 任务完成]\n"
-            break
-
-        if finish_reason == "tool_calls":
-            for tc in message.tool_calls:
-                tool_name = tc.function.name
-                tool_input = json.loads(tc.function.arguments)
-                tool_call_id = tc.id
-
-                yield f"\n[调用工具] {tool_name}({json.dumps(tool_input, ensure_ascii=False)})\n"
-
-                if tool_name in TOOL_REGISTRY:
-                    try:
-                        result = TOOL_REGISTRY[tool_name](**tool_input)
-                    except Exception as e:
-                        result = {"success": False, "error": f"工具执行异常：{str(e)}"}
-                else:
-                    result = {"success": False, "error": f"未知工具：{tool_name}"}
-
-                result_str = json.dumps(result, ensure_ascii=False, indent=2)
-                yield f"[工具结果] {result_str[:200]}{'...' if len(result_str) > 200 else ''}\n"
-
-                # OpenAI 格式：每个工具结果是一条独立的 tool 消息
-                conversation_history.append({
-                    "role": "tool",
-                    "tool_call_id": tool_call_id,
-                    "content": result_str,
-                })
-
-        else:
-            yield f"\n[停止原因：{finish_reason}]\n"
-            break
-
-    else:
-        yield f"\n[达到最大迭代次数 {MAX_ITERATIONS}，任务中止]\n"
-```
-
-这里有几个工程细节值得展开：
-
-**OpenAI 格式与 Anthropic 格式的核心差异在于工具结果的传递方式。** Anthropic 把所有工具结果打包成一条 `user` 消息；OpenAI 则要求每个工具结果是一条独立的 `role: "tool"` 消息，并通过 `tool_call_id` 与对应的工具调用绑定。这个细节如果搞错，模型会拒绝响应或产生幻觉。
-
-**`conversation_history` 是整个 Agent 的"记忆"。** 每一轮循环都把 assistant 的输出（含 `tool_calls` 字段）和工具结果追加进去，下一轮 LLM 调用时完整传入。这就是 ReAct 的状态管理机制——**上下文即状态**。这与 [上下文与记忆那篇](/agent/context-memory-state-management/)里讨论的"过程记忆"是同一件事。
-
-**`MAX_ITERATIONS = 30` 是一个硬上限。** 没有它，一个陷入推理循环的 Agent 会不停调用 API。这个值不是随意选的——30 轮对应的是一个中等复杂任务（读文件 → 写代码 → 运行测试 → 修复 → 验证）的上限，超过这个通常意味着 Agent 陷入了循环。
-
-**工具执行用 `try/except` 包裹，异常作为 `tool` 消息返回。** 这让 Agent 有机会在遇到错误时自我恢复——比如发现路径不存在后，先调用 `list_dir` 探索目录结构，再重试。
-
----
+运行时状态可能是 `complete`、`limit`、`timeout` 或 `error`。这里的“完成”只说明模型返回了最终文本，没有替你验收项目。最后一次命令非零退出或超时，应用仍以非零退出结束；如果模型没有调用命令，也就没有实际测试证据。
 
 ## 第四步：构建 CLI 界面
 
-CLI 层的职责很单纯：接收用户输入，展示 Agent 输出，管理会话历史。
+离线模式自己创建临时项目，并只为这次演示的准确命令数组及 `calculator.py` 写入设置批准。它会在开头显示 `fixture / 本地固定响应`，不能把这项演示授权外推给任意工具请求。
 
-```python
-# cli/main.py
-import sys
-from pathlib import Path
+可选 live 模式通过环境变量读取 `OPENAI_API_KEY` 与所选的 `OPENAI_MODEL`，可选 `OPENAI_BASE_URL`。不要把真实密钥写入源码或命令历史。选好已有的可丢弃项目后运行：
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from agent.core import run_agent
-from agent.tools import WORKSPACE
-
-
-def print_banner():
-    """打印启动横幅，显示工作区路径。"""
-    print("\n╔════════════════════════════════╗")
-    print("║     Coding Agent (CLI)         ║")
-    print(f"║  工作区：{str(WORKSPACE)[:20]:<20} ║")
-    print("╚════════════════════════════════╝\n")
-    print("输入你的编程任务，按 Enter 执行。")
-    print("输入 /exit 退出，/clear 清空对话历史。\n")
-
-
-def main():
-    """CLI 主入口，负责读取用户输入并调用 Agent。"""
-    print_banner()
-    conversation_history = []
-
-    while True:
-        try:
-            user_input = input("\n> ").strip()
-        except (KeyboardInterrupt, EOFError):
-            print("\n再见！")
-            break
-
-        if not user_input:
-            continue
-
-        if user_input == "/exit":
-            print("再见！")
-            break
-
-        if user_input == "/clear":
-            conversation_history.clear()
-            print("[对话历史已清空]")
-            continue
-
-        if user_input == "/history":
-            print(f"[当前对话轮次：{len(conversation_history)}]")
-            continue
-
-        print("\n" + "─" * 50)
-
-        try:
-            for chunk in run_agent(
-                user_message=user_input,
-                conversation_history=conversation_history,
-            ):
-                print(chunk, end="", flush=True)
-        except KeyboardInterrupt:
-            print("\n\n[用户中断]")
-        except Exception as e:
-            print(f"\n[错误] {e}")
-
-        print("\n" + "─" * 50)
-
-
-if __name__ == "__main__":
-    main()
+```sh
+python app.py --live --workspace /path/to/practice-project --task 'Fix the failing add test and run it' --trace live.jsonl
 ```
 
----
+程序展示写入差异或命令的实际参数，只有输入 `y` 才批准这一项。若文件在等待批准时发生变化，写入会拒绝，要求重新读取。非交互输入会拒绝；不支持异步终端读取的环境也会拒绝。等待批准仍受总时限约束，不会启动一个无法取消的后台输入线程。
+
+live 适配器使用共享运行时的 `AsyncOpenAI`，退出时关闭客户端。缺少配置或调用失败都会显式报告，不会悄悄切回 fixture。本教程的本地验证没有真实 API 凭据，未运行 live 模型任务。
 
 ## 一次完整的执行过程
 
-以"给这个项目写一个简单的单元测试"为例：
+下面是 2026-10-17 在 Python 3.11.16 下运行默认入口时捕获的部分标准输出，省略了测试 traceback 和 trace 文件路径：
 
-```
-> 帮我创建一个 Python 函数，计算斐波那契数列的前 n 项，并写测试
-
-[思考中... 第 1 轮]
-我来先创建实现文件，然后写测试。
-
-[调用工具] write_file({"path": "fib.py", "content": "..."})
-[工具结果] {"success": true, "path": "fib.py", "bytes_written": 156}
-
-[调用工具] write_file({"path": "test_fib.py", "content": "..."})
-[工具结果] {"success": true, "path": "test_fib.py", "bytes_written": 312}
-
-[调用工具] run_command({"command": "python -m pytest test_fib.py -v"})
-[工具结果] {"success": true, "stdout": "3 passed in 0.12s", ...}
-
-[✓ 任务完成]
-已创建 fib.py（递推实现）和 test_fib.py（3 个测试用例），
-全部测试通过（0.12s）。
+```text
+MODE fixture / 本地固定响应; exact demo commands and calculator.py write are preapproved.
+RUNTIME status=complete turns=6 tool_calls=5
+COMMAND 1: exit=1 timed_out=false truncated=false
+COMMAND 2: exit=0 timed_out=false truncated=false
+WRITES 1
 ```
 
-每一轮"思考"对应 LLM 的一次文本输出，每一轮"行动"对应一次 `tool_use` 调用。这个模式持续循环，直到 LLM 判断任务完成返回 `end_turn`。
-
----
+临时项目最初把加法写成减法，测试检查 `add(2, 3) == 5`。第一条真实测试命令失败；fixture 接着请求读取文件、批准并写入加法实现，再启动第二条真实测试命令，退出码变为 0。测试证明的是这个练习用例通过，不能证明代码在所有输入下都正确。
 
 ## 必须处理的工程细节
 
 ### 上下文窗口管理
 
-随着对话轮次增加，`conversation_history` 会越来越长，最终超出上下文窗口限制。`trim_history` 已经内嵌进 `run_agent`，保留最近 20 轮对话。
-
-如果你需要更精细的控制，可以在截断时先做摘要压缩——让 LLM 把早期对话总结成一段文字，作为"第一条消息"保留语义。但对于本地 CLI 工具，简单截断通常够用。
+文件大小与命令输出都有边界。每路命令输出最多保留 4,096 字节，同时记录总字节数和 `truncated`。读取仍持续进行，避免子进程因管道写满卡住。示例没有实现模型 token 预算或历史摘要；较大项目需要另外设计，[上下文与记忆那篇](/agent/context-memory-state-management/)解释了相关取舍。
 
 ### 流式输出
 
-当前实现用 generator yield 状态信息，但没有真正的流式 LLM 输出。如果你想要像 Claude Code 那样的流式体验，可以开启 `stream=True`：
-
-```python
-stream = client.chat.completions.create(
-    model=MODEL,
-    max_tokens=8096,
-    tools=TOOL_SCHEMAS,
-    messages=messages,
-    stream=True,
-)
-for chunk in stream:
-    delta = chunk.choices[0].delta
-    if delta.content:
-        print(delta.content, end="", flush=True)
-```
-
-注意：开启流式后需要自行拼接完整的 `tool_calls`，因为工具调用参数会被分块传输（`delta.tool_calls`）。如果不需要流式推理文本，只要流式感知工具调用进度，保持非流式更简单。
+本例没有 token 流式界面。它等一次模型响应完成，再执行工具；子进程输出在内部持续排空，结束后返回保留片段。JSONL 事件实时写出并刷新，适合在另一个终端查看调用进行到哪一步。
 
 ### 安全边界
 
-允许 Agent 执行 Shell 命令是一个高风险能力。`is_dangerous` 检测已经内嵌在 `run_command` 里，但这只是第一道防线。生产环境还应该考虑：
+命令不经 shell，但批准的程序仍继承当前用户环境和权限。不要把路径工具检查、确认框或输出截断称作沙箱。POSIX 系统上，子进程进入新会话，超时、取消或结束清理时会清理这个进程组；Windows 这里只保证直接子进程的终止与回收，不保证已脱离的后代。
 
-- 在 Docker 容器或沙箱中执行命令（隔离副作用）
-- 对写操作请求用户确认（`write_file` 前显示 diff）
-- 记录所有工具调用到审计日志（便于事后排查）
+单个命令默认最多等待 5 秒，可通过 `--command-timeout` 调整，但不能超过 30 秒。可以单独观察超时：
 
----
+```sh
+python app.py --scenario timeout --command-timeout 0.1 --trace timeout.jsonl
+python app.py --summarize-trace timeout.jsonl
+```
+
+这个命令故意启动一个打印后休眠的 Python 子进程，超时后应用退出 1。不要把操作系统相关的负退出码写死为统一标准，要读 `timed_out` 和对应输出。
 
 ## 常见失败模式
 
-在实际使用中，这个 Coding Agent 有几种典型的失败场景：
+拒绝批准时，程序不会启动命令或写入文件，错误会回到模型；模型仍可能给出最终文本，因此不能只看 `complete`。路径越界、符号链接、未读先覆盖、错误参数和超大文件也都会明确失败。
 
-**失败模式一：跳过探索直接写代码。** Agent 在没有调用 `list_dir` 和 `read_file` 了解项目结构的情况下，直接猜测文件路径写代码。结果是路径错误或与现有代码冲突。根本原因是 system prompt 里的"先探索，再行动"没有被严格执行——有时 LLM 会在任务描述非常明确时跳过探索步骤。修复方法：在 system prompt 里把"探索"定义为强制的第一步，而不是建议。
+工具分发成功与业务成功另有区别：`tool.end.ok=true` 表示工具调用和结果序列化成功。测试进程退出 1 时，这个值仍可能为真。应继续查看 `process.end` 的退出码；[调试篇](/agent/agent-observability-debugging/)使用同一个程序的真实 trace 解释这件事。
 
-**失败模式二：工具结果截断导致信息丢失。** `result_str[:200]` 的截断在工具返回大量内容时会丢失关键信息（比如一个有 500 行的文件，截断后 LLM 只看到前几行）。修复方法：对于 `read_file`，返回文件内容时不截断；对于 `run_command`，只在 stdout/stderr 超过阈值时才截断，并附上"输出已截断，共 N 行"的提示。
-
-**失败模式三：推理循环。** Agent 陷入"调用工具 → 得到错误 → 以同样方式再次调用工具"的死循环，直到触发 `MAX_ITERATIONS`。根本原因是 LLM 没有从错误中提取有效信息。修复方法：在工具结果里加入更结构化的错误诊断信息，比如"文件不存在，当前目录下有以下文件：[...]"，而不是只返回一个错误字符串。
-
----
-
-## 安装与运行
-
-```bash
-pip install openai
-
-export OPENAI_API_KEY=sk-...
-
-python cli/main.py
-```
-
-如果使用其他 OpenAI 兼容接口（DeepSeek、Qwen、本地 Ollama 等），只需修改 `core.py` 里的 `base_url` 和 `api_key`，其余代码完全不变：
-
-```python
-# DeepSeek
-client = openai.OpenAI(base_url="https://api.deepseek.com/v1", api_key="sk-...")
-
-# 本地 Ollama
-client = openai.OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
-```
-
----
+离线测试会真实启动测试进程，覆盖先失败后通过、拒绝不执行、路径限制、输出截断、超时、取消回收和入口运行。固定模型响应耗尽则得到 `error`，不会被当作正常结束。
 
 ## 从这里出发，能扩展什么
 
-这个实现是一个有意保持简单的骨架。基于它，可以向几个方向自然演进：
+若要处理跨阶段任务，可以在这个入口上增加[Plan-and-Execute](/agent/planning-plan-and-execute/)；需要分工时参考[多 Agent 协作](/agent/multi-agent-collaboration/)。它们仍需按实际执行结果验收，不能只汇总模型文字。工具跨应用复用可以考虑 [MCP](/agent/mcp-model-context-protocol/)，但接入协议不会补齐操作系统隔离。
 
-**更强的工具集**：加入 `search_files`（grep）、`get_git_diff`、`run_linter` 等，让 Agent 具备更完整的代码理解和审查能力。这些工具的加入不需要修改 `core.py`，只需要扩展 `TOOL_REGISTRY` 和 `TOOL_SCHEMAS`。
-
-**持久化记忆**：把 `conversation_history` 序列化到磁盘，支持跨会话继续之前的任务，就像 Claude Code 的 `--resume` 功能。这是 [上下文与记忆那篇](/agent/context-memory-state-management/)里讨论的"外部存储"在 Coding Agent 场景的直接应用。
-
-**Planning 层**：对于复杂任务（"重构这个模块"），在 ReAct 循环之前加一个规划步骤，让 Agent 先把任务分解成若干子任务，再逐一执行。这对应的是 [Plan-and-Execute 那篇](/agent/planning-plan-and-execute/)里的结构。
-
-**多 Agent 协作**：把这个 Agent 变成一个可调用的子 Agent，由一个 Orchestrator 统一调度——一个负责写功能代码，一个负责写测试，并行执行后 Orchestrator 合并结果。这正是 [多 Agent 协作那篇](/agent/multi-agent-collaboration/)里讨论的"分工 + 并行"模式。
-
-**MCP 接入**：把工具层迁移到 MCP 协议，让这个 Agent 可以和其他支持 MCP 的工具生态互通。具体的接入方式在 [MCP 那篇](/agent/mcp-model-context-protocol/)里有详细讨论。
-
-这些扩展方向，本质上都是在当前骨架的某一层上加结构。骨架本身的清晰设计，让每个扩展都有明确的着力点。
-
----
+当前实现没有持久会话恢复、任意命令自动批准或生产环境隔离。保留这些边界，比把一个可运行练习描述成完整开发产品更有助于判断它能做什么。
 
 ## 总结
 
-1. **Coding Agent = ReAct 循环 + 工具集 + 上下文管理。** 三层结构各司其职，每一层都可以独立替换。
-2. **"上下文即状态"是核心机制。** 工具调用的结果通过 `conversation_history` 传递给下一轮推理，这就是 Agent 与外部世界交互的完整闭环。
-3. **System prompt 的行为约束，比工具实现更重要。** 大多数 Coding Agent 的失败，不是因为工具写错了，而是因为 Agent 的行为约束不够清晰。
-4. **工程细节不可省略。** 路径边界检查、危险命令拦截、硬迭代上限、上下文截断——这些不是优化项，是基础保障。
-5. **理解这个骨架，就理解了 Claude Code 的内部结构。** 它的工具集更丰富、工程更完善，但驱动它的 ReAct 循环，和这里实现的是同一个东西。
-
----
+现在可以从入口跑到真实文件修改和测试进程，并查看每一步的结构化记录。下一次换成真实模型时，保持同一套参数校验、批准、超时和结果检查，先确认模型真的读到了失败信息，再判断修复是否有效。
 
 *上一篇：[Skill：如何教会 Agent 如何工作](/agent/skill-teach-agent-how-to-work/)*

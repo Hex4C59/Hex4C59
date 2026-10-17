@@ -3,8 +3,8 @@ title = "Human-in-the-Loop：Agent 什么时候应该停下来问你"
 date = 2026-04-02T10:00:00+08:00
 draft = false
 author = "Hex4C59"
-description = "从全自动 Agent 的真实风险出发，系统讲解 HITL 的三种介入模式、触发时机设计、暂停与恢复的工程实现，以及如何避免 Alert Fatigue 让 HITL 形同虚设。"
-summary = "Agent 不是越自动越好。本文系统分析 Human-in-the-Loop 的三种介入强度、触发逻辑、工程实现与常见陷阱，帮你在自主性与安全性之间找到合理的平衡点。"
+description = "解释 Agent 何时需要人工介入，并用可运行的 SQLite 示例保存待审批请求，核对请求 ID、审批人、操作内容和期限，验证重启、并发与一次性认领。"
+summary = "事前确认、异常暂停与事后审核分别解决什么问题？本文把审批请求写入 SQLite，让人的决定绑定具体操作，并通过真实重启与并发测试说明一次性决定、执行认领和外部操作恢复的边界。"
 tags = ["Agent", "人在回路", "安全护栏"]
 categories = ["ai"]
 series = ["agent-engineering"]
@@ -15,7 +15,7 @@ topics = ["hitl", "human-in-the-loop", "safety", "autonomy", "agent-design"]
 frameworks = ["OpenAI"]
 ShowToc = true
 source_kind = "original"
-lastmod = 2026-04-02T02:58:46+00:00
+lastmod = 2026-10-17
 +++
 
 在 [Guardrails](/agent/guardrails-safety-boundary/) 那篇里，我们讲了如何用代码层面的防护边界约束 Agent 的行为——权限分级、沙箱隔离、输出过滤。这些机制有一个共同的假设：**防护逻辑在设计时就能写清楚**。
@@ -24,17 +24,17 @@ lastmod = 2026-04-02T02:58:46+00:00
 
 "帮我清理这个项目里过时的依赖"——什么算过时？哪些可以删？删之前需要测试吗？"帮我回复这封客户邮件"——用什么语气？要不要提价格？能不能承诺交付时间？这些判断涉及语境、业务规则、用户偏好，没有一个通用的代码能替你做决定。
 
-这就是 Human-in-the-Loop（HITL）要解决的问题：**不是用更多规则来约束 Agent，而是在合适的节点把决策权还给人。**
+Human-in-the-Loop（HITL，人在回路）就是在执行流程中保留人类决策节点：Agent 先说明准备做什么、还缺什么判断，人再批准、修改或拒绝。
 
-HITL 不是 Agent 不够聪明时的临时补丁。它是生产级 Agent 系统的标准设计组件——不是你能力不够才用，而是你想把 Agent 真正用在重要任务上才必须有。
+本文面向会写简单 Python、了解工具调用的读者，解释三种介入时机，并运行一个不用模型服务的审批机制：把请求保存到本地 SQLite 数据库，重新启动后找到它，再核对回复是否批准了同一个操作。是否需要介入，要按授权范围、错误代价和可恢复性判断；不必为每个动作重复确认。
 
 ---
 
 ## 先给结论
 
-1. **全自动 Agent 在生产环境里几乎不存在。** 真正在生产中跑的 Agent 系统——无论是 Claude Code、Cursor 还是各类 SaaS 工作流自动化——都有明确的人类介入节点。自主性是程度问题，不是有无问题。
+1. **先划清自动执行的范围，再选择人工节点。** 在已授权范围内，低风险步骤可以自动推进；需要用户判断或扩大权限时，再暂停。不能仅凭“生产环境”决定每步都问。
 2. **HITL 有三种介入强度：事前确认、异常暂停、事后审核。** 三者的适用场景不同，不能互相替代。好的设计是根据操作风险和可逆程度选择合适的介入模式，而不是一律要求确认。
-3. **触发 HITL 的核心逻辑只有三类：不可逆操作、低置信度判断、超出授权边界。** 其他场景通常不需要打断用户。
+3. **可以先检查三类介入条件：操作不可逆、判断缺少依据、超出授权边界。** 其他场景通常不需要打断用户。
 4. **Alert Fatigue 是 HITL 最大的工程问题。** 过多的确认请求会让用户开始自动点"确认"，防护形同虚设。HITL 的质量不是靠增加打断次数来保证的。
 5. **HITL 的目标是：让人类在关键节点上花最少的时间，对最高风险的决策保持最高控制权。** 打断越精准，用户越愿意认真对待每一次打断。
 
@@ -46,7 +46,7 @@ HITL 不是 Agent 不够聪明时的临时补丁。它是生产级 Agent 系统�
 
 这在演示里很酷。在生产里，问题是：**你对 Agent 的信任程度需要和它执行的操作风险等级匹配。**
 
-来看三个递增的例子：
+下面三个假设场景按错误代价逐步增加，数字仅用于说明规模差异：
 
 **场景一：读取数据，生成报告**
 
@@ -56,7 +56,7 @@ Agent 读取日志文件，分析异常，生成一份 Markdown 报告。这个�
 
 Agent 分析一个大型代码仓库，自动重构某类模式。它改了 127 个文件。改完之后你发现它误解了你的意图，有 40 个文件的改法不对。
 
-没有 HITL，你现在面对的是：用 git 一个一个 revert，还是重新跑一遍？无论哪个选项都很痛苦。如果在开始执行前 Agent 展示了它的改动计划并让你确认，这个问题就不会发生。
+没有 HITL，你现在面对的是：用 git 一个一个 revert，还是重新跑一遍？无论哪个选项都很痛苦。事前展示计划，可以让你有机会发现方向误解；但批准计划不等于保证每个文件都改对，执行后仍需检查差异和测试结果。
 
 **场景三：自动回复客户**
 
@@ -85,7 +85,7 @@ Agent 在执行高风险操作**之前**，暂停并展示它打算做什么，�
 - 涉及真实资源消耗（API 调用、付费服务、外部系统写入）
 - 超出日常授权范围的操作
 
-**交互形式**：
+**假设交互示意**：
 ```
 Agent：我打算执行以下操作：
   - 删除 /data/backup/2023/ 目录（共 847MB，312 个文件）
@@ -94,7 +94,7 @@ Agent：我打算执行以下操作：
 是否继续？[y/N]
 ```
 
-注意这里 Agent 不只是说"我要删文件"，而是展示了**具体的操作内容和执行理由**。用户有足够的信息来做判断。
+这个请求列出了路径、范围和理由，用户可以核对自己批准的具体对象。信息应来自实际检查，不能因为 Agent 写了“没有引用”就把它当作已证实；如果还缺影响或备份信息，应先补齐再执行。
 
 ### 模式二：异常暂停（Interrupt on Uncertainty）
 
@@ -105,7 +105,7 @@ Agent 在执行过程中遇到**不确定情况**时，主动暂停并向用户�
 - 遇到了预期之外的情况（文件不存在、权限被拒绝、返回了异常数据）
 - 有两个以上的合理选项，需要用户做选择
 
-**交互形式**：
+**假设交互示意**：
 ```
 Agent：在处理用户列表时，我发现 23 条记录的 `email` 字段为空。
 
@@ -116,7 +116,7 @@ Agent：在处理用户列表时，我发现 23 条记录的 `email` 字段为�
 你希望怎么做？
 ```
 
-异常暂停的核心是**及时发现偏差**，而不是在任务结束后才告诉用户"有 23 条失败了"。
+异常暂停把尚未决定的处理方式交给用户。关键是先把依赖这项判断的操作停住，同时保存已经完成的结果；用户选定策略后再继续，避免一边等待一边按猜测处理。
 
 ### 模式三：事后审核（Review After Action）
 
@@ -127,7 +127,7 @@ Agent 自主完成任务，**完成后**将结果提交给用户审核，用户�
 - 错误代价可接受（内容生成、数据分析）
 - 需要最大化 Agent 的吞吐量（批量任务）
 
-**交互形式**：
+**假设交互示意**：
 ```
 Agent：已完成 PR 草稿，包含以下修改：
   - 重构了 UserService 类，拆分为 3 个更小的模块
@@ -166,9 +166,7 @@ Agent：已完成 PR 草稿，包含以下修改：
 
 ### 触发条件二：模型置信度
 
-Agent 的决策可以附带一个置信度估算。当置信度低于阈值时，触发 HITL。
-
-置信度不需要是精确的概率——通常用启发式规则就够了：
+可以把“当前判断缺少依据”作为暂停信号，但要说明信号来自哪里。模型自报的把握程度不等于经过校准的正确概率。也可以用下面这些可观察条件判断是否缺信息，而不只看一个分数：
 - 任务描述里有歧义词（"清理一下"、"整理一下"、"优化一下"）
 - 有多个候选操作，且差异显著
 - 依赖的外部信息不确定（文档缺失、数据异常）
@@ -184,371 +182,103 @@ Agent 的决策可以附带一个置信度估算。当置信度低于阈值时�
 - **服务范围**：只能调用已授权的 API，不能发现并调用新 API
 - **用户范围**：只能操作当前用户的数据，不能跨用户操作
 
-授权边界触发的 HITL 必须是**硬性的**——写在代码里，不能被 prompt 覆盖。这和 [Guardrails](/agent/guardrails-safety-boundary/) 里讲的原则一致：真正的安全边界不能依赖 prompt 指令。
+授权边界应由执行代码检查，不能被 prompt 覆盖。超出范围时先阻止调用，再由有权授权的人决定是否扩大范围；用户没有响应或拒绝，都不等于批准。这和 [Guardrails](/agent/guardrails-safety-boundary/) 里讲的原则一致：真正的安全边界不能依赖 prompt 指令。
 
 ---
 
 ## 工程实现：暂停与恢复
 
-HITL 最核心的工程问题是：**如何在异步执行的 Agent 中安全地暂停，等待人类响应，然后从断点继续。**
-
-这比听起来复杂。Agent 的执行是有状态的——它有当前的 context window、已执行的工具调用历史、中间变量。暂停时需要保存这些状态，恢复时需要还原。
+等待人回复不一定要让一个协程一直挂着。真正需要保存的是：哪一步停住了、谁有权决定、这次决定针对什么内容，以及是否已经有人开始执行。本例把这些记录写入 SQLite，也就是保存在本地文件里的数据库。进程结束后，新调用仍能读取同一份记录。
 
 ![HITL 执行流程：暂停与恢复](hitl_interrupt_flow.svg)
 
-*图 3：Agent 遇到触发条件时的完整执行流程——检测触发、序列化状态、异步等待人类审核、根据审核结果恢复或放弃。*
+*图 3：先保存待审批操作，再根据人的决定继续或放弃。图中的“等待”是工作流状态；本实现不要求一直保留一个正在等待的协程，也没有实现 Web 通知服务。*
 
-### 基础结构
+### 下载并运行机制示例
 
-```python
-import asyncio
-from dataclasses import dataclass, field
-from enum import Enum
-from typing import Any, Callable, Awaitable
-from openai import AsyncOpenAI
+需要 Python 3.11 或以上版本。下载 [Agent 机制完整示例](/downloads/agent-examples/mechanisms.zip)，放到独立目录后解压。ZIP 根目录就是各模块所在位置：
 
-client = AsyncOpenAI()
-
-
-class ApprovalStatus(Enum):
-    """人类审核状态"""
-    PENDING = "pending"    # 等待审核
-    APPROVED = "approved"  # 已批准
-    REJECTED = "rejected"  # 已拒绝
-    MODIFIED = "modified"  # 已修改（用户改了参数）
-
-
-@dataclass
-class HumanApprovalRequest:
-    """
-    发给人类的审核请求。
-    包含足够的上下文，让人类能做出有意义的判断。
-    """
-    request_id: str
-    action_type: str           # 操作类型，例如 "delete_file"
-    description: str           # 用自然语言描述 Agent 打算做什么
-    parameters: dict           # 具体参数
-    reason: str                # Agent 为什么要做这个操作
-    reversible: bool           # 操作是否可逆
-    estimated_impact: str      # 预估影响范围
-
-
-@dataclass
-class HumanApprovalResponse:
-    """人类的审核响应"""
-    request_id: str
-    status: ApprovalStatus
-    modified_parameters: dict | None = None  # 如果 status 是 MODIFIED，这里有修改后的参数
-    feedback: str | None = None              # 用户的文字反馈（可选）
-
-
-@dataclass
-class ExecutionState:
-    """
-    Agent 执行状态快照。
-    暂停时保存，恢复时还原。
-    """
-    task_id: str
-    messages: list[dict]           # 完整的消息历史
-    pending_tool_calls: list[dict] # 待执行的工具调用
-    completed_steps: list[str]     # 已完成的步骤列表
-    context: dict = field(default_factory=dict)  # 任务上下文
+```bash
+unzip mechanisms.zip -d mechanisms-demo
+cd mechanisms-demo
+python3.11 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+python -c 'import asyncio, json; from coordination import demo; print(json.dumps(asyncio.run(demo()), ensure_ascii=False))'
+python -m unittest -v test_coordination
 ```
 
-### 暂停与恢复机制
+这里直接调用 `coordination.demo()`，只验证审批、任务板和消息游标。它在临时目录里真实建立 SQLite 文件，执行断言后清理目录，不访问模型、发送邮件或修改项目文件。以下是本次执行该命令捕获的输出：
 
-```python
-class HITLAgent:
-    """
-    带 Human-in-the-Loop 机制的 Agent。
-    
-    核心逻辑：
-    - 在执行工具调用前，检查是否需要人类确认
-    - 需要确认时，发送请求并等待响应
-    - 响应到达后，根据用户决定继续、放弃或修改参数
-    """
-
-    def __init__(
-        self,
-        model: str = "gpt-4o",
-        approval_handler: Callable[[HumanApprovalRequest], Awaitable[HumanApprovalResponse]] | None = None,
-    ):
-        self.model = model
-        # approval_handler 是实际发送审核请求的函数
-        # 可以是 CLI 交互、Web 回调、Slack 消息等
-        self.approval_handler = approval_handler or self._default_cli_approval
-
-    async def run(self, task: str, tools: list[dict]) -> str:
-        """执行任务，在关键节点插入人类确认"""
-        messages = [{"role": "user", "content": task}]
-
-        while True:
-            response = await client.chat.completions.create(
-                model=self.model,
-                messages=messages,
-                tools=tools,
-                tool_choice="auto",
-            )
-
-            msg = response.choices[0].message
-
-            # 没有工具调用，任务完成
-            if not msg.tool_calls:
-                return msg.content or ""
-
-            messages.append(msg)
-
-            # 处理每个工具调用
-            tool_results = []
-            for tool_call in msg.tool_calls:
-                result = await self._handle_tool_call(tool_call)
-                tool_results.append({
-                    "role": "tool",
-                    "tool_call_id": tool_call.id,
-                    "content": result,
-                })
-
-            messages.extend(tool_results)
-
-    async def _handle_tool_call(self, tool_call) -> str:
-        """
-        处理单个工具调用。
-        如果工具需要人类确认，先获取确认再执行。
-        """
-        import json
-        tool_name = tool_call.function.name
-        params = json.loads(tool_call.function.arguments)
-
-        # 判断是否需要人类确认
-        if self._requires_approval(tool_name, params):
-            approved_params = await self._request_approval(tool_name, params)
-            if approved_params is None:
-                # 用户拒绝了操作
-                return f"操作已被用户取消：{tool_name}"
-            # 使用用户可能修改过的参数
-            params = approved_params
-
-        # 执行工具
-        return await self._execute_tool(tool_name, params)
-
-    def _requires_approval(self, tool_name: str, params: dict) -> bool:
-        """
-        判断工具调用是否需要人类确认。
-        这个判断逻辑是系统最关键的部分，需要根据业务场景仔细设计。
-        """
-        # 硬性规则：特定工具类型必须确认
-        HIGH_RISK_TOOLS = {
-            "delete_file", "delete_directory",
-            "send_email", "send_message",
-            "execute_command", "deploy",
-            "write_database", "call_payment_api",
-        }
-        if tool_name in HIGH_RISK_TOOLS:
-            return True
-
-        # 参数级别的规则：某些参数组合需要确认
-        if tool_name == "write_file" and params.get("overwrite", False):
-            return True
-
-        return False
-
-    async def _request_approval(
-        self,
-        tool_name: str,
-        params: dict,
-    ) -> dict | None:
-        """
-        向人类发送审核请求，等待响应。
-        返回最终使用的参数（用户可能修改过），或 None（用户拒绝）。
-        """
-        import uuid
-        request = HumanApprovalRequest(
-            request_id=str(uuid.uuid4()),
-            action_type=tool_name,
-            description=self._describe_action(tool_name, params),
-            parameters=params,
-            reason="Agent 判断此操作是完成任务所必需的",
-            reversible=self._is_reversible(tool_name),
-            estimated_impact=self._estimate_impact(tool_name, params),
-        )
-
-        response = await self.approval_handler(request)
-
-        if response.status == ApprovalStatus.APPROVED:
-            return params
-        elif response.status == ApprovalStatus.MODIFIED:
-            return response.modified_parameters
-        else:  # REJECTED
-            return None
-
-    async def _default_cli_approval(
-        self,
-        request: HumanApprovalRequest,
-    ) -> HumanApprovalResponse:
-        """
-        默认的 CLI 审核处理器。
-        生产环境应替换为 Web UI 回调或异步消息队列。
-        """
-        print(f"\n{'='*50}")
-        print(f"⚠️  需要确认：{request.action_type}")
-        print(f"描述：{request.description}")
-        print(f"参数：{request.parameters}")
-        print(f"可逆：{'是' if request.reversible else '否'}")
-        print(f"影响：{request.estimated_impact}")
-        print(f"{'='*50}")
-
-        choice = input("操作选项 [y=确认 / n=拒绝 / q=放弃整个任务]：").strip().lower()
-
-        if choice == "y":
-            return HumanApprovalResponse(
-                request_id=request.request_id,
-                status=ApprovalStatus.APPROVED,
-            )
-        else:
-            return HumanApprovalResponse(
-                request_id=request.request_id,
-                status=ApprovalStatus.REJECTED,
-            )
-
-    def _describe_action(self, tool_name: str, params: dict) -> str:
-        """将工具调用转化为人类可读的自然语言描述"""
-        descriptions = {
-            "delete_file": lambda p: f"删除文件：{p.get('path', '?')}",
-            "send_email": lambda p: f"发送邮件给 {p.get('to', '?')}，主题：{p.get('subject', '?')}",
-            "execute_command": lambda p: f"执行命令：{p.get('command', '?')}",
-        }
-        describe = descriptions.get(tool_name)
-        return describe(params) if describe else f"执行 {tool_name}，参数：{params}"
-
-    def _is_reversible(self, tool_name: str) -> bool:
-        IRREVERSIBLE = {"delete_file", "send_email", "send_message", "deploy"}
-        return tool_name not in IRREVERSIBLE
-
-    def _estimate_impact(self, tool_name: str, params: dict) -> str:
-        if tool_name == "delete_file":
-            return f"文件 {params.get('path', '?')} 将被永久删除"
-        if tool_name == "send_email":
-            return f"邮件将发送给 {params.get('to', '?')}，无法撤回"
-        return "影响范围未知"
-
-    async def _execute_tool(self, tool_name: str, params: dict) -> str:
-        """实际执行工具——此处为示例占位"""
-        return f"工具 {tool_name} 执行完成，参数：{params}"
+```text
+{"ok": true, "approval_reopen": true, "one_shot_claim": true, "versioned_task": true, "acknowledged_cursor": true, "recipient_isolation": true}
 ```
 
-### 异步等待：Web 场景下的 HITL
+这些字段表示固定输入下的本地检查通过，不是模型能力评测。下载包的 `app.py` 是机制合集入口；只看本文机制时，上面的命令即可独立运行。
 
-CLI 场景里 `input()` 可以阻塞等待。但在 Web 应用里，Agent 通常是异步服务——它不能一直占着一个线程等用户点击按钮。
+### 一个审批请求究竟绑定什么
 
-这时候需要把 HITL 变成一个**异步回调流程**：
+假设应用准备生成一份草稿。下面是传给 `ApprovalInbox.request()` 的请求正文示意，不是已经执行成功的日志：
 
-```python
-import asyncio
-from collections import defaultdict
-
-
-class AsyncApprovalQueue:
-    """
-    异步审核队列。
-    Agent 发出审核请求后释放线程，
-    等用户在 Web UI 操作后通过回调恢复执行。
-    """
-
-    def __init__(self):
-        # 每个 request_id 对应一个 Future
-        self._pending: dict[str, asyncio.Future] = {}
-
-    async def request(
-        self,
-        request: HumanApprovalRequest,
-        timeout: float = 3600.0,  # 默认等待 1 小时
-    ) -> HumanApprovalResponse:
-        """
-        发出审核请求，挂起等待响应。
-        超时后自动拒绝（避免任务无限挂起）。
-        """
-        loop = asyncio.get_event_loop()
-        future = loop.create_future()
-        self._pending[request.request_id] = future
-
-        # 这里应该把 request 推送给前端（WebSocket、轮询接口等）
-        await self._notify_frontend(request)
-
-        try:
-            return await asyncio.wait_for(future, timeout=timeout)
-        except asyncio.TimeoutError:
-            # 超时视为用户未响应，保守处理：拒绝操作
-            del self._pending[request.request_id]
-            return HumanApprovalResponse(
-                request_id=request.request_id,
-                status=ApprovalStatus.REJECTED,
-                feedback="审核超时，操作已自动取消",
-            )
-
-    def respond(self, response: HumanApprovalResponse) -> bool:
-        """
-        由 Web API 调用：用户在前端操作后，将结果回写进来。
-        返回 True 表示成功，False 表示 request_id 已过期或不存在。
-        """
-        future = self._pending.pop(response.request_id, None)
-        if future and not future.done():
-            future.set_result(response)
-            return True
-        return False
-
-    async def _notify_frontend(self, request: HumanApprovalRequest):
-        """将审核请求推送给前端——具体实现依赖你的架构"""
-        # 例如：await websocket.send(request.to_json())
-        pass
+```json
+{
+  "task_id": "draft-demo",
+  "step": "prepare_draft",
+  "action": "prepare_draft",
+  "parameters": {"name": "synthetic-note"},
+  "completed_steps": []
+}
 ```
 
-这个结构的关键在于：Agent 协程在 `await asyncio.wait_for(future, timeout)` 这一行**真正地挂起**了——它不占 CPU，不占线程，就是等一个 Future 被 set。当用户点击"批准"按钮，Web 后端调用 `queue.respond()`，Future 被 set，Agent 协程被唤醒继续执行。
+应用需要把真正影响用户决定的信息放入正文：工具名、具体参数、执行条件，以及恢复时需要的任务标识和进度。只保存“继续清理”这样的模糊描述，仍无法让人判断影响范围。
+
+`request()` 返回唯一的 `id`、指定审批人 `actor`、`payload_digest`、`expires_at` 和 `binding`。内容摘要是对规范化 JSON 计算的 SHA-256 值；同一对象交换键的顺序不会改变摘要，修改参数则会。`binding` 进一步把请求 ID、审批人、摘要和期限放在一起计算，防止把另一条请求的回复误用到这里。
+
+审批入口调用 `decide(id, actor=..., payload=..., binding=..., approve=True)`。它在同一次 SQLite 事务里读取记录，核对以下条件，再写入决定：
+
+- ID 必须存在，正文与原始摘要一致，收到的绑定值必须对应这个请求。
+- `actor` 必须是记录指定的人，并且仍在宿主应用配置的 `authorized_actors` 中。
+- 当前时间必须早于 `expires_at`，状态仍为 `pending`，也就是尚未作出决定。
+
+这里的身份由可信本地调用方提供。例如，命令行应用已经知道当前操作者是谁，再把该身份传入模块。不能让模型自己填写一个用户名，就把它当成授权；本例没有登录、会话、Web 身份认证或加密签名。摘要也不能抵御有权改写数据库的人。
+
+用户要修改参数时，应用应为新正文创建一个新请求，重新展示和批准。旧批准不会自动覆盖修改后的操作。拒绝会记录为 `rejected`；再次批准、再次拒绝或尝试执行它都会失败。
+
+### 批准和开始执行是两个状态
+
+批准表示“人同意了这个操作”，还需要防止两个执行者同时把它拿去执行。`claim()` 再次核对身份、正文、绑定和期限，在事务内把 `approved` 改为 `claimed`，并返回一段随机生成的认领凭据 `token`，供本次执行者报告完成。
+
+| 状态 | 新调用能做什么 |
+| --- | --- |
+| `pending` | 展示请求，等待一次批准或拒绝；过期后两者都不接受 |
+| `approved` | 在期限内认领一次，未认领前不执行 |
+| `rejected` | 保留拒绝，不能变成批准或执行 |
+| `claimed` | 持有原 token 的执行者可报告结果；不能再次认领 |
+| `finished` | 查询已保存结果，不能重复完成或覆盖结果 |
+
+`list_requests(actor=...)` 让新应用发现该人的历史记录，不必依赖上一个进程记住请求 ID。记录保留原状态和期限；过期不会自动删掉记录或把它显示成已执行。执行者已在有效期内认领后，可以在期限之后用原 token 调用 `finish()`，记录已经发生的结果。
+
+SQLite 的 `BEGIN IMMEDIATE` 事务把读取状态和写入新状态放在一起。两个调用即使都看过 `pending`，也只有一个能决定；只有一个能把 `approved` 认领成功。等待数据库锁的调用会在拿到锁后重新读取状态，不会用旧页面上的状态覆盖新结果。
+
+**一次性认领不等于外部操作恰好执行一次。** 假设执行者认领后发出了邮件，却在记录 `finished` 前退出。数据库只知道它已认领，不能知道邮件是否发出。因此程序保留 `claimed`，不自动重试。接入真实发送、支付或文件变更时，还需要执行端用幂等键识别重复请求，或查询并人工核对外部结果；不能因恢复了请求记录就宣称恢复了整个 Agent。
+
+### 完整源码与验证边界
+
+以下源码与下载包中的 `coordination.py` 来自同一文件：
+
+{{< agent-code example="mechanisms" file="coordination.py" >}}
+
+本次在 Python 3.11.16、macOS 上运行了 `test_coordination.py` 的 18 项测试，全部通过。测试真实创建数据库，验证新进程读取待审批记录并认领、错误 ID/审批人/正文/绑定、过期边界、重复批准和重复认领，以及 SQL 更新失败后的回滚。并发测试使用独立 SQLite 连接，任务板还由两个独立进程竞争认领；没有用返回固定成功值替代数据库操作。
+
+这个模块只处理审批和协调记录，不包含模型循环、通知渠道或完整业务执行器。同步 SQLite 事务中没有 `await`，也没有在事务持锁期间等待人或请求模型。在异步服务中接入时，可以把短数据库调用放进工作线程；不要用同步 SDK 客户端的返回值去做 `await`。
 
 ---
 
 ## 置信度驱动的动态 HITL
 
-除了基于工具类型的硬性规则，还可以让 Agent 自己判断当前是否需要人类介入：
+模型可以提出“目前证据不足，需要澄清”的建议，但不能据自己的把握程度撤销程序的审批要求。应用可以先检查必需字段是否缺失、是否存在差异很大的选项、是否触及已有授权范围，再决定是否创建请求。
 
-```python
-async def should_interrupt(
-    self,
-    task: str,
-    current_step: str,
-    available_options: list[str],
-) -> tuple[bool, str]:
-    """
-    让模型评估当前步骤是否需要人类确认。
-    返回 (是否需要确认, 需要确认的原因)。
-    """
-    prompt = f"""你正在执行任务：{task}
-
-当前步骤：{current_step}
-
-可选方案：
-{chr(10).join(f"- {opt}" for opt in available_options)}
-
-请判断：你对当前最优方案有多大把握？
-- 如果你有清晰的判断，直接执行，回复 {{"needs_human": false}}
-- 如果存在以下任一情况，需要人类确认：
-  - 任务描述有歧义，你的理解可能与用户意图不符
-  - 多个方案的差异很大，你无法确定用户的偏好
-  - 当前情况超出了你的预期，需要用户提供额外信息
-  
-回复 JSON 格式：{{"needs_human": true/false, "reason": "说明原因"}}"""
-
-    response = await client.chat.completions.create(
-        model="gpt-4o",
-        messages=[{"role": "user", "content": prompt}],
-        response_format={"type": "json_object"},
-    )
-
-    import json
-    result = json.loads(response.choices[0].message.content)
-    return result["needs_human"], result.get("reason", "")
-```
-
-这种方式把置信度判断交给模型自己，但要注意：**模型倾向于过度自信**。纯粹依赖模型的自我评估通常会导致打断过少。建议把置信度检查作为补充，核心触发逻辑还是基于操作类型的硬性规则。
+例如，假设收件人尚未确定，程序应先让用户选定收件人，再为包含该收件人的正文创建审批请求。如果用户随后改了收件人，旧正文的摘要不再匹配，需要新的请求。模型自报的高置信度不会让这个检查消失。
 
 ---
 
@@ -558,7 +288,7 @@ Alert Fatigue 是安全领域的经典问题：当系统产生太多告警，操
 
 同样的问题会发生在 HITL 里。
 
-一个设计不好的 Agent 可能每执行 3 步就弹一个确认框。用户在前 5 次还会认真看，从第 6 次开始开始快速点"确认"，到第 10 次已经在边刷手机边点了。这时候 HITL 没有提供任何保护——它只是增加了用户的烦躁感。
+假设 Agent 每执行三步就弹一次相似确认框，用户可能逐渐不再阅读内容，只按习惯批准。这是告警疲劳（Alert Fatigue）：重复打断让真正需要判断的请求更难被认真对待。这里描述的是一种风险，不是固定次数后的必然行为。
 
 **Alert Fatigue 的三个来源：**
 
@@ -567,11 +297,11 @@ Alert Fatigue 是安全领域的经典问题：当系统产生太多告警，操
 ```
 # 错误做法：每个文件操作都要求确认
 Agent：我要读取 config.json，是否允许？[y/N]
-Agent：我要读取 package.json，是否允许？[y/N]  
+Agent：我要读取 package.json，是否允许？[y/N]
 Agent：我要读取 README.md，是否允许？[y/N]
 ```
 
-读操作通常不需要确认。即使需要，也应该批量确认（"允许读取以下 3 个文件"），而不是逐个询问。
+已经授权的普通读取可以直接执行；若涉及新的敏感范围，可以按明确的文件集合一次说明并授权，避免对同一范围反复询问。读取内容会否泄露给外部服务，也应纳入范围判断。
 
 ### 2. 确认信息质量差
 
@@ -603,17 +333,17 @@ Agent：任务开始前，请确认异常处理策略：
 
 在任务中途打断不只是烦人，还会让用户陷入"已经做了 800 条，如果说不，那前面的工作怎么办"的压力里，导致用户更容易说"是"。
 
-**衡量 HITL 质量的一个指标**：用户在看到确认请求后，真正修改或拒绝的比例。如果这个比例接近 0%，说明你的 HITL 触发了太多不必要的请求。
+**可以观察用户修改或拒绝请求的比例**，但要结合请求内容判断。比例低可能是请求多余，也可能是动作本来合理，或用户没有认真阅读；比例高也可能暴露 Agent 经常提错方案。不能仅凭这个比例判断介入是否精准。
 
 ---
 
 ## 真实产品中的 HITL 设计
 
+以下产品例子用于说明授权方式；具体默认值、工具名和会话授权范围需按产品版本及配置核对。
+
 ### Claude Code
 
-Claude Code 采用了精细的权限分级策略。默认情况下，读操作完全自主，写操作会标记但不必须确认，只有执行命令（`bash`）时才需要明确授权。
-
-它的一个值得借鉴的设计是"会话级授权"：用户在会话开始时可以声明"这次会话里允许自动执行 bash 命令"，之后整个会话不再每次询问。这减少了重复确认，同时把授权决策提前到了用户注意力充足的时刻。
+Claude Code 会按权限模式和规则判断工具（如 `bash`）是否需要询问。用户通过确认选项或配置规则批准操作，允许范围与有效期取决于所选方式；对话中的同意不会直接改写规则。详见[官方文档](https://code.claude.com/docs/en/permissions)（2026-10-17 核对）及[权限模型一节](/agent/guardrails-safety-boundary/#claude-code-的权限模型)。
 
 ### Cursor
 
@@ -633,62 +363,21 @@ Cursor 把 HITL 做成了"diff 预览 + 批准"的模式——Agent 先生成所
 
 ### 1. 暂停后恢复时上下文丢失
 
-Agent 被暂停时，context window 里有大量的任务状态。如果恢复时只是"继续执行"，但中间时间过长导致消息历史被截断，或者系统重启丢失了状态，Agent 恢复后可能不知道自己在做什么。
+请求正文应包含任务标识、已完成步骤和当前操作。新进程先查询持久状态：未决定就等待，拒绝就停止该操作，已认领就核对实际结果。仅给模型一句“继续执行”，不能替代这些检查。
 
-解决方式：暂停时持久化完整的 `ExecutionState`，恢复时显式地将状态注入 context：
+本例保存的是调用方提供的正文和结果，不会自动保存整段模型会话。宿主应用若需要恢复会话，必须另外保存必要消息，并确保它们与请求 ID 对得上。
 
-```python
-async def resume_from_state(self, state: ExecutionState) -> str:
-    """
-    从保存的状态中恢复执行。
-    在消息历史前插入状态摘要，确保模型知道自己在做什么。
-    """
-    resume_context = {
-        "role": "system",
-        "content": (
-            f"你正在恢复一个被暂停的任务。\n"
-            f"任务 ID：{state.task_id}\n"
-            f"已完成步骤：{', '.join(state.completed_steps)}\n"
-            f"当前上下文：{state.context}\n"
-            f"请从暂停点继续执行，不要重复已完成的步骤。"
-        )
-    }
-    messages = [resume_context] + state.messages
-    # 继续执行循环...
-```
+### 2. 用户批准的内容和执行内容不一致
 
-### 2. 用户"批准"了，但 Agent 理解的操作和用户以为的不一样
+确认页面必须展示真实操作效果。假设底层实现是“复制内容到新文件，再移除旧文件”，就应说明这一点，不能只写“改名”并暗示原有文件属性都会保留。
 
-这通常发生在确认描述不够精确时。用户以为自己批准的是"重命名这个文件"，实际上 Agent 做的是"删除旧文件，创建新文件"。
-
-解决方式：确认请求里展示的应该是**操作的实际效果**，而不是操作的意图：
-
-```python
-# 不好的描述
-"我要重命名 config.json"
-
-# 好的描述
-"我要将 config.json 复制到 config.json.bak，然后删除原始文件 config.json，再创建新的 config.json"
-```
+执行者应使用 `claim()` 返回的已保存正文，而不是批准后再次让模型生成参数。操作条件本身若已经变化，例如源文件内容改变，业务执行层仍应拒绝并重新提案；批准不能替代执行前检查。
 
 ### 3. 用户拒绝后，Agent 反复尝试变体
 
-用户拒绝了一个操作后，Agent 有时候会用略微不同的参数再次请求确认，或者绕一条路径达到同样的效果。
+持久记录能防止同一请求重复批准，但不会自动判断两个不同请求是否在追求同一个已被拒绝的目标。宿主应用应把拒绝范围和用户反馈保存到任务状态，再约束后续规划。
 
-这是因为 Agent 的目标是完成任务，拒绝一个工具调用不等于告诉它"不要完成这个子目标"。
-
-解决方式：用户拒绝时，给 Agent 一个明确的指令，而不只是"操作被取消"：
-
-```python
-if response.status == ApprovalStatus.REJECTED:
-    rejection_message = (
-        f"工具 {tool_name} 的调用已被用户明确拒绝。"
-        f"用户反馈：{response.feedback or '无'}\n"
-        f"请调整你的执行计划，不要尝试通过其他方式达到相同目的，"
-        f"除非用户明确指示可以这样做。"
-    )
-    return rejection_message
-```
+仅把拒绝反馈写进提示，不足以约束业务接口。需要程序阻止的动作，应继续由授权与参数检查拦住；确实修改了目标或参数时，再让用户看到一份新的请求。
 
 ### 4. 对话式 Agent 里 HITL 的边界模糊
 
@@ -713,10 +402,10 @@ Agent：⚠️ 待确认操作
 
 ## 总结
 
-1. **HITL 是自主性和安全性的平衡器，不是 Agent 能力不足的补丁。** 生产中运行的 Agent 系统几乎都有 HITL 机制，区别只是在哪里介入、介入多少。
+1. **HITL 是自主性和安全性的平衡器，不是 Agent 能力不足的补丁。** 是否设置人工节点，以及在哪里介入，取决于具体授权范围和错误代价。
 2. **三种介入模式对应三类场景：** 事前确认用于不可逆操作，异常暂停用于不确定情况，事后审核用于可逆的高吞吐场景。
-3. **触发 HITL 的核心判断逻辑只有三类：** 操作不可逆程度、模型置信度、授权边界。触发条件应该写在代码里，不能只写在 prompt 里。
-4. **Alert Fatigue 是 HITL 最大的工程问题。** 衡量指标是用户真正修改或拒绝的比例——这个比例越高，说明你的 HITL 触发越精准。
-5. **HITL 和 Guardrails 是互补的，不是替代关系。** Guardrails 处理可以规则化的边界，HITL 处理需要人类判断的模糊地带。两者结合，才能覆盖生产级 Agent 系统的安全需求。
+3. **本文重点检查三类介入条件：** 操作不可逆程度、模型置信度、授权边界。触发条件应该写在代码里，不能只写在 prompt 里。
+4. **过多确认会增加告警疲劳。** 修改或拒绝比例可以帮助排查，但需要同时看请求是否必要、信息是否充分、用户是否认真审阅。
+5. **HITL 和 Guardrails 分别承担人工判断与规则检查。** 用户批准后，执行层仍需检查权限和参数；恢复时也不能重复执行已完成的操作。两者结合仍需按具体风险验收，不能当作完整安全保证。
 
 *上一篇：[持久记忆实战：让 Agent 跨会话记住用户](/agent/build-persistent-memory-agent/)*

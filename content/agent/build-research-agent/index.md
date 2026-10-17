@@ -3,8 +3,8 @@ title = "Research Agent 实战：从 RAG 到自主研究"
 date = 2026-03-28T18:00:00+08:00
 draft = false
 author = "Hex4C59"
-description = "从传统 RAG 的局限出发，用 Python 构建一个能自主制定检索策略、多轮迭代收集信息、评估信息质量并生成结构化研究报告的 Research Agent。"
-summary = "不只是造一个 RAG 问答系统——这篇文章构建一个能自主研究的 Agent：研究规划、多轮 Agentic RAG 检索、信息质量审查、矛盾处理，以及带来源引用的结构化报告输出。"
+description = "用可运行的 Python 示例实现研究规划、本地语料搜索与读取、带来源笔记、报告检查和有上限的修订循环，区分固定响应验收与真实模型研究质量。"
+summary = "先运行无需密钥的本地固定响应演示：实际读取合成文件，保存原文摘录，拒绝错误引用，再修订并重新检查。随后换入自己的语料，或通过共享异步客户端启用 live 模型；每一步都有来源记录、预算与失败出口。"
 tags = ["RAG", "Research Agent", "Agentic RAG"]
 categories = ["ai"]
 series = ["agent-engineering"]
@@ -15,995 +15,246 @@ topics = ["research-agent", "agentic-rag", "multi-step-retrieval", "information-
 frameworks = ["OpenAI"]
 ShowToc = true
 source_kind = "original"
-lastmod = 2026-03-28T08:34:20+00:00
+lastmod = 2026-10-17
 +++
 
-在 [什么是 RAG](/agent/what-is-rag/) 那篇文章的结尾，我说过要写一篇关于 Research Agent 的实战文章。这篇就是。
+在 [什么是 RAG](/agent/what-is-rag/) 那篇文章之后，这篇实战要回答一个更具体的问题：模型搜索和阅读资料以后，程序怎样保存依据、生成报告，并确认修订稿确实又被检查了一遍？
 
-传统 RAG 解决的是"模型不知道某些知识"的问题——从知识库里检索相关内容，塞进上下文，让模型基于这些内容回答。这个流程有效，但它的检索是**被动的**：用户问什么，就检索什么，检索一次，回答一次。
+本文面向会写 Python、了解异步函数的读者。我们从可运行的本地语料开始：搜索、读文件和保存笔记都实际执行，模型决策使用明确标记的固定响应（fixture）。因此，没有 API 密钥也能验证工具与质量门槛之间的交接。换成 live 模型后，能运行同一流程，但真实研究质量仍需另行判断。
 
-Research Agent 要做的事情本质上不同。它不只是回答一个已知答案的问题，而是要**研究**一个可能没有现成答案的复杂主题。研究意味着：制定检索策略、从多个来源收集信息、发现信息里的矛盾和空白、追问补充细节、最终把碎片化的信息综合成一份有结构的报告。
-
-这个过程中，"检索什么"和"检索结果够不够好"不再由开发者预设，而是由 Agent 自己判断——这就是 Agentic RAG。
-
----
+这里的 RAG 是 Retrieval-Augmented Generation，检索增强生成：先查资料，再让模型参考资料回答。本文把“一次检索后直接回答”作为简化基线；实际 RAG 系统也可以安排多轮检索与核验。Research Agent 的变化在于，模型收到中间结果后，还能选择下一次搜索、阅读或记笔记，宿主程序负责执行和设定停止条件。
 
 ## 先给结论
 
-1. **传统 RAG 是被动的一次性检索，Agentic RAG 是 Agent 主动驱动的多轮迭代检索。** 区别在于"谁决定检索什么"和"谁判断结果够不够"——传统 RAG 里这些由代码硬编码，Agentic RAG 里由 Agent 自己判断。
-2. **Research Agent 的核心不是检索能力，而是信息质量判断能力。** 能不能搜到东西不难，难的是搜到之后能不能判断这些信息是否足以支撑结论、是否来源可靠、是否存在矛盾。
-3. **研究规划决定研究质量的上限。** 一个好的研究计划把模糊的任务拆解成具体的、可检索的研究问题，让后续的每一次检索都有明确目标，而不是漫无目的地搜索。
-4. **信息综合比信息收集更难。** 从 5 个来源收集到 20 条信息碎片，要把它们组织成一份逻辑自洽、结论有据的报告，这需要矛盾检测、置信度判断和来源归属。
-5. **来源引用不是可选的。** Research Agent 的输出如果不标注信息来源，用户就无法验证结论的可靠性。每一个关键事实都必须可追溯。
+先让资料与结论能逐项对应，再考虑扩大搜索范围。本例可以完成规划、工具研究、整理报告、审查、修订和再次审查；只有最后一稿通过，才返回 `complete`。搜索为空、来源读取失败、轮数耗尽或整体到期，都不能当成研究完成。
 
----
+默认演示中的两份“南岚团队规程”是虚构的合成文件。程序确实读取了它们，但固定响应没有进行真实推理，也没有发现新的网络资料。这个运行结果证明流程接通了，不能证明模型的研究能力。
 
-## 传统 RAG 的局限
-
-在 [RAG 那篇文章](/agent/what-is-rag/) 里，我们已经建立了 RAG 的基本工作流程：切片 → 向量化 → 检索 → 增强生成。这个流程对"有明确答案的问题"效果很好：
-
-```text
-用户问：我们的退款政策是什么？
-检索到：退款政策文档的相关片段
-模型回答：根据公司政策，购买后 30 天内可申请全额退款...
-```
-
-但当任务变成"研究"时，传统 RAG 的三个局限就暴露了：
-
-**局限一：检索策略是固定的。** 传统 RAG 用用户的原始问题直接做向量检索。但很多研究型问题的检索词和最终答案之间距离很远。用户问"2025 年 AI Agent 框架的技术趋势"，你不能直接用这句话去搜——你需要先搞清楚有哪些主流框架，然后逐一搜索它们的近期变化，再综合分析趋势。**检索策略本身需要规划。**
-
-**局限二：一次检索不够。** 第一次检索的结果可能揭示你之前不知道的信息，这些信息会引发新的问题。比如你搜到"LangGraph 在 2025 年重写了状态管理"，这会引发追问："重写成了什么？和之前有什么区别？其他框架有类似的变化吗？" **研究是一个迭代过程，不是一次性查询。**
-
-**局限三：没有信息质量判断。** 传统 RAG 把检索到的内容直接传给模型，不关心这些内容是否足够、是否可靠、是否存在矛盾。它假设"检索到就是对的"。但在研究场景中，**同一问题的不同来源可能给出矛盾的答案，需要 Agent 去判断和取舍。**
-
-![传统 RAG 与 Agentic RAG 的对比](rag_vs_agentic_rag.svg)
-
-*图 1：传统 RAG 做一次检索就生成回答，无纠正能力；Agentic RAG 的 Agent 自主决定检索策略，根据结果质量决定是否追加检索。*
-
----
-
-## 整体架构
-
-Research Agent 由三层组成：用户任务层接收研究请求，Agent 核心层负责规划和执行研究过程，工具层提供检索和信息处理能力。
-
-![Research Agent 整体架构](architecture.svg)
-
-*图 2：Research Agent 的三层结构。与 [CLI Coding Agent](/agent/build-cli-coding-agent/) 的最大区别在于核心层——Coding Agent 的核心是 ReAct 循环驱动的代码修改，Research Agent 的核心是 Agentic RAG 驱动的信息研究。*
-
----
-
-## 项目结构
-
-```
-research-agent/
-├── agent/
-│   ├── __init__.py
-│   ├── core.py          # Agent 主循环
-│   ├── planner.py       # 研究规划器
-│   ├── researcher.py    # Agentic RAG 研究循环
-│   ├── synthesizer.py   # 信息综合与报告生成
-│   └── prompts.py       # 各模块的 System Prompt
-├── tools/
-│   ├── __init__.py
-│   ├── search.py        # 网络搜索工具
-│   ├── reader.py        # 网页内容提取工具
-│   └── notes.py         # 研究笔记管理
-├── requirements.txt
-└── README.md
-```
-
-和 Coding Agent 一样，`core.py` 不依赖具体工具实现，`tools/` 不依赖 LLM。每一层可以独立替换。
-
----
-
-## 第一步：定义工具集
-
-Research Agent 的工具集和 Coding Agent 完全不同。它不需要读写代码文件和执行命令，它需要的是**从外部获取信息的能力**和**组织信息的能力**。
-
-```python
-# tools/search.py
-import os
-import json
-import httpx
-
-
-async def web_search(query: str, num_results: int = 5) -> dict:
-    """
-    执行网络搜索，返回结果列表。
-    这里使用 Tavily API 作为搜索后端。
-    你也可以替换为 SerpAPI、Brave Search 或 Google Custom Search。
-    """
-    api_key = os.environ.get("TAVILY_API_KEY")
-    if not api_key:
-        return {"success": False, "error": "TAVILY_API_KEY 未设置"}
-
-    try:
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                "https://api.tavily.com/search",
-                json={
-                    "api_key": api_key,
-                    "query": query,
-                    "max_results": num_results,
-                    "include_raw_content": False,
-                    "search_depth": "advanced",
-                },
-                timeout=30,
-            )
-            data = response.json()
-
-        results = []
-        for item in data.get("results", []):
-            results.append({
-                "title": item.get("title", ""),
-                "url": item.get("url", ""),
-                "snippet": item.get("content", "")[:500],
-                "score": item.get("score", 0),
-            })
-
-        return {
-            "success": True,
-            "query": query,
-            "num_results": len(results),
-            "results": results,
-        }
-    except Exception as e:
-        return {"success": False, "error": str(e)}
-```
-
-```python
-# tools/reader.py
-import httpx
-from html.parser import HTMLParser
-
-
-class SimpleHTMLExtractor(HTMLParser):
-    """从 HTML 中提取纯文本，跳过 script 和 style 标签。"""
-
-    def __init__(self):
-        super().__init__()
-        self.text_parts = []
-        self.skip = False
-
-    def handle_starttag(self, tag, attrs):
-        if tag in ("script", "style", "nav", "footer", "header"):
-            self.skip = True
-
-    def handle_endtag(self, tag):
-        if tag in ("script", "style", "nav", "footer", "header"):
-            self.skip = False
-
-    def handle_data(self, data):
-        if not self.skip:
-            text = data.strip()
-            if text:
-                self.text_parts.append(text)
-
-    def get_text(self) -> str:
-        return "\n".join(self.text_parts)
-
-
-async def read_webpage(url: str, max_length: int = 5000) -> dict:
-    """
-    提取网页的文本内容。
-    max_length: 返回内容长度上限，防止注入过多上下文。
-    """
-    try:
-        async with httpx.AsyncClient(follow_redirects=True) as client:
-            response = await client.get(
-                url,
-                timeout=15,
-                headers={"User-Agent": "ResearchAgent/1.0"}
-            )
-            response.raise_for_status()
-
-        extractor = SimpleHTMLExtractor()
-        extractor.feed(response.text)
-        content = extractor.get_text()
-
-        # 截断过长的内容
-        if len(content) > max_length:
-            content = content[:max_length] + f"\n\n[内容已截断，原始长度 {len(content)} 字符]"
-
-        return {
-            "success": True,
-            "url": url,
-            "content": content,
-            "length": len(content),
-        }
-    except Exception as e:
-        return {"success": False, "url": url, "error": str(e)}
-```
-
-```python
-# tools/notes.py
-
-class ResearchNotes:
-    """
-    研究笔记管理器：存储和组织 Agent 在研究过程中收集的信息。
-    每条笔记包含内容、来源 URL 和置信度标注。
-    """
-
-    def __init__(self):
-        self.notes: list[dict] = []
-
-    def add_note(
-        self,
-        content: str,
-        source_url: str,
-        research_question: str,
-        confidence: str = "medium"
-    ) -> dict:
-        """
-        添加一条研究笔记。
-        confidence: high / medium / low，表示信息的可靠程度。
-        """
-        note = {
-            "id": len(self.notes) + 1,
-            "content": content,
-            "source_url": source_url,
-            "research_question": research_question,
-            "confidence": confidence,
-        }
-        self.notes.append(note)
-        return {"success": True, "note_id": note["id"]}
-
-    def get_notes(
-        self,
-        research_question: str | None = None
-    ) -> dict:
-        """获取笔记，可按研究问题过滤。"""
-        if research_question:
-            filtered = [
-                n for n in self.notes
-                if n["research_question"] == research_question
-            ]
-        else:
-            filtered = self.notes
-
-        return {
-            "success": True,
-            "count": len(filtered),
-            "notes": filtered,
-        }
-
-    def get_all_sources(self) -> list[str]:
-        """获取所有引用来源的去重列表。"""
-        return list(set(n["source_url"] for n in self.notes))
-```
-
-工具的设计思路和 [工具接口设计那篇](/agent/tool-interface-design/) 里讲的原则一致：返回值要丰富（搜索结果包含 score、笔记包含 confidence），错误信息要可读。但与 Coding Agent 的工具有一个根本区别：**Research Agent 的工具全部是信息获取类的，没有不可逆的写操作**——这让安全模型简单得多，不需要像 [Guardrails 那篇](/agent/guardrails-safety-boundary/) 里讨论的多级权限确认。
-
----
-
-## 第二步：研究规划器
-
-研究的第一步不是开始搜索，而是**搞清楚要搜索什么**。
-
-一个好的研究计划把模糊的任务拆解成 3-5 个具体的、可以通过检索回答的研究问题。这比直接用原始任务去搜索要有效得多，因为原始任务通常太宽泛、太模糊，没法直接作为检索查询。
-
-```python
-# agent/planner.py
-import openai
-import json
-
-client = openai.OpenAI()
-
-
-async def create_research_plan(task: str) -> dict:
-    """
-    将用户的研究任务分解为具体的研究问题和检索策略。
-    """
-    response = await client.chat.completions.create(
-        model="gpt-4o",
-        messages=[{
-            "role": "system",
-            "content": """你是一个研究规划专家。将用户的研究任务分解为可执行的研究计划。
-
-规划原则：
-- 每个研究问题必须具体到可以通过搜索回答
-- 研究问题之间按逻辑依赖关系排序（先搜基础事实，再搜分析性问题）
-- 3~5 个研究问题为宜，不要过于细碎
-- 为每个问题给出 2~3 个推荐的检索查询词
-
-输出 JSON 格式：
-{
-  "task_understanding": "对任务的一句话理解",
-  "research_questions": [
-    {
-      "id": 1,
-      "question": "具体的研究问题",
-      "why": "为什么需要回答这个问题",
-      "suggested_queries": ["检索查询词1", "检索查询词2"],
-      "expected_sources": "预期从什么类型的来源获取信息"
-    }
-  ],
-  "synthesis_focus": "最终报告应该聚焦回答什么核心问题"
-}"""
-        }, {
-            "role": "user",
-            "content": f"研究任务：{task}"
-        }],
-        response_format={"type": "json_object"},
-        temperature=0.3,
-    )
-
-    plan = json.loads(response.choices[0].message.content)
-    return plan
-```
-
-来看一个实际的规划输出：
-
-```text
-任务："分析 2025 年主流 AI Agent 框架的技术趋势"
-
-研究计划：
-  task_understanding: "梳理 2025 年主要 Agent 框架的技术方向变化"
-
-  research_questions:
-    ① 2025 年主流 Agent 框架有哪些？各自的定位是什么？
-       suggested_queries: ["top AI agent frameworks 2025", "LangGraph vs CrewAI vs AutoGen 2025"]
-       why: 先建立基本的框架全景图
-
-    ② 这些框架在 2025 年有什么重大更新或架构变化？
-       suggested_queries: ["LangGraph changelog 2025", "CrewAI v3 features"]
-       why: 了解具体的技术变化，是趋势分析的基础
-
-    ③ 这些框架在状态管理和工具调用上的设计有什么演进？
-       suggested_queries: ["agent framework state management comparison", "tool calling patterns 2025"]
-       why: 状态管理和工具调用是 Agent 框架最核心的差异点
-
-    ④ 开发者社区对这些框架的评价和采用情况如何？
-       suggested_queries: ["LangGraph developer experience 2025", "agent framework adoption rate"]
-       why: 社区反馈反映了趋势的实际影响
-
-  synthesis_focus: "2025 年 Agent 框架在架构设计上的主要趋势方向"
-```
-
-注意研究问题的排序：从"有哪些框架"（基础事实）到"有什么变化"（具体信息）到"怎么评价"（综合分析），逻辑上层层递进。这和 [Planning 那篇](/agent/planning-plan-and-execute/) 里讨论的"任务分解应按依赖关系排序"是同一个原则。
-
----
-
-## 第三步：Agentic RAG 研究循环
-
-这是整篇文章的核心。Agentic RAG 和传统 RAG 的根本区别在于：**Agent 自己决定检索什么、检索到的信息够不够、需不需要追加检索。**
-
-![Research Agent 执行流程](research_flow.svg)
-
-*图 3：从任务接收到报告输出的完整流程。步骤 ③ 的 Agentic RAG 循环是核心——它不是一次性检索，而是 Agent 自动驱动的多轮迭代。*
-
-```python
-# agent/researcher.py
-import openai
-import json
-from tools.search import web_search
-from tools.reader import read_webpage
-from tools.notes import ResearchNotes
-
-client = openai.OpenAI()
-
-TOOL_SCHEMAS = [
-    {
-        "type": "function",
-        "function": {
-            "name": "web_search",
-            "description": "搜索互联网，返回与查询相关的网页列表。用于发现新信息来源。",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "query": {
-                        "type": "string",
-                        "description": "搜索查询词。尽量具体，包含关键实体和时间范围。"
-                    },
-                    "num_results": {
-                        "type": "integer",
-                        "description": "返回结果数量，默认 5",
-                    }
-                },
-                "required": ["query"],
-            },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "read_webpage",
-            "description": "提取指定 URL 的网页文本内容。用于深入阅读搜索结果中的页面。",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "url": {
-                        "type": "string",
-                        "description": "要读取的网页 URL"
-                    }
-                },
-                "required": ["url"],
-            },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "save_note",
-            "description": "保存一条研究笔记。每当发现有用的信息，都应保存笔记用于后续综合分析。",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "content": {
-                        "type": "string",
-                        "description": "笔记内容：提取的关键信息"
-                    },
-                    "source_url": {
-                        "type": "string",
-                        "description": "信息来源的 URL"
-                    },
-                    "confidence": {
-                        "type": "string",
-                        "enum": ["high", "medium", "low"],
-                        "description": "信息可靠度：high=官方文档/权威来源，medium=技术博客/社区讨论，low=未经验证/单一来源"
-                    }
-                },
-                "required": ["content", "source_url", "confidence"],
-            },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_notes",
-            "description": "查看当前已收集的研究笔记。用于在检索过程中回顾已有信息、发现信息空白。",
-            "parameters": {
-                "type": "object",
-                "properties": {},
-            },
-        },
-    },
-]
-
-
-TOOL_REGISTRY = {
-    "web_search": web_search,
-    "read_webpage": read_webpage,
-}
-
-
-async def research_question(
-    question: str,
-    suggested_queries: list[str],
-    notes: ResearchNotes,
-    max_iterations: int = 8,
-) -> dict:
-    """
-    对单个研究问题执行 Agentic RAG 循环。
-    Agent 自主决定检索策略、评估结果质量、决定是否追加检索。
-    """
-
-    system_prompt = f"""你是一个专业的研究员，正在调查以下研究问题：
-
-研究问题：{question}
-
-你的目标是通过多轮搜索和阅读，收集足够的信息来回答这个问题。
-
-## 工作流程
-
-1. 使用 web_search 搜索相关信息
-2. 对有价值的搜索结果，使用 read_webpage 深入阅读
-3. 发现有用的信息后，用 save_note 保存笔记（必须标注来源和置信度）
-4. 用 get_notes 回顾已收集的信息，判断是否足够
-5. 如果信息不足，调整检索策略，继续搜索
-
-## 检索策略建议
-
-推荐的初始查询词：{json.dumps(suggested_queries, ensure_ascii=False)}
-你不必局限于这些查询词——根据搜索结果随时调整策略。
-
-## 信息收集标准
-
-信息充分的判断条件：
-- 至少有 2 个独立来源对关键事实达成一致
-- 没有明显的信息空白（即你知道应该有的信息，但还找不到）
-- 你能基于收集的信息给出一个有据可查的回答
-
-当你判断信息已经充分时，直接输出一段文字说明你的结论，不要再调用工具。"""
-
-    messages = [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": f"请开始研究：{question}"},
-    ]
-
-    for iteration in range(max_iterations):
-        response = await client.chat.completions.create(
-            model="gpt-4o",
-            messages=messages,
-            tools=TOOL_SCHEMAS,
-        )
-
-        choice = response.choices[0]
-        message = choice.message
-
-        # 构建 assistant 消息
-        assistant_msg = {"role": "assistant", "content": message.content}
-        if message.tool_calls:
-            assistant_msg["tool_calls"] = [
-                {
-                    "id": tc.id,
-                    "type": "function",
-                    "function": {
-                        "name": tc.function.name,
-                        "arguments": tc.function.arguments,
-                    },
-                }
-                for tc in message.tool_calls
-            ]
-        messages.append(assistant_msg)
-
-        # 模型决定结束研究
-        if choice.finish_reason == "stop":
-            return {
-                "question": question,
-                "iterations": iteration + 1,
-                "conclusion": message.content,
-                "notes_collected": len(notes.get_notes(question)["notes"]),
-            }
-
-        # 处理工具调用
-        if choice.finish_reason == "tool_calls":
-            for tc in message.tool_calls:
-                tool_name = tc.function.name
-                tool_args = json.loads(tc.function.arguments)
-                tool_call_id = tc.id
-
-                # 执行工具
-                if tool_name == "save_note":
-                    result = notes.add_note(
-                        content=tool_args["content"],
-                        source_url=tool_args["source_url"],
-                        research_question=question,
-                        confidence=tool_args.get("confidence", "medium"),
-                    )
-                elif tool_name == "get_notes":
-                    result = notes.get_notes(question)
-                elif tool_name in TOOL_REGISTRY:
-                    result = await TOOL_REGISTRY[tool_name](**tool_args)
-                else:
-                    result = {"success": False, "error": f"未知工具：{tool_name}"}
-
-                result_str = json.dumps(result, ensure_ascii=False, indent=2)
-
-                # 截断过长的工具返回
-                if len(result_str) > 4000:
-                    result_str = result_str[:4000] + "\n[结果已截断]"
-
-                messages.append({
-                    "role": "tool",
-                    "tool_call_id": tool_call_id,
-                    "content": result_str,
-                })
-
-    return {
-        "question": question,
-        "iterations": max_iterations,
-        "conclusion": "达到最大检索轮次，基于已收集信息得出结论。",
-        "notes_collected": len(notes.get_notes(question)["notes"]),
-    }
-```
-
-这个实现有几个值得注意的设计决策：
-
-**Agent 自己判断"够不够"。** System prompt 里定义了信息充分的标准——至少 2 个独立来源一致、没有明显的信息空白。Agent 基于这些标准自主决定什么时候停止检索。这和传统 RAG 的"检索 Top-K 就结束"完全不同。
-
-**笔记作为结构化记忆。** `save_note` 不只是保存文本，还要求 Agent 标注来源 URL 和置信度。这些元数据在后续的信息综合阶段非常关键——它让 Agent 可以区分"来自官方文档的高可信信息"和"来自某篇博客的低可信观点"。
-
-**检索策略可以动态调整。** 推荐的初始查询词只是起点。如果第一轮搜索发现了一个 Agent 之前不知道的框架名称，它会用这个名称作为新的查询词继续搜索。这就是"信息引发新问题"的迭代过程。
-
----
-
-## 第四步：信息综合与报告生成
-
-收集完信息之后，最难的部分来了：**把碎片化的笔记综合成一份有逻辑、有结构、有来源的研究报告。**
-
-```python
-# agent/synthesizer.py
-import openai
-import json
-
-client = openai.OpenAI()
-
-
-async def synthesize_report(
-    task: str,
-    research_plan: dict,
-    question_results: list[dict],
-    notes: "ResearchNotes",
-) -> str:
-    """
-    基于研究笔记生成结构化的研究报告。
-    """
-    all_notes = notes.get_notes()["notes"]
-    sources = notes.get_all_sources()
-
-    # 按研究问题组织笔记
-    notes_by_question = {}
-    for note in all_notes:
-        q = note["research_question"]
-        if q not in notes_by_question:
-            notes_by_question[q] = []
-        notes_by_question[q].append(note)
-
-    notes_text = ""
-    for question, question_notes in notes_by_question.items():
-        notes_text += f"\n### 研究问题：{question}\n"
-        for n in question_notes:
-            notes_text += (
-                f"- [{n['confidence']}] {n['content']}\n"
-                f"  来源：{n['source_url']}\n"
-            )
-
-    response = await client.chat.completions.create(
-        model="gpt-4o",
-        messages=[{
-            "role": "system",
-            "content": """你是一个严谨的研究报告撰写专家。基于研究员收集的笔记，撰写结构化的研究报告。
-
-## 报告要求
-
-1. **结构清晰**：使用标题层级组织内容，每个研究问题对应一个章节
-2. **结论有据**：每个关键结论后面用 [来源](URL) 标注信息来源
-3. **矛盾说明**：如果不同来源对同一事实有矛盾的说法，明确指出矛盾并说明你的判断依据
-4. **置信度标注**：对不确定的结论使用"据有限信息显示"等措辞
-5. **低置信笔记谨慎使用**：标记为 low 的笔记不应作为核心结论的唯一依据
-6. **总结与展望**：在报告末尾给出核心发现的总结和进一步研究的建议
-
-## 禁止行为
-- 不要编造笔记中没有的信息
-- 不要省略来源引用
-- 不要对没有数据支撑的趋势做过于确定的判断"""
-        }, {
-            "role": "user",
-            "content": f"""原始任务：{task}
-
-研究计划的综合焦点：{research_plan.get('synthesis_focus', task)}
-
-收集到的研究笔记：
-{notes_text}
-
-所有引用来源：
-{chr(10).join(f'- {s}' for s in sources)}
-
-请基于以上笔记撰写研究报告。"""
-        }],
-        temperature=0.3,  # 低温度：报告需要严谨，不需要创造性
-    )
-
-    return response.choices[0].message.content
-
-
-async def check_report_quality(task: str, report: str) -> dict:
-    """
-    对报告做质量检查——这是 Reflection 机制在研究场景的应用。
-    """
-    response = await client.chat.completions.create(
-        model="gpt-4o",
-        messages=[{
-            "role": "system",
-            "content": """你是一个研究报告的审查员。检查报告的质量。
-
-审查标准：
-1. 完整性：报告是否回答了原始任务的所有方面？
-2. 来源标注：每个关键结论是否都有来源？
-3. 矛盾处理：是否指出了不同来源之间的矛盾？
-4. 逻辑性：推理链是否连贯？结论是否真的从信息中得出？
-5. 客观性：是否存在无依据的推断或过于确定的表述？
-
-输出 JSON：
-{
-  "overall_score": 1-10,
-  "issues": [
-    {
-      "type": "completeness|sourcing|contradiction|logic|objectivity",
-      "description": "问题描述",
-      "severity": "高|中|低",
-      "suggestion": "改进建议"
-    }
-  ],
-  "needs_revision": true/false
-}"""
-        }, {
-            "role": "user",
-            "content": f"原始任务：{task}\n\n研究报告：\n{report}"
-        }],
-        response_format={"type": "json_object"},
-        temperature=0,
-    )
-
-    return json.loads(response.choices[0].message.content)
-```
-
-`check_report_quality` 是 [Reflection](/agent/reflection-agent/) 在研究场景的直接应用。它对报告做五个维度的审查，如果发现严重问题（`needs_revision = true`），Agent 可以基于审查意见修正报告。
-
----
-
-## 第五步：组装完整的 Agent
-
-把规划、研究、综合三个模块串起来：
-
-```python
-# agent/core.py
-import asyncio
-import json
-from agent.planner import create_research_plan
-from agent.researcher import research_question
-from agent.synthesizer import synthesize_report, check_report_quality
-from tools.notes import ResearchNotes
-
-
-async def run_research_agent(
-    task: str,
-    max_revision_rounds: int = 1,
-    verbose: bool = True,
-) -> str:
-    """
-    执行完整的研究流程：规划 → 研究 → 综合 → 审查 → 输出。
-    """
-    notes = ResearchNotes()
-
-    # ============ 阶段一：研究规划 ============
-    if verbose:
-        print("\n📋 正在制定研究计划...\n")
-
-    plan = await create_research_plan(task)
-
-    if verbose:
-        print(f"  任务理解：{plan['task_understanding']}")
-        print(f"  研究问题：{len(plan['research_questions'])} 个")
-        for q in plan["research_questions"]:
-            print(f"    {q['id']}. {q['question']}")
-        print()
-
-    # ============ 阶段二：逐一研究每个问题 ============
-    if verbose:
-        print("🔍 开始研究...\n")
-
-    question_results = []
-    for rq in plan["research_questions"]:
-        if verbose:
-            print(f"  ── 研究问题 {rq['id']}：{rq['question']}")
-
-        result = await research_question(
-            question=rq["question"],
-            suggested_queries=rq.get("suggested_queries", []),
-            notes=notes,
-            max_iterations=8,
-        )
-        question_results.append(result)
-
-        if verbose:
-            print(
-                f"     完成：{result['iterations']} 轮检索，"
-                f"收集 {result['notes_collected']} 条笔记\n"
-            )
-
-    # ============ 阶段三：综合报告 ============
-    if verbose:
-        total_notes = len(notes.get_notes()["notes"])
-        total_sources = len(notes.get_all_sources())
-        print(f"📝 生成研究报告（共 {total_notes} 条笔记，{total_sources} 个来源）...\n")
-
-    report = await synthesize_report(task, plan, question_results, notes)
-
-    # ============ 阶段四：质量审查 ============
-    for round_idx in range(max_revision_rounds):
-        if verbose:
-            print(f"🔎 质量审查（第 {round_idx + 1} 轮）...")
-
-        quality = await check_report_quality(task, report)
-
-        if verbose:
-            print(f"   质量评分：{quality['overall_score']}/10")
-            if quality["issues"]:
-                for issue in quality["issues"]:
-                    print(f"   [{issue['severity']}] {issue['description']}")
-
-        if not quality.get("needs_revision", False):
-            if verbose:
-                print("   ✓ 报告质量达标\n")
-            break
-
-        # 如果需要修正，把审查意见传给综合模块重新生成
-        if verbose:
-            print("   → 正在修正报告...\n")
-
-        revision_prompt = (
-            f"原始报告需要修正。审查意见：\n"
-            + "\n".join(
-                f"- [{i['severity']}] {i['description']}：{i['suggestion']}"
-                for i in quality["issues"]
-            )
-        )
-        # 此处简化为重新生成，实际可以做更精细的局部修正
-        report = await synthesize_report(
-            task + "\n\n" + revision_prompt,
-            plan,
-            question_results,
-            notes,
-        )
-
-    # 附加来源列表
-    sources = notes.get_all_sources()
-    if sources:
-        report += "\n\n---\n\n## 参考来源\n\n"
-        for i, url in enumerate(sources, 1):
-            report += f"{i}. {url}\n"
-
-    return report
-
-
-# 入口
-if __name__ == "__main__":
-    task = input("请输入研究任务：")
-    result = asyncio.run(run_research_agent(task))
-    print("\n" + "=" * 60)
-    print(result)
-```
-
----
-
-## 一次完整的执行过程
-
-以"分析 2025 年主流 Coding Agent 的技术架构差异"为例：
-
-```text
-📋 正在制定研究计划...
-  任务理解：对比主流 Coding Agent 的技术架构
-  研究问题：4 个
-    1. 2025 年主流 Coding Agent 有哪些？
-    2. 它们各自的核心架构设计是什么？
-    3. 工具系统和上下文管理有什么关键差异？
-    4. 开发者的实际使用体验和评价如何？
-
-🔍 开始研究...
-
-  ── 研究问题 1：2025 年主流 Coding Agent 有哪些？
-     [搜索] "top coding agents 2025 comparison"
-     [搜索] "Claude Code vs Cursor vs Copilot 2025"
-     [读取] https://...一篇对比文章...
-     [笔记] Claude Code、Cursor、GitHub Copilot、Cline 为主流选手 [high]
-     完成：4 轮检索，收集 3 条笔记
-
-  ── 研究问题 2：它们各自的核心架构设计是什么？
-     [搜索] "Claude Code architecture design"
-     [读取] https://...Anthropic 的技术博客...
-     [笔记] Claude Code 使用 Agent 循环 + 本地工具集 [high]
-     [搜索] "Cursor agent mode implementation"
-     [读取] https://...Cursor 的文档...
-     [笔记] Cursor 区分 Tab 补全和 Agent 模式 [medium]
-     [搜索] "Cline architecture open source"
-     ...
-     完成：7 轮检索，收集 6 条笔记
-
-  ── 研究问题 3：...
-     完成：5 轮检索，收集 4 条笔记
-
-  ── 研究问题 4：...
-     完成：5 轮检索，收集 5 条笔记
-
-📝 生成研究报告（共 18 条笔记，12 个来源）...
-
-🔎 质量审查（第 1 轮）...
-   质量评分：8/10
-   [中] 缺少对 Cline 工具调用机制的具体说明
-   ✓ 报告质量达标
-
-========================================
-# 2025 年主流 Coding Agent 技术架构分析
-
-## 一、主流 Coding Agent 全景
-
-据多个来源 [1][2] 的对比...
-...
-```
-
-注意几个关键行为：
-- 研究问题 2 用了 7 轮检索——因为它需要分别搜索多个产品的架构细节
-- 笔记的置信度标注区分了官方文档（high）和社区讨论（medium）
-- 质量审查在第一轮就通过了，因为信息收集阶段已经做了足够的深度
-
----
-
-## 关键工程决策
-
-### 为什么先规划再研究
-
-直觉上，直接搜索似乎更快。但没有规划的研究有两个常见问题：
-
-1. **搜索漫无目的**：Agent 搜了很多东西，但这些信息之间没有逻辑关系，最终无法组织成连贯的报告。
-2. **重复搜索**：同一个概念被反复用不同关键词搜索，因为 Agent 没有全局视图来判断"这个问题已经够了"。
-
-规划的成本很低（一次 LLM 调用），但它给后续的每一次检索都提供了明确的目标。
-
-### 为什么用笔记而不是直接传递原文
-
-把搜索结果和网页内容直接拼接进上下文，会快速耗尽上下文窗口。更重要的是，原始内容里大量信息是无关的——一篇 5000 字的文章里可能只有 2 句话和当前研究问题相关。
-
-笔记机制让 Agent 在阅读时就完成了**信息提取和压缩**：只保留关键事实，标注来源和置信度。这和 [上下文与记忆那篇](/agent/context-memory-state-management/) 里讨论的"压缩以保持上下文预算"是同一个策略。
-
-### 信息矛盾怎么处理
-
-研究过程中经常遇到不同来源说法矛盾的情况。比如一个来源说"LangGraph 的市场份额在增长"，另一个说"LangGraph 的满意度在下降"。这两个说法可能同时为真（用的人多了但体验变差了），也可能其中一个是错的。
-
-我们在 `synthesize_report` 的 prompt 里明确要求："如果不同来源对同一事实有矛盾的说法，明确指出矛盾并说明你的判断依据。"同时，笔记的置信度标注帮助 Agent 在矛盾中做权衡——来自官方文档的 `high` 优先于来自个人博客的 `low`。
-
----
-
-## 常见失败模式
-
-### 搜索深度不够
-
-Agent 只用了最初的推荐查询词搜索一次就停了，没有根据搜索结果调整策略继续深入。通常发生在 system prompt 里"信息充分"的标准太宽松时。
-
-修复：在 prompt 里明确要求"至少从 2 个独立来源验证关键事实"，并在 `get_notes` 的返回中加入覆盖度分析。
-
-### 信息收集多但综合差
-
-Agent 收集了很多笔记，但最终报告只是简单地分类列举，没有真正的分析和综合。
-
-修复：在综合 prompt 里区分"信息汇总"和"分析报告"，要求 Agent 在列举事实之后给出自己的分析判断——趋势是什么、为什么、对谁有影响。
-
-### 来源同质化
-
-Agent 的多轮搜索找到的都是同一类来源（比如全是技术博客），缺少多样性。
-
-修复：在研究规划阶段加入来源多样性要求——比如"至少包含官方文档、社区讨论和第三方评测三类来源"。
-
-### 过度搜索不停止
-
-Agent 总是觉得信息不够，不停地追加搜索。这和 [Reflection 那篇](/agent/reflection-agent/) 里讨论的"反思循环"是类似的问题。
-
-修复：`max_iterations = 8` 是硬上限。同时在 prompt 里告诉 Agent "不需要完美，只需要足够回答核心问题"。
-
----
-
-## 从这里出发，能扩展什么
-
-这个 Research Agent 的骨架可以向几个方向演进：
-
-**知识库集成**：在 `web_search` 之外加入本地知识库的向量检索。Agent 可以同时从互联网和私有文档中获取信息，这是企业级 Research Agent 的标准配置。工具层加一个 `search_knowledge_base`，Agent 核心不需要改动。
-
-**多 Agent 协作**：把"搜索"和"综合"拆成两个 Agent——一个 Research Agent 专注于信息收集，一个 Analyst Agent 专注于分析综合。它们通过 [多 Agent 协作](/agent/multi-agent-collaboration/) 里讨论的 Handoff 模式交接上下文。
-
-**持久化记忆**：把 `ResearchNotes` 持久化到数据库，让 Agent 记住之前的研究成果。下次研究相似主题时，可以先查阅历史笔记，减少重复搜索。这是 [记忆的四种形态](/agent/memory-types-and-design/) 里讨论的"语义记忆"在研究场景的应用。
-
-**报告格式化**：把输出从纯文本 Markdown 扩展为带图表的报告。可以集成图表生成工具，让 Agent 在综合阶段自动生成数据可视化。
-
----
+报告中的事实句采用保守规则：必须逐字等于已保存的原文摘录。程序可以检查引用是否存在、摘录来自哪里，却不能由此证明原文真实、来源相互独立或问题已经研究充分。模型审查再检查相关性和误导性概括，仍需人工判断其意见。
 
 ## 安装与运行
 
+[下载完整示例 ZIP](/downloads/agent-examples/research.zip)。包内有入口、研究流程、来源工具、固定响应、测试和合成语料，也包含共享的异步运行层与固定版本依赖。
+
+需要 Python 3.11 或更新版本。以下是解压后的 POSIX shell 命令：
+
 ```bash
-pip install openai httpx
-
-export OPENAI_API_KEY=sk-...
-export TAVILY_API_KEY=tvly-...  # 用于网络搜索
-
-python agent/core.py
+unzip research.zip -d research-demo
+cd research-demo
+python3.11 -m venv .venv
+. .venv/bin/activate
+python -m pip install --requirement requirements.txt
+python app.py
+python -m unittest -v test_app
 ```
 
-Tavily 提供免费额度，适合开发测试。如果不想用 Tavily，把 `tools/search.py` 替换为 SerpAPI 或 Brave Search 的实现即可，Agent 核心代码不需要任何修改——这就是工具层和核心层解耦的好处。
+依赖中的 `openai==3.33.0`、`jsonschema==4.26.0` 由共享运行层提供。默认演示不调用模型 API，不需要密钥。入口是 `python app.py`，没有额外安装一个名为 `research-agent` 的命令，也不需要拼接旧教程中的多个零散模块。
 
----
+<a id="一次完整的执行过程"></a>
 
-## 总结
+2026-10-17，在 Python 3.11.16 下运行默认入口，实际得到以下输出：
 
-Research Agent 和 Coding Agent 的核心架构是一样的——都是 ReAct 循环驱动的工具调用。区别在于工具集的类型和 Agent 的推理重心：Coding Agent 的重心在"怎么改代码"，Research Agent 的重心在"怎么找信息和怎么综合信息"。
+```text
+mode=fixture (本地固定响应；无联网检索)
+corpus=本地合成语料：虚构的南岚团队规程，不代表现实政策
+plan.questions=2
+tool.search=2 tool.fetch=2 notes=2
+check revision=0 passed=false issues=unknown_citation:N999
+check revision=1 passed=true issues=none
+status=complete
+citations=N1:S1,N2:S2
+workspace=temporary (已清理；用 --workspace 显式保留)
+```
 
-Agentic RAG 和传统 RAG 的核心区别是决策权的转移。传统 RAG 里"检索什么"和"检索几次"由代码硬编码；Agentic RAG 里这些决策由 Agent 自主做出。这让它能应对无法预定义检索策略的复杂研究任务。
+首稿的 `N999` 是固定响应故意写入的错误笔记号。检查器拒绝它，整理步骤收到反馈后改用实际保存的 `N1`、`N2`，第二轮检查通过。日志把“修订”与“修订后复查”分别展示出来。
 
-研究规划是高投入回报比的环节。一次 LLM 调用的成本，换来的是后续每一次检索都有明确目标。没有规划的研究就像没有地图的探险——你可能也能到达目的地，但路上会浪费大量时间在无关的方向上。
+默认文件位于本次系统临时目录，结束后清理。加上 `--workspace ./research-output`，就会在显式目录下创建一个新的 `run-<随机编号>/`，保留计划、文本快照、笔记、每稿报告、检查结果和最终 Markdown。已有运行不会被覆盖。这些文件可能包含你的原始资料，需要按资料本身的权限保管。
 
-信息综合比信息收集更难，也更能体现 Agent 的价值。任何人都可以搜索到碎片信息，但把碎片组织成有逻辑、有来源、对矛盾做了处理的结构化报告——这是 Research Agent 的核心能力。
+<a id="传统-rag-的局限"></a>
+
+## 为什么需要研究循环
+
+一次查询后直接回答，适合资料范围与问题都很明确的情况。研究型任务常常要先确定比较对象，再寻找某个对象的具体记录，最后补查冲突或缺口。第一轮找到的内容可能改变下一次查询。
+
+![传统 RAG 与 Agentic RAG 的对比](rag_vs_agentic_rag.svg)
+
+*图 1：左边是本文用于比较的一次检索基线；右边允许根据已有结果再次检索。图展示决策方式，不能证明多轮一定更准确。*
+
+<a id="第二步研究规划器"></a>
+
+<a id="为什么先规划再研究"></a>
+
+规划先把任务拆成可回答的问题，并提供初始查询词。这个步骤与 [Planning](/agent/planning-plan-and-execute/) 中的任务分解相同：每个问题需要说明要找什么证据。规划也会漏分问题，本例只限制为 1～4 个问题，并没有把数量当成研究充分的证明。
+
+模型能决定下一步，程序仍要限制它能做多少步。这里每题最多 8 轮模型交互、12 次工具调用；整项研究还有统一截止时间。达到上限只说明必须停止，不表示已经得到答案。
+
+<a id="整体架构"></a>
+
+<a id="项目结构"></a>
+
+## 项目结构与职责
+
+```text
+research/
+├── app.py                 # 参数、模型创建、结果保存、关闭客户端
+├── pipeline.py            # 规划、研究工具循环、整理、检查和修订
+├── sources.py             # 真实本地语料搜索与读取
+├── fixture_model.py       # 明确标记的固定决策策略
+├── fixtures/               # 合成语料清单与两份文本
+├── test_app.py             # 包括成功、失败与超时的测试
+├── agent_runtime.py        # ZIP 注入的共享异步运行层
+└── requirements.txt        # ZIP 生成的固定版本依赖
+```
+
+![Research Agent 整体架构](architecture.svg)
+
+*图 2：用户任务、研究控制和工具执行仍分别负责不同工作。图中的检索工具是概念位置，本例在这个位置接入本地语料，不抓取网页。*
+
+与 [CLI Coding Agent](/agent/build-cli-coding-agent/) 一样，模型只请求工具，宿主执行工具。区别在于这里处理的是资料和证据，不执行代码修改或 Shell 命令。所有阶段共用同一个异步 `model.complete(messages, tools)` 接口；live 模式由共享 `model_from_env()` 创建客户端，并在入口的 `finally` 中关闭，避免把同步调用的返回值放在 `await` 后面。
+
+<a id="第一步定义工具集"></a>
+
+<a id="第三步agentic-rag-研究循环"></a>
+
+## 第一步：准备真实可读的资料
+
+`SourceProvider` 提供两个异步接口：`search(query, limit)` 查找候选来源，`fetch(source_id)` 返回完整的受限文本及来源信息。当前实现是 `CorpusProvider`：按词在用户选定文件的 ID、标题和正文中检索，搜索摘要只用来选文件；真正记笔记前，必须通过读取工具取得正文。
+
+这延续了 [工具接口设计](/agent/tool-interface-design/) 中的分工：工具应提供内容与错误，不能让一个空列表同时表示“没有匹配”和“读取失败”。空搜索会返回空 `hits`；文件缺失、超限或无法解码会返回工具错误。模型可以据此调整行动，没有取得证据时，宿主不会进入报告发布分支。
+
+换入自己的资料时，创建一个目录，放入 UTF-8 纯文本或 Markdown 文件，再写清单：
+
+```json
+{
+  "label": "我的产品资料",
+  "documents": [
+    {"id": "Policy1", "title": "产品记录规则", "file": "policy.txt"}
+  ]
+}
+```
+
+这是清单格式示例，`policy.txt` 的内容由你提供，不是假设已经抓取到的网页。`file` 相对于清单目录；可选的 `publisher`、`published_at`、`url` 保存书目信息，其中 URL 不会被抓取或核验。
+
+```bash
+python app.py --corpus ./my-corpus/corpus.json \
+  --task '整理这份资料对研究记录的要求。' \
+  --workspace ./research-output
+```
+
+仍使用 fixture 时，固定策略会按前两份资料的 ID 搜索，并从真实读取结果中选首个至少 12 字符的非空行。它能验证自定义资料是否走通接口，不能理解任意研究任务。真实内容是否相关，需要读者自行核对。
+
+<a id="关键工程决策"></a>
+
+## 第二步：从正文保存可追溯的笔记
+
+`save_note` 不接受一个随意填写的 URL。它要求来源已经在本轮被读取，摘录必须真实出现在这份文本中。宿主随后分配笔记号，并记录以下信息：
+
+| 字段 | 它让后续检查器知道什么 |
+| --- | --- |
+| `source_id` | 摘录属于哪份已读取资料 |
+| `source_sha256` | 本次读取的内容版本；摘要不能证明资料权威 |
+| `start`、`end` | 摘录在文本中的 Python 字符区间 `[start, end)`，不是字节偏移 |
+| `question_id` | 笔记要回答哪个研究问题 |
+| `quote` | 后续报告实际引用的原文 |
+
+`Source` 另外保存标题、相对文件名、读取时间和可选书目信息。`sources.json` 中的文本快照、`notes.json` 中的摘录和 `report.md` 中的引用可以相互核对；程序不会把模型自报的“高置信度”当成真实性证据。
+
+<a id="为什么用笔记而不是直接传递原文"></a>
+
+笔记仍然是一种取舍。[上下文管理](/agent/context-memory-state-management/)解释过，把全部原文长期放在对话里会增加开销。这里保留摘录便于整理，但也可能漏掉同段后面的限制条件。因此，模型审查会同时收到来源文本；真实研究仍应回看上下文，而不能只数笔记条数。
+
+<a id="第四步信息综合与报告生成"></a>
+
+<a id="搜索深度不够"></a>
+
+<a id="信息收集多但综合差"></a>
+
+## 第三步：整理、检查、修订，再检查
+
+![Research Agent 执行流程](research_flow.svg)
+
+*图 3：研究得到笔记后进入整理与检查。实现中每次修订都会重新检查；达到修订上限仍失败时，只保存失败草稿，不返回接受的报告。*
+
+整理阶段按研究问题组织 `claims`，每项包含事实文本和笔记号。本例要求事实文本逐字等于对应摘录，引用必须指向本轮笔记。这种摘录式综合限制了表达自由，却能直接检查“报告声称引用的内容是否真的存在”。它不接受给一条新结论贴上旧笔记号。
+
+质量门槛分两层。程序先检查 JSON 格式、问题覆盖、引用号、来源摘要和摘录定位；随后，模型审查收到任务、草稿、笔记、来源文本及机器检查结果，判断内容是否相关、是否遗漏关键方面、是否把资料说得过于确定。只有两层都通过，才接受报告；模型说“通过”不能推翻未知引用等机器错误。
+
+这与 [Reflection](/agent/reflection-agent/) 中的再次审视有关，但控制权在程序里：审查返回失败时，整理器必须收到上一稿及具体反馈，改完还要再审。`--max-revisions 2` 表示首稿之外最多再改两稿，因此最多检查三次；`--max-revisions 0` 也会检查首稿，失败就停止，不会跳过质量门槛。
+
+当前修订只使用已有笔记，不会自动补搜资料。如果发现来源不够，应把问题保留为缺口，或由用户补充语料重新运行。反复改写不能制造证据。
+
+<a id="信息矛盾怎么处理"></a>
+
+<a id="来源同质化"></a>
+
+报告的 Markdown 引用由宿主根据实际笔记生成。标题与“资料局限”仍是模型撰写的文字，需要人工阅读；机器通过只适用于已定义的检查项目。原文可能错误或过时，多个文件可能转述同一来源，摘录也可能与问题不相关，这些都不由内容摘要或逐字匹配自动解决。
+
+<a id="第五步组装完整的-agent"></a>
+
+## 完整入口
+
+以下入口与下载包中的 `app.py` 来自同一文件。`pipeline.py`、`sources.py` 和固定响应模型的完整实现也在 ZIP 中；没有需要读者自行补齐的模型调用或搜索占位函数。
+
+{{< agent-code example="research" file="app.py" >}}
+
+## 使用 live 模型
+
+在自己的终端设置 `OPENAI_API_KEY` 和 `OPENAI_MODEL`；所选服务和模型应支持 Chat Completions 工具调用。兼容服务可另设 `OPENAI_BASE_URL`。不要将凭据写进清单或工作文件。
+
+```bash
+python app.py --live --corpus ./my-corpus/corpus.json \
+  --task '比较这些资料对记录与复核的要求，指出未覆盖的问题。' \
+  --timeout 60 --request-timeout 10 --max-revisions 2 \
+  --workspace ./research-output
+```
+
+`--live` 必须显式选择语料。它会将任务、目录、读取到的正文和笔记发送给配置的模型服务，使用前应确认你有权这样处理这些资料。来源工具仍只接受本地清单中的 ID，不接受任意 URL，也不会抓取公网、私网或云元数据服务；这是一项工具实现的限制，不是操作系统网络沙箱。
+
+本次环境没有模型或搜索服务密钥，因而没有验证真实模型的规划与研究质量，也没有运行外部搜索。live 客户端的创建入口、异步协议和关闭路径可通过本地测试核对，不能据此声称外部服务一定可用。
+
+<a id="常见失败模式"></a>
+
+<a id="过度搜索不停止"></a>
+
+## 预算、失败与复现证据
+
+研究阶段的总期限覆盖规划、所有问题的工具循环、整理、审查和修订，不会在进入下一阶段时重新获得完整时间。另有单次模型请求与一次来源工具等待的期限。异步取消的行为依据 [Python 的超时与取消文档](https://docs.python.org/3.11/library/asyncio-task.html#timeouts)；它不会强行终止工作线程中已经开始的文件读取。
+
+本例默认使用以下上限：
+
+| 限制 | 默认值 |
+| --- | --- |
+| 总研究期限 / 单次请求或来源工具等待 | 60 秒 / 10 秒 |
+| 每题模型轮数 / 工具调用数 | 8 / 12 |
+| 不同已读取来源 / 笔记条数 | 8 / 24 |
+| 语料清单 / 每份文本大小 | 32,000 字节 / 24,000 字节 |
+| 清单资料数 / 模型响应大小 | 20 份 / 32,000 字符 |
+| 修订次数 | 2，另加首稿检查 |
+
+内容过大时直接报错，不会裁剪掉限制条件后假装读完。畸形清单、重复来源号、路径越界、符号链接、空文本、无效 UTF-8 和 NUL 内容都会被拒绝。路径检查面向用户控制、没有其他进程并发改换路径的语料目录；它不提供操作系统隔离，相关边界仍应按 [Guardrails](/agent/guardrails-safety-boundary/) 理解。
+
+`complete` 退出 0；`quality_failed`、`limit`、`error` 退出 1；配置错误退出 2；模型等待或整体超时退出 124。来源工具超时先作为工具错误返回模型，如果始终没有证据，流程失败。失败的最后一稿保存在 `drafts.json`，不会被标成最终通过报告。
+
+本次本地 `unittest` 包含 27 项测试并全部通过，覆盖两种入口、自定义语料、实际搜索与读取、来源与摘录校验、无依据结论、空结果和读取错误、请求与总期限、取消、轮数与修订耗尽，以及 live 客户端关闭。测试也把一组响应交给共享 `ScriptedModel` 回放，确认工具调用确实经过公共循环，而不是直接调用测试用的伪搜索函数。
+
+同一份文件还通过主打包器的清单制作了临时平铺 ZIP：解压后移除 `PYTHONPATH`，`python app.py`、`python -m app`、`python .` 和这 27 项测试均通过。临时包在检查后已清理。
+
+这些测试使用真实文件和合成资料，没有测量检索召回率、模型事实正确率或开放网络研究效果。复现日期为 2026-10-17，Python 版本为 3.11.16；依赖版本由 ZIP 中的 `requirements.txt` 固定。源文件与测试是本文实现行为的依据，异步接口与内容摘要分别参考 [Python asyncio](https://docs.python.org/3.11/library/asyncio-task.html) 和 [hashlib](https://docs.python.org/3.11/library/hashlib.html)，资料核对日期同为 2026-10-17。
+
+<a id="从这里出发能扩展什么"></a>
+
+## 从这里继续扩展
+
+要接入外部检索，可以替换 `SourceProvider` 的搜索和读取实现，但还需要处理真实 HTTP 状态、正文限制、超时、重定向和网络访问范围。本例没有安装一个隐含的网络搜索后端，也不把本地合成结果包装成网络发现。
+
+研究与分析也可以拆成多个执行者，按 [多 Agent 协作](/agent/multi-agent-collaboration/) 的交接方式传递计划和笔记。若把笔记保留为 [长期记忆](/agent/memory-types-and-design/)，下次复用前还需要核对资料是否改变，以及旧摘录是否适用于新问题。文件多、模型多或历史笔记多，都不能替代来源核验。
+
+<a id="总结"></a>
+
+从本例已经能观察到：搜索结果先引导读取，读取结果才能形成笔记，报告引用笔记，检查反馈驱动修订，每次修订后再检查。能沿着这条记录查清每条引用的来处，是扩大研究范围之前值得先完成的工作。
 
 ---
 
 *上一篇：[Guardrails：如何约束 Agent 不做错事](/agent/guardrails-safety-boundary/)*
 
-*下一篇预告：带 Guardrails 的文件管理 Agent——当 Agent 的操作可能不可逆时，安全护栏怎么嵌入执行循环*
+*下一篇：[带 Guardrails 的文件管理 Agent](/agent/build-file-management-agent/)*

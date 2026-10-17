@@ -3,8 +3,8 @@ title = "上下文与记忆：Agent 为什么会在长任务中失去方向，�
 date = 2026-03-22T20:30:00+08:00
 draft = false
 author = "Hex4C59"
-description = "解释 Agent 在长任务中出现“失忆”、目标漂移与重复调用工具的根本原因，并给出可落地的状态管理设计。"
-summary = "从 context window、工作/情节/语义记忆分层出发，系统分析长任务中的记忆问题，并给出任务状态对象、上下文压缩、滑动窗口与检查点等工程模式。"
+description = "解释模型本轮输入与长期记录的区别，用可运行的字符预算包装器保护当前任务、完整工具交换和结构化计划状态。"
+summary = "从记忆分层讲到调用前预算检查：保留当前任务和完整工具交换，按整轮裁剪历史，装不下必要输入时拒绝请求；配套异步规划模块提供可验收的步骤状态和截止时间。"
 tags = ["记忆", "上下文窗口", "状态管理"]
 categories = ["ai"]
 series = ["agent-engineering"]
@@ -15,24 +15,24 @@ topics = ["context-window", "memory", "state-management", "agent", "long-horizon
 frameworks = ["OpenAI", "Anthropic"]
 ShowToc = true
 source_kind = "original"
-lastmod = 2026-03-23T04:46:29+00:00
+lastmod = 2026-10-17
 +++
 
 在前两篇文章里，我们把 Agent 的核心结构拆清楚了：它需要目标、上下文、决策能力、执行能力和反馈闭环；而 Tool Use 是让它真正能行动的关键接口。
 
 但有一个问题一直没有正面回答：**当任务变长、工具调用变多、对话轮次增加之后，Agent 为什么开始犯低级错误、忘记之前的结论、甚至原地打转？**
 
-这篇文章就专门回答这个问题，以及如何设计状态管理来解决它。
+本文面向会写简单代码、了解工具调用的读者，说明程序怎样保存任务进度，并在下一次调用模型前挑选需要的信息。读完后，你应能区分“存过的信息”和“模型这一轮实际看见的信息”。后面的机制模块可以直接运行并测试，使用共享异步模型接口，不依赖未定义的客户端。它实现请求预算和计划状态；长期存储属于另一项职责，见[持久记忆实战](/agent/build-persistent-memory-agent/)。
 
 ---
 
 ## 先给结论
 
-1. **Agent 的“失忆”不是模型变笨了，而是上下文窗口的物理限制和信息质量问题共同导致的。**
-2. **Context Window 是 Agent 的工作记忆，它有容量上限，而且越靠后的信息越重要。** 如何填充这个窗口，比窗口多大更关键。
-3. **Agent 需要三类记忆：工作记忆（当前上下文）、情节记忆（历史执行记录）、语义记忆（可检索的知识库）。** 大多数失败的 Agent 系统只实现了第一类。
-4. **状态管理的本质是：在每一轮推理前，确保模型拿到的是“对当前决策最有价值的信息”，而不是“完整的历史记录”。**
-5. **好的状态管理不是让 Agent 记住更多，而是让它在任何时刻都知道自己在哪、做了什么、下一步应该做什么。**
+1. **先检查模型这一轮实际收到了什么。** 目标或证据可能没有进入请求，也可能混在大量无关内容里；这些原因需要与工具本身出错区分。
+2. **Context Window（上下文窗口）是模型本轮能接收的信息范围，有容量上限。** 信息放在哪里、是否与当前任务相关，也会影响模型能否利用它，不能只看窗口大小。
+3. **本文区分三类记忆：工作记忆（当前上下文）、情节记忆（历史执行记录）、语义记忆（可检索的知识库）。** 按任务需要选择，不能只靠不断追加对话保存全部进展。
+4. **状态管理在每轮调用前选择并检查输入。** 当前目标、必要状态和工具协议不能被随意切断；历史信息可以按明确规则裁剪。
+5. **状态应来自实际操作和验收。** 保存了一个计划对象，不代表下一次模型请求已经包含它，也不代表被标为完成的步骤确实成功。
 
 ---
 
@@ -42,15 +42,15 @@ lastmod = 2026-03-23T04:46:29+00:00
 
 ### Context Window 的本质
 
-语言模型没有持久化的内部状态。每次调用模型，它看到的只有当前传入的 messages 列表。它没有“上一次调用时记得什么”，也没有“后台一直在运行的记忆”。
+在本文的 messages 调用方式中，应用每次都要准备本轮输入；模型不会因为上一轮处理过某条结果，就自动在下一轮获得它。LLM（Large Language Model，大语言模型）依赖当前提供的内容继续生成。
 
-所谓的“对话历史”，本质上是每次调用时把之前的消息都重新传给模型。模型每次都是从头看完整个历史，然后生成下一条消息。
+因此，应用若要让模型参考历史，就要把相关消息重新放进本轮输入。保存在数据库或日志中、却没有传给模型的记录，并不属于这一轮的上下文。
 
 这意味着两件事：
 
-**第一，context window 是有上限的。** 不管是 128k 还是 200k tokens，它是有限的。当历史消息 + 工具结果 + 当前输入超过这个上限，要么截断，要么报错。
+**第一，context window 是有上限的。** 具体容量由所选模型和接口决定。当历史、工具结果、当前输入和工具定义一起超过可接受范围时，请求就可能失败。本例另外执行可复查的字符预算，不把某个窗口参数当成已经生效的长度检查。
 
-**第二，模型对上下文的注意力不是均匀分布的。** 研究表明，模型对上下文开头和结尾的注意力更高，对中间部分的注意力较弱——这就是所谓的“Lost in the Middle”问题。当你的关键信息被淹没在大量工具调用结果的中间，模型很容易“看不见”它。
+**第二，信息放进窗口，不等于模型一定能用好。** “Lost in the Middle”描述的是这类现象：某些实验中，放在长输入中部的信息比开头或结尾更难被模型利用。对状态管理来说，应避免把关键目标和结论埋在大量无关结果中；这不等于“越靠后的信息永远越重要”。
 
 ### 工具调用是上下文的主要消耗者
 
@@ -61,9 +61,9 @@ lastmod = 2026-03-23T04:46:29+00:00
 [tool]      → tool_result: {content: "...搜索结果，可能几百到几千 tokens..."}
 ```
 
-如果一个任务需要 20 次工具调用，而每次工具结果平均 500 tokens，光工具结果就消耗了 10,000 tokens。再加上系统提示词、用户消息、模型的中间推理，context window 消耗得非常快。
+假设一个任务调用工具 20 次，每次结果平均 500 tokens，仅结果就合计 10,000 tokens。这里是按给定条件计算的示例，不是实际测量。再加上系统提示词、用户消息、模型的中间推理，context window 消耗得非常快。
 
-更麻烦的是：**这些工具结果大多数是“用完就没用了”的**。第 3 次搜索的结果，在第 15 次推理时可能完全不相关，但它仍然占据着宝贵的 context window 空间。
+更麻烦的是：**旧工具结果的后续用途会变化**。第 3 次搜索的结果，在第 15 次推理时可能完全不相关，但它仍然占据着宝贵的 context window 空间。
 
 ### 失忆的三种典型表现
 
@@ -79,7 +79,7 @@ Agent 忘记了几轮前已经查过某个信息，再次调用相同的工具�
 
 Agent 在第 5 轮得出了“方案 A 不可行”的结论，但在第 12 轮上下文被稀释后，又重新考虑方案 A，甚至给出相反的建议。
 
-这三种表现背后的根本原因是一样的：**关键信息在上下文中的信噪比太低，或者直接被挤出了窗口。**
+这些表现都可能与必要信息没有进入本轮输入有关，也可能来自工具结果错误或状态更新遗漏。先记录实际请求和操作结果，再缩小原因，不能只凭“失忆”这个名称判断。
 
 ---
 
@@ -91,9 +91,9 @@ Agent 在第 5 轮得出了“方案 A 不可行”的结论，但在第 12 轮�
 
 ### 工作记忆（Working Memory）
 
-对应 context window。这是模型每次推理时能直接“看到”的信息，也是唯一能直接影响模型输出的记忆类型。
+对应 context window。这是应用在当前调用中直接提供的信息；外部记录只有被取回并放进请求，才成为本轮可用资料。
 
-特点：**容量有限、访问速度最快、每次推理都会重建。**
+特点：**容量有限，需要按每次请求重新组装。**
 
 工作记忆里应该放什么？只放“当前这一步决策需要的信息”，不是“完整的历史记录”。
 
@@ -115,9 +115,9 @@ Agent 在第 5 轮得出了“方案 A 不可行”的结论，但在第 12 轮�
 
 ### 大多数 Agent 系统只实现了工作记忆
 
-这是最常见的问题。开发者把完整对话历史塞进 messages，然后奇怪为什么 Agent 在长任务里表现越来越差。
+这里讨论的是一种设计问题：开发者只把对话历史追加到 messages，却没有单独维护可回查的执行记录和稳定知识。消息变长后，关键进度更难从中找出。
 
-真正健壮的 Agent 需要三层记忆协同工作：工作记忆处理当前推理，情节记忆支持历史回顾，语义记忆提供稳定的知识基础。
+需要回顾历史、复用知识的长任务，可以让三层协同：程序从执行记录中取回相关步骤，从知识库取回稳定信息，再与当前进度一起放进工作记忆。短任务未必需要全部三层，关键是每类信息有明确去处。
 
 ---
 
@@ -127,282 +127,57 @@ Agent 在第 5 轮得出了“方案 A 不可行”的结论，但在第 12 轮�
 
 ### 模式一：任务状态对象（Task State）
 
-与其让 Agent 从对话历史里“回想”当前进展，不如显式维护一个结构化的任务状态对象，在每轮推理时注入 context。
+与其每次从长对话里推断进度，可以单独保存原目标、待办、已验收步骤和失败原因。配套 `planning.py` 用 `PlanStep` 保存计划内容，用 `StepRecord` 保存执行状态，再通过 `PlanResult` 返回整体状态、当前阶段、尝试次数和修订记录。
 
-```python
-from dataclasses import dataclass, field
-from typing import Optional
-from enum import Enum
+更新顺序很关键：开始操作时记为 `running`；先检查工具循环是否正常结束、是否包含失败工具结果，再执行应用的验收函数；通过后才记为 `complete`。超时、失败和限额不能只换成一句说明文字，再走同一个“标记完成”分支。
 
-class TaskStatus(Enum):
-    IN_PROGRESS = "in_progress"
-    BLOCKED = "blocked"
-    COMPLETED = "completed"
-    FAILED = "failed"
-
-@dataclass
-class SubTask:
-    id: str
-    description: str
-    status: TaskStatus
-    result: Optional[str] = None
-    tool_used: Optional[str] = None
-
-@dataclass
-class TaskState:
-    goal: str                              # 原始目标，永远不变
-    current_focus: str                     # 当前正在做什么
-    completed_subtasks: list[SubTask] = field(default_factory=list)
-    pending_subtasks: list[SubTask] = field(default_factory=list)
-    key_findings: list[str] = field(default_factory=list)   # 关键发现，蒸馏后保留
-    blockers: list[str] = field(default_factory=list)       # 当前阻碍
-    decisions_made: list[str] = field(default_factory=list) # 已经做出的决策
-
-    def to_context_string(self) -> str:
-        """把任务状态转成注入 context 的字符串"""
-        lines = [
-            f"## 当前任务状态",
-            f"**目标**：{self.goal}",
-            f"**当前焦点**：{self.current_focus}",
-            "",
-        ]
-        if self.completed_subtasks:
-            lines.append("**已完成步骤**：")
-            for st in self.completed_subtasks:
-                result_summary = f" → {st.result[:100]}..." if st.result else ""
-                lines.append(f"  - ✅ {st.description}{result_summary}")
-        if self.pending_subtasks:
-            lines.append("**待执行步骤**：")
-            for st in self.pending_subtasks:
-                lines.append(f"  - ⬜ {st.description}")
-        if self.key_findings:
-            lines.append("**关键发现**：")
-            for f in self.key_findings:
-                lines.append(f"  - {f}")
-        if self.decisions_made:
-            lines.append("**已确定决策**：")
-            for d in self.decisions_made:
-                lines.append(f"  - {d}")
-        if self.blockers:
-            lines.append("**当前阻碍**：")
-            for b in self.blockers:
-                lines.append(f"  - ⚠️ {b}")
-        return "\n".join(lines)
-```
-
-每轮推理时，把 `task_state.to_context_string()` 注入 system prompt 或 user message 的开头。这样模型无论看不看历史消息，都能立刻知道任务的当前状态。
-
-```python
-def build_messages(task_state: TaskState, user_input: str, history: list) -> list:
-    system = f"""你是一个任务执行 Agent。
-
-{task_state.to_context_string()}
-
----
-根据以上任务状态，继续执行任务。如果当前焦点已完成，更新任务状态并推进到下一步。
-"""
-    messages = [{"role": "system", "content": system}]
-
-    # 只保留最近 N 轮历史，不是全部
-    recent_history = history[-10:]  # 后面会详细说这个策略
-    messages.extend(recent_history)
-    messages.append({"role": "user", "content": user_input})
-    return messages
-```
-
-这个模式的核心思想是：**把隐式的“对话历史”转化为显式的“结构化状态”**。状态是稠密的、精确的，而历史是稀疏的、充满噪音的。
+状态在程序里还不够。规划模块会在下一步的用户消息中传入原目标、完成标准、当前步骤和已验证摘要，再调用模型。这些信息同样要通过预算检查；无法完整装下时应返回失败，不能静默删掉目标。
 
 ### 模式二：上下文压缩（Context Compression）
 
-当工具结果很长时，不要把原始结果全部存入 messages，而是先压缩再存储。
+压缩可以指模型生成摘要，也可以指按明确规则移除旧信息。两者改变的内容不同：摘要可能漏掉数字、条件和错误原因；直接删除则让这部分证据完全不在当前请求中。需要回查的原始结果应另行保存，不应把输入裁剪误当成永久存储。
 
-```python
-async def compress_tool_result(
-    tool_name: str,
-    raw_result: str,
-    task_context: str,
-    max_tokens: int = 500
-) -> str:
-    """
-    在工具结果进入 context 之前，用一次轻量级 LLM 调用把它压缩成
-    与当前任务相关的关键信息摘要。
-    """
-    if len(raw_result.split()) < 200:
-        # 短结果不需要压缩
-        return raw_result
+本例实现确定性的整组裁剪，不额外请求模型做摘要。它先移除旧用户轮次，再移除当前轮中较早的完整 assistant／tool 交换；保留 system、developer、当前用户任务，以及当前轮最新消息单元。必要信息仍超预算时，拒绝底层模型调用。
 
-    response = await client.chat.completions.create(
-        model="gpt-4o-mini",   # 压缩用便宜模型就够了
-        max_tokens=max_tokens,
-        messages=[
-            {
-                "role": "system",
-                "content": (
-                    "你的任务是提取工具返回结果中与当前任务直接相关的关键信息，"
-                    "去除无关内容，输出简洁的摘要。"
-                    "保留具体的数据、结论、错误信息。不要添加分析，只做提取和压缩。"
-                )
-            },
-            {
-                "role": "user",
-                "content": (
-                    f"当前任务上下文：{task_context}\n\n"
-                    f"工具名称：{tool_name}\n"
-                    f"工具返回结果：\n{raw_result}"
-                )
-            }
-        ]
-    )
-    return response.choices[0].message.content
-```
-
-这个模式有几个注意点：
-
-**压缩不是摘要。** 摘要会丢失细节，压缩是在保留关键信息的前提下减少体积。在 prompt 里要明确说“保留具体数据、结论、错误信息”。
-
-**只压缩长结果。** 短结果压缩反而增加开销，设一个阈值，低于阈值直接使用原文。
-
-**压缩本身有成本。** 额外的 LLM 调用意味着延迟和费用。用便宜的模型（gpt-4o-mini、haiku）做压缩，用强模型做推理，是合理的分工。
+这里不用 `raw_result.split()` 估计 token：中文长字符串可能没有空格，工具定义和 JSON 格式也会占用输入。本例明确测量字符，指标是规范 JSON 中 `messages` 与 `tools` 两部分的 Unicode 码点数，不冒充模型的 token 数或 HTTP 请求字节数。
 
 ### 模式三：滑动窗口历史（Sliding Window History）
 
-不要无限追加历史消息，维护一个固定长度的滑动窗口。
+[下载机制示例 ZIP](/downloads/agent-examples/mechanisms.zip)，解压后在该目录执行。需要 Python 3.11 或更新版本，模型使用本地固定回复，不需要凭据：
 
-```python
-class ContextWindow:
-    def __init__(self, max_messages: int = 20, max_tokens: int = 8000):
-        self.messages: list[dict] = []
-        self.max_messages = max_messages
-        self.max_tokens = max_tokens
-        self.archived: list[dict] = []  # 滑出窗口的消息存档
-
-    def add(self, message: dict):
-        self.messages.append(message)
-        self._trim()
-
-    def _trim(self):
-        """
-        裁剪策略：
-        1. 如果消息数量超过上限，把最老的消息移入 archived
-        2. 工具调用消息（assistant + tool）要成对保留或成对移除，
-           避免出现孤立的 tool_result 没有对应的 tool_call
-        """
-        while len(self.messages) > self.max_messages:
-            # 找到第一对完整的 tool_call + tool_result 或普通消息
-            if self.messages[0]["role"] == "assistant" and \
-               hasattr(self.messages[0].get("content"), "__iter__") and \
-               self.messages[1]["role"] == "tool":
-                # 成对移除 tool_call + tool_result
-                self.archived.append(self.messages.pop(0))
-                self.archived.append(self.messages.pop(0))
-            else:
-                self.archived.append(self.messages.pop(0))
-
-    def get_messages(self) -> list[dict]:
-        return self.messages
-
-    def search_archived(self, keyword: str) -> list[dict]:
-        """在归档历史中检索相关消息，用于情节记忆检索"""
-        return [m for m in self.archived
-                if keyword.lower() in str(m.get("content", "")).lower()]
+```sh
+python3.11 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+python -c "import asyncio,json,context_budget; print(json.dumps(asyncio.run(context_budget.demo()),ensure_ascii=False,sort_keys=True))"
+python -m unittest -v test_context_planning
 ```
 
-滑动窗口有一个容易踩的坑：**tool_call 和 tool_result 必须成对出现**。如果把一个 `assistant` 消息（里面包含 tool_call）移走，但保留了它对应的 `tool` 消息，API 会报错。裁剪时要检查消息的配对关系。
+PowerShell 使用 `.venv\Scripts\Activate.ps1` 激活。仓库内工作目录为 `examples/agents/mechanisms`，设置 `PYTHONPATH=../common`；ZIP 根目录已包含共享运行时。
+
+完整实现是 `context_budget.py`。`fit_context` 返回裁剪后的副本和测量报告，不修改原消息；`BudgetedModel` 在每次 `await model.complete(...)` 之前调用它，因此预算不是一个没有参与判断的配置字段。包装器只保留最近 64 份测量报告和总调用次数，完整执行轨迹需要另存，不在这个类里维护一个无限增长的归档列表。
+
+{{< agent-code example="mechanisms" file="context_budget.py" >}}
+
+一条 assistant 消息可能同时请求两个工具，随后就需要两条对应的 tool 结果。这个交换单元包含三条消息，不能只按“最近两条”留下两个结果；assistant 的 `content` 也可能是 `None`，不能用它是否可迭代来识别工具调用。
+
+实现检查 `tool_calls` 数组与调用 ID：每次调用恰好有一个结果，整组保留或整组移除。孤立结果、缺少结果、重复 ID 或中间插入用户消息都会在调用模型之前被拒绝。当前任务是最后一条用户消息，也可以通过 `required_task` 再检查内容是否与调用者指定的任务完全相同。
+
+下面是 2026-10-17 运行 `context_budget.demo()` 的实测返回值。固定模型给出调用选择，四次合成资料读取和每次请求前的裁剪检查都实际执行：
+
+```json
+{"complete_tool_exchanges": true, "current_task_preserved": true, "dropped_exchanges": 2, "limit_characters": 3700, "max_request_characters": 3019, "mode": "fixture", "model_calls": 4, "ok": true, "status": "complete", "tools_executed": ["one", "two", "three", "four"]}
+```
+
+此演示设定 3700 字符上限，实际最大输入为 3019 字符。默认包装器上限为 16000 字符，可由调用者显式选择；换成不同提示或工具说明，测量值也会变。新输入中的任务、工具定义或最新完整交换若装不下，会返回预算错误，底层模型不会被调用。
 
 ### 模式四：显式规划 + 检查点（Planning + Checkpoints）
 
-对于需要多步执行的复杂任务，在开始执行前先让 Agent 生成一个结构化计划，然后在每个检查点更新计划状态。
+计划状态与上下文预算解决两件事：前者记录哪些目标经过验收，后者决定这一轮能否把必要内容完整传入模型。配套规划器也使用 `BudgetedModel`，因此规划、步骤执行和检查点输入都受到同一字符检查。
 
-```python
-async def create_execution_plan(goal: str, context: str) -> dict:
-    """任务开始前，先生成结构化执行计划"""
-    response = await client.chat.completions.create(
-        model="gpt-4o",
-        messages=[
-            {
-                "role": "system",
-                "content": "你是一个任务规划专家。根据给定目标和上下文，生成结构化执行计划。"
-            },
-            {
-                "role": "user",
-                "content": f"""
-目标：{goal}
-上下文：{context}
+规划器在一个总异步截止时间内推进；每步另有等待、工具轮次和调用次数上限。检查点只能替换待执行步骤，不能更改原目标或把已完成证据覆盖掉。重规划次数与实际尝试步数在外层累计，不因新计划对象出现而清零。
 
-请生成执行计划，格式如下（JSON）：
-{{
-  "goal_summary": "一句话总结目标",
-  "steps": [
-    {{
-      "id": "step_1",
-      "description": "步骤描述",
-      "depends_on": [],
-      "success_criteria": "什么情况下这步算完成",
-      "tools_likely_needed": ["tool_name"]
-    }}
-  ],
-  "key_constraints": ["约束条件"],
-  "definition_of_done": "整体任务完成的判断标准"
-}}
-"""
-            }
-        ]
-    )
-    return json.loads(response.choices[0].message.content)
-
-
-async def checkpoint(plan: dict, completed_step_id: str,
-                     result_summary: str, agent_notes: str) -> dict:
-    """每完成一步，调用检查点更新计划状态"""
-    # 更新步骤状态
-    for step in plan["steps"]:
-        if step["id"] == completed_step_id:
-            step["status"] = "completed"
-            step["result_summary"] = result_summary
-            break
-
-    # 让模型评估是否需要调整计划
-    response = await client.chat.completions.create(
-        model="gpt-4o",
-        messages=[
-            {
-                "role": "user",
-                "content": f"""
-当前执行计划：
-{json.dumps(plan, ensure_ascii=False, indent=2)}
-
-刚完成步骤：{completed_step_id}
-执行结果摘要：{result_summary}
-执行者备注：{agent_notes}
-
-请判断：
-1. 是否需要调整后续步骤？（比如某个结果改变了后续的方向）
-2. 如果需要调整，给出调整后的步骤列表
-3. 整体任务是否已经完成？
-
-以 JSON 格式返回：
-{{
-  "needs_replan": true/false,
-  "updated_steps": [...] or null,
-  "task_completed": true/false,
-  "next_step_id": "step_x" or null,
-  "notes": "调整原因或完成说明"
-}}
-"""
-            }
-        ]
-    )
-    checkpoint_result = json.loads(response.choices[0].message.content)
-
-    if checkpoint_result["needs_replan"] and checkpoint_result["updated_steps"]:
-        plan["steps"] = checkpoint_result["updated_steps"]
-
-    return plan, checkpoint_result
-```
-
-显式规划的最大价值是：**它把“任务目标”固化成了一个可以随时查阅的结构化文档**，而不是埋在对话历史的某条消息里。哪怕 context window 只剩下最近 5 条消息，只要规划对象还在，Agent 就不会迷失方向。
-
----
+完整规划源码和运行结果见 [Planning：提前分解目标](/agent/planning-plan-and-execute/)。这套状态转移比“按摘要文字标完成”多了一道实质判断：只有实际执行状态和验收都通过，才允许下游依赖该步。
 
 ## 一个完整的状态管理架构
 
@@ -410,7 +185,7 @@ async def checkpoint(plan: dict, completed_step_id: str,
 
 ![Agent 状态管理架构图](agent_state_management_architecture.svg)
 
-*图 1：一个完整的 Agent 状态管理架构，把任务规划器、任务状态对象、上下文构建器、工作记忆、工具接口层，以及情节记忆与语义记忆连接成一个闭环。*
+*图 1：各类状态的职责关系。规划器提供目标和步骤，状态对象记录操作结果，上下文构建器决定哪些内容进入当前请求；外部事件和知识需要被检索回来才会进入工作记忆。*
 
 各层职责：
 
@@ -418,9 +193,9 @@ async def checkpoint(plan: dict, completed_step_id: str,
 
 **任务状态对象**：实时记录目标、当前焦点、已完成步骤、关键发现、已确定决策。每轮推理前注入 context，是 Agent 方向感的核心锚点。
 
-**上下文构建器**：负责在每轮推理前把“任务状态 + 近期历史 + 必要的语义记忆”组装成 messages 列表，控制总 token 量不超过预算。
+**上下文构建器**：在每轮调用前组装任务状态、所需资料和近期历史，再检查消息及工具定义的总量。本例执行实测字符预算；换成 token 预算时需要适配所用模型的计数方法。
 
-**工作记忆（Messages）**：滑动窗口，只保留最近 N 条，超出的归档到情节记忆。
+**工作记忆（Messages）**：按本轮需要保留消息。本例按完整轮次和工具交换裁剪，原始轨迹如需归档，由调用者另行保存；移出请求不代表已经自动存入数据库。
 
 **情节记忆**：存储完整的历史执行轨迹，支持关键词或向量检索，在需要回溯时按需取回相关片段。
 
@@ -434,11 +209,11 @@ async def checkpoint(plan: dict, completed_step_id: str,
 
 当 context 快满时，有两种选择：直接截断最老的消息，或者先压缩再保留。
 
-一般建议：对工具结果做压缩，对推理过程做截断。工具结果里可能有不可再现的数据（比如搜索结果、API 响应），压缩后保留摘要比直接扔掉要好。推理过程（模型的 assistant 消息）通常可以从任务状态里重建，截断成本更低。
+应先判断哪些信息会改变下一步决定。具体数字、错误码和条件可能需要原文；assistant 的解释也不能假定都能从状态重建。本例只删除完整旧单元，并保留任务和最新交换；如果选择摘要，应另外验证摘要保留了哪些字段、原始证据放在哪里。
 
 ### 决策点 2：什么时候做检查点
 
-不是每步都需要做检查点，过于频繁的规划重评估会增加延迟和成本。实践中通常在以下时机触发：
+不是每步都需要做检查点，过于频繁的规划重评估会增加延迟和成本。可以按自己的任务约定触发条件，例如：
 
 - 完成一个预定义的“阶段性目标”
 - 工具调用失败或返回了意外结果
@@ -449,13 +224,13 @@ async def checkpoint(plan: dict, completed_step_id: str,
 
 语义记忆是稳定的，但不是无限的。放太多会占用工作记忆空间，放太少又起不到作用。
 
-一个可行策略：把语义记忆分成“核心知识”和“扩展知识”两部分。核心知识（用户偏好、项目基础配置）永远注入；扩展知识通过向量检索，只在与当前任务相关时才取入 context。
+一个可行策略：把语义记忆分成“核心知识”和“扩展知识”两部分。先挑选本轮必需的知识和状态，完整放入受保护的当前任务；扩展知识按需检索。“核心”只是业务选择，仍要接受总预算检查，不能据此无限追加输入。
 
 ### 决策点 4：任务状态对象应该多详细
 
 任务状态对象的粒度需要平衡：太粗糙提供不了足够信息，太细致又会膨胀占用 context 空间。
 
-实践中的经验：`key_findings` 和 `decisions_made` 的每一条都应该是一句话的结论性陈述，不是原始数据。原始数据放情节记忆，结论放状态对象。
+例如，可以让 `key_findings` 和 `decisions_made` 保存带证据出处的简短结论，把原始数据另存为可回查记录。但一句话也可能遗漏限制；验收状态要由程序根据结果更新，不能只追求文字短。
 
 ---
 
@@ -463,11 +238,11 @@ async def checkpoint(plan: dict, completed_step_id: str,
 
 **1. 用日志代替状态**
 
-把所有工具调用结果堆进 context，期望模型自己从中提炼状态。这本质上是把状态管理的工作外包给了模型，而模型并不擅长做这件事——它的注意力不是均匀分布的。
+把所有工具调用结果堆进 context，期望模型自己从中提炼状态。这样会让当前进度依赖模型从原始记录中再次推断。应直接检查请求中是否包含正确目标和已验证状态，而不只检查日志是否完整。
 
 **2. 状态对象和 messages 双轨但不同步**
 
-维护了任务状态对象，但忘记在工具调用完成后更新它，导致状态对象和实际执行历史出现偏差。解决方法是在工具执行的 postprocessing 钩子里自动更新状态。
+维护了任务状态对象，但忘记在工具调用完成后更新它，导致状态对象和实际执行历史出现偏差。可以在工具执行后的结果处理步骤中更新状态，也就是 postprocessing 钩子：工具成功、失败或被取消后，由这段程序把实际结果写入状态对象。
 
 **3. 压缩时过度摘要**
 
@@ -481,19 +256,8 @@ async def checkpoint(plan: dict, completed_step_id: str,
 
 ## 总结
 
-Agent 在长任务里失忆，根本原因是：它赖以推理的工作记忆（context window）是有限的，而执行过程产生的信息是无限增长的。不做主动管理，这个矛盾会随着任务复杂度线性恶化。
+程序保存过资料，与模型本轮收到资料，是两件事。状态对象负责记录实际进度；上下文构建器负责选择、组装和检查输入；长期记录需要独立存储并按需取回。
 
-解决方案不是“让 context window 更大”，而是建立有结构的状态管理：
+本例把这一区别落实在调用路径上：每次模型调用前都计数，完整工具交换才可进入请求；当前任务不能被裁掉，必要内容装不下就返回失败。规划状态同样需要操作结果与验收，超时或错误不会因为返回了一句自然语言而变成完成。
 
-- 用**任务状态对象**固化目标和方向，让 Agent 在任何时刻都知道自己在哪
-- 用**上下文压缩**提高工作记忆的信息密度
-- 用**滑动窗口历史**控制 context 体积不失控
-- 用**显式规划和检查点**在长任务中保持执行的连贯性
-- 用**情节记忆和语义记忆**把工作记忆装不下的信息外化存储，按需取回
-
-这些机制组合起来，不是让 Agent 记住更多，而是让它在每一轮推理时拿到的信息都是“当前决策最需要的那些”。
-
-方向感不来自记忆的完整性，而来自状态的清晰度。
-
----
-
+规划与上下文模块共有 29 项本地测试，检查实际异步截止时间、失败状态、重规划与步骤界限、多工具调用整组保留、原消息不变、当前任务保护和调用前拒绝。夹具是固定回复，没有在线模型质量或 token 上限验收；字符预算也不限制外部归档大小或模型输出。

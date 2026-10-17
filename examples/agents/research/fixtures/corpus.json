@@ -1,0 +1,7 @@
+{
+  "label": "本地合成语料：虚构的南岚团队规程，不代表现实政策",
+  "documents": [
+    {"id": "S1", "title": "南岚研究记录规程（合成）", "file": "recording.txt", "publisher": "虚构的南岚团队"},
+    {"id": "S2", "title": "南岚发布复核规程（合成）", "file": "review.txt", "publisher": "虚构的南岚团队"}
+  ]
+}

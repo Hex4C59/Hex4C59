@@ -1,0 +1,18 @@
+{{- $example := .Get "example" -}}
+{{- $file := .Get "file" -}}
+{{- if or (not (in (slice "cli-coding" "file-management" "mcp" "mechanisms" "multi-agent-review" "persistent-memory" "research" "skills") $example)) (not (findRE `^[a-zA-Z0-9_/-]+\.(py|json|md|txt)$` $file)) (in $file "..") -}}
+  {{- errorf "Invalid agent-code example or file in %s" .Position -}}
+{{- else -}}
+  {{- $source := printf "examples/agents/%s/%s" $example $file -}}
+  {{- if not (fileExists $source) -}}
+    {{- errorf "Missing tutorial source %s in %s" $source .Position -}}
+  {{- else -}}
+    {{- $language := strings.TrimPrefix "." (path.Ext $file) -}}
+    {{- $code := readFile $source -}}
+    {{- $length := 3 -}}
+    {{- range findRE "`{3,}" $code -}}{{- $length = math.Max $length (add (len .) 1) -}}{{- end -}}
+    {{- $fence := strings.Repeat (int $length) "`" -}}
+    {{- $markdown := printf "\n%s%s\n%s\n%s\n" $fence $language $code $fence -}}
+    {{- printf "<!-- agent-code-source:%s -->%s<!-- /agent-code-source -->" $source (.Page.RenderString $markdown) | safeHTML -}}
+  {{- end -}}
+{{- end -}}

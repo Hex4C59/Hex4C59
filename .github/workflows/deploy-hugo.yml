@@ -38,6 +38,14 @@ jobs:
           mkdir -p "${HOME}/.local/hugo"
           tar -xf "${HUGO_ARCHIVE}" -C "${HOME}/.local/hugo" hugo
           echo "${HOME}/.local/hugo" >> "${GITHUB_PATH}"
+      - name: Setup Python for runnable tutorials
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install pinned Agent example dependencies
+        run: python -m pip install -r examples/agents/requirements.txt
+      - name: Run downloadable Agent examples
+        run: python scripts/check_agent_examples.py
       - name: Check validation tools
         run: python3 -m unittest discover -s scripts/tests -v
       - name: Setup Node for comment service checks

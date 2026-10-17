@@ -3,8 +3,8 @@ title = "多 Agent 协作：当一个 Agent 不够用时，如何让多个 Agent
 date = 2026-03-23T16:00:00+08:00
 draft = false
 author = "Hex4C59"
-description = "解释为什么单 Agent 存在天花板，以及多 Agent 系统的四种编排模式、真实产品中的实现方式与常见失败场景。"
-summary = "系统分析多 Agent 协作的核心编排模式（Supervisor、Handoff、Agent-as-Tool、Peer-to-Peer），结合 Claude Code、Cursor、OpenAI Agents SDK 的真实架构，说明多 Agent 系统的设计取舍与工程落地方式。"
+description = "解释多 Agent 的四种分工方式，并用可运行的 SQLite 任务板实现原子认领、版本检查和独立消息游标，验证并发工作者不会相互覆盖。"
+summary = "先区分集中调度、路由交接、Agent 作为工具与对等协作，再运行真实 SQLite 协调机制：认领绑定执行者、版本和 token，消息按消费者独立确认，避免并发覆盖与游标误跳。"
 tags = ["Agent", "多智能体", "任务编排"]
 categories = ["ai"]
 series = ["agent-engineering"]
@@ -15,14 +15,14 @@ topics = ["multi-agent", "orchestration", "coordination", "supervisor", "handoff
 frameworks = ["OpenAI", "Anthropic", "LangGraph", "CrewAI"]
 ShowToc = true
 source_kind = "original"
-lastmod = 2026-03-23T10:35:35+00:00
+lastmod = 2026-10-17
 +++
 
 前面九篇文章把单 Agent 的能力栈拆得很清楚了：[Tool Use](/agent/tool-use-core-of-agent/) 让它能行动，[上下文管理](/agent/context-memory-state-management/)让它在长任务中保持方向感，[ReAct](/agent/react-paradigm/) 和 [Planning](/agent/planning-plan-and-execute/) 给了它推理和规划能力，[Reflection](/agent/reflection-agent/) 让它能审视自己的输出，[Prompt 设计](/agent/prompt-design-agent/)和[工具接口设计](/agent/tool-interface-design/)是把这些能力组装起来的工程手段，[评测](/agent/agent-evaluation/)告诉你它到底做得怎么样。
 
 但有一类问题，单 Agent 做得再好也不够：**当任务本身需要多个独立视角、多条并行路径、或者超出单个上下文窗口的承载能力时，你需要多个 Agent 协作。**
 
-这篇文章要回答的是：多 Agent 系统有哪些编排模式，真实产品是怎么做的，以及什么时候该用、什么时候不该用。
+本文面向会写简单代码、了解单 Agent 工具循环的读者。这里把每个 Agent 看作一份角色指令、一个独立上下文和一段执行循环，再检查三件事：任务交给谁、哪些信息随任务传过去、谁检查并汇总结果。产品名称用于说明模式，具体能力和限制需按所用版本核对。前面三种模式用假设任务说明控制权流向；后面的 SQLite 任务板是完整可运行的机制，用真实数据库验证认领、提交结果与消息进度，不需要模型服务。
 
 ---
 
@@ -31,7 +31,7 @@ lastmod = 2026-03-23T10:35:35+00:00
 1. **多 Agent 的核心价值不是"更多的 Agent"，而是任务分解后的独立执行与结果聚合。** 每个 Agent 有自己的上下文窗口、角色定义和工具集，各自负责一个子问题，最终由编排层把结果组合起来。
 2. **四种主流编排模式覆盖了绝大多数场景：Supervisor（集中调度）、Handoff（路由交接）、Agent-as-Tool（Agent 作为工具调用）、Peer-to-Peer（对等协作）。** 它们的复杂度、协调开销和适用场景各不相同。
 3. **真实产品已经验证了这些模式。** Claude Code 的 Subagent 和 Agent Teams 分别对应 Agent-as-Tool 和 Peer-to-Peer；Cursor 的 Task 工具是典型的 Supervisor + Agent-as-Tool；OpenAI Agents SDK 原生支持 Handoff 和 Agent-as-Tool 两种模式。
-4. **多 Agent 系统最常见的失败不是"协作不起来"，而是"协调开销超过了任务本身的复杂度"。** 大多数被设计成多 Agent 的系统，其实单 Agent 就能搞定。
+4. **需要核算协调开销。** 拆任务、传背景、等结果和汇总都要花时间与 token；子任务过小时，这些开销可能超过分工带来的收益。
 5. **判断是否需要多 Agent 的标准很简单：任务能否自然地分解成互相独立的子任务？** 如果子任务之间强耦合、需要频繁同步上下文，多 Agent 反而比单 Agent 更慢、更贵、更难调试。
 
 ---
@@ -44,15 +44,15 @@ lastmod = 2026-03-23T10:35:35+00:00
 
 **1. 上下文窗口物理不够用**
 
-即使做了压缩和滑动窗口，当任务涉及的信息量本身就超过单个 context window 的容量时，单 Agent 只能丢信息。比如同时审查一个 PR 的安全性、性能影响和测试覆盖率——三个维度各自需要阅读大量代码，放在一个上下文里互相挤占。
+当多个审查方向各自需要大量材料时，单个上下文可能容纳不下全部细节。除了分批读取和外部存储，也可以让不同 Agent 分别处理相关材料，再汇总关键发现。比如同时审查一个 PR 的安全性、性能影响和测试覆盖率——三个维度各自需要阅读大量代码，放在一个上下文里互相挤占。
 
 **2. 任务天然可并行，但串行太慢**
 
-前端、后端、测试三个模块的修改互相独立。单 Agent 只能一个一个做，三个 Agent 各做一个，wall-clock time 直接除以三。这不是能力问题，是物理时间问题。
+假设前端、后端和测试三个子任务已划清接口，可以互不等待地执行，就可以考虑并行分派。总等待时间仍包括拆分、最慢子任务和汇总，不能直接按 Agent 数量等比例缩短；如果测试依赖代码修改，就要先等修改完成。
 
 **3. 需要独立视角避免偏见**
 
-[Reflection](/agent/reflection-agent/) 那篇讲过自我一致性陷阱——模型倾向于认为自己的输出是合理的。当任务需要真正的批判性审查时（比如竞品分析、代码安全审计），用一个独立的 Agent 做审查，效果比让同一个 Agent 自我审查好得多，因为审查者没有被执行者的推理路径"锚定"。
+[Reflection](/agent/reflection-agent/) 那篇讲过自我一致性陷阱——模型倾向于认为自己的输出是合理的。对于竞品分析或代码安全审查，可以给另一个 Agent 不同的检查标准，让它独立阅读必要证据。这样提供了另一轮检查机会；如果双方使用同一模型、同一份不完整资料，仍可能漏掉相同问题，不能仅凭上下文独立就保证效果更好。
 
 **4. 角色差异太大，放在一个 prompt 里互相干扰**
 
@@ -76,126 +76,14 @@ lastmod = 2026-03-23T10:35:35+00:00
 
 一个"主管 Agent"负责接收任务、分解子任务、分配给 Worker Agent 执行，然后收集结果并汇总。所有的协调逻辑集中在 Supervisor 身上。
 
-```python
-import openai
-import json
-import asyncio
+下面是假设代码审查任务的控制流示意，不是运行输出：
 
-client = openai.AsyncOpenAI()
-
-async def run_worker(
-    worker_name: str,
-    worker_instructions: str,
-    task: str,
-    tools: list | None = None,
-) -> str:
-    """启动一个 Worker Agent 执行子任务"""
-    messages = [
-        {"role": "system", "content": worker_instructions},
-        {"role": "user", "content": task},
-    ]
-
-    for _ in range(10):
-        response = await client.chat.completions.create(
-            model="gpt-4o",
-            messages=messages,
-            tools=tools,
-        )
-        choice = response.choices[0]
-
-        if choice.finish_reason == "stop":
-            return choice.message.content
-
-        if choice.finish_reason == "tool_calls":
-            messages.append(choice.message)
-            for tc in choice.message.tool_calls:
-                result = await dispatch_tool(tc.function.name,
-                                             json.loads(tc.function.arguments))
-                messages.append({
-                    "role": "tool",
-                    "tool_call_id": tc.id,
-                    "content": str(result),
-                })
-
-    return f"[{worker_name}] 执行超时"
-
-
-async def supervisor_orchestrate(goal: str, workers: list[dict]) -> str:
-    """
-    Supervisor 模式的核心编排逻辑。
-
-    workers 格式：
-    [
-        {"name": "researcher", "instructions": "...", "tools": [...]},
-        {"name": "analyst", "instructions": "...", "tools": [...]},
-    ]
-    """
-
-    # 第一步：Supervisor 分解任务
-    plan_response = await client.chat.completions.create(
-        model="gpt-4o",
-        messages=[{
-            "role": "system",
-            "content": (
-                "你是一个任务协调者。根据目标和可用的 Worker 列表，"
-                "把任务分解成子任务并分配给合适的 Worker。"
-                "输出 JSON 格式。"
-            ),
-        }, {
-            "role": "user",
-            "content": f"""
-目标：{goal}
-
-可用 Workers：
-{json.dumps([{"name": w["name"], "capabilities": w["instructions"][:200]}
-             for w in workers], ensure_ascii=False, indent=2)}
-
-输出格式：
-{{
-  "assignments": [
-    {{"worker": "worker_name", "task": "具体子任务描述"}},
-  ],
-  "synthesis_plan": "如何汇总各 Worker 的结果"
-}}
-""",
-        }],
-        response_format={"type": "json_object"},
-    )
-
-    plan = json.loads(plan_response.choices[0].message.content)
-    worker_map = {w["name"]: w for w in workers}
-
-    # 第二步：并行分发子任务给 Workers
-    tasks = []
-    for assignment in plan["assignments"]:
-        w = worker_map[assignment["worker"]]
-        tasks.append(run_worker(
-            worker_name=w["name"],
-            worker_instructions=w["instructions"],
-            task=assignment["task"],
-            tools=w.get("tools"),
-        ))
-
-    results = await asyncio.gather(*tasks)
-
-    # 第三步：Supervisor 汇总结果
-    result_summary = "\n\n".join([
-        f"=== {plan['assignments'][i]['worker']} ===\n{results[i]}"
-        for i in range(len(results))
-    ])
-
-    synthesis = await client.chat.completions.create(
-        model="gpt-4o",
-        messages=[{
-            "role": "system",
-            "content": "你是一个任务协调者。根据各 Worker 的执行结果，汇总出最终答案。",
-        }, {
-            "role": "user",
-            "content": f"目标：{goal}\n\n各 Worker 结果：\n{result_summary}\n\n汇总计划：{plan['synthesis_plan']}",
-        }],
-    )
-
-    return synthesis.choices[0].message.content
+```text
+Supervisor 接收“审查这次修改”
+  ├─ 安全 Worker：检查权限与输入边界
+  └─ 测试 Worker：检查缺少的测试
+两个 Worker 分别返回发现与证据
+Supervisor 汇总，指出冲突与尚未验证的部分
 ```
 
 **Supervisor 模式的核心特征：**
@@ -212,63 +100,16 @@ async def supervisor_orchestrate(goal: str, workers: list[dict]) -> str:
 
 不是一个 Agent 调度多个 Agent，而是一个"路由 Agent"判断当前任务应该交给哪个专家 Agent 处理，然后把对话控制权完整移交。被选中的专家 Agent 直接面对用户（或下游系统），不再经过路由 Agent 中转。
 
-```python
-from dataclasses import dataclass
-from typing import Callable
+下面是假设客服任务的路由示意，不是运行输出：
 
-@dataclass
-class SpecialistAgent:
-    name: str
-    description: str
-    instructions: str
-    tools: list | None = None
-    condition: Callable[[str], bool] | None = None
-
-
-async def handoff_router(
-    user_message: str,
-    specialists: list[SpecialistAgent],
-    conversation_history: list[dict],
-) -> tuple[str, str]:
-    """
-    路由 Agent 决定交给哪个专家处理，然后移交控制权。
-    返回 (specialist_name, response)。
-    """
-
-    specialist_descriptions = "\n".join([
-        f"- {s.name}: {s.description}" for s in specialists
-    ])
-
-    routing_response = await client.chat.completions.create(
-        model="gpt-4o",
-        messages=[{
-            "role": "system",
-            "content": f"""你是一个路由 Agent。根据用户的请求，选择最合适的专家来处理。
-
-可用专家：
-{specialist_descriptions}
-
-只输出 JSON：{{"specialist": "专家名称", "reason": "选择原因"}}""",
-        }] + conversation_history + [{
-            "role": "user",
-            "content": user_message,
-        }],
-        response_format={"type": "json_object"},
-    )
-
-    routing = json.loads(routing_response.choices[0].message.content)
-    chosen = next(s for s in specialists if s.name == routing["specialist"])
-
-    # 控制权完整移交给专家——专家直接处理，不经过路由中转
-    response = await run_worker(
-        worker_name=chosen.name,
-        worker_instructions=chosen.instructions,
-        task=user_message,
-        tools=chosen.tools,
-    )
-
-    return chosen.name, response
+```text
+路由 Agent 接收问题和必要会话背景
+选择“账单专家”
+宿主应用把当前问题、授权范围和必要历史交给账单专家
+账单专家继续对话并产出最终结果
 ```
+
+路由只解决“交给谁”，宿主应用还要决定传哪些背景、约束和进度。专家需要看到与本次处理相关的历史，不能把“选中专家”当成“上下文已完整移交”。
 
 **Handoff 与 Supervisor 的关键区别：**
 
@@ -277,65 +118,26 @@ async def handoff_router(
 
 **适用场景：** 不同类型的请求需要完全不同的处理方式——不同的 prompt、不同的工具集、甚至不同的模型。比如：客服系统根据问题类型路由到不同的专家；开发工具根据任务类型（写代码 / 改配置 / 跑测试）路由到不同的 Agent。
 
-OpenAI Agents SDK 把 Handoff 作为一等公民支持，用 `handoff()` 函数声明 Agent 之间的交接关系，框架自动处理对话上下文的传递。
+框架可以提供交接接口，但传哪些消息、如何过滤历史以及授权能否继承，仍需按所用框架的实际配置检查。
 
 ### 模式三：Agent-as-Tool（Agent 作为工具）
 
 把一个 Agent 包装成 Tool，让主 Agent 像调用普通工具一样调用它。被调用的 Agent 在自己的上下文里独立执行任务，完成后把结果返回给主 Agent。
 
-```python
-def agent_as_tool(
-    name: str,
-    description: str,
-    agent_instructions: str,
-    agent_tools: list | None = None,
-) -> dict:
-    """把一个 Agent 包装成 Tool 定义"""
-    return {
-        "type": "function",
-        "function": {
-            "name": name,
-            "description": description,
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "task": {
-                        "type": "string",
-                        "description": "要交给这个 Agent 完成的任务描述",
-                    },
-                },
-                "required": ["task"],
-            },
-        },
-        "_agent_config": {
-            "instructions": agent_instructions,
-            "tools": agent_tools,
-        },
-    }
+下面是假设仓库检索任务的调用示意，不是运行输出：
 
-
-async def dispatch_tool(name: str, args: dict) -> str:
-    """工具调度——如果是 Agent Tool，启动子 Agent 执行"""
-    tool_registry = get_tool_registry()
-    tool_def = tool_registry[name]
-
-    if "_agent_config" in tool_def:
-        config = tool_def["_agent_config"]
-        return await run_worker(
-            worker_name=name,
-            worker_instructions=config["instructions"],
-            task=args["task"],
-            tools=config.get("tools"),
-        )
-
-    return await call_regular_tool(name, args)
+```text
+主 Agent 调用“查找调用者”工具，参数为函数名与目录范围
+子 Agent 在自己的上下文中检索
+子 Agent 返回调用位置、证据和未检查范围
+主 Agent 继续决定下一步，不把控制权交出去
 ```
 
 **Agent-as-Tool 的核心特征：**
 
 - 主 Agent 决定何时、是否调用子 Agent——调用时机由模型的推理决定，不是预先编排的
-- 子 Agent 有完全独立的上下文窗口，不会污染主 Agent 的上下文
-- 子 Agent 只返回结果摘要，不返回完整的推理过程
+- 子 Agent 使用独立上下文；主 Agent 不必保存它读过的全部材料
+- 返回内容仍会进入主 Agent 的输入，宜包含结果摘要、必要证据和未解决项，避免只给无法核对的结论
 
 **这正是 Claude Code 的 Subagent 和 Cursor 的 Task 工具采用的模式。** 主 Agent 在执行过程中发现某个子任务适合委托出去——可能是因为需要独立上下文、需要并行执行、或者是为了避免当前上下文被无关信息污染——于是把子任务作为一次"工具调用"分发出去。
 
@@ -345,113 +147,63 @@ async def dispatch_tool(name: str, args: dict) -> str:
 
 没有中心调度者。多个 Agent 地位对等，通过共享的通信机制（消息队列、共享文件、任务列表）直接交流，自行认领任务、分享发现、挑战彼此的结论。
 
-```python
-import time
-from dataclasses import dataclass, field
-
-@dataclass
-class SharedTaskBoard:
-    """Agent 之间的共享任务板——协调的核心数据结构"""
-    tasks: list[dict] = field(default_factory=list)
-    messages: list[dict] = field(default_factory=list)
-    findings: list[dict] = field(default_factory=list)
-
-    def add_task(self, task_id: str, description: str, depends_on: list[str] | None = None):
-        self.tasks.append({
-            "id": task_id,
-            "description": description,
-            "status": "pending",
-            "claimed_by": None,
-            "depends_on": depends_on or [],
-        })
-
-    def claim_task(self, task_id: str, agent_name: str) -> bool:
-        for t in self.tasks:
-            if t["id"] == task_id and t["status"] == "pending":
-                deps_done = all(
-                    any(d["id"] == dep and d["status"] == "completed" for d in self.tasks)
-                    for dep in t["depends_on"]
-                )
-                if not deps_done:
-                    return False
-                t["status"] = "in_progress"
-                t["claimed_by"] = agent_name
-                return True
-        return False
-
-    def complete_task(self, task_id: str, result: str):
-        for t in self.tasks:
-            if t["id"] == task_id:
-                t["status"] = "completed"
-                t["result"] = result
-                break
-
-    def post_message(self, sender: str, recipient: str | None, content: str):
-        """发消息：recipient=None 表示广播"""
-        self.messages.append({
-            "sender": sender,
-            "recipient": recipient,
-            "content": content,
-            "timestamp": time.time(),
-        })
-
-    def get_messages_for(self, agent_name: str) -> list[dict]:
-        return [
-            m for m in self.messages
-            if m["recipient"] is None or m["recipient"] == agent_name
-        ]
-
-
-async def peer_agent_loop(
-    agent_name: str,
-    instructions: str,
-    board: SharedTaskBoard,
-    tools: list | None = None,
-):
-    """单个 Peer Agent 的执行循环"""
-    while True:
-        available = [
-            t for t in board.tasks
-            if t["status"] == "pending" and not t["claimed_by"]
-        ]
-        if not available and all(t["status"] == "completed" for t in board.tasks):
-            break
-
-        new_messages = board.get_messages_for(agent_name)
-        context = build_peer_context(agent_name, board, new_messages)
-
-        response = await client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {"role": "system", "content": instructions},
-                {"role": "user", "content": context},
-            ],
-            response_format={"type": "json_object"},
-        )
-
-        action = json.loads(response.choices[0].message.content)
-
-        if action.get("claim_task"):
-            board.claim_task(action["claim_task"], agent_name)
-        elif action.get("complete_task"):
-            board.complete_task(action["complete_task"], action["result"])
-        elif action.get("send_message"):
-            board.post_message(agent_name, action["send_message"]["to"],
-                               action["send_message"]["content"])
-        elif action.get("post_finding"):
-            board.findings.append({
-                "agent": agent_name,
-                "finding": action["post_finding"],
-            })
-```
+两个执行者可以同时读到“任务尚未认领”。因此，不能先读一个 Python 列表，再分别把状态改成“处理中”；认领本身必须是数据库检查并写入的一次操作。下面的 `TaskBoard` 用 SQLite 事务实现这个边界。
 
 **Peer-to-Peer 的核心特征：**
 
 - 没有中心调度者，每个 Agent 自主决定做什么
 - Agent 之间通过共享状态（任务板、消息、文件系统）协调
-- 协调是"涌现"的，不是预先编排的
+- 具体协作顺序由认领和消息反馈逐步形成；任务依赖、认领规则和停止条件仍需事先设计
 
-**这正是 Claude Code Agent Teams 的设计。** Team Lead 创建任务列表后，Teammate 自行认领任务、互相发消息讨论、挑战彼此的发现。协调通过文件系统上的 JSON 文件进行，不依赖中心化的消息代理。
+### 用版本和认领凭据防止结果互相覆盖
+
+`add_task()` 保存任务 ID、说明、依赖和从 0 开始的 `version`。版本表示这条任务记录已经被修改了几次。执行者调用 `claim_task(id, actor=..., version=...)`，必须提交自己看到的版本；事务内同时检查状态仍为 `pending`、依赖任务已经完成，才把任务改为 `claimed`，记录所有者、增加版本并返回随机生成的认领凭据 `token`。
+
+假设 A、B 都读到版本 0。A 先认领后，数据库中的版本变成 1，所有者是 A；B 再提交版本 0 时失败。这个判断在 SQLite 的 `BEGIN IMMEDIATE` 事务中完成，两个进程不能靠最后写入覆盖对方。
+
+完成任务时，`complete_task()` 必须同时提供所有者、当前版本和认领返回的 token。错的人、旧版本或上一轮认领的 token 都不能提交结果；成功完成后再次增加版本，不能重复完成或覆盖已保存结果。认领者需要主动放弃时可调用 `release_task()`，它也检查相同凭据，再增加版本并回到待认领状态。
+
+依赖任务必须先加入任务板，且全部完成后才能认领当前任务。本例不支持后来改写依赖，也没有自动过期的认领租约。工作者退出后，记录仍为 `claimed`；不能因等待时间长就让另一个执行者冒领并重复执行外部操作。保存了原 token 的执行者可以恢复并报告结果，丢失凭据时需要宿主程序核对现场。
+
+### 消息游标按消费者保存，确认后再推进
+
+`post_message()` 给每条消息分配递增 ID；`recipient=None` 表示广播。`poll_messages(consumer, actor=..., limit=...)` 先筛选这个人的定向消息和广播，再按 ID 取一批。`consumer` 是一条独立收件进度的名称；它保存已经确认到哪个消息 ID 的记录，也就是游标，并绑定固定 actor。
+
+例如，假设全局消息顺序是：B 的消息 1、A 的消息 2、B 的消息 3、A 的消息 4、广播 5。A 每次取一条时，应依次收到 2、4、5。不能先截取一批全局消息、再用它们的最大 ID 更新 A 的进度，否则可能跳过尚未交付给 A 的消息。A 的游标也不影响 B，B 仍能收到 1、3、5。
+
+取消息不会立刻确认处理完成。数据库保存这批消息的 ID 和批次 token；进程重启、重复轮询或改变分页大小，都先返回同一份尚未确认的批次。处理成功后，调用 `ack_messages(consumer, actor=..., token=...)`，只把该消费者的游标推进到这批实际消息的末尾。调用方不能任填一个最大 ID 跳过内容。确认两次、拿别人的批次 token 确认，都会失败；批次确认后，新消息仍会按顺序送达。
+
+这是“未确认就重投”的语义。若外部动作已经完成、确认前进程却退出，消息会重来，处理程序仍需用消息 ID 判断是否处理过，或让外部服务通过业务幂等键识别重复请求。不能把这个游标称为外部动作恰好执行一次的保证。
+
+### 下载并运行实际机制
+
+下载 [Agent 机制完整示例](/downloads/agent-examples/mechanisms.zip)，在独立目录解压。需要 Python 3.11 或以上版本：
+
+```bash
+unzip mechanisms.zip -d mechanisms-demo
+cd mechanisms-demo
+python3.11 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+python -c 'import asyncio, json; from coordination import demo; print(json.dumps(asyncio.run(demo()), ensure_ascii=False))'
+python -m unittest -v test_coordination
+```
+
+`demo()` 在临时目录创建真实 SQLite 文件，重建应用对象后检查审批和任务状态，再验证消息分页、确认与收件人隔离。以下是本次运行这条命令捕获的输出；它没有调用真实模型：
+
+```text
+{"ok": true, "approval_reopen": true, "one_shot_claim": true, "versioned_task": true, "acknowledged_cursor": true, "recipient_isolation": true}
+```
+
+本次在 Python 3.11.16、macOS 上运行了 18 项 `test_coordination.py` 测试，全部通过。除重启外，测试还让两个独立进程竞争同一任务，并用独立 SQLite 连接竞争认领、提交和消息确认；测试检查数据库里只保留一个有效所有者或结果。游标测试覆盖交错收件人、广播、单条分页、空批次、新消息、错误身份、重复确认和未确认批次在重启后重读。
+
+完整的 `coordination.py` 同时包含任务板和[人工审批机制](/agent/human-in-the-loop/)，与下载包使用同一来源：
+
+{{< agent-code example="mechanisms" file="coordination.py" >}}
+
+模块中的 actor 是可信本地宿主传入的工作者身份，token 是宿主保存的认领凭据；不能让模型随意冒充另一个工作者。这个例子不是 Web 登录或多租户权限系统，也不是完整 Agent 服务。它验证同一本地 SQLite 数据库上的协调，不覆盖网络盘、跨机器调度、数据库被恶意改写或外部副作用的自动恢复。
+
+**Claude Code Agent Teams 是文中用于比较的产品例子。** Team Lead 创建任务列表后，Teammate 自行认领任务、互相发消息讨论、挑战彼此的发现。协调通过文件系统上的 JSON 文件进行，不依赖中心化的消息代理。
 
 **适用场景：** 任务需要多个独立视角互相碰撞——竞争性假设调查、对抗性审查、需要讨论和辩论才能收敛的开放性问题。
 
@@ -482,7 +234,7 @@ async def peer_agent_loop(
 
 ## 真实产品中的多 Agent 设计
 
-理论讲完了，来看真实产品是怎么做的。
+下面用产品例子辨认控制权和消息流。工具名称、继承规则、数量建议及文件位置都可能随版本变化；判断这些模式能否用于自己的任务时，应核对所用版本和配置。
 
 ### Claude Code：Subagent 与 Agent Teams
 
@@ -524,7 +276,7 @@ OpenAI Agents SDK 把两种编排模式做成了框架级原语：
 
 **`handoff()`** 声明 Agent 之间的交接关系。一个 Triage Agent 可以把对话完整移交给一个 Specialist Agent，Specialist Agent 带着对话上下文继续处理，不再经过 Triage Agent 中转。
 
-**`agent.asTool()`** 把一个 Agent 包装成工具。Manager Agent 可以调用多个 Specialist Agent 作为工具，收集它们的结果后自己汇总最终答案。
+**Agent 作为工具的接口**把一个 Agent 包装成工具。Manager Agent 可以调用多个 Specialist Agent 作为工具，收集它们的结果后自己汇总最终答案。
 
 OpenAI 的建议是：**当你需要一个 Agent 掌控最终输出时用 Agent-as-Tool，当你需要专家直接面对用户时用 Handoff。** 两种模式可以在同一个系统里混用——Triage Agent 通过 Handoff 把对话交给一个 Specialist，这个 Specialist 又可以通过 Agent-as-Tool 调用其他 Agent 做子任务。
 
@@ -536,7 +288,7 @@ OpenAI 的建议是：**当你需要一个 Agent 掌控最终输出时用 Agent-
 
 最常见的失败。开发者把一个单 Agent 能在 10 轮工具调用内完成的任务拆成 3 个 Agent，结果光是 Supervisor 的任务分解、分配、结果汇总就消耗了更多的 token 和时间。
 
-**判断标准：** 如果子任务之间有超过 30% 的信息需要共享，多 Agent 的协调成本很可能不划算。
+**判断方法：** 列出每个子任务必需的输入，再检查它是否要反复等待其他任务的新结果。如果需要频繁同步大量材料，应先比较单 Agent 或顺序流程的开销，不宜用一个固定共享比例判断。
 
 ### 2. 上下文割裂导致信息丢失
 
@@ -544,30 +296,22 @@ OpenAI 的建议是：**当你需要一个 Agent 掌控最终输出时用 Agent-
 
 Claude Code 的 Agent Teams 文档专门强调了这一点：Teammate 不会继承 Team Lead 的对话历史，你需要在 spawn prompt 中包含所有必要的上下文。
 
-```python
-# 反面示例：子 Agent 缺少关键上下文
-await run_worker(
-    worker_name="reviewer",
-    worker_instructions="审查代码质量",
-    task="审查 src/auth/ 模块",  # 没有说明项目的认证方案和技术栈
-)
+下面是假设审查任务的委派内容示意，不是模型输入输出的实测：
 
-# 正面示例：传递必要上下文
-await run_worker(
-    worker_name="reviewer",
-    worker_instructions="审查代码质量",
-    task=(
-        "审查 src/auth/ 模块的安全性。"
-        "项目使用 JWT + httpOnly cookie 方案，"
-        "后端是 Express.js，数据库是 PostgreSQL。"
-        "重点关注 token 过期处理和 CSRF 防护。"
-    ),
-)
+```text
+不足的委派：审查 src/auth/ 的代码质量。
+
+更完整的委派：
+审查 src/auth/ 的认证边界。
+假设项目使用 JWT 与 httpOnly cookie，后端为 Express.js，数据库为 PostgreSQL。
+检查 token 过期处理和 CSRF 防护；报告证据、未读文件与未验证项。
 ```
+
+这些技术栈是假设背景，实际委派应填入当前项目已经核实的信息。
 
 ### 3. 文件冲突和状态竞争
 
-当多个 Agent 并行修改同一个代码库时，文件冲突几乎不可避免。两个 Agent 同时修改同一个文件，后写入的会覆盖先写入的修改。
+当多个 Agent 同时修改同一文件，又没有合并或写入协调机制时，后写入的内容可能覆盖先前修改。可以先按文件划分责任；确实需要重叠时，再隔离工作目录并检查合并结果。
 
 Claude Code 的最佳实践是：**让每个 Teammate 拥有不同的文件集。** 如果无法避免重叠，使用 Git worktree 让每个 Agent 在独立的工作目录中操作，最后再合并。
 
@@ -579,9 +323,9 @@ Claude Code 的最佳实践是：**让每个 Teammate 拥有不同的文件集�
 
 ### 5. 成本和延迟失控
 
-每个 Agent 都是一个独立的模型实例，有自己的 token 消耗。Claude Code 的文档明确说：Agent Teams 的 token 消耗大约是单 Agent 的 2 倍以上，因为每个 Teammate 都有独立的上下文窗口。
+每个 Agent 的输入、输出和工具循环都要计入总消耗，汇总与审查也会增加调用。具体倍数取决于任务拆分、上下文长度和通信频率，不能只按成员数推算。
 
-Peer-to-Peer 模式的成本增长尤其快：Agent 之间的每次消息交换都是额外的模型调用，5 个 Agent 互相讨论一轮就是 5 次模型调用。如果讨论三轮，就是 15 次。
+例如，假设五个 Agent 在每轮讨论中各调用一次模型，三轮就是十五次调用；这是该假设下的计数。发送或接收一条消息，不一定立刻触发一次模型调用，还取决于运行程序如何批量处理消息。
 
 ---
 
@@ -591,7 +335,7 @@ Peer-to-Peer 模式的成本增长尤其快：Agent 之间的每次消息交换�
 
 ![多 Agent 决策检查](multi_agent_decision_checklist.svg)
 
-**多 Agent 不是"更高级"的 Agent 架构。** 它是一种在特定任务结构下才有优势的设计选择。如果单 Agent 能搞定，单 Agent 永远是更好的选择——更简单、更便宜、更容易调试。
+**多 Agent 不是"更高级"的 Agent 架构。** 它是一种在特定任务结构下才有优势的设计选择。如果单 Agent 已能在目标成本和时间内完成任务，可以先保留简单结构，再用对照任务判断分工是否值得。
 
 ---
 
@@ -603,7 +347,7 @@ Peer-to-Peer 模式的成本增长尤其快：Agent 之间的每次消息交换�
 
 真实产品的选择印证了一个原则：**从最简单的模式开始。** Claude Code 默认用 Subagent（Agent-as-Tool），只有在需要 Agent 间交流时才升级到 Agent Teams。Cursor 用 Supervisor + Agent-as-Tool 混合模式，子 Agent 不能再嵌套。OpenAI Agents SDK 把 Handoff 和 Agent-as-Tool 作为两个正交的原语，让开发者按需组合。
 
-多 Agent 系统最大的风险不是技术实现的复杂度，而是在不需要多 Agent 的场景下引入了多 Agent。协调有成本，通信有开销，调试难度指数上升。在引入之前，先确认任务结构真的需要——如果子任务之间高度耦合，多 Agent 不会让事情变好，只会让调试变难。
+多 Agent 系统最大的风险不是技术实现的复杂度，而是在不需要多 Agent 的场景下引入了多 Agent。协调和通信会增加开销，跨上下文排查问题也更复杂。在引入之前，先确认任务结构真的需要——如果子任务之间高度耦合，多 Agent 不会让事情变好，只会让调试变难。
 
 ---
 

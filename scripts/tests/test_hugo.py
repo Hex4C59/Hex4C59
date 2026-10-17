@@ -58,6 +58,35 @@ class HugoContentTest(unittest.TestCase):
             self.assertIn(error, output)
         return result
 
+    def test_agent_code_renders_the_download_source_and_tracks_changes(self):
+        examples = self.root / "examples"
+        source = examples / "agents/cli-coding/app.py"
+        source.parent.mkdir(parents=True)
+        self.addCleanup(shutil.rmtree, examples)
+        source.write_text('print("artifact version one")\n')
+        self.article(body='{{< agent-code example="cli-coding" file="app.py" >}}\n')
+        self.build()
+        html = (self.output / "tutorials/lesson/index.html").read_text()
+        self.assertIn("artifact version one", html)
+        self.assertIn('copy-code-button', html)
+        url = re.search(r'data-markdown-url=([^ >]+)', html).group(1).strip('"')
+        markdown = (self.output / url.lstrip('/')).read_text()
+        self.assertIn('```py\nprint("artifact version one")\n', markdown)
+        self.assertNotIn("agent-code-source", markdown)
+        self.assertNotIn('<span class=', markdown)
+        source.write_text('print("artifact version two")\n')
+        self.build()
+        html = (self.output / "tutorials/lesson/index.html").read_text()
+        self.assertIn("artifact version two", html)
+        self.assertNotIn("artifact version one", html)
+
+    def test_agent_code_rejects_missing_or_escaping_sources(self):
+        self.article(body='{{< agent-code example="cli-coding" file="app.py" >}}\n')
+        self.build(error="Missing tutorial source")
+        (self.content / "tutorials/lesson/index.md").unlink()
+        self.article(body='{{< agent-code example="cli-coding" file="../private.py" >}}\n')
+        self.build(error="Invalid agent-code")
+
     def series(self, extra=""):
         self.article(slug="one", fields='series = ["course"]\nseries_order = 1\nseries_number = 1')
         self.article(slug="two", fields='series = ["course"]\nseries_order = 2\nseries_number = 2\n' + extra)

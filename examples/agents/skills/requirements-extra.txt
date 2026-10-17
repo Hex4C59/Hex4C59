@@ -1,0 +1,2 @@
+# Parse complete YAML safely instead of approximating it with regular expressions.
+PyYAML==6.0.3

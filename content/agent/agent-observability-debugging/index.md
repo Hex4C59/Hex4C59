@@ -3,8 +3,8 @@ title = "调试 Agent：当你不知道它为什么做了那件事"
 date = 2026-03-28T22:00:00+08:00
 draft = false
 author = "Hex4C59"
-description = "从传统软件调试与 Agent 调试的根本差异出发，系统讲解 Agent 可观测性的三支柱——Tracing、Logging、Metrics——的设计与实现，以及如何用 Replay 复现问题、用结构化方法定位 Agent 的隐性错误。"
-summary = "补完评测-调试-修复闭环：Agent 评测告诉你出了问题，可观测性告诉你问题在哪、为什么出问题。涵盖 Trace 设计、结构化日志、关键指标、Replay 复现、常见调试模式和工具链选型。"
+description = "用可运行 CLI Coding Agent 的真实 JSONL 记录，解释如何关联模型调用、工具分发与进程结果，并定位超时、拒绝和未完成任务。"
+summary = "从真实的先失败后通过的测试过程出发，区分运行轨迹、日志和汇总指标，说明工具调用成功不等于业务成功，以及只有元数据的 trace 为什么不能自动重放模型任务。"
 tags = ["Agent", "可观测性", "Tracing"]
 categories = ["ai"]
 series = ["agent-engineering"]
@@ -15,735 +15,175 @@ topics = ["observability", "debugging", "tracing", "logging", "metrics", "evalua
 frameworks = ["OpenAI", "Anthropic"]
 ShowToc = true
 source_kind = "original"
-lastmod = 2026-03-28T08:50:50+00:00
+lastmod = 2026-10-17
 +++
 
-在 [评测那篇文章](/agent/agent-evaluation/) 里，我们讨论了如何判断一个 Agent 做得好不好——四维评测框架帮助你发现"任务完成率下降了""某类任务系统性失败""成本异常升高"这些问题。
+Agent 的一次任务可能经过多轮模型调用和工具执行。最终回答说“完成了”，只能说明模型结束了这次对话；要知道测试是否通过、文件是否写入、失败后有没有恢复，还要看实际调用记录。
 
-但评测只告诉你**出了问题**。它不告诉你**为什么**。
+本文面向会写简单 Python、尚未设计日志系统的读者。我们使用[CLI Coding Agent](/agent/build-cli-coding-agent/)的真实运行记录，而不再另造一个没有接入执行循环的 Tracer。默认模型动作来自 fixture（本地固定响应），文件和子进程真实执行。你可以不使用 API 密钥重跑，比较自己的 JSONL 文件与文中片段。
 
-一个 Agent 在 10 步推理后给出了错误答案，你从评测报告里看到"失败"。然后呢？10 步推理里哪一步出了问题？是推理逻辑错了，还是工具返回了错误的数据，还是上下文窗口溢出导致模型"忘记"了早期信息？
-
-这就是可观测性和调试要解决的问题。如果评测是 Agent 的"体检报告"，那可观测性就是"CT 扫描"——它让你看到 Agent 内部发生了什么。
-
----
+[评测篇](/agent/agent-evaluation/)回答一组任务完成得怎样；这里回答单次任务在哪一步出现了可观察的偏差。日志帮助定位证据，不直接展示模型内部思考，也不自动证明原因。
 
 ## 先给结论
 
-1. **Agent 调试和传统软件调试是两件不同的事。** 传统软件里 bug 是确定性的——相同输入产生相同输出。Agent 的"bug"通常是概率性的——同一个输入可能产生不同的推理路径和结果，你需要追踪的是推理过程而不是代码逻辑。
-2. **Agent 可观测性有三个支柱：Tracing、Logging、Metrics。** Tracing 记录执行轨迹（发生了什么），Logging 记录推理和决策细节（为什么这么做），Metrics 量化整体表现（趋势在变好还是变差）。三者结合才能完整定位问题。
-3. **Replay 是 Agent 调试最有力的工具。** 把一次失败执行的完整上下文（消息历史 + 工具返回值）保存下来，在相同条件下重放，可以复现绝大多数问题——即使模型的非确定性输出不完全相同，推理路径通常是一致的。
-4. **Agent 的大多数"bug"不在代码里，而在 Prompt、工具描述或上下文组织里。** 所以调试的重点不是单步断点调试，而是分析推理链中的信息流——模型在每一步看到了什么、推理出了什么、为什么做了那个决策。
-5. **可观测性不是事后补丁，应该在 Agent 的第一行代码就设计进去。** 后期加入的可观测性往往覆盖不全面，成本也更高。
+1. **把执行者和结果关联起来。** 模型回合用 `turn`，工具调用用 `call_id`，进程结束另记真实退出码；不要只留一句最终总结。
+2. **区分工具分发与业务结果。** `tool.end.ok=true` 表示工具返回了可序列化结果，返回值中的测试进程仍可能退出 1。
+3. **先记录足以定位的元数据。** 本例默认不保存提示词、文件正文、命令参数和标准输出，避免把敏感内容复制到 trace。
+4. **只汇总实际存在的字段。** 这个入口能统计调用、写入、非零命令和超时；没有 token 与计费数据，就不输出假成本。
+5. **查看记录与重新执行分开。** 只保存元数据的 trace 可以分析顺序，不能据此自动恢复全部模型输入或重放外部副作用。
 
----
+## 先运行一次可检查的任务
+
+下载 [CLI Coding Agent 完整示例](/downloads/agent-examples/cli-coding.zip)，需要 Python 3.11 或更新版本。解压到单独目录后执行：
+
+```sh
+unzip cli-coding.zip -d cli-coding
+cd cli-coding
+python3.11 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+python app.py --trace repair.jsonl
+python app.py --summarize-trace repair.jsonl
+python -m unittest -v
+```
+
+默认入口新建临时项目，先运行失败测试，再读代码、批准并写入修复，最后重跑测试。只有命令行指定的 `repair.jsonl` 保留下来，练习项目会清理。trace 文件必须尚不存在，以免覆盖旧证据。
+
+本例不需要创建另一套观测应用。`app.py` 中的 `JsonlTrace` 接受共享运行时的 `on_event` 回调，也接受文件和子进程工具的事件；`summarize_trace` 读取同一格式并统计。完整实现和批准、工作区边界在 CLI 教程中说明。
 
 ## 为什么 Agent 调试和传统调试不一样
 
-传统软件的 bug 模式：给一个输入，代码走了一条错误的分支，输出了错误的结果。你加断点、看变量值、找到那行有问题的代码、修复。
-
-Agent 的"bug"模式完全不同。看一个例子：
-
-```text
-任务：帮我把 src/utils.py 里的 parse_date 函数改成支持 ISO 8601 格式
-
-Agent 实际行为：
-  Step 1: read_file("src/utils.py")          ← 正确
-  Step 2: 分析代码，找到 parse_date 函数      ← 正确
-  Step 3: write_file("src/utils.py", ...)    ← 写了修改后的代码
-  Step 4: run_command("python -m pytest")     ← 测试失败
-  Step 5: read_file("src/utils.py")          ← 重新读取
-  Step 6: write_file("src/utils.py", ...)    ← 又写了一版
-  Step 7: run_command("python -m pytest")     ← 还是失败
-  Step 8: ...反复尝试...
-  Step 15: 达到最大迭代次数，任务失败
-```
-
-从外部看，你只知道"任务失败了"。但问题出在哪？可能是：
-
-- **推理错误**：模型对 ISO 8601 格式的理解有误
-- **信息丢失**：Step 5 重新读取文件时，上下文窗口已经很长，模型"忘记"了之前的错误信息
-- **工具问题**：`write_file` 覆盖了整个文件，但模型只想改其中一个函数
-- **测试环境问题**：pytest 的报错信息被截断了，模型没有看到关键错误行
-
-要定位真正的原因，你需要看到每一步的**输入**（模型收到了什么上下文）、**推理**（模型想做什么）和**输出**（实际结果是什么）。这就是可观测性的价值。
-
 ### Agent 调试的三个根本差异
 
-**差异一：非确定性。** 传统软件给相同输入总是走相同路径。Agent 不是——温度参数、上下文的微小变化都可能导致不同的推理路径。你不能简单地"重跑一遍"来复现问题。
+第一，模型下一次请求取决于前面提供的信息；单看最后输出看不到它是否收到错误。第二，工具执行成功只说明完成了一次操作，不一定达成目标。第三，网页、文件和外部服务可能变化；重新调用得到不同结果，不能直接归因于模型随机性。
 
-**差异二：推理过程是黑盒。** 传统软件的每一步逻辑都写在代码里，你可以逐行阅读。Agent 的推理过程发生在模型内部，你只能看到模型的输出（Thought 文本），无法看到它内部的权重计算。
-
-**差异三：错误的隐蔽性。** 传统软件的错误通常是崩溃或抛异常，很显眼。Agent 的错误往往是"推理方向偏了但每一步都看起来合理"——它不会崩溃，只是给了一个有道理但实际上错误的结果。
-
----
+因此，排查时先找最早能观察到的不同：请求的是哪个工具、执行是否被批准、进程何时结束、下一轮有没有开始。若要进一步判断模型为什么选了这个动作，还需要经授权保存的输入和工具结果，当前元数据记录不足以回答。
 
 ## 可观测性的三个支柱
 
-![Agent 可观测性三支柱](observability_pillars.svg)
+Tracing 把一次任务的事件按顺序关联；Logging 把每个事件写成可查询记录；Metrics 把多条记录汇成数量。这里的 JSONL（JSON Lines）文件每行是一个 JSON 对象，同时承载顺序与结构；汇总入口再计算指标。
 
-*图 1：Tracing 回答"发生了什么"，Logging 回答"为什么这么做"，Metrics 回答"表现怎么样"。三者结合定位问题的位置、原因和影响。*
+![Agent 可观测性三支柱：执行关联、事件记录与数量汇总](observability_pillars.svg)
 
----
+*图中是三种职责的概念划分。本例实际提供的字段以下文事件为准，没有记录模型内部思考、token 用量或价格。*
 
 ## 第一支柱：Tracing——执行轨迹追踪
 
-Trace 是一次完整 Agent 执行的结构化记录。它把 Agent 的每一步——LLM 调用、工具执行、状态变更——组织成一棵有时间顺序和父子关系的 Span 树。
-
-![一次 Agent 执行的 Trace 结构](trace_structure.svg)
-
-*图 2：每个 Span 记录了推理文本、工具调用、耗时和 Token 用量。错误（红色 Span）和恢复（绿色 Span）在 Trace 中一目了然。*
-
 ### Trace 的实现
 
-```python
-import time
-import uuid
-from dataclasses import dataclass, field
+共享循环会发出 `run.start`、`model.start`、`model.end`、`tool.start`、`tool.end` 和 `run.end`。模型事件带回合号，工具事件带工具名与调用标识。CLI 再记录批准结果、文件读写，以及 `process.start`、`process.end`。
 
-
-@dataclass
-class Span:
-    """一个执行单元——可以是 LLM 调用、工具执行或其他操作。"""
-    span_id: str = field(default_factory=lambda: str(uuid.uuid4())[:8])
-    name: str = ""
-    span_type: str = ""       # llm_call, tool_call, guardrail_check
-    parent_id: str | None = None
-    start_time: float = 0
-    end_time: float = 0
-    status: str = "running"   # running, success, error
-    attributes: dict = field(default_factory=dict)
-    events: list[dict] = field(default_factory=list)
-
-    @property
-    def duration_ms(self) -> float:
-        if self.end_time and self.start_time:
-            return (self.end_time - self.start_time) * 1000
-        return 0
-
-
-class Tracer:
-    """
-    Agent 执行追踪器。
-    记录一次完整执行的所有 Span，支持嵌套结构。
-    """
-
-    def __init__(self, trace_id: str | None = None):
-        self.trace_id = trace_id or str(uuid.uuid4())[:12]
-        self.spans: list[Span] = []
-        self._active_span: Span | None = None
-
-    def start_span(
-        self,
-        name: str,
-        span_type: str,
-        attributes: dict | None = None,
-    ) -> Span:
-        """开始一个新的 Span。"""
-        span = Span(
-            name=name,
-            span_type=span_type,
-            parent_id=self._active_span.span_id if self._active_span else None,
-            start_time=time.time(),
-            attributes=attributes or {},
-        )
-        self.spans.append(span)
-        self._active_span = span
-        return span
-
-    def end_span(self, status: str = "success", attributes: dict | None = None):
-        """结束当前活跃的 Span。"""
-        if self._active_span:
-            self._active_span.end_time = time.time()
-            self._active_span.status = status
-            if attributes:
-                self._active_span.attributes.update(attributes)
-            # 回到父 Span
-            parent_id = self._active_span.parent_id
-            self._active_span = next(
-                (s for s in self.spans if s.span_id == parent_id), None
-            )
-
-    def add_event(self, name: str, attributes: dict | None = None):
-        """在当前 Span 上添加一个事件。"""
-        if self._active_span:
-            self._active_span.events.append({
-                "name": name,
-                "timestamp": time.time(),
-                "attributes": attributes or {},
-            })
-
-    def get_summary(self) -> dict:
-        """生成 Trace 的摘要统计。"""
-        total_llm_time = sum(
-            s.duration_ms for s in self.spans if s.span_type == "llm_call"
-        )
-        total_tool_time = sum(
-            s.duration_ms for s in self.spans if s.span_type == "tool_call"
-        )
-        total_tokens = sum(
-            s.attributes.get("total_tokens", 0)
-            for s in self.spans if s.span_type == "llm_call"
-        )
-        error_spans = [s for s in self.spans if s.status == "error"]
-
-        return {
-            "trace_id": self.trace_id,
-            "total_spans": len(self.spans),
-            "llm_calls": len([s for s in self.spans if s.span_type == "llm_call"]),
-            "tool_calls": len([s for s in self.spans if s.span_type == "tool_call"]),
-            "total_llm_time_ms": round(total_llm_time, 1),
-            "total_tool_time_ms": round(total_tool_time, 1),
-            "total_tokens": total_tokens,
-            "errors": len(error_spans),
-            "error_details": [
-                {"span": s.name, "error": s.attributes.get("error")}
-                for s in error_spans
-            ],
-        }
-```
+`JsonlTrace` 给每条记录增加 `seq` 序号和 `mode`。`elapsed_ms` 来自共享循环的实际计时；文件和进程事件不强造这个字段。开始与结束配对，可以知道执行进行到了哪里，但“没有看到结束”仍需结合进程是否存活、输出文件是否写完判断。
 
 ### 把 Tracer 嵌入 ReAct 循环
 
-Tracer 嵌入 Agent 核心循环的方式很简洁——在每次 LLM 调用和工具调用的前后各加一行：
+`coding_run` 把 trace 作为 `on_event` 传入共享循环，`WorkspaceTools` 也使用同一个接收器。这样模型请求和真实操作不会落到两套无法关联的假日志中。
 
-```python
-async def run_agent_with_tracing(
-    user_message: str,
-    tools: dict,
-    tracer: Tracer,
-) -> str:
-    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
-    messages.append({"role": "user", "content": user_message})
+以下四行从 2026-10-17、Python 3.11.16 的 `repair.jsonl` 实际捕获文件中按原顺序选出；它们不是连续行，中间事件未展示。耗时和输出字节数会随环境变化。
 
-    for iteration in range(MAX_ITERATIONS):
-        # ===== LLM 调用 Span =====
-        tracer.start_span(
-            name=f"llm_call_{iteration + 1}",
-            span_type="llm_call",
-            attributes={"iteration": iteration + 1},
-        )
-
-        response = await client.chat.completions.create(
-            model="gpt-4o",
-            messages=messages,
-            tools=TOOL_SCHEMAS,
-        )
-
-        msg = response.choices[0].message
-        usage = response.usage
-
-        tracer.end_span(
-            status="success",
-            attributes={
-                "input_tokens": usage.prompt_tokens,
-                "output_tokens": usage.completion_tokens,
-                "total_tokens": usage.total_tokens,
-                "thought": msg.content[:200] if msg.content else None,
-                "finish_reason": response.choices[0].finish_reason,
-            },
-        )
-
-        # 处理工具调用
-        if msg.tool_calls:
-            for tc in msg.tool_calls:
-                tool_name = tc.function.name
-                tool_args = json.loads(tc.function.arguments)
-
-                # ===== 工具调用 Span =====
-                tracer.start_span(
-                    name=f"tool_{tool_name}",
-                    span_type="tool_call",
-                    attributes={
-                        "tool_name": tool_name,
-                        "tool_args": tool_args,
-                    },
-                )
-
-                try:
-                    result = await tools[tool_name](**tool_args)
-                    tracer.end_span(
-                        status="success",
-                        attributes={"result_preview": str(result)[:200]},
-                    )
-                except Exception as e:
-                    tracer.end_span(
-                        status="error",
-                        attributes={"error": str(e)},
-                    )
-                    result = {"error": str(e)}
-
-                # ... 把结果追加到 messages ...
-
-        if response.choices[0].finish_reason == "stop":
-            break
-
-    return msg.content
+```jsonl
+{"event": "process.end", "returncode": 1, "timed_out": false, "cancelled": false, "stdout_bytes": 0, "stderr_bytes": 582, "truncated": false, "seq": 12, "mode": "fixture"}
+{"event": "tool.end", "elapsed_ms": 25, "turn": 2, "tool": "run_command", "call_id": "test-before", "ok": true, "seq": 13, "mode": "fixture"}
+{"event": "process.end", "returncode": 0, "timed_out": false, "cancelled": false, "stdout_bytes": 0, "stderr_bytes": 148, "truncated": false, "seq": 30, "mode": "fixture"}
+{"event": "run.end", "elapsed_ms": 51, "status": "complete", "turns": 6, "tool_calls": 5, "seq": 34, "mode": "fixture"}
 ```
 
-嵌入 Tracer 只增加了几行代码，但获得了完整的执行轨迹。这些轨迹在生产环境中，是排查问题最重要的信息源。
-
----
+第一条进程记录退出 1，但紧接着的工具结束事件仍是 `ok=true`。原因是测试程序真实运行并正常返回了一份“测试失败”的结果，工具并未发生参数解析或调用异常。第二次进程退出 0，最后模型循环以 `complete` 结束。应同时检查这些层次，不能只筛工具事件中的成功值。
 
 ## 第二支柱：Logging——结构化日志
 
-Tracing 记录的是执行的**结构**（什么时候调用了什么、花了多长时间），Logging 记录的是执行的**语义**（模型在想什么、为什么做了那个决策、哪里出了岔子）。
-
 ### Agent 日志应该记什么
 
-Agent 的日志需求和传统应用不同。传统应用记录的是"系统状态变化"，Agent 需要记录的是"推理过程和决策点"：
+本例记录事件名、角色或回合、调用标识、分发状态、退出码、超时、取消和输出是否截断。默认不写提示词、参数、文件正文或命令输出。CLI 在当前终端显示保留的命令输出，trace 则只保存它的字节数；两者用途不同。
 
-```python
-import logging
-import json
-from datetime import datetime
-
-# 使用结构化日志格式，便于后续查询和分析
-logger = logging.getLogger("agent")
-
-
-class AgentLogger:
-    """
-    Agent 专用日志器。
-    按 Agent 的执行阶段记录不同粒度的信息。
-    """
-
-    def __init__(self, session_id: str):
-        self.session_id = session_id
-
-    def log_thought(self, iteration: int, thought: str):
-        """记录模型的推理文本——这是调试推理问题的核心信息。"""
-        logger.info(json.dumps({
-            "event": "thought",
-            "session_id": self.session_id,
-            "iteration": iteration,
-            "thought": thought,
-            "timestamp": datetime.now().isoformat(),
-        }, ensure_ascii=False))
-
-    def log_tool_call(
-        self,
-        iteration: int,
-        tool_name: str,
-        tool_args: dict,
-        result: dict,
-        duration_ms: float,
-    ):
-        """记录工具调用的完整信息。"""
-        # 对大结果做截断，避免日志膨胀
-        result_str = json.dumps(result, ensure_ascii=False)
-        if len(result_str) > 1000:
-            result_preview = result_str[:1000] + "...[truncated]"
-        else:
-            result_preview = result_str
-
-        logger.info(json.dumps({
-            "event": "tool_call",
-            "session_id": self.session_id,
-            "iteration": iteration,
-            "tool_name": tool_name,
-            "tool_args": tool_args,
-            "result_preview": result_preview,
-            "result_success": result.get("success", True),
-            "duration_ms": round(duration_ms, 1),
-            "timestamp": datetime.now().isoformat(),
-        }, ensure_ascii=False))
-
-    def log_decision_point(
-        self,
-        iteration: int,
-        description: str,
-        chosen_action: str,
-        alternatives: list[str] | None = None,
-    ):
-        """
-        记录关键决策点——Agent 在多个选项中做了选择。
-        这是调试"为什么走了那条路"的关键信息。
-        """
-        logger.info(json.dumps({
-            "event": "decision",
-            "session_id": self.session_id,
-            "iteration": iteration,
-            "description": description,
-            "chosen": chosen_action,
-            "alternatives": alternatives,
-            "timestamp": datetime.now().isoformat(),
-        }, ensure_ascii=False))
-
-    def log_context_state(self, iteration: int, messages: list[dict]):
-        """
-        记录上下文状态——当前消息历史有多长、Token 预算还剩多少。
-        这是调试"信息丢失"问题的关键信息。
-        """
-        total_chars = sum(len(str(m.get("content", ""))) for m in messages)
-        logger.info(json.dumps({
-            "event": "context_state",
-            "session_id": self.session_id,
-            "iteration": iteration,
-            "message_count": len(messages),
-            "estimated_chars": total_chars,
-            "estimated_tokens": total_chars // 4,  # 粗略估算
-            "timestamp": datetime.now().isoformat(),
-        }, ensure_ascii=False))
-
-    def log_error(self, iteration: int, error_type: str, error_msg: str):
-        """记录错误。"""
-        logger.error(json.dumps({
-            "event": "error",
-            "session_id": self.session_id,
-            "iteration": iteration,
-            "error_type": error_type,
-            "error_msg": error_msg,
-            "timestamp": datetime.now().isoformat(),
-        }, ensure_ascii=False))
-```
+如果真实问题需要查看内容，先决定谁可以读取、保留多久、怎样脱敏，再增加明确字段。不能为了“完整复现”就默认复制凭据或全部项目内容。
 
 ### 日志分析的关键模式
 
-有了结构化日志，你可以做几种关键分析：
+查不到 `process.start`、却有拒绝批准事件，说明进程没有启动。`process.end.timed_out=true` 说明命令等待超过本次限制；模型可能继续给出文字，因此还要检查应用退出和未完成项。`tool.end.ok=false` 则先查参数、工具名与执行错误，不要先猜模型能力。
 
-**推理链断点分析**：找到 Agent 的推理从"正确"变成"错误"的那一步。通常的方法是顺序阅读每一步的 `thought` 日志，标记每一步的推理是否合理，直到找到第一步不合理的推理——那就是断点。
-
-**上下文膨胀检测**：通过 `context_state` 日志监控消息历史的长度。如果在某一步 `estimated_tokens` 突然接近模型的上下文窗口上限，后续步骤的推理质量很可能会下降——因为模型被迫丢弃了早期信息。
-
-**工具调用模式异常**：如果同一个工具被反复调用（比如 `read_file` 连续被调用 5 次，每次参数一样），说明 Agent 可能陷入了循环。
-
----
+[工具接口设计](/agent/tool-interface-design/)强调错误应能帮助下一步判断；本例把参数错误和工具异常作为结构化工具消息交回模型，trace 只记录失败状态，不把可能含内容的异常全文复制进默认日志。
 
 ## 第三支柱：Metrics——量化指标
 
-Metrics 不关心单次执行的细节，它关心的是整体趋势。
-
 ### Agent 的核心指标
 
-```python
-from dataclasses import dataclass, field
-import time
+`--summarize-trace` 读取真实 JSONL，并区分模型回合、工具分发失败、命令次数、非零命令、进程超时、取消和文件写入。上面同一次运行的实际汇总是：
 
-
-@dataclass
-class AgentMetrics:
-    """
-    Agent 运行指标收集器。
-    在每次执行中更新，定期聚合查看趋势。
-    """
-
-    # 任务维度
-    total_tasks: int = 0
-    successful_tasks: int = 0
-    failed_tasks: int = 0
-
-    # 成本维度
-    total_input_tokens: int = 0
-    total_output_tokens: int = 0
-    total_cost_usd: float = 0
-
-    # 效率维度
-    total_iterations: int = 0
-    total_tool_calls: int = 0
-    total_duration_seconds: float = 0
-
-    # 质量维度
-    tool_errors: int = 0
-    retry_count: int = 0
-    max_iteration_hits: int = 0  # 触发最大迭代次数的次数
-
-    @property
-    def success_rate(self) -> float:
-        return self.successful_tasks / max(self.total_tasks, 1)
-
-    @property
-    def avg_iterations(self) -> float:
-        return self.total_iterations / max(self.total_tasks, 1)
-
-    @property
-    def avg_cost_per_task(self) -> float:
-        return self.total_cost_usd / max(self.total_tasks, 1)
-
-    @property
-    def avg_duration_seconds(self) -> float:
-        return self.total_duration_seconds / max(self.total_tasks, 1)
-
-    @property
-    def tool_error_rate(self) -> float:
-        return self.tool_errors / max(self.total_tool_calls, 1)
-
-    def report(self) -> dict:
-        return {
-            "tasks": {
-                "total": self.total_tasks,
-                "success_rate": f"{self.success_rate:.1%}",
-            },
-            "cost": {
-                "total_usd": f"${self.total_cost_usd:.4f}",
-                "avg_per_task": f"${self.avg_cost_per_task:.4f}",
-                "total_tokens": self.total_input_tokens + self.total_output_tokens,
-            },
-            "efficiency": {
-                "avg_iterations": f"{self.avg_iterations:.1f}",
-                "avg_duration": f"{self.avg_duration_seconds:.1f}s",
-                "tool_error_rate": f"{self.tool_error_rate:.1%}",
-            },
-            "warnings": {
-                "max_iteration_hits": self.max_iteration_hits,
-                "retry_count": self.retry_count,
-            },
-        }
+```json
+{
+  "events": 34,
+  "model_turns": 6,
+  "tool_dispatch_failures": 0,
+  "commands": 2,
+  "nonzero_commands": 1,
+  "process_timeouts": 0,
+  "cancelled_processes": 0,
+  "writes": 1,
+  "runtime_statuses": [
+    "complete"
+  ]
+}
 ```
+
+`nonzero_commands=1` 与 `tool_dispatch_failures=0` 同时成立，正是前面的测试失败被正常回传。`runtime_statuses` 中的 `complete` 不能覆盖这个事实。汇总没有 token、API 费用或修复准确率，因为入口没有采集这些数据。
 
 ### 应该设告警的指标
 
-不是所有指标都需要实时告警。以下是最应该设告警的几个：
-
-| 指标 | 告警阈值 | 说明 |
-|------|----------|------|
-| `success_rate` | < 80% | 任务成功率显著下降 |
-| `avg_cost_per_task` | > 历史均值 × 2 | 成本异常——可能因为推理循环 |
-| `max_iteration_hits` | 连续 3 次 | Agent 反复触发迭代上限 |
-| `tool_error_rate` | > 20% | 工具层有系统性问题 |
-| `avg_iterations` | > 历史均值 × 1.5 | Agent 效率下降 |
-
----
+先按任务定义需要关注的变化。例如同一固定练习突然没有第二次命令，可能是循环提前停止；超时数增加，可能来自命令变慢或时限变短。先核对输入与配置，再决定是否告警。一个孤立的调用次数不能直接说明效率下降，参考[评测篇](/agent/agent-evaluation/)对任务结果与过程的区分。
 
 ## Replay：复现问题的最有力工具
 
-Agent 调试中最大的挑战是**复现**。因为模型的输出是非确定性的，同样的输入可能产生不同的推理路径。
-
-Replay 机制的核心思想是：**保存一次执行的完整上下文（包括所有工具返回值），在相同条件下重跑或逐步重放。**
-
-```python
-import json
-from dataclasses import dataclass
-
-
-@dataclass
-class ExecutionSnapshot:
-    """一次完整执行的快照，包含复现所需的全部信息。"""
-    session_id: str
-    task: str
-    system_prompt: str
-    messages: list[dict]          # 完整的消息历史
-    tool_results: list[dict]      # 每次工具调用的参数和返回值
-    model: str
-    temperature: float
-    trace_summary: dict
-
-
-class ReplayEngine:
-    """
-    执行重放引擎。
-    两种模式：模拟重放（不调用真实 API）和真实重放（重跑 LLM）。
-    """
-
-    def save_snapshot(self, snapshot: ExecutionSnapshot, path: str):
-        """保存执行快照到文件。"""
-        data = {
-            "session_id": snapshot.session_id,
-            "task": snapshot.task,
-            "system_prompt": snapshot.system_prompt,
-            "messages": snapshot.messages,
-            "tool_results": snapshot.tool_results,
-            "model": snapshot.model,
-            "temperature": snapshot.temperature,
-            "trace_summary": snapshot.trace_summary,
-        }
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
-
-    def load_snapshot(self, path: str) -> ExecutionSnapshot:
-        """加载执行快照。"""
-        with open(path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        return ExecutionSnapshot(**data)
-
-    def simulate_replay(self, snapshot: ExecutionSnapshot):
-        """
-        模拟重放：按时间顺序展示每一步的输入、推理和输出，
-        不调用真实 API。用于分析问题发生的过程。
-        """
-        print(f"=== Replay: {snapshot.session_id} ===")
-        print(f"Task: {snapshot.task}\n")
-
-        tool_idx = 0
-        for i, msg in enumerate(snapshot.messages):
-            role = msg["role"]
-
-            if role == "system":
-                print(f"[SYSTEM] (prompt, {len(msg['content'])} chars)")
-
-            elif role == "user":
-                print(f"\n[USER] {msg['content'][:200]}")
-
-            elif role == "assistant":
-                if msg.get("content"):
-                    print(f"\n[THOUGHT] {msg['content'][:300]}")
-                if msg.get("tool_calls"):
-                    for tc in msg["tool_calls"]:
-                        fn = tc["function"]
-                        print(f"[ACTION] {fn['name']}({fn['arguments'][:100]})")
-
-            elif role == "tool":
-                content = msg["content"]
-                # 高亮错误
-                if '"success": false' in content.lower():
-                    print(f"[RESULT] ⚠️ ERROR: {content[:200]}")
-                else:
-                    print(f"[RESULT] ✓ {content[:200]}")
-
-        print(f"\n=== Trace Summary ===")
-        for k, v in snapshot.trace_summary.items():
-            print(f"  {k}: {v}")
-
-    async def live_replay(
-        self,
-        snapshot: ExecutionSnapshot,
-        stop_at_iteration: int | None = None,
-    ):
-        """
-        真实重放：用保存的工具返回值 mock 工具调用，
-        但使用真实的 LLM API。用于验证 prompt 修改是否解决了问题。
-        """
-        # 使用保存的工具结果作为 mock
-        tool_results_iter = iter(snapshot.tool_results)
-
-        async def mock_tool(name: str, args: dict) -> dict:
-            """用保存的结果替代真实工具调用。"""
-            saved = next(tool_results_iter, None)
-            if saved and saved["tool_name"] == name:
-                return saved["result"]
-            return {"error": f"No saved result for {name}"}
-
-        # 用真实 LLM + mock 工具重跑
-        # 这让你可以测试 prompt 修改的效果，
-        # 而不需要重新执行真实的工具调用
-        # ...
-```
-
 ### 什么时候用 Replay
 
-- **模拟重放**：你想理解一次失败执行的过程——每一步做了什么、在哪一步出了岔子。不消耗 API 调用。
-- **真实重放**：你修改了 prompt 或工具描述后，想验证对同一个任务是否能给出更好的结果。用保存的工具返回值 mock 工具调用，只用真实 LLM 重跑推理。
+本例的 trace 不包含完整输入，因此不能从文件自动重建对话。能做的是重新运行同一个 fixture：程序再次创建同样的练习文件，模型请求顺序固定，文件和测试命令重新执行。这验证固定流程是否仍成立，不是重放原进程或证明 live 模型会产生相同输出。
 
----
+重跑时用新的 trace 文件名；否则入口会拒绝覆盖。对真实任务而言，文件版本、工具返回与授权可能已经变化，不能未经检查便重复写入或外发动作。
 
 ## 评测-调试-修复闭环
 
-![评测-调试-修复闭环](eval_debug_fix_loop.svg)
+先用失败用例确认问题，再用 trace 找到最早可观察的偏差，提出原因假设，修改后重跑原例与相关测试。
 
-*图 3：评测发现问题（任务完成率下降）→ 调试定位原因（Trace + Log + Replay）→ 修复解决问题（调整 Prompt/工具/Guardrails）→ 回到评测验证修复效果。*
+![评测、定位、修改与回归的关系](eval_debug_fix_loop.svg)
 
-这个闭环的关键在于**回归验证**。修复完成后，必须用和发现问题相同的评测基准重新测试，确认修复真的解决了问题，而且没有引入新问题。[评测那篇](/agent/agent-evaluation/) 里讨论的评测用例集就是回归验证的基准。
+*记录帮助选择排查位置，修复是否成立仍靠任务验收和回归测试。*
 
----
+本例的集成测试不仅检查日志里有没有“成功”这个词，还检查磁盘文件确实变了、第一条真实测试退出 1、第二条退出 0、拒绝时没有启动进程，以及取消后子进程已经回收。它们验证程序实现；live 模型能力没有在这些离线测试中测量。
 
 ## 五种常见的 Agent 调试模式
 
 ### 模式一：推理链断裂
 
-**症状**：Agent 在某一步突然"忘记"了任务目标，开始做无关的事情。
-
-**调试方法**：查看 `context_state` 日志，找到 `estimated_tokens` 接近上下文窗口上限的那一步。通常这一步之后，模型因为截断丢失了系统提示或早期的关键信息。
-
-**修复**：优化上下文管理策略——在截断前做摘要压缩，确保系统提示和任务目标始终保留在上下文中。参见 [上下文与记忆那篇](/agent/context-memory-state-management/)。
+若模型直接结束却没有读取或测试，trace 能显示缺少哪些操作，不能直接解释内部推理原因。应核对模型实际收到的资料，再判断是任务表达、工具描述还是输入缺失。[上下文与记忆](/agent/context-memory-state-management/)讨论了已保存资料与本轮输入的差别。
 
 ### 模式二：工具调用循环
 
-**症状**：Agent 反复调用同一个工具，参数几乎相同，进入死循环直到触发 `MAX_ITERATIONS`。
-
-**调试方法**：查看 `tool_call` 日志，找到重复调用的模式。然后查看对应的 `thought` 日志——通常模型没有从错误中提取有效的诊断信息。
-
-**修复**：改进工具的错误返回值。比如 `read_file` 失败时，不只返回"文件不存在"，还返回"当前目录下有这些文件：[...]"，帮助模型从错误中恢复。参见 [工具接口设计那篇](/agent/tool-interface-design/)。
+重复的工具事件只说明重复发生了调用；默认 trace 不含参数，不能证明请求完全相同。先检查工具返回是否足以采取下一步，再在获准范围内对照参数。循环也应由硬性轮数和时限结束，不能靠日志代替限制。
 
 ### 模式三：工具返回污染
 
-**症状**：Agent 的推理在某一步之后突然变得奇怪——语气变了、开始做之前没有要求的事情。
-
-**调试方法**：查看那一步之前的 `tool_call` 日志，检查工具返回的内容。很可能是间接 Prompt Injection——工具返回的数据中包含了操纵性的文本。
-
-**修复**：加强输入防护层的工具返回内容扫描。参见 [Guardrails 那篇](/agent/guardrails-safety-boundary/) 关于间接 Prompt Injection 的讨论。
+外部资料可能包含诱导越权的文字。默认元数据无法显示这段文字，需要另查获准保存的工具内容；执行前的权限检查仍要独立生效。[Guardrails](/agent/guardrails-safety-boundary/)解释了资料中的指令与用户授权的区别，trace 本身不防注入。
 
 ### 模式四：幻觉式工具调用
 
-**症状**：Agent 调用了一个不存在的工具，或者传了根本不合法的参数格式。
-
-**调试方法**：查看出错前几步的 `thought` 日志和 `context_state`。通常这发生在上下文很长时——模型"忘记"了可用的工具列表，开始从训练知识中"回忆"工具名称。
-
-**修复**：在上下文截断策略中，确保工具定义始终存在。或者降低 `temperature`，减少模型的"创造性"。
+不存在的名称或不符合 Schema 的参数会被共享运行时拒绝，出现 `tool.end.ok=false`。先核对本轮发送的工具定义与具体错误，再调整指令；不要把所有此类失败都归因于上下文太长。
 
 ### 模式五：成本失控
 
-**症状**：某些任务的成本是正常任务的 5-10 倍。
-
-**调试方法**：查看 Metrics 中的 `avg_iterations` 和 `total_tokens`。如果迭代次数正常但 Token 用量异常高，通常是某个工具返回了过大的内容（比如读取了一个很大的文件，整个内容进入了上下文）。如果迭代次数异常高，通常是推理循环问题。
-
-**修复**：在工具返回值上加长度限制。设置 Token 预算——当一次执行的 Token 用量超过阈值时，主动终止并告知用户。
-
----
+本例能发现轮数、工具数或返回字节数异常，但不能报告真实 token 账单。输出上限也不等于 token 预算。如果需要成本告警，应先采集服务实际返回的计量字段和适用价格，再建立统计。
 
 ## 可观测性工具链
 
-自己从零实现 Tracing 和 Logging 适合学习和小规模使用。在生产环境中，通常会接入专门的可观测性平台：
-
-### LangSmith（LangChain 生态）
-
-LangChain 团队提供的可观测性平台。如果你使用 LangGraph 构建 Agent，LangSmith 是最自然的选择——它可以自动捕获 LangGraph 执行流中的所有 Span。
-
-核心能力：Trace 可视化、Prompt Playground（修改 prompt 后在同一输入上测试效果）、评测数据集管理。
-
-### Langfuse（开源）
-
-开源的 LLM 可观测性平台，**不绑定任何框架**。如果你的 Agent 是自研的（像我们系列里的实现），Langfuse 是最灵活的选择。
-
-核心能力：Trace 和 Span 管理、成本分析、Prompt 版本管理、评测。可以自托管。
-
-接入方式很简单：
-
-```python
-from langfuse import Langfuse
-
-langfuse = Langfuse()
-
-# 创建一个 Trace
-trace = langfuse.trace(name="research_agent_run", input=user_task)
-
-# 在 LLM 调用时记录 Span
-span = trace.span(name="llm_call_1", input=messages)
-response = await client.chat.completions.create(...)
-span.end(output=response.choices[0].message.content)
-
-# 在工具调用时记录 Span
-tool_span = trace.span(name="web_search", input={"query": query})
-result = await web_search(query)
-tool_span.end(output=result)
-```
-
-### Arize Phoenix（开源）
-
-专注于 LLM 评估和排障的开源工具。它的特色是**Trace 的可视化和对比分析**——可以对比两次执行的 Trace 差异，帮助你理解为什么一次成功一次失败。
+LangSmith、Langfuse 和 Arize Phoenix 是可观测性平台的例子。当前入口没有集成它们，也不包含对应 SDK 调用。已有平台仍需检查采集哪些字段、是否会上传代码或提示词、如何关联工具结果，不能因为接入平台就假定所有执行已覆盖。
 
 ### 工具选型建议
 
-| 场景 | 推荐工具 |
-|------|----------|
-| 用 LangGraph 构建 | LangSmith |
-| 自研 Agent，想自托管 | Langfuse |
-| 重点在 Trace 对比分析 | Arize Phoenix |
-| 学习和原型验证 | 自研（本文的实现） |
-
----
+先把实际事件与失败语义定义清楚，再决定是否将它们送入平台。学习这个例子时，本地 JSONL 与自带汇总入口足以观察调用顺序、失败和恢复；需要多人查询、权限管理或长期保存时，再核对平台的具体版本与接入方式。
 
 ## 总结
 
-评测告诉你"出了问题"，可观测性和调试告诉你"问题在哪、为什么出问题"。两者结合才是完整的质量保证闭环。
-
-三个支柱各有分工：Tracing 记录执行轨迹，回答"发生了什么""按什么顺序发生的"；Logging 记录推理和决策细节，回答"为什么这么做""哪一步出了岔子"；Metrics 量化整体表现，回答"趋势在变好还是变差"。
-
-Agent 调试最难的地方，不是技术实现，而是接受一个事实：**你无法对模型的内部推理设断点。** 你能做的是尽可能完整地记录模型的输入、输出和工具交互，通过分析这些外部可观测信号来推断内部出了什么问题。Replay 机制把一次失败执行的完整上下文保存下来，是缩小排查范围最有效的手段。
-
-最后，可观测性不是事后补丁。在 Agent 开发的第一天就把 Tracer 嵌入 ReAct 循环——它只增加几行代码，但在你第一次遇到"不知道它为什么做了那件事"时，会省下几个小时的排查时间。
-
----
+调试从可观察事实开始：模型回了什么状态，工具有没有真正执行，进程退出了多少，哪个限制被触发。这个例子把这些事实写进同一份 JSONL，既能本地重跑，也能解释“调用成功但测试失败”。想进一步回答模型决策原因或实际费用，还需要额外、明确授权的数据，不能由现有字段猜出来。
 
 *上一篇：[文件管理 Agent 实战：Guardrails 怎么落地](/agent/build-file-management-agent/)*
 
-*下一篇预告：Multi-Agent 实战——用 Supervisor 模式构建代码审查系统*
+*下一篇：[Multi-Agent 实战：用 Supervisor 模式构建代码审查系统](/agent/build-multi-agent-code-review/)*

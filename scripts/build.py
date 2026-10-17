@@ -8,6 +8,7 @@ import sys
 
 from check_site import check_site
 from package_course import ARCHIVE, COURSE, check_archive
+from package_agent_examples import write_archives
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -32,6 +33,8 @@ def main():
         if args.cache_dir:
             command.extend(["--cacheDir", str(args.cache_dir.resolve())])
         subprocess.run(command, cwd=ROOT, check=True)
+        packages = write_archives(args.destination / "downloads/agent-examples")
+        print("Agent example archives: %d self-contained packages" % len(packages), flush=True)
         print(check_site(args.destination, args.base_url))
     except (ValueError, OSError, subprocess.CalledProcessError) as error:
         print(error, file=sys.stderr)

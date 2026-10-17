@@ -3,8 +3,8 @@ title = "Planning：当 ReAct 不够用时，Agent 如何提前分解目标"
 date = 2026-03-22T23:00:00+08:00
 draft = false
 author = "Hex4C59"
-description = "解释 Planning 为什么是复杂 Agent 任务的必要上层结构，以及 Plan-and-Execute 如何把任务分解、执行与检查点串成稳定闭环。"
-summary = "系统分析 ReAct 在长任务中的局限，说明 Planning 的核心思想、Plan-and-Execute 的执行结构、代码实现与常见失败模式。"
+description = "用可运行的异步 Plan-and-Execute 说明任务分解、结果验收、结构化状态，以及总截止时间、步骤和重规划上限如何共同约束执行。"
+summary = "显式保存依赖、完成标准和执行状态，通过真实临时文件演示局部重规划；失败、超时和限额不再被标记为完成，每步与整体目标都需要独立验收。"
 tags = ["Agent", "规划", "Task Decomposition"]
 categories = ["ai"]
 series = ["agent-engineering"]
@@ -15,24 +15,22 @@ topics = ["planning", "plan-and-execute", "agent", "task-decomposition", "reflec
 frameworks = ["OpenAI", "Anthropic"]
 ShowToc = true
 source_kind = "original"
-lastmod = 2026-03-23T10:35:35+00:00
+lastmod = 2026-10-17
 +++
 
-在上一篇《ReAct：模型如何让推理与行动交替运转》里，我们把 ReAct 的局限性说清楚了：
+[上一篇 ReAct](/agent/react-paradigm/)讨论了模型怎样根据目标、历史和工具结果决定下一步。当任务有多组依赖和验收要求时，还需要一份能单独查看的计划，才能核对哪些要求已满足、哪些步骤仍在等待。
 
-> ReAct 是一个“反应式”范式——它在每一步根据当前观察决定下一步，没有全局规划。对于需要提前规划、分解目标、并行执行的复杂长任务，纯 ReAct 往往不够。
-
-这篇文章就是要回答：**不够用的时候，怎么办。**
+本文面向会写 Python 循环、了解异步调用和工具接口的读者。这里比较“不单独保存全局计划的循环”和“显式维护计划的循环”；ReAct 也能读取历史目标，并非只能看到最近一条结果。后面的机制模块可以直接运行：它会区分完成、失败、超时与限额，限制整个任务的异步等待时间，并用真实临时文件检查重规划后的结果。
 
 ---
 
 ## 先给结论
 
-1. **ReAct 的核心缺陷是“只看当下”。** 它每一步只根据最新的 Observation 决定下一步，没有对整个任务的全局视图。任务越长、越复杂，这个缺陷就越明显。
+1. **只做逐步选择，可能漏掉整体要求。** 如果没有单独保存任务分解和完成标准，执行循环就需要反复从对话中推断进度，长任务更难检查是否覆盖完整。
 2. **Planning 的本质是“先想清楚再做”。** 在执行任何动作之前，先生成一份结构化的执行计划，把目标分解成可执行的子任务序列。
-3. **Plan-and-Execute 是最常见的 Planning 范式。** 规划阶段生成计划，执行阶段按计划推进，检查点阶段评估是否需要调整。三个阶段分工明确。
+3. **Plan-and-Execute 把规划与执行分开。** 规划阶段生成计划，执行阶段按计划推进，检查点阶段评估是否需要调整。三个阶段分工明确。
 4. **Planning 不是 ReAct 的替代品，而是它的上层结构。** 好的 Agent 系统里，Planning 负责任务分解和全局协调，ReAct 负责每个子任务内部的推理与工具调用。
-5. **计划的刚性是工程上最重要的设计决策。** 计划太刚性，遇到意外就崩；计划太灵活，和没有计划没区别。找到合适的刚性程度，是 Planning 系统设计的核心挑战。
+5. **需要决定何时允许改计划。** 完全照旧执行，可能沿用已失效的前提；每步都推翻重写，又会增加规划开销并丢失进度。检查点应说明哪些结果会触发调整。
 
 ---
 
@@ -50,7 +48,7 @@ lastmod = 2026-03-23T10:35:35+00:00
 - 验证假设
 - 生成结构化报告
 
-用 ReAct 来做，大致会发生什么：
+以下是人为设定的轨迹示意，数字不是实测结果：
 
 ```text
 Thought: 我需要分析用户流失情况，先查查数据。
@@ -62,20 +60,20 @@ Action: analyze_data("按月统计流失率")
 Observation: 1月 3.2%，2月 4.1%，3月 5.8%...
 
 Thought: 流失率在上升，我来看看具体原因...
-（继续一步一步走，每步只看当前结果）
+（继续推进；这段假设轨迹没有另外列出完整计划）
 ```
 
 问题在哪里：
 
-**没有全局结构。** ReAct 不知道“分析流失原因”这件事总共需要几个步骤，哪些步骤是必须的，哪些可以并行，哪些依赖于其他步骤的结果。它只是走一步看一步。
+**没有单独维护全局结构。** 上面的记录没有列出必要步骤、依赖和完成标准。开发者因此难以检查：数据查询后是否还会查用户反馈，原因假设是否经过验证。问题在于缺少这份结构化记录，而不是 ReAct 这个名称决定模型一定不知道目标。
 
 **容易迷失在细节里。** 当某个工具返回了有趣的数据，ReAct 很容易被吸引过去深挖，偏离了原始目标。没有全局计划约束，任务路径很难保持连贯。
 
 **无法保证完整性。** 没有计划意味着没有“完成检查表”。任务执行完后，你不知道是否覆盖了所有必要的分析角度，很容易遗漏关键步骤。
 
-**对长任务来说上下文消耗失控。** 前面[上下文与记忆](/agent/context-memory-state-management/)那篇已经讲过这个问题：没有结构的执行会让 context window 很快被工具结果填满，导致后续推理质量下降。
+**对长任务来说上下文消耗失控。** [上下文与记忆](/agent/context-memory-state-management/)讨论了如何控制每次请求。只追加工具结果会增加输入长度；显式计划有助于提供进度，但它本身也要接受预算检查，不能取代上下文管理。
 
-这些问题，都不是换个更强的模型能解决的。它们是“反应式执行”这个设计本身的局限。
+仅更换模型，不能代替系统对计划、进度和验收标准的保存。显式维护这些信息，可以让执行过程与整体目标逐项对照。
 
 ---
 
@@ -95,7 +93,7 @@ Planning 的答案直接了当：**在开始执行之前，先生成一份结构
 
 ![结构化计划与执行](plan_and_execute_structured_plan.svg)
 
-这样，Agent 在任何时刻都知道：整个任务的全貌、当前在哪一步、还有哪些步骤没完成、当前步骤的完成标准是什么。
+以前面的假设任务为例，先查询数据才能分析趋势；用户反馈可以作为另一条信息来源；形成原因假设后，还要验证再写报告。把依赖和完成标准写进计划，并在每轮提供相关内容，执行模块就能判断哪些步骤可开始、哪些仍需等待。
 
 ---
 
@@ -109,294 +107,69 @@ Planning 的答案直接了当：**在开始执行之前，先生成一份结构
 
 **检查点阶段（Checkpoint）**：每完成一个子任务，评估结果，判断是否需要调整后续计划。
 
-三个阶段的关系是：规划是起点，执行是主体，检查点是保险——它让计划在遇到意外时能够自我修正，而不是崩溃或继续执行一个已经不适用的计划。
+程序先保存计划，再执行依赖已满足的步骤；到检查点时，把结果与该步的完成标准对照，并判断后续前提是否还成立。若结果改变了判断，就修改尚未执行的步骤。检查点提供复查机会，不保证模型一定能发现所有问题。
 
 ---
 
 ## 代码实现
 
+[下载机制示例 ZIP](/downloads/agent-examples/mechanisms.zip)，解压后使用 Python 3.11 或更新版本。以下命令在解压目录执行，离线演示不需要模型凭据：
+
+```sh
+python3.11 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+python -c "import asyncio,json,planning; print(json.dumps(asyncio.run(planning.demo()),ensure_ascii=False,sort_keys=True))"
+python -m unittest -v test_context_planning
+```
+
+PowerShell 使用 `.venv\Scripts\Activate.ps1` 激活环境。仓库内运行时，工作目录是 `examples/agents/mechanisms`，并设置 `PYTHONPATH=../common`；ZIP 根目录已经包含共享运行时。
+
 ### 规划阶段
 
-规划器的职责是把一个自然语言目标转化成结构化的执行计划：
+`run_plan_and_execute` 接收实现 `async complete(messages, tools)` 的模型，以及共享运行时的 `Tool` 列表。规划器只返回结构化 JSON，不得自行给步骤设置“已完成”。程序检查原目标是否保留、字段和类型是否正确、步骤编号是否重复、依赖是否存在或成环、工具是否真的可用。
 
-```python
-import openai
-import json
-from dataclasses import dataclass, field
-from typing import Optional
-from enum import Enum
+每个 `PlanStep` 保存描述、依赖、完成标准和需要的工具。`StepRecord` 另存执行状态、实际摘要和工具次数。把计划内容与执行状态分开，能防止模型在计划 JSON 中写一个 `status=complete` 就跳过操作。
 
-client = openai.OpenAI()
+完整 `planning.py` 与 ZIP 共用一份源码；它在同一机制包内使用 `context_budget.py`，所有规划、执行和检查点的模型输入也经过调用前字符预算检查。
 
-class StepStatus(Enum):
-    PENDING   = "pending"
-    RUNNING   = "running"
-    COMPLETED = "completed"
-    FAILED    = "failed"
-    SKIPPED   = "skipped"
-
-@dataclass
-class PlanStep:
-    id: str
-    description: str
-    depends_on: list[str]
-    success_criteria: str
-    tools_needed: list[str]
-    status: StepStatus = StepStatus.PENDING
-    result_summary: Optional[str] = None
-    notes: Optional[str] = None
-
-@dataclass
-class ExecutionPlan:
-    goal: str
-    steps: list[PlanStep]
-    definition_of_done: str
-    constraints: list[str] = field(default_factory=list)
-
-    def get_next_steps(self) -> list[PlanStep]:
-        """返回当前可以执行的步骤（依赖已完成，自身未开始）"""
-        completed_ids = {s.id for s in self.steps if s.status == StepStatus.COMPLETED}
-        return [
-            s for s in self.steps
-            if s.status == StepStatus.PENDING
-            and all(dep in completed_ids for dep in s.depends_on)
-        ]
-
-    def is_done(self) -> bool:
-        return all(
-            s.status in (StepStatus.COMPLETED, StepStatus.SKIPPED)
-            for s in self.steps
-        )
-
-    def summary(self) -> str:
-        lines = [f"目标：{self.goal}", ""]
-        for s in self.steps:
-            icon = {"pending": "⬜", "running": "🔄",
-                    "completed": "✅", "failed": "❌", "skipped": "⏭️"}[s.status.value]
-            result = f" → {s.result_summary[:80]}..." if s.result_summary else ""
-            lines.append(f"{icon} [{s.id}] {s.description}{result}")
-        return "\n".join(lines)
-
-
-def create_plan(goal: str, context: str = "") -> ExecutionPlan:
-    """规划阶段：把目标分解成结构化执行计划"""
-    response = client.chat.completions.create(
-        model="gpt-4o",
-        messages=[
-            {
-                "role": "system",
-                "content": (
-                    "你是一个任务规划专家。"
-                    "根据给定目标，生成清晰的结构化执行计划。"
-                    "计划要完整覆盖目标，步骤之间的依赖关系要准确。"
-                    "只输出 JSON，不要有任何其他文字。"
-                )
-            },
-            {
-                "role": "user",
-                "content": f"""
-目标：{goal}
-{f"背景信息：{context}" if context else ""}
-
-生成执行计划，格式如下：
-{{
-  "goal": "目标描述",
-  "definition_of_done": "整体任务完成的判断标准",
-  "constraints": ["约束条件1", "约束条件2"],
-  "steps": [
-    {{
-      "id": "step_1",
-      "description": "步骤描述",
-      "depends_on": [],
-      "success_criteria": "这步完成的判断标准",
-      "tools_needed": ["tool_name"]
-    }}
-  ]
-}}
-"""
-            }
-        ],
-        response_format={"type": "json_object"}
-    )
-
-    data = json.loads(response.choices[0].message.content)
-    steps = [PlanStep(**s) for s in data["steps"]]
-    return ExecutionPlan(
-        goal=data["goal"],
-        steps=steps,
-        definition_of_done=data["definition_of_done"],
-        constraints=data.get("constraints", [])
-    )
-```
+{{< agent-code example="mechanisms" file="planning.py" >}}
 
 ### 执行阶段
 
-执行阶段负责按计划推进，每个子任务内部用 ReAct 处理：
+程序只选择依赖都已完成的待执行步骤。开始前把它标为 `running`，再交给共享异步工具循环。执行返回的是 `AgentResult`，因此可以先检查 `status`，不再从返回句子里猜测成功与否。
 
-```python
-def execute_step(step: PlanStep, plan: ExecutionPlan, tools: list) -> str:
-    """执行单个子任务，内部使用 ReAct 范式"""
-    system = f"""你是一个任务执行 Agent。
+| 执行结果 | 步骤和整体怎样处理 |
+| --- | --- |
+| 工具循环达到轮次或调用上限 | 返回 `limit`，不运行依赖该步的后续步骤 |
+| 步骤等待超时 | 返回 `timeout`，不标记完成 |
+| 模型出错或工具结果含 `ok:false` | 返回失败，即使最后一句声称成功 |
+| 工具循环正常结束 | 继续调用 `verify_step(step, result)` 检查应用证据 |
+| 验收函数返回严格的布尔真 | 才把步骤标为 `complete`，进入检查点 |
 
-当前任务计划：
-{plan.summary()}
-
-你现在需要执行的步骤：
-- ID: {step.id}
-- 描述: {step.description}
-- 完成标准: {step.success_criteria}
-- 可用工具: {', '.join(step.tools_needed)}
-
-执行完成后，输出一段简洁的结果摘要，说明完成了什么、关键发现是什么。
-"""
-    messages = [
-        {"role": "system", "content": system},
-        {"role": "user", "content": f"请执行步骤 {step.id}：{step.description}"}
-    ]
-
-    # 内部用 ReAct 执行（工具调用循环）
-    for _ in range(10):  # 最多 10 轮
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=messages,
-            tools=tools
-        )
-        choice = response.choices[0]
-
-        if choice.finish_reason == "stop":
-            return choice.message.content
-
-        if choice.finish_reason == "tool_calls":
-            messages.append(choice.message)
-            for tc in choice.message.tool_calls:
-                args = json.loads(tc.function.arguments)
-                result = dispatch_tool(tc.function.name, args)
-                messages.append({
-                    "role": "tool",
-                    "tool_call_id": tc.id,
-                    "content": str(result)
-                })
-
-    return "步骤执行超时，未能完成。"
-```
+示例演示中的验收会读取实际生成的文件或检查真实工具返回内容。换成报告、数据分析等任务时，调用者需要提供适合自己任务的验收函数；“模型回答结束”与“业务目标已经完成”是两回事。
 
 ### 检查点阶段
 
-每完成一个步骤后，评估结果，判断是否需要调整计划：
+每步验收通过后，检查点可以保持计划，或者替换尚未执行的步骤。新计划仍要通过依赖和工具检查，不得复用已完成步骤的编号；已验证的摘要保留。整体目标与原完成标准也不会由重规划悄悄改掉。
 
-```python
-def checkpoint(plan: ExecutionPlan, completed_step: PlanStep) -> tuple[ExecutionPlan, bool]:
-    """
-    检查点：评估已完成步骤的结果，判断是否需要调整后续计划。
-    返回 (更新后的计划, 是否需要重新规划)
-    """
-    # 构建当前完成情况的摘要
-    completed_summaries = [
-        f"[{s.id}] {s.description}: {s.result_summary}"
-        for s in plan.steps
-        if s.status == StepStatus.COMPLETED
-    ]
+`max_replans` 限制接受修改的次数，`max_steps` 统计整个任务已经尝试执行的步骤，重规划后不清零。每个步骤内部另有工具循环轮次和工具调用上限，因此反复加新步骤、反复请求工具都会遇到明确的限额状态。
 
-    pending_steps = [
-        f"[{s.id}] {s.description}"
-        for s in plan.steps
-        if s.status == StepStatus.PENDING
-    ]
-
-    response = client.chat.completions.create(
-        model="gpt-4o",
-        messages=[
-            {
-                "role": "user",
-                "content": f"""
-任务目标：{plan.goal}
-
-已完成步骤：
-{chr(10).join(completed_summaries)}
-
-刚完成的步骤：[{completed_step.id}] {completed_step.description}
-结果：{completed_step.result_summary}
-
-待执行步骤：
-{chr(10).join(pending_steps)}
-
-请判断：
-1. 根据刚才的结果，后续步骤是否需要调整？
-2. 是否发现了计划中遗漏的重要步骤？
-3. 任务是否已经可以提前完成？
-
-输出 JSON：
-{{
-  "needs_replan": true/false,
-  "reason": "说明原因",
-  "updated_pending_steps": [
-    {{"id": "step_x", "description": "...", "depends_on": [], "success_criteria": "...", "tools_needed": []}}
-  ],
-  "can_finish_early": true/false
-}}
-"""
-            }
-        ],
-        response_format={"type": "json_object"}
-    )
-
-    result = json.loads(response.choices[0].message.content)
-
-    if result["needs_replan"] and result.get("updated_pending_steps"):
-        # 只更新待执行的步骤，已完成的不动
-        completed = [s for s in plan.steps if s.status != StepStatus.PENDING]
-        new_pending = [PlanStep(**s) for s in result["updated_pending_steps"]]
-        plan.steps = completed + new_pending
-
-    return plan, result.get("can_finish_early", False)
-
-
-def run_plan_and_execute(goal: str, tools: list, context: str = "") -> str:
-    """完整的 Plan-and-Execute 执行循环"""
-
-    # 1. 规划阶段
-    print("=== 规划阶段 ===")
-    plan = create_plan(goal, context)
-    print(plan.summary())
-
-    # 2. 执行阶段
-    print("\n=== 执行阶段 ===")
-    while not plan.is_done():
-        next_steps = plan.get_next_steps()
-
-        if not next_steps:
-            print("没有可执行的步骤，可能存在依赖死锁。")
-            break
-
-        # 取第一个可执行步骤（并行执行可以在这里扩展）
-        step = next_steps[0]
-        step.status = StepStatus.RUNNING
-        print(f"\n执行: [{step.id}] {step.description}")
-
-        result = execute_step(step, plan, tools)
-        step.result_summary = result
-        step.status = StepStatus.COMPLETED
-        print(f"完成: {result[:100]}...")
-
-        # 3. 检查点
-        plan, can_finish = checkpoint(plan, step)
-        if can_finish:
-            print("检查点判断：任务可以提前完成。")
-            break
-
-    # 生成最终输出
-    return generate_final_output(plan)
-```
+`timeout` 是规划、执行、检查点和验收共同使用的一个异步截止时间，`step_timeout` 另限制单步执行与验收。规划器或检查点一直等待时也会停止。调用者主动取消会传播 `CancelledError`；这些约束针对正常协作的异步等待，不能打断阻塞事件循环的同步代码，也不是操作系统级强制终止。达到工具调用上限时，前面已经执行的动作仍然存在；程序停止后续推进并报告状态，不自动回滚应用副作用。
 
 ### 完整执行流程回顾
 
-三个阶段串起来的完整流程如下图所示。规划阶段生成结构化计划后进入执行循环：每轮先找出依赖已满足的待执行步骤，用 ReAct 执行，经过检查点评估，直到 `is_done()` 为真才退出循环生成最终输出。否则分支经左侧回环，重新进入 `get_next_steps()`。
+下面是 2026-10-17 运行上面的 `planning.demo()` 捕获的结果。`mode=fixture` 表示模型回复固定，临时文件工具、依赖调度、重规划、验收和清理则实际执行：
+
+```json
+{"attempts": 3, "completed_steps": ["write", "verify", "report"], "files_verified": true, "max_request_characters": 1408, "mode": "fixture", "model_calls": 10, "ok": true, "replans": 1, "status": "complete", "temporary_workspace_removed": true}
+```
+
+初始计划是写源文件再写报告。第一步完成后，检查点插入“读回并核对源文件”这一步；程序保留已完成的写入记录，先验证，再生成报告。最后还运行 `verify_goal(plan, records)`，只有整体证据通过才返回 `complete`。
 
 ![Plan-and-Execute 完整执行流程图](plan_and_execute_flow.svg)
 
-*图 1：Plan-and-Execute 由规划、执行、检查点三部分构成；当 `is_done()` 为否时，流程会回到 `get_next_steps()` 继续推进。*
-
----
+*图 1：规划、执行和检查点的概念流程。图中的“执行”在本实现中包含状态检查与证据验收；整体完成还需要目标验收，不会因为执行函数返回了一段文字就通过。*
 
 ## 计划的刚性：最重要的设计决策
 
@@ -406,58 +179,27 @@ def run_plan_and_execute(goal: str, tools: list, context: str = "") -> str:
 
 ### 完全刚性计划
 
-规划阶段生成计划后，执行阶段严格按照计划走，中途不允许修改。
+计划生成后不接受中途修改，适合路径确定、验收规则稳定的流程。但发现前提失效时仍应停止，不能因为“严格执行”就把失败结果交给后续步骤。
 
-```python
-# 完全刚性：不调用 checkpoint，直接按顺序执行
-def strict_execute(plan: ExecutionPlan, tools: list):
-    for step in plan.steps:
-        if all(
-            s.status == StepStatus.COMPLETED
-            for s in plan.steps
-            if s.id in step.depends_on
-        ):
-            result = execute_step(step, plan, tools)
-            step.result_summary = result
-            step.status = StepStatus.COMPLETED
-```
-
-适用场景：任务路径非常确定，每一步输出都可以预期，意外情况极少。比如定期运行的数据报告、标准化的文件处理流程。
-
-风险：一旦某个步骤结果意外，后续步骤可能在错误的前提上继续执行，产生错误传播。
+本例可以用 `max_replans=0` 拒绝修改。验收和检查点仍会运行；一旦检查点要求改计划，就返回 `limit/replan_limit`，保留已有证据，让调用者决定是否重新启动任务。
 
 ### 完全动态计划
 
-每一步执行完都重新规划，计划随时可以完全推翻重来。
+每次得到新结果都重新规划，可能适合任务方向很不确定的场景，但也容易反复推翻待办、忽略之前的执行成本。
 
-```python
-def dynamic_execute(goal: str, tools: list):
-    context = ""
-    for _ in range(20):  # 最大步数
-        # 每步都重新规划
-        plan = create_plan(goal, context)
-        next_step = plan.get_next_steps()[0]
-        result = execute_step(next_step, plan, tools)
-        context += f"\n已完成：{next_step.description} → {result}"
-        if plan.is_done():
-            break
-```
-
-适用场景：任务路径高度不确定，每一步结果都可能完全改变后续方向。
-
-风险：每步都重新规划开销很大，而且容易失去对整体进度的把控，变成 ReAct 的另一种形式。
+无论修改多频繁，已经尝试的步骤和总截止时间都不能随计划对象重建而清零。否则每个小循环看似有上限，组合起来却仍可能一直运行。本实现把次数和截止时间放在外层执行器中，由所有修订共同使用。
 
 ### 带检查点的自适应计划（推荐）
 
 这是上面代码实现的方式：计划在执行中保持稳定，但在每个检查点有机会做局部调整。
 
 核心原则：
-- 已完成的步骤不可撤销
+- 保留已完成步骤的实际执行记录；若后来发现结论有误，另列修正或补做步骤，不把原记录悄悄删掉
 - 当前步骤完成后才触发检查点
 - 检查点只修改**待执行**的步骤，不推翻整个计划
 - 检查点的调整有明确触发条件（结果异常、发现遗漏、可提前完成）
 
-这个设计在稳定性和灵活性之间找到了平衡：计划足够稳定，让执行有全局方向感；同时足够灵活，能应对执行过程中的意外。
+这个设计让执行者能对照稳定的计划推进，同时在新结果改变前提时调整待办。是否适合具体任务，还取决于检查点能否识别异常、调整后是否保留有效依赖。
 
 ---
 
@@ -477,7 +219,7 @@ def dynamic_execute(goal: str, tools: list):
 - 工具返回了意外结果，下一步怎么调整？
 - 当前子任务是否已经完成？
 
-在实际的 Agent 系统里，它们是嵌套关系：Planning 负责把大任务分解成子任务，ReAct 负责执行每一个子任务。`execute_step()` 函数里的工具调用循环，本质上就是 ReAct。
+在实际的 Agent 系统里，它们是嵌套关系：Planning 负责把大任务分解成子任务，ReAct 负责执行每一个子任务。本例每步调用共享 `run_agent` 处理工具选择和结果反馈，外层执行器负责依赖、进度与验收。
 
 可以用一句话概括它们的分工：**Planning 决定做什么，ReAct 决定怎么做。**
 
@@ -515,7 +257,7 @@ def dynamic_execute(goal: str, tools: list):
 
 **适合 Planning 的场景**：
 
-- 任务包含 5 个以上有依赖关系的子任务
+- 任务包含多个有依赖关系的子任务，已经难以靠近期对话检查整体进度
 - 任务需要跨越多轮工具调用，且整体结构可以提前预判
 - 任务失败的代价较高，需要在执行前做好全局把控
 - 任务输出需要保证完整性（如报告、分析文档），不能遗漏关键步骤
@@ -530,7 +272,7 @@ def dynamic_execute(goal: str, tools: list):
 
 ## 总结
 
-ReAct 的价值在于让推理与行动交替，形成闭环。但它是“反应式”的，只看当前不看全局。当任务变得复杂，这个局限就开始显现。
+ReAct 组织每一步的判断、行动和结果反馈；当任务包含多组依赖和验收要求时，还需要一种方式单独保存整体计划。
 
 Planning 不是来取代 ReAct 的，而是在它上面加了一层全局视图：
 
@@ -538,9 +280,9 @@ Planning 不是来取代 ReAct 的，而是在它上面加了一层全局视图�
 - 执行阶段用 ReAct 处理每个子任务内部的工具调用
 - 检查点阶段评估进度，在保持整体稳定的前提下做局部调整
 
-这三层加在一起，才是一个真正能处理复杂任务的 Agent 结构。
+这三层共同提供任务分解、局部执行与进度复查。本例把验收写成明确接口，把 `failed`、`timeout`、`limit` 与 `complete` 分开；没有通过证据检查的步骤不会成为后续依赖。
 
-计划的刚性是最需要根据场景权衡的设计决策。太刚性，遇到意外就崩；太灵活，和没有计划没区别。带检查点的自适应计划，是大多数场景下合理的起点。
+计划的刚性是最需要根据场景权衡的设计决策。太刚性，遇到意外就崩；太灵活，和没有计划没区别。可以从稳定计划加局部检查点开始，再按任务的不确定性决定调整频率。规划模块和上下文模块共有 29 项本地测试，覆盖真实异步超时、错误状态、重规划与步骤上限、依赖校验、工具失败及当前任务保护；本轮没有在线模型质量验收。
 
 ---
 

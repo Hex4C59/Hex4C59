@@ -1,5 +1,16 @@
 {{- $page := . -}}{{- $lines := slice -}}{{- $fence := "" -}}{{- $fenceLength := 0 -}}{{- $skipTag := "" -}}{{- $htmlTag := "" -}}{{- $htmlDepth := 0 -}}
-{{- range split (replace .RenderShortcodes "\r\n" "\n") "\n" -}}
+{{- $rendered := .RenderShortcodes -}}
+{{- /* Embedded tutorial files stay plain fenced code in Markdown exports. */ -}}
+{{- range findRESubmatch `(?s)<!-- agent-code-source:([A-Za-z0-9_./-]+) -->(.*?)<!-- /agent-code-source -->` $rendered -}}
+  {{- $source := index . 1 -}}
+  {{- $code := readFile $source -}}
+  {{- $length := 3 -}}
+  {{- range findRE "`{3,}" $code -}}{{- $length = math.Max $length (add (len .) 1) -}}{{- end -}}
+  {{- $fence := strings.Repeat (int $length) "`" -}}
+  {{- $plain := printf "\n%s%s\n%s\n%s\n" $fence (strings.TrimPrefix "." (path.Ext $source)) $code $fence -}}
+  {{- $rendered = replace $rendered (index . 0) $plain -}}
+{{- end -}}
+{{- range split (replace $rendered "\r\n" "\n") "\n" -}}
   {{- $line := . -}}
   {{- $marker := findRESubmatch "^ {0,3}(`{3,}|~{3,})(.*)$" $line -}}
   {{- if $marker -}}

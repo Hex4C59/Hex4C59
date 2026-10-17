@@ -1,0 +1,16 @@
+{
+  "servers": {
+    "local": {
+      "command": "$PYTHON",
+      "args": ["local_server.py", "--workspace", "{workspace}", "--label", "local"],
+      "cwd": ".",
+      "timeout_seconds": 10
+    },
+    "mirror": {
+      "command": "$PYTHON",
+      "args": ["local_server.py", "--workspace", "{workspace}", "--label", "mirror"],
+      "cwd": ".",
+      "timeout_seconds": 10
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "cli-coding": "/agent/build-cli-coding-agent/",
+  "file-management": "/agent/build-file-management-agent/",
+  "mcp": "/agent/build-mcp-agent/",
+  "mechanisms": "/agent/planning-plan-and-execute/",
+  "multi-agent-review": "/agent/build-multi-agent-code-review/",
+  "persistent-memory": "/agent/build-persistent-memory-agent/",
+  "research": "/agent/build-research-agent/",
+  "skills": "/agent/build-skill-expert-agent/"
+}

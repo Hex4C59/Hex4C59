@@ -77,7 +77,7 @@ Reflection 要做的，就是在任务执行完成后（或执行中的关键节
 
 *图 1：任务执行完成后，Reflection 会对结果做一次全局审查；如果没有问题就直接输出，如果发现问题则触发修正或重执行。*
 
-下面代码展示控制流程，省略了部分执行、修正和汇总函数，也未提供完整运行环境。阅读时重点看输入包含什么证据、什么严重程度触发重做，以及轮数怎样限制。
+下面代码展示控制流程，省略了部分执行、修正和汇总函数。这里使用异步客户端 `AsyncOpenAI`，与函数中的 `await` 对应；客户端应由外层应用在结束时关闭。阅读时重点看输入包含什么证据、什么严重程度触发重做，以及轮数怎样限制。要运行带完整入口、修订后重查和失败测试的例子，可以使用 [Research Agent 的配套项目](/agent/build-research-agent/)。
 
 实现方式：
 
@@ -85,7 +85,7 @@ Reflection 要做的，就是在任务执行完成后（或执行中的关键节
 import openai
 import json
 
-client = openai.OpenAI()
+client = openai.AsyncOpenAI()
 
 async def reflect_on_output(
     task: str,

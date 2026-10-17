@@ -1,0 +1,6 @@
+{
+  "name": "explain-cache",
+  "description": "Explain a cache check using the supplied teaching data.",
+  "triggers": ["缓存检查"],
+  "content": "# 缓存检查\n\n依次说明键是否存在、缺失时怎样计算、何时更新已保存的值。只依据本次任务资料解释，不编造性能数字。\n"
+}

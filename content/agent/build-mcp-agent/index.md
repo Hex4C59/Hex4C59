@@ -3,8 +3,8 @@ title = "MCP 集成实战：让 Agent 连接真实服务"
 date = 2026-03-29T14:00:00+08:00
 draft = false
 author = "Hex4C59"
-description = "用 Python 构建一个通过 MCP 协议动态发现和调用工具的 Agent——连接文件系统、GitHub 和 SQLite 三个真实的 MCP Server，展示从硬编码工具到协议驱动工具的架构升级。"
-summary = "前面所有实战教程的工具都是硬编码注册的。这篇展示一种完全不同的方式：Agent 启动时不知道有哪些工具，运行时通过 MCP 协议动态发现、注册和调用——连接文件系统、GitHub 和 SQLite 三个真实的 MCP Server。"
+description = "用官方 Python MCP SDK 连接两个真实本地 FastMCP 服务，完成初始化、工具发现、命名空间映射和调用，并验证错误处理、超时与取消清理。"
+summary = "下载可运行示例，用固定模型响应驱动真实 MCP 子进程读取合成文件。工具定义由服务报告；宿主负责校验、路由和清理。包含固定版本依赖、启动配置、离线演示与协议集成测试，并说明真实模型、认证和隔离的边界。"
 tags = ["Agent", "MCP", "工具调用"]
 categories = ["ai"]
 series = ["agent-engineering"]
@@ -15,715 +15,189 @@ topics = ["mcp", "tool-use", "dynamic-tools", "protocol", "integration"]
 frameworks = ["OpenAI", "Anthropic"]
 ShowToc = true
 source_kind = "original"
-lastmod = 2026-03-28T09:11:36+00:00
+lastmod = 2026-10-17
 +++
 
-前面四篇实战教程——[Coding Agent](/agent/build-cli-coding-agent/)、[Research Agent](/agent/build-research-agent/)、[文件管理 Agent](/agent/build-file-management-agent/)、[代码审查](/agent/build-multi-agent-code-review/)——有一个共同点：**工具都是硬编码的。**
+前面四篇实战——[Coding Agent](/agent/build-cli-coding-agent/)、[Research Agent](/agent/build-research-agent/)、[文件管理 Agent](/agent/build-file-management-agent/)、[代码审查](/agent/build-multi-agent-code-review/)——都需要把工具实现和定义接入 Agent。这篇把工具移到独立进程：Agent 启动时先问服务“你有哪些工具”，再把模型提出的调用转发过去。
 
-你在 `TOOL_REGISTRY` 里手动注册 `read_file`、`web_search`、`move_file`，在 `TOOL_SCHEMAS` 里手动写每个工具的 JSON Schema 描述。Agent 能用哪些工具，在代码写好的那一刻就确定了。
+本文面向会写 Python、了解模型工具调用的读者。你将运行两个真实的本地 MCP 服务，读取同一份合成笔记，并看到初始化、发现、调用和关闭的结果。模型部分默认使用 **fixture（本地固定响应）**；协议消息、服务进程和文件读取都是真实的。这个演示验证接入代码，不证明模型会自主选对工具。
 
-这篇文章展示一种完全不同的方式。
+## 先运行一个完整例子
 
-Agent 启动时不知道自己有哪些工具。它通过 [MCP 协议](/agent/mcp-model-context-protocol/) 连接到外部的 MCP Server，**动态发现**这些 Server 提供的工具，自动转换成 LLM 能理解的格式，然后像使用硬编码工具一样调用它们。
+下载 [MCP Agent 示例 ZIP](/downloads/agent-examples/mcp.zip)，在空目录执行以下命令。ZIP 内没有额外的目录前缀，解压后入口和依赖文件就在 `mcp-demo` 中。需要 Python 3.11+；命令用于 macOS/Linux shell：
 
-加一个新服务？不用改 Agent 代码。在配置文件里加一行 MCP Server 的地址就行。
-
----
-
-## 先给结论
-
-1. **MCP 让 Agent 的工具集从"编译时确定"变成"运行时发现"。** Agent 代码不需要知道工具的实现细节——它只需要知道怎么通过 MCP 协议和 Server 通信。
-2. **MCP Client 的核心职责是三件事：启动 Server 进程、发现工具列表、转发工具调用。** 理解了这三步，就理解了整个集成逻辑。
-3. **MCP 工具定义自带 JSON Schema，可以直接转换成 OpenAI function calling 格式。** 不需要手动写 `TOOL_SCHEMAS`——MCP Server 已经定义好了。
-4. **多个 MCP Server 的工具可以混合使用。** Agent 同时连接文件系统、GitHub 和数据库三个 Server，三个 Server 的工具在同一个 ReAct 循环里被统一调用。
-5. **MCP 和硬编码工具可以共存。** 你不需要一次性把所有工具都迁移到 MCP。对于核心工具用硬编码，对于扩展工具用 MCP——两种方式可以在同一个 Agent 里混合。
-
----
-
-## 硬编码工具 vs MCP 工具
-
-先看直观对比：
-
-```python
-# ===== 硬编码方式：你需要自己写每一个工具的实现 =====
-
-TOOL_SCHEMAS = [
-    {
-        "type": "function",
-        "function": {
-            "name": "read_file",
-            "description": "读取文件内容",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "path": {"type": "string", "description": "文件路径"}
-                },
-                "required": ["path"],
-            },
-        },
-    },
-    # ... 每个工具都要手写 Schema ...
-]
-
-TOOL_REGISTRY = {
-    "read_file": read_file,       # 每个工具都要手写实现
-    "write_file": write_file,
-    "list_directory": list_directory,
-}
+```sh
+unzip mcp.zip -d mcp-demo
+cd mcp-demo
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt -r requirements-extra.txt
+.venv/bin/python app.py
+.venv/bin/python -m unittest -v test_app.py
 ```
 
-```python
-# ===== MCP 方式：工具由 Server 提供，Agent 只需要连接 =====
+下载包包含 `app.py`、`connector.py`、`local_server.py`、`config.json`、测试、说明，以及公共的 `agent_runtime.py` 和依赖文件。MCP SDK 固定为 **`mcp==1.30.0`**，使用同一版本的 `ClientSession`、`stdio_client` 和 FastMCP。安装依赖后，默认演示不需要网络、模型密钥或外部服务。
 
-async def setup():
-    client = MCPClient()
-    await client.connect("npx @modelcontextprotocol/server-filesystem /Users/me")
-    tools = await client.list_tools()   # 自动发现所有工具
-    schemas = client.to_openai_schemas()  # 自动转换格式
-    # 完成。不需要手写任何工具实现或 Schema。
-```
+程序会在临时目录写入 `note.txt`，内容是 `synthetic MCP note`，启动两个服务后各读取一次，最后关闭连接并删除临时目录。它不会把演示数据写入 HOME 或当前仓库。
 
-区别很明显：硬编码方式每加一个工具要写实现 + Schema；MCP 方式只需要连接一个新 Server，工具定义和实现全部由 Server 端提供。
-
----
-
-## 整体架构
-
-![MCP Agent 架构](architecture.svg)
-
-*图 1：Agent 作为 MCP Host 管理多个 MCP Client，每个 Client 连接一个 Server。启动时通过协议发现工具，运行时通过协议调用工具。Agent 代码不包含任何工具实现。*
-
----
-
-## 项目结构
-
-```
-mcp-agent/
-├── agent/
-│   ├── __init__.py
-│   ├── core.py          # ReAct 循环
-│   ├── mcp_manager.py   # MCP 连接管理器
-│   └── prompts.py       # System prompt
-├── config.json           # MCP Server 配置
-├── main.py               # 入口
-└── requirements.txt
-```
-
-整个项目的核心只有两个文件：`mcp_manager.py`（管理 MCP 连接）和 `core.py`（ReAct 循环）。没有 `tools/` 目录——因为工具全部来自 MCP Server。
-
----
-
-## 第一步：MCP 连接管理器
-
-这是整篇文章最核心的模块。它负责三件事：启动 MCP Server 进程、发现工具列表、代理工具调用。
-
-```python
-# agent/mcp_manager.py
-import json
-import asyncio
-import subprocess
-from dataclasses import dataclass, field
-
-
-@dataclass
-class MCPTool:
-    """从 MCP Server 发现的工具。"""
-    name: str
-    description: str
-    input_schema: dict       # MCP 原生的 JSON Schema
-    server_name: str         # 来源 Server 的名称
-
-
-@dataclass
-class MCPServerConnection:
-    """一个 MCP Server 的连接。"""
-    name: str
-    command: str             # 启动命令，如 "npx @modelcontextprotocol/server-filesystem /path"
-    args: list[str] = field(default_factory=list)
-    env: dict = field(default_factory=dict)
-    process: subprocess.Popen | None = None
-    tools: list[MCPTool] = field(default_factory=list)
-    _request_id: int = 0
-
-    def next_id(self) -> int:
-        self._request_id += 1
-        return self._request_id
-
-
-class MCPManager:
-    """
-    MCP 连接管理器——管理多个 MCP Server 的生命周期。
-    负责：启动 Server → 初始化协议 → 发现工具 → 代理调用 → 关闭。
-    """
-
-    def __init__(self):
-        self.servers: dict[str, MCPServerConnection] = {}
-        self.tool_map: dict[str, MCPServerConnection] = {}  # tool_name → server
-
-    async def connect_server(self, name: str, command: str, args: list[str] = None, env: dict = None):
-        """
-        启动并连接一个 MCP Server。
-        command: Server 的启动命令
-        args: 传给 Server 的参数
-        """
-        full_cmd = [command] + (args or [])
-
-        # 合并环境变量
-        import os
-        server_env = {**os.environ, **(env or {})}
-
-        # 通过 stdio 传输启动 Server 进程
-        process = await asyncio.create_subprocess_exec(
-            *full_cmd,
-            stdin=asyncio.subprocess.PIPE,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-            env=server_env,
-        )
-
-        server = MCPServerConnection(
-            name=name,
-            command=command,
-            args=args or [],
-            env=env or {},
-            process=process,
-        )
-        self.servers[name] = server
-
-        # MCP 协议初始化：发送 initialize 请求
-        init_result = await self._send_request(server, "initialize", {
-            "protocolVersion": "2025-03-26",
-            "capabilities": {},
-            "clientInfo": {"name": "mcp-agent", "version": "1.0"},
-        })
-        print(f"  ✓ 连接 {name}: {init_result.get('serverInfo', {}).get('name', 'unknown')}")
-
-        # 发送 initialized 通知
-        await self._send_notification(server, "notifications/initialized", {})
-
-        # 发现工具
-        tools_result = await self._send_request(server, "tools/list", {})
-        for tool_data in tools_result.get("tools", []):
-            tool = MCPTool(
-                name=tool_data["name"],
-                description=tool_data.get("description", ""),
-                input_schema=tool_data.get("inputSchema", {}),
-                server_name=name,
-            )
-            server.tools.append(tool)
-            self.tool_map[tool.name] = server
-
-        print(f"    发现 {len(server.tools)} 个工具: {[t.name for t in server.tools]}")
-
-    async def call_tool(self, tool_name: str, arguments: dict) -> dict:
-        """
-        通过 MCP 协议调用工具。
-        Agent 代码调用这个方法——它不需要知道工具在哪个 Server 上。
-        """
-        server = self.tool_map.get(tool_name)
-        if not server:
-            return {"error": f"未知工具：{tool_name}"}
-
-        result = await self._send_request(server, "tools/call", {
-            "name": tool_name,
-            "arguments": arguments,
-        })
-
-        # MCP 的工具返回格式：{content: [{type: "text", text: "..."}]}
-        contents = result.get("content", [])
-        text_parts = []
-        for c in contents:
-            if c.get("type") == "text":
-                text_parts.append(c.get("text", ""))
-
-        return {
-            "success": not result.get("isError", False),
-            "result": "\n".join(text_parts),
-        }
-
-    def get_all_tools(self) -> list[MCPTool]:
-        """获取所有连接的 Server 提供的工具。"""
-        all_tools = []
-        for server in self.servers.values():
-            all_tools.extend(server.tools)
-        return all_tools
-
-    def to_openai_schemas(self) -> list[dict]:
-        """
-        把 MCP 工具定义转换为 OpenAI function calling 格式。
-        这是连接 MCP 和 LLM 的桥梁——MCP Server 定义工具，
-        这个方法把定义转换成 LLM 能理解的格式。
-        """
-        schemas = []
-        for tool in self.get_all_tools():
-            schemas.append({
-                "type": "function",
-                "function": {
-                    "name": tool.name,
-                    "description": tool.description,
-                    "parameters": tool.input_schema,
-                },
-            })
-        return schemas
-
-    async def close_all(self):
-        """关闭所有 Server 连接。"""
-        for server in self.servers.values():
-            if server.process:
-                server.process.terminate()
-                try:
-                    await asyncio.wait_for(server.process.wait(), timeout=5)
-                except asyncio.TimeoutError:
-                    server.process.kill()
-        self.servers.clear()
-        self.tool_map.clear()
-
-    async def _send_request(self, server: MCPServerConnection, method: str, params: dict) -> dict:
-        """发送 JSON-RPC 请求并等待响应。"""
-        request_id = server.next_id()
-        request = {
-            "jsonrpc": "2.0",
-            "id": request_id,
-            "method": method,
-            "params": params,
-        }
-
-        request_line = json.dumps(request) + "\n"
-        server.process.stdin.write(request_line.encode())
-        await server.process.stdin.drain()
-
-        # 读取响应
-        response_line = await server.process.stdout.readline()
-        response = json.loads(response_line.decode())
-
-        if "error" in response:
-            raise RuntimeError(
-                f"MCP error: {response['error'].get('message', 'unknown')}"
-            )
-
-        return response.get("result", {})
-
-    async def _send_notification(self, server: MCPServerConnection, method: str, params: dict):
-        """发送 JSON-RPC 通知（无需响应）。"""
-        notification = {
-            "jsonrpc": "2.0",
-            "method": method,
-            "params": params,
-        }
-        notification_line = json.dumps(notification) + "\n"
-        server.process.stdin.write(notification_line.encode())
-        await server.process.stdin.drain()
-```
-
-![MCP 工具发现流程](tool_discovery.svg)
-
-*图 2：Agent 启动时通过 MCP 协议发现工具的完整流程。关键步骤：initialize → tools/list → 转换为 OpenAI 格式 → 注册到 LLM 上下文。运行时 LLM 调用工具，Agent 通过 tools/call 转发给对应的 Server。*
-
-这段代码的核心是 `to_openai_schemas()` 方法——它把 MCP 的工具定义自动转换成 OpenAI function calling 格式。**你不需要手写任何 `TOOL_SCHEMAS`。** MCP Server 已经定义好了每个工具的名称、描述和参数的 JSON Schema，这个方法只做格式转换。
-
----
-
-## 第二步：配置 MCP Server
-
-用一个 JSON 配置文件管理所有 MCP Server 的连接信息：
-
-```json
-{
-  "servers": {
-    "filesystem": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/Users/me/projects"],
-      "description": "本地文件系统访问"
-    },
-    "github": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-github"],
-      "env": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_xxxxxxxxxxxx"
-      },
-      "description": "GitHub API 访问"
-    },
-    "sqlite": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-sqlite", "/Users/me/data/app.db"],
-      "description": "SQLite 数据库查询"
-    }
-  }
-}
-```
-
-加一个新服务，只需要在这个文件里加一个条目。Agent 代码完全不用改。
-
-这三个 MCP Server 都是 [Anthropic 官方维护的开源实现](https://github.com/modelcontextprotocol/servers)，可以直接用 `npx` 运行。
-
----
-
-## 第三步：构建 ReAct 循环
-
-ReAct 循环和前面教程里的几乎一样——唯一的区别是工具的来源和调用方式：
-
-```python
-# agent/core.py
-import json
-import openai
-from agent.mcp_manager import MCPManager
-
-client = openai.AsyncOpenAI()
-MODEL = "gpt-4o"
-MAX_ITERATIONS = 20
-
-SYSTEM_PROMPT = """你是一个通用助手，可以访问多种外部服务和工具。
-
-## 能力范围
-你通过工具连接了以下服务（具体工具列表会在对话中动态提供）：
-- 文件系统：浏览、读取、搜索本地文件
-- GitHub：查看仓库、Issues、PR
-- 数据库：查询 SQLite 数据库
-
-## 工作原则
-- 先探索再行动：使用工具前，先了解可用的信息
-- 组合使用多个服务：如果任务涉及多个数据源，主动从不同服务收集信息
-- 错误是信息：工具调用失败时，分析错误原因，调整策略重试
-
-## 关于工具
-你可用的工具是动态发现的，不是硬编码的。
-工具的名称和描述会告诉你它们能做什么。请仔细阅读工具描述后再调用。
-"""
-
-
-async def run_agent(
-    user_message: str,
-    mcp: MCPManager,
-    conversation_history: list[dict],
-):
-    """
-    运行 MCP Agent。
-    和硬编码工具的 Agent 唯一的区别：
-    - 工具 Schema 来自 mcp.to_openai_schemas()
-    - 工具调用转发给 mcp.call_tool()
-    """
-    conversation_history.append({"role": "user", "content": user_message})
-
-    # 从 MCP 动态获取工具定义
-    tool_schemas = mcp.to_openai_schemas()
-
-    for iteration in range(MAX_ITERATIONS):
-        print(f"\n[第 {iteration + 1} 轮]")
-
-        messages = [
-            {"role": "system", "content": SYSTEM_PROMPT}
-        ] + conversation_history[-30:]
-
-        response = await client.chat.completions.create(
-            model=MODEL,
-            messages=messages,
-            tools=tool_schemas if tool_schemas else None,
-        )
-
-        choice = response.choices[0]
-        message = choice.message
-
-        # 构建 assistant 消息
-        assistant_msg = {"role": "assistant", "content": message.content}
-        if message.tool_calls:
-            assistant_msg["tool_calls"] = [
-                {
-                    "id": tc.id,
-                    "type": "function",
-                    "function": {
-                        "name": tc.function.name,
-                        "arguments": tc.function.arguments,
-                    },
-                }
-                for tc in message.tool_calls
-            ]
-        conversation_history.append(assistant_msg)
-
-        if message.content:
-            print(f"\n{message.content}")
-
-        if choice.finish_reason == "stop":
-            print("\n[✓ 任务完成]")
-            break
-
-        if choice.finish_reason == "tool_calls":
-            for tc in message.tool_calls:
-                tool_name = tc.function.name
-                tool_args = json.loads(tc.function.arguments)
-
-                print(f"  [工具] {tool_name}({json.dumps(tool_args, ensure_ascii=False)[:100]})")
-
-                # 核心区别：工具调用通过 MCP 协议转发
-                result = await mcp.call_tool(tool_name, tool_args)
-
-                result_str = json.dumps(result, ensure_ascii=False)
-                if len(result_str) > 3000:
-                    result_str = result_str[:3000] + "\n[结果已截断]"
-
-                print(f"  [结果] {result_str[:200]}")
-
-                conversation_history.append({
-                    "role": "tool",
-                    "tool_call_id": tc.id,
-                    "content": result_str,
-                })
-```
-
-注意 `run_agent` 函数和 [Coding Agent](/agent/build-cli-coding-agent/) 里的 `run_agent` 结构几乎完全一样。唯一的两个区别用注释标出了：
-
-1. `tool_schemas = mcp.to_openai_schemas()` —— Schema 是动态获取的，不是硬编码的
-2. `result = await mcp.call_tool(tool_name, tool_args)` —— 工具调用通过 MCP 转发，不是调用本地函数
-
-**Agent 的推理逻辑完全不变。** 它不知道也不需要知道工具是 MCP 提供的还是硬编码的——它只管推理和调用，底层的工具发现和路由由 MCPManager 处理。
-
----
-
-## 第四步：入口与组装
-
-```python
-# main.py
-import asyncio
-import json
-from agent.core import run_agent
-from agent.mcp_manager import MCPManager
-
-
-async def main():
-    # 1. 加载配置
-    with open("config.json") as f:
-        config = json.load(f)
-
-    # 2. 启动 MCP 连接
-    mcp = MCPManager()
-
-    print("🔌 连接 MCP Server...\n")
-    for name, server_config in config["servers"].items():
-        try:
-            await mcp.connect_server(
-                name=name,
-                command=server_config["command"],
-                args=server_config.get("args", []),
-                env=server_config.get("env"),
-            )
-        except Exception as e:
-            print(f"  ✗ {name}: {e}")
-
-    # 3. 显示发现的工具
-    all_tools = mcp.get_all_tools()
-    print(f"\n📦 共发现 {len(all_tools)} 个工具:")
-    for tool in all_tools:
-        print(f"  - {tool.name} ({tool.server_name}): {tool.description[:60]}")
-
-    # 4. 交互循环
-    print("\n" + "=" * 50)
-    print("MCP Agent 已就绪。输入任务，按 Enter 执行。")
-    print("输入 /tools 查看可用工具，/exit 退出。")
-    print("=" * 50)
-
-    conversation_history = []
-
-    while True:
-        try:
-            user_input = input("\n> ").strip()
-        except (KeyboardInterrupt, EOFError):
-            break
-
-        if not user_input:
-            continue
-        if user_input == "/exit":
-            break
-        if user_input == "/tools":
-            for tool in mcp.get_all_tools():
-                print(f"  [{tool.server_name}] {tool.name}: {tool.description[:80]}")
-            continue
-
-        await run_agent(user_input, mcp, conversation_history)
-
-    # 5. 清理
-    await mcp.close_all()
-    print("\n再见！")
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
-```
-
----
-
-## 一次完整的执行过程
+2026-10-17 的实际输出节选如下；中间两条完整的 `tool-result` JSON 在此略去，运行时会显示。
 
 ```text
-🔌 连接 MCP Server...
-
-  ✓ 连接 filesystem: Filesystem MCP Server
-    发现 11 个工具: ['read_file', 'write_file', 'list_directory', ...]
-  ✓ 连接 github: GitHub MCP Server
-    发现 18 个工具: ['list_repos', 'get_issues', 'create_issue', ...]
-  ✓ 连接 sqlite: SQLite MCP Server
-    发现 4 个工具: ['query', 'list_tables', 'describe_table', ...]
-
-📦 共发现 33 个工具
-==================================================
-MCP Agent 已就绪。
-
-> 帮我查一下 GitHub 上 Hex4C59/my-app 仓库最近的 issues，
-  然后看看本地项目里的 README 是否需要更新
-
-[第 1 轮]
-好的，我先查看 GitHub 上的 issues，再读取本地 README。
-
-  [工具] get_issues({"repo": "Hex4C59/my-app", "state": "open"})
-  [结果] {"success": true, "result": "[{\"number\": 42, \"title\": \"文档缺少安装说明\"..."}
-
-[第 2 轮]
-GitHub 上有 3 个 open issues。其中 #42 提到文档缺少安装说明。
-让我看看本地的 README。
-
-  [工具] read_file({"path": "/Users/me/projects/my-app/README.md"})
-  [结果] {"success": true, "result": "# My App\n\nA simple web application..."}
-
-[第 3 轮]
-对比分析：
-
-1. GitHub Issue #42 说"缺少安装说明"——确实，README 里只有项目描述，
-   没有 Installation 部分。
-2. Issue #38 说"缺少 API 文档"——README 里也没有 API 相关内容。
-
-README 确实需要更新。建议：
-- 添加 Installation 部分
-- 添加 Quick Start 部分
-- 添加 API 概述
-
-需要我帮你写更新后的内容吗？
-
-[✓ 任务完成]
+mode=fixture (local fixed model responses; real MCP subprocesses)
+mcp-sdk=1.30.0
+local initialize -> protocol=2025-11-25
+local tools/list -> read_note
+mirror initialize -> protocol=2025-11-25
+mirror tools/list -> read_note
+model tools -> local__read_note, mirror__read_note
+local tools/call read_note -> call.ok
+mirror tools/call read_note -> call.ok
+agent.status=complete; tool_calls=2
+fixture: predetermined calls finished; inspect the real tool results above.
+fixture.check=passed
+connections=closed
 ```
 
-注意这个执行过程里，Agent **同时使用了两个不同 Server 的工具**——先调用 GitHub Server 的 `get_issues`，再调用 Filesystem Server 的 `read_file`。Agent 不知道这些工具来自不同的 Server，它只看到一个统一的工具列表。
+`tool-result` 中有真实返回的 `content` 和 `structured_content`，后者包含服务标签、`note.txt` 路径和文件内容。两个服务分别返回 `local`、`mirror` 标签。程序还检查是否收到两次成功的工具结果：找不到文件时会报失败并返回非零，不会只根据 fixture 的结束文本宣称成功。
 
----
+## 谁负责发现，谁负责执行
 
-## 混合模式：MCP 工具 + 硬编码工具共存
+[MCP](/agent/mcp-model-context-protocol/) 是 Model Context Protocol（模型上下文协议）。在这个程序里，三个角色分别是：
 
-你不需要把所有工具都迁移到 MCP。实际上，最实用的做法是混合模式：
+- **Host**：`app.py` 和连接管理器，决定启动哪些程序、把哪些工具交给模型，以及怎样处理结果。
+- **Client**：每个服务对应的官方 `ClientSession`，通过 stdio，也就是子进程的标准输入输出，交换协议消息。
+- **Server**：`local_server.py` 启动的 FastMCP 进程，真正检查路径并读取文件。
+
+![MCP Agent 架构：宿主管理多个客户端，每个客户端连接一个工具服务](architecture.svg)
+
+图 1 表示多个服务汇入同一工具循环的关系。图中的文件系统、GitHub 和数据库是可替换的服务类型；本例实际验证的是两个本地笔记服务，只使用 stdio。
+
+工具发现改变的是注册方式。Host 不再手写 `read_note` 的每个参数，而是读取 Server 报告的名称、说明和 `inputSchema`，再转换为公共运行层的 `Tool`。模型看到这些定义后提出调用；读取文件的代码仍在 Server 中执行。
+
+把工具放进另一个进程，并没有消除宿主的责任：配置是否可信、参数能否接受、工具属于哪个服务、服务失败后怎样退出，都需要明确处理。
+
+## 配置必须能直接启动服务
+
+随包的 `config.json` 是默认演示实际使用的配置：
+
+{{< agent-code example="mcp" file="config.json" >}}
+
+`$PYTHON` 会替换为运行 `app.py` 的解释器，因此服务使用同一个虚拟环境。`{workspace}` 只有作为一个完整参数时才会替换；相对 `cwd` 从配置文件所在目录解析；带目录的程序路径再从 `cwd` 解析，裸命令名从 PATH 查找。Host 使用命令和参数数组启动程序，不把它们拼成 shell 命令。
+
+启动前，`load_config()` 会校验整个文件：拒绝重复 JSON 键、未知字段、非字符串参数、缺失的可执行程序、无效目录，以及不在 0.05～60 秒范围内的请求期限。`env_from` 可列出明确需要转发的环境变量名；变量缺失时拒绝启动，配置不存储凭据。SDK 另外提供自身定义的基础环境，不会由本连接器把宿主全部环境复制过去。
+
+**配置是一份启动程序的指令，必须来自可信用户。** 参数数组不会让指定程序自动变得安全。不能把模型生成的 JSON 直接当作启动配置。
+
+## 初始化和发现交给官方 SDK
+
+`connector.py` 使用 `AsyncExitStack` 保存已经进入的资源上下文。下面是连接阶段的片段，省略了配置校验、分页循环和工具登记；完整实现随 ZIP 提供，不能只复制此片段运行：
 
 ```python
-# 核心工具硬编码（更可控、更快）
-BUILTIN_TOOLS = {
-    "think": lambda thought: {"noted": thought},  # 内部推理
-}
-BUILTIN_SCHEMAS = [
-    {
-        "type": "function",
-        "function": {
-            "name": "think",
-            "description": "内部思考工具，用于推理和规划。不会产生外部副作用。",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "thought": {"type": "string", "description": "思考内容"}
-                },
-                "required": ["thought"],
-            },
-        },
-    },
-]
-
-
-async def run_agent_hybrid(user_message: str, mcp: MCPManager, history: list[dict]):
-    """混合模式：内置工具 + MCP 工具。"""
-
-    # 合并工具定义
-    all_schemas = BUILTIN_SCHEMAS + mcp.to_openai_schemas()
-
-    # ... ReAct 循环 ...
-
-    # 工具调用时区分来源
-    if tool_name in BUILTIN_TOOLS:
-        result = BUILTIN_TOOLS[tool_name](**tool_args)
-    else:
-        result = await mcp.call_tool(tool_name, tool_args)
+async with AsyncExitStack() as stack:
+    errlog = stack.enter_context(tempfile.TemporaryFile(mode="w+t", encoding="utf-8"))
+    params = StdioServerParameters(
+        command=config.command, args=list(config.args),
+        cwd=str(config.cwd), env=config.env,
+    )
+    read, write = await stack.enter_async_context(stdio_client(params, errlog=errlog))
+    session = await stack.enter_async_context(ClientSession(
+        read, write,
+        read_timeout_seconds=timedelta(seconds=config.timeout_seconds),
+    ))
+    init = await session.initialize()
+    page = await session.list_tools(params=None)
 ```
 
-什么时候用硬编码，什么时候用 MCP：
+`initialize()` 协商协议版本并发送后续的 initialized 通知；程序使用返回的版本和能力，不在请求里写死协议版本。SDK 持续分发响应、通知和请求，应用不再假定“下一行输出就是这次调用的回答”。stderr 写入会被关闭的临时文件，不创建一个无人读取的错误管道。
 
-| 场景 | 推荐方式 | 原因 |
-|------|----------|------|
-| Agent 内部推理工具（think） | 硬编码 | 不需要外部依赖 |
-| 自定义业务逻辑 | 硬编码 | 实现和 Agent 强耦合 |
-| 标准化外部服务（GitHub、DB） | MCP | Server 由社区维护，即插即用 |
-| 需要跨 Agent 复用的工具 | MCP | 一个 Server 服务多个 Agent |
+连接器确认服务声明支持工具后，逐页调用 `list_tools()`。若有下一页，就将游标放进 `PaginatedRequestParams`；重复游标、超过 20 页、没有工具或总数超过 64 都会拒绝，避免不完整地登记一部分结果。
 
----
+![MCP 工具发现流程：初始化后发现定义，再把模型请求转发给服务](tool_discovery.svg)
 
-## MCP Server 的生态
+图 2 表示启动、发现、调用的概念顺序。实际程序由 SDK 启动子进程；图中 `subprocess.Popen()` 不是本文入口。初始化还包含版本协商和 initialized 通知，宿主仍负责权限、参数与生命周期，不能把图末“协议处理一切”理解为安全保证。
 
-截至 2025 年，MCP 社区已经有大量可直接使用的 Server：
+## 两个服务都有 read_note，怎样避免覆盖
 
-| Server | 提供的工具 | 维护方 |
-|--------|-----------|--------|
-| `server-filesystem` | 文件读写、目录操作、搜索 | Anthropic 官方 |
-| `server-github` | 仓库、Issues、PR、代码搜索 | Anthropic 官方 |
-| `server-sqlite` | SQL 查询、表结构查看 | Anthropic 官方 |
-| `server-postgres` | PostgreSQL 查询 | Anthropic 官方 |
-| `server-brave-search` | 网络搜索 | Anthropic 官方 |
-| `server-slack` | 消息、频道管理 | Anthropic 官方 |
-| `server-memory` | 知识图谱式记忆 | Anthropic 官方 |
-| `server-puppeteer` | 浏览器自动化 | 社区 |
-| `server-notion` | Notion 页面和数据库 | 社区 |
+两个服务报告的远端名称都是 `read_note`。直接以它作为字典键，后登记的服务就可能覆盖先登记的服务。本例给模型的名称分别是：
 
-用我们的 `config.json` 接入任何一个 Server，只需要加一个条目：
+| 模型看到的名称 | 连接中的服务 | 发给服务的名称 |
+| --- | --- | --- |
+| `local__read_note` | `local` | `read_note` |
+| `mirror__read_note` | `mirror` | `read_note` |
 
-```json
-{
-  "brave-search": {
-    "command": "npx",
-    "args": ["-y", "@modelcontextprotocol/server-brave-search"],
-    "env": {
-      "BRAVE_API_KEY": "your-api-key"
-    }
-  }
-}
+连接器保存这份映射，调用时查表，不靠拆字符串猜测远端名称。服务别名不能包含 `__`，组合名称必须满足本适配器的 64 字符规则；不符合就报错，不截短名称后继续注册。
+
+参数也要校验。连接器只接受对象 Schema，禁止额外的顶层参数，输入和输出 Schema 都拒绝文档外的 `$ref`，避免验证参数时额外下载网络资源。公共运行层会在执行工具前检查 JSON 参数，连接器直接调用入口也会检查。MCP 可以传递 Schema，但这不意味着每个服务的 Schema 都适合当前模型接口。
+
+## 服务端做的是真实文件读取
+
+服务使用官方 SDK 的 FastMCP 注册 `read_note`。工具收到相对路径后，先检查路径是否越界、是否经过符号链接、目标是否为普通文件，以及大小是否超过 8192 字节，随后读取 UTF-8 内容并返回标签、路径和文本。完整服务如下：
+
+{{< agent-code example="mcp" file="local_server.py" >}}
+
+`delay_seconds` 的范围是 0～5 秒，只为演示请求期限与取消提供可等待的操作。服务的 stdout 专用于 MCP 消息，不能随意 `print()` 调试日志，否则会干扰协议。
+
+这些路径检查适用于用户控制的私有目录，假定没有其他进程同时替换路径。它们不是操作系统沙箱。启动的服务仍有当前用户的权限；接入不可信代码需要另外隔离进程、文件、网络和凭据。
+
+## 把发现的工具交给 Agent 循环
+
+入口通过 `manager.tools()` 获得公共运行层的 `Tool` 列表，再交给 `run_agent()`。工具处理函数调用 `session.call_tool()`，保持远端工具名与对应连接一致。完整入口如下：
+
+{{< agent-code example="mcp" file="app.py" >}}
+
+默认的 `fixture_model()` 预先规定两次调用。它并没有根据描述学会选择工具，也不会因为你改了 `--task` 就改变行动。若配置里去掉 `local` 或 `mirror`，固定演示就不能完成它原有的两个调用；要测试新任务，需要修改固定响应，或明确选择真实模型。
+
+调用结果有两层错误要区分。服务返回 `isError=true` 时，连接器抛出工具错误，由公共循环生成 `ok=false` 的工具消息；JSON-RPC 层的 `McpError` 则保留错误码与信息。成功结果保留全部内容块和 `structuredContent`，不只提取文本后丢掉其他数据。
+
+`AgentResult.status=complete` 表示模型结束了本轮交互，不能单独证明业务目标已经实现。因此固定演示另行检查两次真实读取都成功。实际模型任务还需要与目标相符的检查，不能用一句“完成了”代替。
+
+手写的本地 `Tool` 也可以与 `manager.tools()` 放进同一列表，交给同一个循环。只需保证名称不冲突；不需要为本地工具再启动 MCP 服务。
+
+## 正常退出、失败和取消都要清理
+
+`connect_servers()` 在同一任务内进入每个传输和会话上下文，退出时由 `AsyncExitStack` 反向关闭。如果第二个服务启动失败，第一个已连接的服务也会退出；如果工具调用被取消，取消会继续向外传播，随后退出上下文。
+
+不要把 `stack.aclose()` 放进另一个 asyncio 任务来“后台清理”。SDK 的 AnyIO 取消作用域必须由进入它们的任务退出。SDK 的 stdio 上下文负责关闭输入、等待进程退出，并在需要时终止进程；宿主不另写一套手工收发和终止逻辑。
+
+测试既运行默认 FastMCP 服务，也用官方低层 SDK 启动会返回协议错误、混合内容或不响应初始化的测试服务。它们覆盖：
+
+- 两个同名工具的发现、路由及合成文件实际内容。
+- 工具失败后继续读取、JSON-RPC 错误、非文本与结构化内容保留。
+- 分页、配置校验、Schema 限制，以及绝对路径、上级目录、符号链接和大文件拒绝。
+- 第二个服务启动或发现失败、请求和 Agent 总期限、初始化及工具调用期间取消。
+
+POSIX 测试读取本次临时 PID 标记，检查退出后服务进程是否已经消失。这是本机进程清理证据，不是操作系统隔离或 Windows 验证。本次测试中，SDK 对一个不响应的测试进程组终止时报权限拒绝，随后退回终止单个进程；该进程的退出检查通过，未据此证明完整后代树已被隔离。
+
+## 换成自己的目录和真实模型
+
+使用已有的私有目录时：
+
+```sh
+python app.py --workspace /path/to/private-notes
 ```
 
-重启 Agent，它就自动发现了搜索工具。**零代码修改。**
+该目录需要已有 `note.txt`。程序不创建或覆盖其中的数据。默认 fixture 仍固定读取两次。
 
----
+若要调用真实模型，先在本机环境设置 `OPENAI_API_KEY`、`OPENAI_MODEL`；兼容服务还可设置 `OPENAI_BASE_URL`。再运行：
 
-## 常见问题与解决
-
-### Server 启动失败
-
-最常见的问题是 `npx` 找不到包或者 Node.js 版本不够。确保 Node.js >= 18，并且网络可以访问 npm registry。
-
-调试方法：直接在终端跑 Server 命令，看报错信息：
-```bash
-npx -y @modelcontextprotocol/server-filesystem /tmp/test
+```sh
+python app.py --live --workspace /path/to/private-notes --task '读取 note.txt 并说明两次返回的标签'
 ```
 
-### 工具名称冲突
+网络请求可能收费，所选模型需要支持工具调用；模型客户端会在 `finally` 中关闭。本轮没有真实模型密钥，未验证模型 API 的运行效果。
 
-两个 Server 可能提供同名工具（比如都有 `search`）。当前的实现用后连接的覆盖先连接的。
+这份程序只实现本地 stdio。接入远程服务、真实账户或写入工具时，还需实现相应认证、凭据管理、用户确认和隔离。工具被发现不等于用户已经授权执行，服务返回的说明和文件内容也应当按外部数据对待。
 
-更好的做法是给工具名加 Server 前缀（如 `filesystem_search`、`github_search`），但这需要修改 LLM 看到的工具名和 MCP 调用时用的工具名之间的映射。
+## 来源与复现范围
 
-### 性能开销
+核对日期为 2026-10-17。本文固定在 SDK v1 API 上，协议版本由双方初始化协商；未把它写成当前所有 SDK 大版本通用的接口。
 
-每次工具调用都经过 JSON-RPC + 进程间通信，比直接调用本地函数慢几毫秒。对大多数场景影响不大，但如果你的 Agent 需要在一轮推理中做几十次文件操作，考虑用硬编码工具。
+- [官方 Python SDK v1 文档](https://py.sdk.modelcontextprotocol.io/v1/)及 [v1.30.0 README](https://github.com/modelcontextprotocol/python-sdk/blob/v1.30.0/README.md)：客户端和 FastMCP 用法。
+- [ClientSession 源码](https://github.com/modelcontextprotocol/python-sdk/blob/v1.30.0/src/mcp/client/session.py)与 [stdio 传输源码](https://github.com/modelcontextprotocol/python-sdk/blob/v1.30.0/src/mcp/client/stdio/__init__.py)：初始化、分页请求、调用结果和关闭顺序。
+- [PyPI：mcp 1.30.0](https://pypi.org/project/mcp/1.30.0/)：本例实际安装并运行的 SDK 版本。
+- [MCP 生命周期规范](https://modelcontextprotocol.io/specification/2025-11-25/basic/lifecycle)：版本协商、initialized 通知与关闭。
+- [MCP 参考实现仓库](https://github.com/modelcontextprotocol/servers)：继续选择外部服务时，需要分别核对维护状态、固定版本、安装方式和权限，不能把服务名称当作可执行的启动命令。
 
----
-
-## 总结
-
-MCP 集成改变的不是 Agent 的推理方式——ReAct 循环完全没变——它改变的是**工具的来源和管理方式**。从"开发者手动写实现 + Schema"变成"Agent 启动时通过协议自动发现"。
-
-这个变化的工程意义很大：加一个新服务不用改代码，只改配置文件；工具的实现由专门的 Server 维护，质量更稳定；同一个 Server 可以被多个 Agent 复用，不用重复实现。
-
-但 MCP 不是万能的。对于和 Agent 业务逻辑强耦合的工具（比如 Coding Agent 的路径检查、文件管理 Agent 的权限分级），硬编码仍然是更好的选择。最实用的模式是混合：核心工具硬编码保证可控性，扩展工具通过 MCP 保证可扩展性。
-
-MCP 协议本身在 [MCP 概念篇](/agent/mcp-model-context-protocol/) 里已经详细讲过了——三层架构、三种原语、安全模型。这篇文章把那些概念落地成了可运行的代码。如果你还没读过概念篇，建议先读概念再看代码，理解会更完整。
-
----
+本机验证使用 Python 3.11.16、MCP SDK 1.30.0，模型为固定响应。演示与测试均使用临时目录和合成文件；没有登录 GitHub、访问真实业务数据，也没有进行延迟或模型质量测量。
 
 *上一篇：[Multi-Agent 实战：代码审查系统](/agent/build-multi-agent-code-review/)*
 
