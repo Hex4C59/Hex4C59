@@ -1,9 +1,10 @@
 +++
 title = "DeepSeek Harness 源码解析（六）：类型声明如何接上服务注册"
 date = 2026-10-15
+lastmod = 2026-10-17
 draft = false
 author = "Hex4C59"
-description = "沿 ctx.fs 追踪 DeepSeek Harness 的 Context 声明合并、类型导入、运行时注册与声明产物，结合可复现的 TypeScript 实验区分编译器看见字段和进程取得服务。"
+description = "沿 ctx.fs 追踪 DeepSeek Harness 的 Context 声明合并、类型导入、运行时注册与声明产物，通过 TypeScript 实验、真实 Cordis 生命周期与独立包消费，区分编译器看见字段和进程取得服务。"
 summary = "import type {} 能让编译器认识 ctx.fs，却不会挂载文件系统服务；源文件中的类型入口，也不保证原样保留在发布声明中。本文从这两个差异出发，解释 Context、包边界与运行时实现怎样接在一起。"
 tags = ["DeepSeek Harness", "Cordis", "TypeScript"]
 categories = ["ai"]
@@ -23,9 +24,9 @@ ShowToc = true
 
 本文面向能阅读 TypeScript、已了解 Cordis 服务和 inject 的开发者。继续沿文件系统接口、工具消费方和本地提供方追踪，再看 Host/Client 的类型检查边界和包发布入口。这里的 Program 指 TypeScript 为一次检查加载的源文件、声明文件及其依赖集合，不是 dsh 的插件树。
 
-源码基线仍是 [`d743267388641bc76f17c45ce8b4c231aed1d32c`](https://github.com/deepseek-ai/deepseek-harness/tree/d743267388641bc76f17c45ce8b4c231aed1d32c)，核对日期为 2026-10-15。[dsh 根包](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/package.json)版本为 `0.2.1-alpha.2`，快照中的 [Cordis manifest](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/package.json)为 `4.0.5-alpha.1`。[锁文件](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/pnpm-lock.yaml#L22670)将 TypeScript 固定到 `6.0.3`，本篇语言实验也使用这个版本。
+本文分析 **DeepSeek Harness `0.2.1-alpha.2`**，对应[固定源码快照](https://github.com/deepseek-ai/deepseek-harness/tree/d743267388641bc76f17c45ce8b4c231aed1d32c)，核对与补充实验日期为 2026-10-17。该版本内的 [Cordis](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/package.json)为 `4.0.5-alpha.1`，[Cosmokit](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cosmokit/package.json)为 `1.8.6-alpha.1`。[锁文件](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/pnpm-lock.yaml#L22670)将 TypeScript 固定到 `6.0.3`，两套实验均使用这个版本。
 
-dsh 部分是静态源码分析；文末另有实际执行的独立语言实验。实验不加载 Cordis，不模拟插件依赖、服务域或生命周期，也不构成 dsh 全量类型检查、运行测试或模型请求的证据。
+正文沿 dsh 的实际文件系统源码解释连接关系。实验分两层：8 组独立语言检查使用简化 Context；另有 13 组检查构建并加载真实 Cordis，验证服务生命周期、类型约束与本地包消费。后者使用本文定义的内存示意服务，不加载 dsh 的本地文件系统后端；两者都不构成 dsh 全量构建或模型请求的证据。
 
 ## `fs` 字段来自接口包的声明合并
 
@@ -143,6 +144,36 @@ get(name: string, strict?: boolean): any
 
 这类类型提示有用，但不是封闭的注册证明。需要核对的运行条件仍包括：服务名是否正确、谁拥有实现、提供者是否就绪、消费者是否在同域，以及当前挂载是否具有合法读取路径。
 
+## 普通 `inject` 与 `@Inject()` 的类型约束并不相同
+
+既然 Context 已经知道有哪些服务，写错 `inject` 中的名字是不是也会被拒绝？要继续看依赖声明的实际签名。
+
+在 [`registry.ts`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/registry.ts#L19) 中，`Inject<M = Dict>` 允许键数组或键值对象；插件元数据的 [`inject?: Inject`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/registry.ts#L106)没有把 M 收窄成 Context 的字段。下面节选自真实 Cordis 实验，两段代码都能通过检查：
+
+```ts
+export const wrongName: Plugin.Object<void> = {
+  inject: ['blogFiels'], apply() {},
+}
+export const wrongConfig: Plugin.Object<void> = {
+  inject: { blogFiles: { prefix: 123 } }, apply() {},
+}
+```
+
+实验真正注册的名称是 `blogFiles`，配置中的 `prefix` 应为字符串。普通元数据的开放类型仍接受上述输入。编译成功并不能确认名称或配置正确；配置放进声明后，还要看运行时谁读取和校验它。
+
+同文件的装饰器函数 [`Inject()`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/registry.ts#L22)采用另一条类型路径。`InjectKey` 从 Context 中筛选具有服务配置类型标记的字段，再通过该字段推导 config 的类型。[`Service<T>`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/service.ts#L29)中的 `declare [symbols.config]: T` 就是这个标记，它只提供类型信息，不会创建运行时配置属性。
+
+实验里的 `BlogFiles extends Service<{ prefix: string }>` 因而支持：
+
+```ts
+@Inject('blogFiles', { prefix: 'ok' })
+export class TypedConsumer {}
+```
+
+另外三个文件分别调用 `Inject('blogFiels')`、`Inject('blogFiles', { prefix: 123 })` 和 `Inject('plainFiles')`。前两项是拼错名称与配置类型错误；第三项的 `plainFiles` 虽已增强到 Context，却只是普通接口，没有上述配置类型标记。实际诊断依次是 `TS2345`、`TS2322`、`TS2345`。
+
+这里测试的是装饰器入口的静态约束；方法装饰器怎样通过 `ctx.inject()` 等待依赖，仍要沿运行实现分析。也不能据此认为所有字符串形式的 `inject` 都获得了相同的类型检查。
+
 ## Program 边界为什么会影响 Host 与 Client
 
 声明合并在当前 Program 中起作用。若把两个运行世界的声明无差别放进同一次检查，它们对同名字段的不同定义就可能相遇。
@@ -184,7 +215,7 @@ dsh 的[根 tsconfig](https://github.com/deepseek-ai/deepseek-harness/blob/d7432
 
 根 [`tsdown.config.ts`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/tsdown.config.ts#L19)的普通 Host 构建读取已由 TypeScript 发出的 JavaScript，再生成包的 `lib` 输出；它关闭了自己的 dts 生成。这条构建路线不能概括成“打包器看到源文件，就顺便把所有声明正确发布了”。
 
-本次没有执行 dsh 全量构建，也没有检查该快照的实际发布 tarball。这里核对的是源码、配置和 manifest 的连接关系。
+这里对 dsh-fs 的判断来自源码、配置和 manifest，尚未验证它的真实发布产物。后面的包消费实验实际构建 Cordis/Cosmokit，再打包安装到独立工程；它能验证这两个包和本文示例包的连接，不能替代 dsh-fs 或完整 Host/Client 的构建检查。
 
 ### 类型导入甚至可能不保留在消费方的 `.d.ts` 中
 
@@ -247,6 +278,135 @@ npm run verify
 本次运行使用 Node `v25.9.0`、TypeScript `6.0.3`，8 组检查通过。编译输出创建在临时目录中，检查后清理；末行会报告检查数量和实际版本。完整入口是下载包中的 `verify.mjs`，各个 tsconfig 用显式文件列表控制 Program，避免反例意外加载旁边的增强文件。
 
 这组实验回答的是语言行为。Cordis 会在依赖缺失时阻止消费者主体激活，还会检查服务域、所有权和生命周期；不能把实验里普通对象的 TypeError 直接写成真实 dsh 相同阶段的报错。
+
+## 在真实 Cordis 中观察等待、清理与恢复
+
+普通对象赋值能解释“类型声明不会创建属性”，但没有 Cordis 的依赖管理。要观察消费者什么时候执行，需要让真实 Context、Service 和 Fiber 一起参与。
+
+[下载真实 Cordis 实验工程](types-cordis-lab.zip)，解压后进入 `types-cordis-lab`。需要 Git、npm，以及符合 dsh 要求的 Node `^22.19.0 || >=24.0.0`。先准备 **dsh `0.2.1-alpha.2`** 对应的源码：
+
+```sh
+git clone https://github.com/deepseek-ai/deepseek-harness.git
+git -C deepseek-harness switch --detach d743267388641bc76f17c45ce8b4c231aed1d32c
+```
+
+然后在实验目录安装固定依赖并运行。`DSH_SOURCE` 替换为刚才的源码目录：
+
+```sh
+npm ci --ignore-scripts
+DSH_SOURCE=/path/to/deepseek-harness npm run verify
+```
+
+脚本核对源码快照、相关文件状态与工具版本，在新建的系统临时目录构建，完成后清理；不会向 dsh 原工作区写入产物。依赖为 TypeScript `6.0.3`、tsdown `0.22.2`、`@types/node` `22.20.1` 和 `@standard-schema/spec` `1.1.0`，随包提供锁文件。实际执行环境为 macOS arm64、Node `v25.9.0`、npm `11.12.1`。
+
+为了不把真实文件 IO 混进这个实验，接口包定义一个名为 `blogFiles` 的示意能力。下面是其中的能力基类与提供方，Context 模块增强见下载包的 `packages/files/src/index.ts`：
+
+```ts
+export abstract class BlogFiles extends Service<{ prefix: string }> {
+  constructor(ctx: Context) { super(ctx, 'blogFiles') }
+  abstract readText(path: string): string
+}
+
+export class MemoryFiles extends BlogFiles {
+  constructor(ctx: Context, private options: { prefix: string }) { super(ctx) }
+  readText(path: string) { return `${this.options.prefix}:${path}` }
+}
+```
+
+`MemoryFiles` 只是把前缀和路径拼成字符串，不是 dsh 的 FileSystem 或 LocalFileSystem。注册则确实经过这份 Cordis 的 Service 构造函数和 `reflect.provide()`。消费方采用 `inject: ['blogFiles']`，执行时读取 `hello.txt`，并用 `ctx.effect()` 登记清理函数。
+
+脚本先挂消费方，等待其当前生命周期工作稳定；再依次挂载、移除和重新挂载提供方。每次都等待相应 Fiber 稳定后检查状态，不靠固定 sleep 猜测完成时间。实际观察为：
+
+| 操作完成后 | 消费者状态 | 新增记录 |
+|---|---|---|
+| 只挂载消费者 | `PENDING` | 没有执行读取 |
+| 挂载前缀为 v1 的提供方 | `ACTIVE` | `read:v1:hello.txt` |
+| 移除 v1 提供方 | `PENDING` | `cleanup:v1:hello.txt` |
+| 挂载前缀为 v2 的提供方 | `ACTIVE` | `read:v2:hello.txt` |
+| 在另一 blogFiles 服务域挂载消费者 | `PENDING` | 该消费者没有执行读取 |
+| 卸载根 Fiber | `DISPOSED` | 原消费者增加 `cleanup:v2:hello.txt` |
+
+前四行使用同一个消费者 Fiber。服务重新出现后，它读取了 v2 提供的内容；清理记录也分别对应两次激活。第五行另建隔离域，用来确认共享域已有实现并不会自动满足另一个域的依赖。
+
+状态值来自实际 Cordis 类型。该版本的 [`FiberState`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/fiber.ts#L147)是 `const enum`，实验先用 tsc 编译 `runtime.ts`，再执行生成的 JavaScript；不能假定打包后的运行入口也导出了一个同名 JavaScript 对象。
+
+## 把构建产物交给独立消费工程
+
+这套实验还把“源码里类型可见”推进到一次实际的包消费。构建对象是快照中的真实 Cordis、Cosmokit，以及两个教学包：`@dsh-blog/files` 提供示意能力，`@dsh-blog/reader` 导出读取函数。
+
+Cordis/Cosmokit 使用原始 tsconfig 和项目引用完成 `tsc -b`。随后，针对这两个包的 tsdown 配置读取已发出的 JavaScript，生成 `lib/index.js`，保留 tsc 输出的 `lib/types/index.d.ts`。这沿用了前面解释的构建分工，但没有运行根构建中的 Typert 插件或完整 Host/Client 工程。
+
+打包前，脚本只在临时副本中把 manifest 的 `workspace:` 依赖替换成快照中的对应版本，保留原有 main、types、exports 和 files。两个真实包、两个教学包以及 standard-schema 共生成五个本地 tarball，再显式安装进一个独立消费工程。该工程没有指向 dsh 源码的 `paths`，类型检查使用 `skipLibCheck: false`。
+
+教学 reader 的源码仍然有空类型导入：
+
+```ts
+import type { Context } from '@deepseek-ai/cordis'
+import type {} from '@dsh-blog/files'
+
+export function readThroughContext(ctx: Context): string {
+  return ctx.blogFiles.readText('hello.txt')
+}
+```
+
+它实际生成的 `.d.ts` 为：
+
+```ts
+import type { Context } from '@deepseek-ai/cordis';
+export declare function readThroughContext(ctx: Context): string;
+```
+
+独立消费工程中的反例同时导入 Context 和 reader，调用读取函数后再访问 `ctx.blogFiles`；正例只多一行 `import type {} from '@dsh-blog/files'`。两种模块解析配置分别得到：
+
+| 消费工程配置 | 只导入 Context 与 reader | 再显式引入 files 类型入口 |
+|---|---|---|
+| `module/moduleResolution: NodeNext` | 字段访问报 `TS2339` | 通过 |
+| `module: ESNext`、`moduleResolution: Bundler` | 字段访问报 `TS2339` | 通过 |
+
+这次增强作用于真实 Cordis 的 Context，包也确实经历了构建、打包与安装。即使 files 已经作为 peer 依赖安装在 node_modules，它的增强仍需要被当前 Program 加载；“已安装”与“类型文件已进入检查集合”是两个条件。
+
+实验生成的是按源码快照局部构建的本地 tarball，并未下载验证 npm 上的官方发布包，也未验证真实 dsh-fs/dsh-fs-local 产物。消费工程使用 `--offline --ignore-scripts --legacy-peer-deps` 安装；最后一个选项用于避免拉取未参与实验的可选 Loader/include peer，实际参与实验的五个包都显式提供。它不证明省略其他应用依赖后完整 dsh 仍能运行。
+
+新增工程共通过 13 组检查，包含真实项目引用构建、运行入口打包、声明输出、tarball 消费、两种解析配置、四组 inject 类型检查、真实生命周期及编译器诊断。完整断言在 `run.mjs`，结果与脱敏后的诊断保存在 `reports/`。
+
+## 用编译器输出定位缺失的声明入口
+
+如果只看 `ctx.blogFiles` 报错，很容易把问题归因于接口没写对。上面的反例里，接口文件和安装后的声明都存在；缺的是从当前 Program 到增强文件的引入路径。
+
+实验自动保存了正反两份 `--explainFiles` 输出和一份 `--traceResolution` 输出。前者解释每个文件为什么参与检查，后者展示模块名怎样解析到具体文件，分别对应 TypeScript 的 [explainFiles](https://www.typescriptlang.org/tsconfig/explainFiles.html) 和 [traceResolution](https://www.typescriptlang.org/tsconfig/traceResolution.html) 选项。
+
+想手动查看，可在实验目录重新运行并保留本次临时工程：
+
+```sh
+DSH_SOURCE=/path/to/deepseek-harness npm run verify -- --keep-workspace
+```
+
+脚本会输出消费工程路径。保持当前终端位于实验目录，将下面的 `/path/to/consumer` 换成该路径：
+
+```sh
+node node_modules/typescript/bin/tsc -p /path/to/consumer/without-contract-Bundler.json --explainFiles --pretty false
+node node_modules/typescript/bin/tsc -p /path/to/consumer/with-contract-Bundler.json --traceResolution --pretty false
+```
+
+第一条命令预期以非零状态退出并报告 `TS2339`。对照正例的 explain 日志，能找到下面两行节选，临时路径已简化：
+
+```text
+node_modules/@dsh-blog/files/lib/index.d.ts
+  Imported via '@dsh-blog/files' from file 'fixtures/with-contract.ts' ...
+```
+
+反例的文件集合里没有这一项。不是 Context 不允许扩展，而是本次检查根本没有加载包含扩展的文件。
+
+第二条命令的解析日志包含以下节选：
+
+```text
+Matched 'exports' condition 'types'.
+Using 'exports' subpath '.' with target './lib/index.d.ts'.
+```
+
+继续看同一段中的目标路径，就能确认它选中的是安装后的 `@dsh-blog/files/lib/index.d.ts`。真实项目里若跳转到了另一份包、另一版本或意外的源码路径，也应从这里追查；只比较 import 中的包名文字无法发现这种差异。
+
+排查时先确认增强文件是否进入 Program，再确认它的模块解析目标。字段已经可见后，若消费者仍然等待，再回到运行时核对提供方。
 
 ## 沿着失败所在的层次排查
 

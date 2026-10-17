@@ -1,7 +1,7 @@
 ---
 title: "DeepSeek Harness"
 description: "按源码与调用链研究 DeepSeek Harness：从插件运行时、模型与工具，到会话、权限、多 Agent、界面及工程验证。"
-lastmod: 2026-10-16
+lastmod: 2026-10-17
 series_start: "/agent/deepseek-harness-agent-engineering/"
 series_status: "连载中"
 ---
@@ -14,7 +14,7 @@ series_status: "连载中"
 
 [第五篇：Context、Service 与依赖注入如何协作](/articles/deepseek-harness-cordis-context-services/)开始阅读 Cordis 运行时，从工具插件缺少文件系统服务的情况出发，解释服务注册、依赖激活、服务域隔离和调用方 Context。
 
-[第六篇：类型声明如何接上服务注册](/articles/deepseek-harness-types-service-registration/)接着解释编辑器怎样认识 `ctx.fs`，区分声明合并、类型导入、运行时挂载与发布声明，并用独立 TypeScript 实验核对它们的差异。
+[第六篇：类型声明如何接上服务注册](/articles/deepseek-harness-types-service-registration/)接着解释编辑器怎样认识 `ctx.fs`，区分声明合并、类型导入、运行时挂载与发布声明，并用独立语言实验、真实 Cordis 生命周期和本地 tarball 消费验证它们的差异，同时演示类型入口的排查方法。
 
 [第七篇：五种事件派发怎样执行监听器](/articles/deepseek-harness-event-dispatch/)比较 `emit`、`parallel`、`serial`、`bail` 与 `waterfall` 的执行、等待、返回值和异常处理，再追踪监听器过滤、派发快照与重入，并附固定源码的聚焦实验。
 

@@ -1,0 +1,21 @@
+{
+  "name": "@dsh-blog/reader",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    }
+  },
+  "files": [
+    "lib"
+  ],
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "4.0.5-alpha.1",
+    "@dsh-blog/files": "1.0.0"
+  }
+}
