@@ -12,6 +12,10 @@
   {{- /* Bundle HTML is a page resource; publish its content as a standalone asset. */ -}}
   {{- $target := strings.TrimPrefix "/" (path.Join .Page.RelPermalink $source) -}}
   {{- $html := os.ReadFile (path.Join (path.Dir .Page.File.Filename) $source) -}}
+  {{- if eq (.Get "auto-height") "true" -}}
+    {{- $bridge := partial "interactive-diagram-bridge.html" . -}}
+    {{- $html = replace $html "</body>" (printf "%s</body>" $bridge) -}}
+  {{- end -}}
   {{- $diagram = resources.FromString $target $html -}}
   {{- $title := .Get "title" | default "交互式流程图" -}}
   {{- $id := printf "interactive-diagram-%s-%d" .Page.File.UniqueID .Ordinal -}}
@@ -20,7 +24,9 @@
   {{- $compactHeight := .Get "compact-height" | default $mobileHeight -}}
   <figure class="interactive-diagram" style="margin:1.8rem 0;padding:1.3rem 0;border-top:1px solid var(--code-border);border-bottom:1px solid var(--code-border);container-type:inline-size">
     <iframe id="{{ $id }}" src="{{ $diagram.RelPermalink }}" title="{{ $title }}" width="100%" height="{{ $height }}" loading="lazy" sandbox="allow-scripts" style="display:block;width:100%;border:0;background:transparent;--figure-height:{{ $height }}px;--figure-mobile-height:{{ $mobileHeight }}px;--figure-compact-height:{{ $compactHeight }}px"></iframe>
+    {{- if ne (printf "%v" (.Get "caption")) "false" }}
     <figcaption style="font-size:.78rem;line-height:1.8;margin-top:.7rem;color:var(--content-secondary)">{{ $title }} · <a href="{{ $diagram.RelPermalink }}" target="_blank" rel="noopener">在独立窗口中查看</a></figcaption>
+    {{- end }}
   </figure>
   {{- if .Get "mobile-height" -}}
   <style>@container(max-width:719px){#{{ $id }}{height:var(--figure-compact-height)}}@container(max-width:399px){#{{ $id }}{height:var(--figure-mobile-height)}}</style>
@@ -50,7 +56,9 @@
       if (event.data.type !== 'diagram-height') return;
       const height = event.data.height;
       if (typeof height !== 'number' || !Number.isFinite(height)) return;
-      frame.height = String(Math.max(400, Math.min(4000, Math.ceil(height))));
+      const pixels = String(Math.max(400, Math.min(4000, Math.ceil(height))));
+      frame.height = pixels;
+      frame.style.height = pixels + 'px';
     });
     frame.addEventListener('load', sendTheme);
     const observer = new MutationObserver(sendTheme);

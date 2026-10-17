@@ -1,7 +1,7 @@
 +++
 title = "DeepSeek Harness 源码解析（一）：从代码补全到仓库级 Agent"
 date = 2026-08-16T02:10:20+08:00
-lastmod = 2026-10-14
+lastmod = 2026-10-17
 draft = false
 author = "Hex4C59"
 description = "从一个取消导出的修复任务出发，比较代码补全、对话助手与 Coding Agent，解释 Harness 如何组织仓库上下文、工具执行和会话记录，再对照 DeepSeek Harness 固定源码建立阅读入口。"
@@ -63,7 +63,7 @@ Coding Agent 把其中的读取、编辑和执行操作接入工具，让模型�
 
 下面的流程图可以切换两种交互。观察左侧负责接收模型输出、操作仓库并送回结果的主体：同一条测试报错，在对话中由开发者搬运，在 Agent 中由运行系统处理。图里的 Harness 是职责示意，不对应 dsh 的单个类。
 
-{{< interactive-diagram src="feedback-ownership.html" title="同一条报错，谁把它送回模型？切换对话助手与 Coding Agent，比较执行反馈的承担者" height="740" mobile-height="880" compact-height="840" >}}
+{{< interactive-diagram src="feedback-ownership.html" title="同一条报错，谁把它送回模型？切换对话助手与 Coding Agent，比较执行反馈的承担者" height="620" mobile-height="840" compact-height="780" caption="false" auto-height="true" >}}
 
 模型输出的一条工具调用，还只是一个待执行的请求。读取工具需要访问真实文件，命令工具需要启动进程并捕获输出，运行系统也可能因为权限、取消或参数问题拒绝执行。模型能用到的观察，取决于工具实际返回了什么，以及这些内容有没有进入后续请求。
 

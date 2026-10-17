@@ -1,0 +1,25 @@
+<script>
+(() => {
+  if (window.parent === window) return;
+  const content = document.querySelector('main') || document.body;
+  const reportHeight = () => {
+    const height = Math.ceil(content.getBoundingClientRect().bottom + window.scrollY);
+    window.parent.postMessage({ type: 'diagram-height', height }, '*');
+  };
+  window.addEventListener('message', event => {
+    if (event.source !== window.parent || event.data?.type !== 'diagram-theme') return;
+    const { theme, colors } = event.data;
+    if (theme !== 'light' && theme !== 'dark') return;
+    const root = document.documentElement;
+    root.dataset.theme = theme;
+    root.style.colorScheme = theme;
+    for (const [key, variable] of Object.entries({ paper: 'paper', ink: 'ink', muted: 'muted', line: 'rule' })) {
+      const color = colors?.[key];
+      if (typeof color === 'string' && CSS.supports('color', color)) root.style.setProperty('--' + variable, color);
+    }
+  });
+  new ResizeObserver(reportHeight).observe(content);
+  document.fonts.ready.then(reportHeight);
+  window.parent.postMessage({ type: 'diagram-ready' }, '*');
+})();
+</script>
