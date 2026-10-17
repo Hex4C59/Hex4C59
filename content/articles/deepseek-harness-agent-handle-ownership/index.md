@@ -20,7 +20,7 @@ ShowToc = true
 
 用 `ctx.agents.get(id)` 取得 Agent，和用 `ctx.agents.create()` 创建 Agent，返回的东西不一样。
 
-前者给出一个正在运行的对象，调用者可以提交输入、取消工作、等待当前活动结束；后者返回 `AgentHandle`，额外带有 `dispose()`，让创建方能结束这次实例的生命周期。AgentLoop 自己也是资源所有者：提供工厂的插件卸载时，它必须收回曾经创建的实例。
+前者给出一个正在运行的对象，调用者可以提交输入、取消工作、等待当前活动结束；后者返回 `AgentHandle`，其中既有 Agent，也有用于结束实例的 `dispose()`。结束实例还要撤下工具和监听器、关闭会话写入通道，并从活实例注册表中移除它。本文所说的所有权，就是谁登记并负责完成这些清理。AgentLoop 提供创建实例的工厂；提供工厂的插件卸载时，也必须收回它创建的实例。
 
 [第九篇](/articles/deepseek-harness-loader-config-hmr/)讲过配置怎样改变插件实例。这篇继续进入 Agent 层，面向已经认识 Context、Fiber 和 effect、希望读懂 dsh 创建与清理代码的开发者。这里先讲实例怎样建立、何时可见、谁负责销毁；Turn、Step 和模型请求循环留给后面的文章。
 
@@ -46,15 +46,15 @@ interface AgentHandle {
 }
 ```
 
-Registry 的 `get()` 返回裸 Agent，`create()`、`resume()` 才返回 handle。这里说的“所有权能力”是 API 的责任划分：可信的同进程组合代码仍可能拿到 Context 或 Fiber，不能把这个接口差异当成隔离不可信代码的安全沙箱。[Handle 合同](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent/src/index.ts#L146-L163) · [查询与创建](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent/src/index.ts#L382-L415)
+Registry 的 `get()` 返回裸 Agent，`create()`、`resume()` 才返回 handle。这种返回值区别让查询方使用 Agent、创建方保留清理入口，是 API 对责任的划分。可信的同进程组合代码仍可能拿到 Context 或 Fiber，不能把这个接口差异当成隔离不可信代码的安全沙箱。[Handle 合同](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent/src/index.ts#L146-L163) · [查询与创建](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent/src/index.ts#L382-L415)
 
 ## 谁拥有资源，不能只看 parentAgent
 
 先看最容易写错的地方。一个子实例可以同时涉及三种关系：
 
-- **调用方 Fiber**：从哪个 Context 调用工厂，生命周期 effect 就登记到哪个 owner。这决定该调用方退出时会收回哪些资源。
-- **`parentAgent`**：显式传给工厂、保存到 AgentRegistry entry 的运行时关系。`roots()` 和 `isOwnedBy()` 查询它。
-- **`meta.parentSession`**：写入 Session 的持久谱系，表示历史从哪个 Session 派生，不决定当前进程由哪个 Fiber 清理。
+- **调用方 Fiber**：从哪个 Context 调用工厂，就把实例的清理 effect 登记在那个 Context 所属的 Fiber 上。这决定调用方卸载时会收回哪些实例；源码把它称为 owner。
+- **`parentAgent`**：显式告诉工厂“这个实例在业务上属于哪个 Agent”，并保存在 AgentRegistry entry 中。`roots()` 和 `isOwnedBy()` 查询这份记录，本身不搬动清理 effect。
+- **`meta.parentSession`**：在 Session 元数据中记录这段会话从哪段会话派生而来，供恢复历史时保留来源；它不决定当前进程由哪个 Fiber 清理。
 
 代码分别处理它们：Registry 把访问服务时的 Context 当作 `ownerCtx` 传给工厂；AgentLoop 在 `ownerCtx` 登记 lifecycle effect；发布时另把 `parentAgent` 交给 `agents.enter()`，Session 元数据则在准备 Session 时进入另一条路径。[调用方绑定](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent/src/index.ts#L391-L415) · [owner effect](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent-loop/src/index.ts#L601-L622) · [运行时 owner 写入](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent-loop/src/index.ts#L650-L662)
 
@@ -76,27 +76,27 @@ Registry 的 `get()` 返回裸 Agent，`create()`、`resume()` 才返回 handle�
 
 ## Registry 把创建交给工厂，仍要保留调用方
 
-`AgentRegistry` 作为 `agents` 服务挂载，保存活实例 Map、一个 factory slot，以及进程内的 initiator 上下文。AgentLoop 构造时调用 `ctx.agents.setFactory(this)`；同一 Registry 重复注册工厂会报错，返回的 effect disposer 在卸载时清空 slot。[Registry 构造](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent/src/index.ts#L245-L283) · [工厂注册](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent/src/index.ts#L346-L374)
+`AgentRegistry` 作为 `agents` 服务挂载，保存活实例 Map、一个创建工厂的位置（factory slot），以及记录“谁发起这次调用”的 initiator 上下文。AgentLoop 构造时调用 `ctx.agents.setFactory(this)`；同一 Registry 重复注册工厂会报错，返回的 effect disposer 在卸载时清空 slot。[Registry 构造](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent/src/index.ts#L245-L283) · [工厂注册](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent/src/index.ts#L346-L374)
 
 没有工厂时，Registry 仍可登记一个外部已经构造好的 Agent，但 `create()` 会拒绝。它不会偷偷帮调用者装上 AgentLoop，也不会把 `register()` 当作创建 Session 的替代品。本文实验分别检查了缺工厂、裸登记与真实创建的结果。
 
-委托时有一个细节：factory slot 保存原始对象，必要时经 `symbols.original` 去掉已有代理；每次 create/resume 再通过 `getTraceable(ownerCtx, target)`，以调用方 Context 重新追踪 Service 工厂。实际调用用 `Reflect.apply` 显式传 receiver 和 `ownerCtx`。这样既保留工厂提供者的依赖来源，又让新资源归属于本次访问服务的调用方。
+委托时必须同时保留两份信息：工厂原本使用哪一方的服务，以及这次是谁要求创建实例。factory slot 因而保存原始对象，必要时经 `symbols.original` 去掉已有代理；每次 create/resume 再通过 `getTraceable(ownerCtx, target)`，让工厂调用带上本次访问服务的 Context。实际调用用 `Reflect.apply` 显式传入作为 this 的 receiver 和 `ownerCtx`。这样，工厂仍使用提供者一侧的依赖，新实例的清理却登记在本次调用方。
 
 AgentLoop 内部至少有三个 Context，不能全部替换成一个“当前上下文”：
 
 | 名称 | 来源 | 用途 |
 | --- | --- | --- |
 | `loopCtx` | AgentLoop 的运行时注册 Context | 驱动器使用的基础服务、工厂提供者生命周期 |
-| `ownerCtx` | 访问 `agents.create/resume` 的调用方 | 持有创建事务和返回实例的生命周期 effect |
-| `agent.ctx` | 为新驱动器建立的 Scope | 挂载本 Agent 的工具、监听器及其他组合贡献 |
+| `ownerCtx` | 访问 `agents.create/resume` 的调用方 | 登记初始化过程及返回实例的清理 effect |
+| `agent.ctx` | 为新驱动器建立的 Scope | 登记本 Agent 可见的工具、监听器及其他插件资源 |
 
-`ReactLoopAgent` 构造时从 loop Context 建立自己的 Scope，再创建 Inbox、运行时上下文和系统提示词投影。这些对象与该实例的 Session 连接起来，但构造动作本身还没有把它放进两个公开 Registry。[驱动器构造](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent-loop/src/agent.ts#L122-L138)
+`ReactLoopAgent` 构造时从 loop Context 建立自己的 Scope，再创建保存待处理输入的 Inbox，以及根据会话记录跟踪运行时上下文和系统提示词状态的两个投影对象。它们读取该实例的 Session，也就是记录这段会话事件的对象。构造动作本身还没有把 Agent 和 Session 放进两个公开 Registry。[驱动器构造](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent-loop/src/agent.ts#L122-L138)
 
 ## 创建要经过“未发布”的阶段
 
 程序化入口是 `agents.create({ sessionId, agentOptions, setup, ... })`。调用方给出一个 SessionId，Agent 与 Session 共用这个身份。`meta`、`seed`、创建期 `signal` 和 `parentAgent` 分别承担元数据、初始历史、创建取消和运行时关系的职责。[创建参数](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent/src/index.ts#L56-L118)
 
-正常路径可以拆成六个观察步骤：准备 Session；建立驱动器与清理入口；完成 setup 和可选 commit；插入两个 Registry；发出 Session 公告并等待 Agent 公告；最后将 handle 交回调用方。下面可以对照正常创建与创建监听器失败的路径。
+正常路径可以拆成六个观察步骤：准备 Session；建立驱动器与清理入口；完成 setup 和可选 commit；插入两个 Registry；发出 Session 公告并等待 Agent 公告；最后将 handle 交回调用方。这里的“公告”，就是向生命周期事件的监听器发送创建通知。下面可以对照正常创建与创建监听器失败的路径。
 
 {{< interactive-diagram src="agent-publication.html" title="Agent 创建、注册公告与回滚的六步时序：setup 未发布阶段和监听器失败后的清理" height="1800" compact-height="1720" mobile-height="2200" >}}
 
@@ -104,9 +104,9 @@ AgentLoop 内部至少有三个 Context，不能全部替换成一个“当前�
 
 `createAgent()` 先调用 `sessions.prepare()`，用 `SessionPreparation` 包住尚未发布的 Session。有持久化后端时取得写 handle；之后 `setupAndPublish()` 把 Session、调用方 Context、setup 和创建期信号交给 `prepare()`。[createAgent](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent-loop/src/index.ts#L750-L786)
 
-准备阶段与公开存储分开，允许初始化失败时不向普通消费者暴露半成品。SessionPreparation 的同步、幂等释放也只是管理这次未发布准备所持有的状态，不等于“销毁一个已经公开的 Agent”。[SessionPreparation](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/session/src/preparation.ts#L1-L48)
+准备阶段与公开存储分开，允许初始化失败时不向普通消费者暴露半成品。SessionPreparation 的释放是同步的，重复释放不会重复处理；它管理的只是这次尚未发布的准备状态，不能代替工厂销毁一个已经公开的 Agent。[SessionPreparation](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/session/src/preparation.ts#L1-L48)
 
-`prepare()` 在资源创建前就接好取消和清理入口，使用可填充的 machine、detachSession、detachAgent 等位置。新驱动器建立后，caller owner 和工厂侧的跟踪都能找到同一份清理过程。Scope 的原始 disposer 也会被确切收编，以免它作为并发兄弟先退出、破坏清理顺序。[预先登记生命周期](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent-loop/src/index.ts#L497-L622)
+`prepare()` 在资源创建前就接好取消和清理入口，先为驱动器 machine、撤回 Session 登记的 detachSession、撤回 Agent 登记的 detachAgent 留出位置，等各对象建立后再填入。这样，即使初始化中途失败，调用方 owner 和工厂侧的跟踪也能找到同一份清理过程。Scope 的原始 disposer 则直接交给组合 effect，使它从原 Fiber 的顶层名单移入组合，按指定顺序执行，避免它作为兄弟项并行清理时过早退出。[预先登记生命周期](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent-loop/src/index.ts#L497-L622)
 
 ### setup 完成前，普通查找看不到它
 
@@ -134,7 +134,7 @@ return { agent: prepared.agent, dispose }
 
 真正的 `publish()` 保存两个 detach closure，先公告 Session，再等待 `agents.announce()` 的 serial 监听器。Registry 在派发前就标记公告已经开始，阻止重入或第二次 announce；监听器抛错会拒绝，并跳过后续监听器。[公开与公告](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent-loop/src/index.ts#L650-L666) · [Agent 公告](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent/src/index.ts#L537-L559)
 
-初始化被放在 `runMaintenance()` 内，排在它后面的唤醒输入要等当前初始化任务结束。创建监听器也不能等待这个 Agent 的 `whenIdle()`，或等待负责当前创建的 owner 自己销毁：前者在等包住自己这次派发的初始化任务，后者可能要反过来等这次派发结束，形成循环等待。[初始化维护阶段](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent-loop/src/index.ts#L818-L834) · [事件等待合同](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent/src/runtime-types.ts#L245-L261)
+初始化被放在 `runMaintenance()` 内，排在它后面的唤醒输入要等当前初始化任务结束。创建监听器也不能等待这个 Agent 的 `whenIdle()`：初始化要等监听器返回，whenIdle 又要等初始化结束，两边会互相等待。监听器若等待负责本次创建的 owner 完成销毁，也可能遇到同样的问题，因为 owner 的清理可能正在等这次公告派发结束。[初始化维护阶段](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent-loop/src/index.ts#L818-L834) · [事件等待合同](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent/src/runtime-types.ts#L245-L261)
 
 ## 插入、公告与注销为什么分成三个方法
 
@@ -148,11 +148,11 @@ return { agent: prepared.agent, dispose }
 
 还有一个重入边界：在 `agent/created` 监听器中调用该 entry 的 detach，Registry 只先记下请求，直到整轮 serial 派发结束才真正移除。实验中的第二个监听器仍能查到同一个 Agent，`agent/disposed` 出现在两者之后。[延迟 detach](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent/src/index.ts#L479-L492)
 
-`register()` 返回的是 Cordis 的 awaitable effect disposer，必须先等登记完成；它遵循单次调用约定，重复调用可以返回 undefined。工厂返回的 handle 则有另一层共享清理，下面会看到区别。[register 的清理身份](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent/src/index.ts#L418-L441)
+`register()` 返回一个既可等待、又可调用的 effect disposer：先 await 它以等到登记完成，之后调用它才请求撤销登记。这就是这里的 awaitable。它遵循单次调用约定，重复调用可以返回 undefined。工厂返回的 handle 则有另一层共享清理，下面会看到区别。[register 的清理身份](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent/src/index.ts#L418-L441)
 
 ## dispose 需要等待完整的退出过程
 
-裸 Agent 的 `cancel()` 取消当前活动，并按参数处理 Inbox；`whenIdle()` 等待当前活动收敛。它们没有代替工厂 handle 去关闭 Session 写 handle 或从 Registry 注销。
+裸 Agent 的 `cancel()` 取消当前活动，并按参数处理保存待办输入的 Inbox；`whenIdle()` 等待当前驱动或维护任务结束。这两种操作都不会代替工厂 handle 去关闭 Session 写 handle 或从 Registry 注销。
 
 对公开 Agent，输入方法也各有边界：`followup()` 提交普通后续输入，`steer()` 送到最近的 Step 边界，`inject()` 放入模型侧上下文但不主动唤醒驱动器。这里只说明它们属于 Agent 的使用能力，具体的 Inbox 和 Step 执行留到后文。[Agent 操作接口](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent/src/runtime-types.ts#L176-L241)
 
@@ -162,7 +162,7 @@ handle 的清理按下面的依赖关系展开：
 | --- | --- | --- |
 | 1 | 中止创建期等待；若公告正在进行，等待公告结束 | 创建监听器仍可能使用 Scope 与 Session |
 | 2 | `machine.cancel({ kind: 'disposed' })`，再 `whenIdle()` | 当前驱动或维护任务必须先退出 |
-| 3 | 释放 Agent Scope | 工具、投影、监听器等实例资源此时才能撤下 |
+| 3 | 释放 Agent Scope | 等当前任务结束后，才能撤下它使用的工具、投影和监听器等资源 |
 | 4 | 等待持久化写 handle 的 `close()` | 它可能还要排空最后的写入 |
 | 5 | 从 AgentRegistry、SessionStore 解除登记 | 活实例查询在前面的清理期间仍有意义 |
 | 6 | 释放工厂及 owner 的跟踪关系 | 后续重复清理不再启动第二次资源释放 |
@@ -175,7 +175,7 @@ handle 的清理按下面的依赖关系展开：
 
 ReactLoopAgent 的公开 status 只有 idle/running；内部 maintenance 阶段对外仍显示 idle。`whenIdle()` 会等待 `activityDone`，若等待期间出现替换活动，还要继续追踪新的完成信号。[内部阶段与 status](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent-loop/src/agent.ts#L122-L151) · [maintenance 与等待](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent-loop/src/agent.ts#L183-L242)
 
-本文用真正的 `runMaintenance()` 保持一个活动，status 的确是 idle。调用 handle.dispose 后，活动先收到 abort，但 Scope 和两个 Registry 仍保留。放行活动后才观察到：`work exit → scope cleanup → agent/disposed → session/disposed`。因此，UI 上读到 idle 不能代替资源释放的完成屏障。
+本文用真正的 `runMaintenance()` 保持一个活动，status 的确是 idle。调用 handle.dispose 后，活动先收到 abort，但 Scope 和两个 Registry 仍保留。放行活动后才观察到：`work exit → scope cleanup → agent/disposed → session/disposed`。因此，UI 上读到 idle 只说明公开状态显示空闲；要知道实例是否已完成清理，仍须等待 handle.dispose。
 
 ### 清理失败发生在哪一层，也影响结果
 
@@ -196,9 +196,9 @@ AgentLoop 会收集停止、Scope 释放和写 handle 关闭的失败，继续�
 | `agent/created` 后续监听器 | 前面的消费者已看见两个对象 | 释放并撤回，配对 Agent 和 Session disposal |
 | owner 在创建监听器等待期间退出 | 创建尚未向调用方返回，但监听器已拿到实例 | 发出取消，保留资源直到当前公告派发结束，再完成回滚 |
 
-对应的实验分别观察到“没有创建公告”“只有 Session 的创建/销毁配对”和“Agent、Session 均配对”。这提供可跟踪的生命周期边，不会让先收到 created 的监听器忘掉自己已经做过的事情。[公告状态与配对](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent/src/index.ts#L496-L559) · [初始化回滚](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent-loop/src/index.ts#L818-L834)
+对应的实验分别观察到“没有创建公告”“只有 Session 的创建/销毁配对”和“Agent、Session 均配对”。配对的销毁通知让已经收到 created 的监听器有机会撤销自己的登记，但不会自动撤回它们先前做过的其他操作。[公告状态与配对](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent/src/index.ts#L496-L559) · [初始化回滚](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent-loop/src/index.ts#L818-L834)
 
-setup 的异步函数也不会因为 Promise 竞争失败而被 JavaScript 强制终止。AgentLoop 可以停止等待、触发清理，并拒绝在已关闭的 Scope 中继续登记资源；回调若还持有自己的外部任务，仍需遵守其取消合同。实验在 owner 卸载后重新向旧 agentCtx 登记 effect，实际得到拒绝。[创建取消辅助](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent-loop/src/index.ts#L161-L201)
+如果取消先于 setup 完成，AgentLoop 可以结束对 setup 的等待并进入回滚，但 JavaScript 不会因此强制终止 setup 的异步函数。AgentLoop 会触发清理，并拒绝在已关闭的 Scope 中继续登记资源；回调若还持有自己的外部任务，仍需按这些任务约定的方式取消它们。实验在 owner 卸载后重新向旧 agentCtx 登记 effect，实际得到拒绝。[创建取消辅助](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent-loop/src/index.ts#L161-L201)
 
 创建期 signal、owner Fiber 卸载和工厂卸载都能进入准备阶段的取消/清理路径。创建完成后的普通用户停止用 `agent.cancel()`，要结束实例则等待 handle.dispose；不要把创建期 signal 当作日后所有工作的控制器。
 
@@ -208,7 +208,7 @@ setup 的异步函数也不会因为 Promise 竞争失败而被 JavaScript 强�
 
 FactoryOwnership 因此保存 live Agent 的 dispose 集合，以及创建、恢复和配置启动中尚未结束的任务。开始退出时先停止接纳、发出 abort，随后并行等待现有 dispose 和启动任务，把失败收集后交回。[工厂所有权](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent-loop/src/index.ts#L103-L158)
 
-AgentLoop 还把共享 Inbox/Turn 投影的撤销包在整个事务清理外层，尽量使驱动收敛期间仍能读到需要的投影。本文创建了两个不同 caller Fiber 各自拥有的实例：卸载其中一个 caller 只收回自己的 Agent；卸载工厂提供者则收回两者。之后 Registry 仍存在，但创建入口已没有可用工厂。[工厂事务 effect](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent-loop/src/index.ts#L365-L388)
+AgentLoop 还安排先清理这些创建和运行实例的任务，再撤销共享 Inbox/Turn 投影，尽量使驱动器退出期间仍能读到需要的会话状态。本文创建了两个不同 caller Fiber 各自拥有的实例：卸载其中一个 caller 只收回自己的 Agent；卸载工厂提供者则收回两者。之后 Registry 仍存在，但创建入口已没有可用工厂。[工厂事务 effect](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent-loop/src/index.ts#L365-L388)
 
 配置创建的 Agent 也走同一套驱动和清理，但调用方就是 AgentLoop 自己，公开便捷入口 `agentLoop.create()` 返回裸 Agent；程序化 `agents.create/resume` 返回 handle。配置里的逻辑 id、显式 sessionId、恢复与默认模型如何组合，将在下一篇继续读。[配置创建入口](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent-loop/src/index.ts#L688-L701)
 
@@ -216,15 +216,15 @@ AgentLoop 还把共享 Inbox/Turn 投影的撤销包在整个事务清理外层�
 
 `resume()` 要求持久化服务，不能在没有后端时偷偷退化成 fresh create。实际恢复流程先 `open(id, 'write')`，再读取日志；若尾部存在中断的 Turn，还会计算修复收尾事件并追加。然后用恢复后的历史、元数据和继承边界准备 Session，重新进入 setup 与 publish。[恢复实现](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent-loop/src/index.ts#L843-L925)
 
-读取和写入获取可能比调用方活得更久。这里把 caller signal、owner Fiber 退出和工厂退出合成信号；取消后若 backend 才交回写 handle，仍要把这个迟到资源关闭。本文用受控内存后端让 open 停住，先卸载 caller，再交出 handle：resume 已拒绝，read 没有执行，迟到 handle 最终被关闭。
+请求后端读取日志或打开写 handle 后，调用方可能先退出，后端却尚未返回。这里把 caller signal、owner Fiber 退出和工厂退出合成信号；即使取消之后 backend 才交回写 handle，也要关闭这个迟到资源。本文用受控内存后端让 open 停住，先卸载 caller，再交出 handle：resume 已拒绝，read 没有执行，迟到 handle 最终被关闭。
 
-另一组实验运行了真实 resume 主线，核对 write-open 在 read 之前，公开来源为 resume，原来的 parentSession 保留；没有显式 parentAgent 时，恢复后的实例仍是当前进程的运行时根。**持久谱系没有自动变成活实例所有权。**
+另一组实验运行了真实 resume 主线，核对 write-open 在 read 之前，公开来源为 resume，原来的 parentSession 保留；没有显式 parentAgent 时，恢复后的实例仍是当前进程的运行时根。**记录会话从哪里派生，不会自动决定由谁清理恢复后的活实例。**
 
 handle.dispose 从 SessionStore 移除的是这次活对象，并关闭它持有的写 handle。删除历史日志、归档 Session 或清理工作区是另外的产品动作，本篇的 dispose 顺序没有授权它们自动发生。
 
 ## initiator 说明因果来源，不替代 owner 或 subject
 
-Registry 还用 AsyncLocalStorage 传播同进程异步调用链的 initiator。父 Agent 发起创建时，setup 的 Agent 参数指向新子实例，而 `currentInitiator()` 可以仍指向父 Agent。本文用真实创建核对了这两个对象不同，边界之外的 initiator 则恢复为 undefined。[initiator 合同](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent/src/index.ts#L233-L243) · [继承与显式清除](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent/src/index.ts#L285-L344)
+Registry 还会记录“是谁发起了这条调用”，称为 initiator，并用 AsyncLocalStorage 让同进程的后续异步调用继续读取它。父 Agent 发起创建时，setup 正在处理的是新子实例，所以传入的 Agent 参数指向子实例；而 `currentInitiator()` 可以仍指向发起创建的父 Agent。本文用真实创建核对了这两个对象不同，边界之外的 initiator 则恢复为 undefined。[initiator 合同](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent/src/index.ts#L233-L243) · [继承与显式清除](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent/src/index.ts#L285-L344)
 
 这回答“是谁引发这条调用”，不证明 Agent 仍活着，也不提供授权，更不会自动填上 parentAgent。跨 Worker、进程、日志和传输边界，身份仍要显式携带和校验。Registry 给 Typert 注册的 lookup/context provider 也只按 id 解析活 Agent 及其 Context，没有把包含 dispose 闭包的 AgentHandle 变成可直接在线路上传递的对象。[查找桥接](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent/src/index.ts#L255-L269)
 

@@ -2,7 +2,7 @@
 url = "/posts/rust-01-setup/"
 title = "Rust 入门 01：安装工具，运行第一个程序"
 date = 2026-10-12T09:00:00+08:00
-lastmod = 2026-10-13T09:00:00+08:00
+lastmod = 2026-10-17
 draft = false
 author = "Hex4C59"
 description = "认识终端、Rust 编译器和 Cargo，创建项目，运行并修改第一个 Rust 程序。"
@@ -136,13 +136,13 @@ edition = "2024"
 [dependencies]
 ```
 
-这里的 `[dependencies]` 是空的，尚未声明第三方依赖。这三节只使用 Rust 标准库和基本语言功能。
+这里的 `[dependencies]` 是空的，尚未声明第三方依赖，也就是其他库提供的代码。这三节只使用 Rust 标准库和基本语言功能。标准库随 Rust 提供常用功能，例如前面用来打印文字的宏，不需要为它另加第三方依赖。
 
 `src/main.rs` 是这个可执行程序的入口源码。用编辑器打开整个 `hello-rust` 文件夹，再找到它。不要把代码保存成 `main.rs.txt`，也不要用带字体、颜色等格式的富文本文件代替源代码。
 
 首次构建后还会有：
 
-- `Cargo.lock`：记录依赖解析结果，通常交给 Cargo 管理。
+- `Cargo.lock`：记录 Cargo 为项目选定的依赖及其具体版本，通常交给 Cargo 管理。
 - `target/`：存放构建产物，不是你日常编辑的源码目录。
 
 现在主要修改 `src/main.rs` 即可。

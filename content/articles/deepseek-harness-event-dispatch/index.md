@@ -18,15 +18,15 @@ frameworks = ["DeepSeek Harness", "Cordis"]
 ShowToc = true
 +++
 
-[第六篇](/articles/deepseek-harness-types-service-registration/)讲到，接口包通过模块增强声明服务与事件类型。文件系统包中的 `fs/observed`、`fs/write-intent` 都能被编辑器识别，但它们的执行方式很不一样：一次读取完成后用 `emit` 记录观察结果，写入前却用 `waterfall` 取得决策。
+[第六篇](/articles/deepseek-harness-types-service-registration/)讲到，接口包通过模块增强，让 TypeScript 认识插件新增的服务和事件。类型声明能让编辑器识别文件系统包中的 `fs/observed`、`fs/write-intent`，但执行这些事件时，还要决定怎样调用监听器：一次读取完成后用 `emit` 记录观察结果，写入前却用 `waterfall` 等待策略插件给出决策。
 
 为什么不用一个统一的 `emitAsync`？给 `serial` 注册多个监听器，为什么第二个返回 `0` 就让第三个不再执行？给 `bail` 注册 async 函数后，即使它最终返回 `false`，后续监听器为什么仍没有机会运行？
 
 **Cordis 的五种派发决定了谁会执行、调用方等什么，以及一个返回值怎样影响后续工作。** 其中 `serial` 和 `bail` 都有提前停止规则；`waterfall` 则把控制权交给 `next()`。这些规则会影响初始化、文件策略和失败处理，不能只按名字理解成“同步广播”和“异步广播”。
 
-本文面向了解 Promise、Context 和插件依赖的开发者。先追踪监听器如何进入一次派发，再分别看执行与失败路径，最后回到文件工具、Agent 和事件作用域。以下讨论普通字符串业务事件；内部更新 Hook 和完整 Fiber 清理算法留给后续章节。
+本文面向会读函数调用和 Promise、但没读过该项目源码的开发者。Context 是插件访问服务和登记资源的入口，前几篇介绍过它的依赖机制。本文先追踪监听器如何进入一次派发，再分别看执行与失败路径，最后回到文件工具、Agent 和事件作用域。以下讨论普通字符串业务事件；内部更新 Hook 和完整 Fiber 清理算法留给后续章节。
 
-本文分析 [DeepSeek Harness `0.2.1-alpha.2`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/package.json)，核对日期为 2026-10-15。[Cordis manifest](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/package.json)为 `4.0.5-alpha.1`。本文另用 TypeScript 6.0.3 转译固定快照的 Cordis/cosmokit 源文件，在 Node `v25.9.0` 上完成 18 组聚焦检查。
+本文分析 [DeepSeek Harness `0.2.1-alpha.2`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/package.json)，源码取自[固定快照](https://github.com/deepseek-ai/deepseek-harness/tree/d743267388641bc76f17c45ce8b4c231aed1d32c)；核对日期为 2026-10-15。[Cordis manifest](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/package.json)为 `4.0.5-alpha.1`。本文另用 TypeScript 6.0.3 转译固定快照的 Cordis/cosmokit 源文件，在 Node `v25.9.0` 上完成 18 组聚焦检查。
 
 这些检查执行了原有事件服务和 Context，实现方法没有被替换为自写模拟器；转译不做完整语义类型检查。它们不等于 dsh 全量构建、所有插件组合、进程故障或模型请求已经验证。下载包和复现范围见文末。
 
@@ -34,11 +34,13 @@ ShowToc = true
 
 ### 注册记录既包含函数，也包含拥有它的 Context
 
+插件登记监听器时，框架还要记下它属于哪次插件挂载，才能在卸载时撤销这条登记。Cordis 用 Fiber 保存一次插件挂载的运行状态，用 effect 登记初始化及对应的清理函数。这里先关注它们怎样移除监听器，完整清理过程放在下一篇。
+
 [`EventsService.on()`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/events.ts#L288)先规范化选项、检查当前 Fiber，并通过 `ctx.reflect.bind()` 包装回调，再触发框架内部的 `internal/listener` 拦截点。普通事件进入事件名对应的 Hook 数组。
 
-Hook 是一条注册记录，保存注册方 `ctx`、回调，以及 `prepend`、`global` 等选项。这里的 Context 用于之后的过滤和资源归属，不只是函数调用时随手传入的参数。
+Hook 是一条注册记录，保存注册方 `ctx`、回调，以及 `prepend`、`global` 等选项。事件服务之后会根据注册方 Context 判断这条记录能否接收事件，并据此找到负责清理它的插件。
 
-[`register()`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/events.ts#L254)通过当前 Fiber 的 effect 管理这条记录。默认从数组尾部加入，`prepend: true` 则从头部加入；布尔参数 `true` 是 prepend 的简写。连续 prepend 时，后注册者排在前面；没有另一个按数字排序的通用优先级字段。
+[`register()`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/events.ts#L254)通过当前 Fiber 的 effect 加入记录，并登记对应的移除动作。默认从数组尾部加入，`prepend: true` 则从头部加入；布尔参数 `true` 是 prepend 的简写。连续 prepend 时，后注册者排在前面；没有另一个按数字排序的通用优先级字段。
 
 普通注册完成后返回 disposer，也就是用于撤销的函数。插件卸载时框架会清理相应 effect，从以后派发所选的列表中移除监听器。不过，已经开始执行的异步工作和当前派发已经取得的回调，不会仅因移除记录就自动消失。
 
@@ -51,7 +53,7 @@ ctx.emit('some/event', payload)
 ctx.emit(receiver, 'some/event', payload)
 ```
 
-第二种形式最前面的对象或函数是派发接收者，在普通函数监听器中作为 `this`，也可能携带 `[Context.filter]`。它不是监听器收到的第一个普通参数；payload 仍从事件名后开始传递。
+第二种形式最前面的对象或函数是派发接收者，在普通函数监听器中作为 `this`。接收者还可能携带 `[Context.filter]`：事件服务会用这个函数检查各监听器的注册方 Context，决定选中谁。接收者不是监听器收到的第一个普通参数；payload 仍从事件名后开始传递。
 
 非 `internal/` 事件会先产生一条 `internal/dispatch` 诊断事件，然后读取接收者上的过滤器。监听器满足以下任一条件才会入选：标记了 `global`、本次没有过滤器、或过滤器接受它的注册方 Context。入选回调再绑定到这次接收者；监听器内部的 `reflect.bind()` 还会追踪相应的 this 与参数。
 
@@ -65,14 +67,14 @@ ctx.emit(receiver, 'some/event', payload)
 
 ## 先对照五种派发的等待与停止规则
 
-下表描述普通监听器的主要行为。公共派发前的诊断与过滤也能抛错，不能把表格扩展成任意框架错误都已被转换或聚合。
+下表描述普通监听器的主要行为。其中“bail 值”指会使 serial 或 bail 提前停止、直接作为结果返回的值，具体条件列在“怎样继续”一栏。公共派发前的诊断与过滤也能抛错，不能把表格扩展成任意框架错误都已被转换或聚合。
 
 | 方法 | 怎样继续 | 调用方得到什么 | 普通监听器失败时 |
 |---|---|---|---|
 | `emit` | 依次调用，不等返回的 Promise | `undefined` | 同步抛错立即退出，后续不调用；异步拒绝不由本方法收集 |
-| `parallel` | 按列表启动，等待全部 settled | 成功时为 `undefined` 的 Promise | 回调抛错或拒绝纳入结果，全部结束后抛 AggregateError |
-| `serial` | 逐个 await，直到一个结果满足 bail 条件 | 解析为首个 bail 值的 Promise，否则解析为 undefined | 首个抛错或拒绝使派发拒绝，后续不调用 |
-| `bail` | 同步逐个调用，直到一个结果满足 bail 条件 | 首个 bail 值，否则 undefined | 同步抛错向外传播；不等 Promise 的最终结果 |
+| `parallel` | 按列表启动，等待每项都确定成功或失败 | 成功时为 `undefined` 的 Promise | 回调抛错或拒绝纳入结果，全部结束后抛 AggregateError |
+| `serial` | 逐个 await，遇到既非 null、false，也非 undefined 的结果便停止 | 解析为首个 bail 值的 Promise，否则解析为 undefined | 首个抛错或拒绝使派发拒绝，后续不调用 |
+| `bail` | 同步逐个调用，使用与 serial 相同的停止条件 | 首个 bail 值，否则 undefined | 同步抛错向外传播；不等 Promise 的最终结果 |
 | `waterfall` | 当前监听器自己决定是否调用 next | 最外层监听器或终点的返回值 | 按实际调用链传播同步异常或返回的 Promise 拒绝 |
 
 没有监听器时，emit 和 bail 返回 undefined，parallel 和 serial 返回解析为 undefined 的 Promise；waterfall 则直接调用生产方提供的终点函数。空名单不会替它生成一份业务结果。
@@ -157,7 +159,7 @@ for (const cb of this.dispatch('bail', args)) {
 
 同步决策回调返回 false 时，它会继续寻找下一个结果。async 回调则立即返回 Promise；Promise 既不是 null，也不是 false 或 undefined，因此 bail 会当场返回它，不再调用后面的回调。
 
-实验让 A 返回 `Promise.resolve(false)`。调用方最后 await 得到 false，但 B 始终没有执行。外面加 await，只能解开已经选中的 Promise，不能回到事件循环内部重新继续派发。
+实验让 A 返回 `Promise.resolve(false)`。调用方最后 await 得到 false，但 B 始终没有执行。外面加 await，只能取得已经选中的 Promise 的最终结果，不能回到 bail 的监听器循环中继续派发。
 
 所以，bail 适合与同步返回约定配合。若需要按异步结果逐个寻找处理者，要检查是否应该选择 serial；也要同时检查事件本身的类型与生产方契约，不能仅在消费方擅自换一个方法。
 
@@ -210,15 +212,15 @@ ctx.emit('fs/observed', target, { kind: 'present', version: info.version }, exec
 const intent = await ctx.waterfall('fs/write-intent', target, exec, () => undefined)
 ```
 
-末尾的默认函数返回 undefined，对应没有额外写入意图时的路径。观察策略插件则注册了一个[不调用 next 的监听器](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/fs/fs-observation-policy/src/index.ts#L116)，直接返回它计算的意图 Promise，占用这个决策位置，而非继续与多个策略自动叠加。
+末尾的默认函数返回 undefined，对应没有额外写入意图时的路径。观察策略插件则注册了一个[不调用 next 的监听器](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/fs/fs-observation-policy/src/index.ts#L116)，直接返回它计算的意图 Promise。由于它没有调用 next，排在后面的策略和默认函数都不会执行，本次写入就使用它给出的结果。
 
 生产方 await 这份结果，然后才调用 `ctx.fs.writeText(...)`。策略计算失败会使这条调用链拒绝；事件服务没有为它自动挑选另一份策略，也没有把任意多个策略的结果合并成一个更严格的对象。
 
-因此，prepend 和装配顺序在这里会改变先遇到哪个决策者。事件名本身不规定冲突消解，waterfall 也不自动赋予策略安全性；仍需阅读具体插件与默认函数的合同。
+因此，prepend 和装配顺序在这里会改变先遇到哪个决策者。事件名本身不规定冲突消解，waterfall 也不自动赋予策略安全性；仍需检查具体插件与默认函数怎样约定输入、结果和失败处理。
 
 ### `agent/created` 用 serial 等待初始化监听器
 
-Agent 注册表的 [`announce()`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent/src/index.ts#L550)以 `entry.carrier` 为接收者，对 `agent/created` 执行 serial 并等待。函数还在派发前标记公告已开始，避免监听器重入时重新发起同一条生命周期边。
+Agent 注册表的 [`announce()`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent/src/index.ts#L550)以 `entry.carrier` 为接收者，对 `agent/created` 执行 serial 并等待。函数还在派发前标记公告已开始，避免创建监听器再次调用公告入口时，重复发出同一个 Agent 的创建通知。
 
 这里需要按顺序等待创建监听器，某个监听器失败会使等待拒绝。serial 的提前停止规则仍然存在，事件监听器需要遵守其返回约定；方法名不会把不合约的返回值变成 void。
 
@@ -228,7 +230,9 @@ Agent 注册表的 [`announce()`](https://github.com/deepseek-ai/deepseek-harnes
 
 dsh 用 [`scopeTarget()`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/scope/src/index.ts#L170)构造专门的接收者：先保留基础对象的过滤条件，再根据注册方 Context 的 scope 判断。未标记 scope 的监听器被接纳，当前 key 或其祖先 scope 的监听器也可接纳；位于被派发 key 下层的 scope 不会因此被选中。
 
-这就是前面的 `entry.carrier` 有意义的原因。carrier 提供路由身份，业务对象仍可以作为显式事件参数传递；不能随意用 payload 替换 carrier，也不能只看事件名就推断某个 Agent 会收到谁的通知。
+例如，假设 R 是 A 的祖先 scope，B 又是 A 的下级。向 A 派发时，在基础过滤条件也通过的前提下，未标 scope、R 和 A 中的监听器可以入选，B 中的监听器不会仅因它位于 A 下级而入选。
+
+前面的 `entry.carrier` 就带着这份筛选信息。carrier 决定通知投递给哪些监听器，业务对象仍可以作为显式事件参数传递；用 payload 替换 carrier 可能丢掉过滤器，因此不能只看事件名就推断某个 Agent 会收到谁的通知。
 
 `global: true` 则在事件服务的 Hook 过滤中直接放行。这是框架级投递选项，和“未标记 scope 的监听器可通过 dsh carrier”处在不同层次。作用域过滤也不是操作系统权限检查。
 

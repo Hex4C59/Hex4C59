@@ -22,9 +22,9 @@ ShowToc = true
 
 把这个情况代入文件工具：假设配置中已经加入 `tool-fs`，却没有可用的文件系统服务。配置行明明存在，为什么模型仍得不到 `read` 工具？程序为什么没有立即进入工具注册代码，然后在 `ctx.fs` 上报一个空值错误？
 
-**Cordis 用服务依赖决定插件主体何时执行，用服务域标签决定同名能力从哪里取得。** `Context` 负责承载和解析这些关系，`Service` 提供一套注册服务的方式，`inject` 则让消费者跟随提供者的可用状态加载或卸载。理解这几层之后，才能判断“插件已经写进配置”离“能力已经可以使用”还差什么。
+**Cordis 会先等插件需要的服务可用，再执行插件主体；查找同名服务时，还要确认插件属于哪个服务域。** 服务域通过标签区分，标签决定到哪里查找实现。`Context` 保存插件的运行环境，并负责查找服务；`Service` 提供注册服务的方式；插件用 `inject` 声明需要什么服务，让框架在依赖可用时加载它、依赖消失时卸载它。这种由框架提供所需服务并管理等待的方式，就是这里讨论的依赖注入。
 
-本文面向能阅读 TypeScript、了解 dsh 应用组合的开发者。主线是 `tool-fs` 与 `fs`；随后解释子 Context、服务隔离与 Agent scope。这里的 Context 是插件运行环境，不是提交给模型的上下文窗口。类型声明合并、事件分派和完整 effect 卸载算法分别留给后续文章。
+本文面向能阅读 TypeScript、了解 dsh 应用组合的开发者。主线是 `tool-fs` 与 `fs`；随后解释子 Context、服务隔离与 Agent scope。这里的 Context 是插件运行环境，不是提交给模型的上下文窗口。类型声明合并、事件分派，以及随插件一起释放资源的 effect 机制，会在后续文章展开。
 
 本文继续分析 [DeepSeek Harness `0.2.1-alpha.2`](https://github.com/deepseek-ai/deepseek-harness/tree/d743267388641bc76f17c45ce8b4c231aed1d32c)，核对日期为 2026-10-15。该版本的 [`@deepseek-ai/cordis` manifest](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/package.json)声明 `4.0.5-alpha.1`。[vendor 记录](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/README.md)另列上游来源为 `4.0.0-rc.7`，并记录本地修改。本文以快照中的实现为准，不把上游文档直接当作该版本行为。
 
@@ -56,7 +56,7 @@ export const inject = ['tools', 'fs', 'systemPrompt', 'workingDirectory']
 
 ## `new Context()` 创建的是代理与共享基础设施
 
-[`Context` 构造函数](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/context.ts#L71)先创建服务隔离映射和 intercept 映射，再用 `ReflectService.handler` 建立代理，创建根 Fiber，并安装反射、插件注册、事件和日志等内置服务。
+[`Context` 构造函数](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/context.ts#L71)先建立“服务名对应哪个域标签”的映射，以及用于调整服务配置的 intercept 映射。它再用 `ReflectService.handler` 建立代理，让服务属性的读取先经过框架处理；同时创建根 Fiber，并安装按名称查找和登记服务的反射服务、插件注册服务，以及事件和日志等内置服务。
 
 Context 上一些看起来很普通的方法，实际也是内置服务转发出来的：[`ReflectService` 构造函数](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/reflect.ts#L213)将 `get`、`provide` 等反射方法，`plugin`、`inject` 等注册方法，以及事件方法混入 `ctx`。
 
@@ -66,21 +66,21 @@ Context 上一些看起来很普通的方法，实际也是内置服务转发出
 
 [`RegistryService.plugin()`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/registry.ts#L316)解析插件入口，取得或建立模块的 runtime 记录，再创建一个新的 Fiber。runtime 记录描述共享的插件入口；Fiber 对应这一次具体挂载。
 
-[`Fiber` 构造过程](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/fiber.ts#L236)使用 `parent.extend({ fiber: this })` 创建插件 Context。它继承父环境，但 `fiber` 指向本次挂载实例。服务注册、事件监听和 effect 因而可以知道资源由哪次插件挂载拥有。
+[`Fiber` 构造过程](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/fiber.ts#L236)使用 `parent.extend({ fiber: this })` 创建插件 Context。它继承父环境，但 `fiber` 指向本次挂载实例。框架因此能把服务注册、事件监听和 effect 记到这次挂载名下，卸载时再清理对应资源。
 
-相反，直接调用 `ctx.extend({ ... })` 只创建一个携带元数据的子 Context，不会顺便创建新的 Fiber。两者都能产生子 Context，却有不同的生命周期含义。
+相反，直接调用 `ctx.extend({ ... })` 只创建一个携带附加信息的子 Context，不会顺便创建新的 Fiber。两者都能产生子 Context，却有不同的生命周期含义。
 
 ## `ctx.fs` 与 `ctx.get('fs')` 分别怎样读取
 
 ### 属性访问沿插件声明的依赖环境解析
 
-[`ReflectService.handler.get`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/reflect.ts#L135)先处理 Context 上已有的普通属性和 accessor。对于服务属性，普通插件上下文会进入依赖读取检查。
+[`ReflectService.handler.get`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/reflect.ts#L135)先处理 Context 自身已有的普通属性；若属性定义了专门的取值函数，也按它读取。访问服务属性时，普通插件 Context 则要先接受依赖读取检查。
 
-这个检查从当前或关联的 Fiber 开始，先查看挂载期间保存的服务实现，再根据依赖声明与服务域继续判断是否可以沿父 Fiber 查找。如果遇到声明需要、但当前不可用的服务，会报告 inactive context；如果一路找不到合法读取路径，则报告 `without inject`。服务域改变时也不能随意跨过去找另一份实现。
+这个检查从当前或关联的 Fiber 开始，先查看挂载期间保存的服务实现，再根据依赖声明与服务域判断能否沿父 Fiber 继续查找。如果插件声明需要的服务当前不可用，会报告 inactive context，也就是当前环境不再满足执行条件；如果一路都找不到符合依赖声明的读取路径，则报告 `without inject`。即使父环境有同名服务，服务域不同也不能随意取用。
 
 所以，`ctx.fs` 并不是一次无条件的全局字典查询。插件通常通过 `inject` 声明必需服务，让框架在执行主体前准备依赖；祖先 Fiber 自己提供的服务，以及它已保存的依赖，也可能被子插件继承。若提供者和消费者只是兄弟插件，服务出现在共享存储中，并不会自动建立这条属性读取路径。不能把“此文件没有显式写 inject”一概判断为非法读取，还要看它挂载在哪个父环境中。
 
-根 Context 有一个启动用的特例：它没有普通插件的 runtime，属性代理允许通过非严格模式取得服务。根环境中的临时调试读取，不能用来证明普通插件也拥有相同的读取权限与就绪条件。
+根 Context 有一个启动用的特例：它没有普通插件的 runtime，属性代理允许通过非严格模式取得服务，不要求提供者已经活跃。根环境中的临时调试读取，不能用来证明普通插件也拥有相同的读取权限与就绪条件。
 
 ### `get()` 绕过 inject 检查，默认只返回活跃提供者
 
@@ -96,7 +96,7 @@ return impl
 
 `ctx.get('fs')` 默认使用 `strict = true`，因此提供者还在加载、已经失败或正在卸载时，不会按活跃服务返回。调用方可以根据返回值决定是否提供可选功能。
 
-这也不是完整的 inject 就绪检查：`get()` 不执行实现记录的可选 `check`，该判断在 Fiber 的 `_checkImpl()` 中进行。服务即使能被 `get()` 读到，也可能尚不满足依赖消费者的激活条件。
+但“提供者活跃”仍不等于通过了全部 inject 就绪检查：`get()` 不执行实现记录中可选的 `check`。这项检查由 Fiber 的 `_checkImpl()` 执行，用于判断提供者是否还满足自定义可用条件。因此，即使能通过 `get()` 读到服务，声明依赖它的插件也可能仍需等待。
 
 但一次 `get()` 不会自动把当前插件变成 `fs` 的依赖消费者。之后 `fs` 消失时，框架不会仅因这次读取就重载该插件；如果把返回值长期保存在闭包里，其后续有效性需要调用方自己处理。与此相对，`inject` 会把关系登记到 Fiber 中，用于后续变化通知。
 
@@ -122,7 +122,7 @@ constructor(ctx: Context) {
 
 [`Service` 构造函数](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/service.ts#L42)将服务实例与 Context、名称和调用追踪信息关联，再转到 `ctx.reflect.provide()`。具体文件系统实现继承这个入口，就能以 `fs` 提供能力；工具侧不需要直接导入那一份本地实现。
 
-服务也可以由普通插件直接调用 `ctx.provide(name, value)` 提供，值不必是 `Service` 子类实例。`Service` 在具名注册之外提供了调用追踪、可调用服务与 intercept 配置等辅助机制，不能把它和一条字符串服务名当作同一个东西。
+普通插件也可以直接调用 `ctx.provide(name, value)` 注册服务，注册值不必是 `Service` 子类实例。继承 `Service` 则能额外使用调用方追踪、让服务像函数一样被调用，以及 intercept 配置等机制。这里要区分服务名称、注册的具体值和辅助注册的基类。
 
 ### 注册记录包含提供者，值本身还不代表就绪
 
@@ -130,7 +130,7 @@ constructor(ctx: Context) {
 
 同一服务域中已经有同名记录时，再次提供会抛错；框架不会默默选择“最后注册的一份”。换一个服务域可以放另一份同名能力，后文再解释。
 
-注册动作由当前 Fiber 的 effect 管理。撤销时，框架移除共享存储中的记录，通知相关消费者并等待它们处理变化，然后清理提供者的本地记录。清理期间保留旧依赖供清理代码使用，和对新消费者公布服务是不同的时机。
+注册动作会作为 effect 归当前 Fiber 管理，即同时登记以后该怎样撤销。撤销时，框架先移除共享存储中的记录，再通知相关消费者并等待它们处理变化，最后清理提供者的本地记录。这样，新的消费者不再取得已撤销的服务，而正在清理的代码仍可使用先前保存的依赖。
 
 `Service` 在构造时登记实例，也不等于消费者此刻就能运行。正常依赖检查还要求提供者的 Fiber 已经活跃；如果有自定义 `check`，还要通过这项可用性判断。异步初始化尚未完成时，单凭 JavaScript 对象已经创建，不能宣称服务已经准备好。
 
@@ -146,7 +146,7 @@ constructor(ctx: Context) {
 
 [`Inject.resolve()`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/registry.ts#L71)将数组或对象声明转换成按名称索引的依赖映射。对象形式还可以携带对应服务的 intercept 配置。它不会因为 TypeScript 中某字段可选，就把列入声明的服务自动变成可选依赖。
 
-Fiber 创建后，会为每项依赖调用 `_checkImpl()`，再执行 [`_refresh()`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/fiber.ts#L611)。后者将当前依赖提供者的身份组成内部的加载代次标记；任意依赖缺失，就将这次挂载标记为 inactive。
+Fiber 创建后，会为每项依赖调用 `_checkImpl()`，再执行 [`_refresh()`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/fiber.ts#L611)。后者记录当前这一组依赖分别由谁提供，形成内部的“加载代次”标记。框架用它判断依赖组合是否变化、是否需要重新加载；任意依赖缺失，就把这次挂载标为 inactive，暂不执行主体。
 
 以下按 `tool-fs` 缺少、随后取得 `fs` 的假设顺序推演。其他三个依赖均已可用，插件配置也有效：
 
@@ -209,7 +209,7 @@ label = context 的服务域映射[name]
 implementation = root 的反射存储[label]
 ```
 
-Context 看起来不同，只要 `fs` 对应的标签相同，就仍然选中同一条底层实现记录。不同服务域也仍可以共用同一个根反射存储；区分它们的是标签，而不是各复制一份整个应用。
+查找分两步：先由 Context 把服务名换成域标签，再用标签到根反射存储中取实现。两个 Context 即使是不同对象，只要 `fs` 对应的标签相同，就仍会选中同一条底层实现记录。反过来，不同服务域可以共用同一份根存储，因为它们用不同标签保存实现，无需各复制一份整个应用。
 
 [`Context.isolate('fs')`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/context.ts#L121)创建一个子 Context，只给 `fs` 换上新的标签。这个名字在该分支中的读取和提供，都使用新域；其他服务名称继续按原映射解析。
 
@@ -229,7 +229,7 @@ Context 看起来不同，只要 `fs` 对应的标签相同，就仍然选中同
 
 `isolate(name, label)` 允许显式传入 Symbol 标签。对同一服务名，两处分支使用同一个 Symbol，可以接入相同的域。两个各自执行的 `Symbol('shared')` 虽然描述文本相同，仍是两个不同 Symbol；不能只按打印出来的名称判断它们共享。
 
-Loader 的 YAML 选项还提供自己的映射方式：[`isolate` 配置处理](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/loader/src/config/isolate.ts#L71)将 `true` 对应到条目的局部 realm，将字符串 label 对应到共享的命名 realm。它最终仍为服务名分配 Symbol，但这与直接传给 `Context.isolate()` 的参数形式不同。
+Loader 的 YAML 选项还提供自己的映射方式：[`isolate` 配置处理](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/loader/src/config/isolate.ts#L71)把 `true` 放到条目自己的局部 realm 中处理，把字符串 label 放到可共享的命名 realm 中处理。realm 在这里负责组织并分配服务标签：前者随当前条目形成局部域，后者让相同名称的配置接入同一个域。它最终仍为服务名分配 Symbol，但参数形式不同于直接调用 `Context.isolate()`。
 
 在 dsh 的 [standard preset](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/bundle/web-app/presets/standard.patch.yml#L45)中，planning 组使用 `isolate: { planMode: true }`，并在组内挂载对应提供者。这是真实的按服务名隔离组合；并不意味着组内代码已经获得操作系统级沙箱。服务解析与文件、进程权限仍是不同机制。
 
@@ -237,13 +237,13 @@ Loader 的 YAML 选项还提供自己的映射方式：[`isolate` 配置处理](
 
 ## 共享实现为什么还需要追踪调用方 Context
 
-Service 构造时登记了 tracker 信息。读取服务时，[`getTraceable()`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/utils.ts#L117)会对带 tracker 的对象建立追踪代理，使服务调用能够结合调用方的 Context 工作。
+Service 构造时会登记用于追踪调用方的 tracker 信息。插件读取服务时，[`getTraceable()`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/utils.ts#L117)为带 tracker 的对象建立代理。随后调用服务方法时，框架便能知道是哪个插件的 Context 发起调用。
 
 这对“一个共享注册服务，许多插件向它注册内容”尤其有用。若所有注册都只记在服务提供者的 Context 上，卸载某个消费插件时，就难以按该消费者的生命周期撤销它的贡献。
 
-dsh 的 [`ToolsService.register()`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/tools/src/index.ts#L1069)经过参数校验后，把 `this.ctx` 交给 `layers.effect()`。这份 Context 既参与注册的作用域选择，也参与 effect 所有权。追踪代理让共享服务的方法可以接上调用方，而不是把所有贡献无差别留在服务提供者身上。
+dsh 的 [`ToolsService.register()`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/tools/src/index.ts#L1069)经过参数校验后，把 `this.ctx` 交给 `layers.effect()`。这份 Context 决定工具注册到哪个作用域，也决定卸载哪个插件时要撤销这次注册。追踪代理保留了调用方信息，因此工具注册可以归属于发起注册的插件，而不是全部算到工具服务提供者名下。
 
-具体的 [`createTraceable()` 与 shadow 方法](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/utils.ts#L165)还要同时处理提供方原有依赖与调用方环境，并不是简单修改原服务对象的 `ctx` 字段。直接把它概括成“服务全局单例，所以所有方法都只使用根 Context”会丢掉这一层。
+具体的 [`createTraceable()` 与 shadow 方法](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/utils.ts#L165)负责创建带调用方信息的服务视图，同时保留提供方原有依赖和调用方环境；并不是直接修改共享服务对象的 `ctx` 字段。直接把它概括成“服务全局单例，所以所有方法都只使用根 Context”会丢掉这一层。
 
 由此还会影响调试：不同 Context 取得的服务可能是不同的代理外观，不能只用 `===` 判断它们是否采用同一底层实现。应沿服务域标签与提供者记录确认来源。
 
@@ -258,9 +258,9 @@ const fiber = ctx.plugin(scope)
 const scoped: Context = fiber.ctx.extend({ [kScope]: key })
 ```
 
-它没有在这里对所有服务逐项执行 `isolate()`。这个身份供工具、提示词等按 scope 分层的注册表区分贡献，并配合事件路由与释放。
+它没有在这里对所有服务逐项执行 `isolate()`。这里添加的是 Agent 身份：工具、提示词等共享注册表用它区分“这项注册属于哪个 Agent”，事件也据此寻找接收方，释放时再清理对应内容。
 
-例如共享的工具服务内部使用 [`ScopedLayers`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/tools/src/index.ts#L834)，按调用 Context 的 scope 将工具贡献放进相应层。这可以让 Agent 看到自己的注册内容，而不必为每个 Agent 都复制整个 ToolsService。
+例如共享的工具服务内部使用 [`ScopedLayers`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/tools/src/index.ts#L834)，按调用 Context 的 scope 把工具注册放进相应层。Agent 查询工具时便能取得属于自己的注册内容，无需为每个 Agent 都复制整个 ToolsService。
 
 | 机制 | 主要区分什么 |
 |---|---|

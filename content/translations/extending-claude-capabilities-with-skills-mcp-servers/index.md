@@ -1,11 +1,11 @@
 +++
 title = "用 Skills 与 MCP 服务器扩展 Claude 的能力"
 date = 2026-03-25T12:00:00+08:00
-lastmod = 2026-03-25T12:00:00+08:00
+lastmod = 2026-10-17
 draft = false
 author = "Hex4C59"
-description = "说明 Model Context Protocol（MCP）与 Agent Skills 如何分工与协同：连接外部系统与沉淀工作流知识，并给出金融分析与会议筹备等实例及选型对照表。"
-summary = "MCP 负责安全、标准化的工具与数据接入；Skills 负责领域知识与流程编排。二者组合可让 agent 按团队 playbook 产出一致结果，而非每次靠猜。"
+description = "说明 Model Context Protocol（MCP）与 Agent Skills 如何配合：MCP 连接外部系统，Skills 记录领域知识与操作流程。通过金融分析、会议筹备案例和对照表，介绍两者的选用方式。"
+summary = "MCP 负责安全、标准化地接入工具与数据；Skills 说明使用这些工具的步骤和标准。组合使用时，agent 可以按团队既定流程工作，减少每次重新猜测的需要。"
 tags = ["模型上下文协议", "智能体技能", "Claude"]
 categories = ["ai"]
 topics = ["mcp", "agent-skills", "claude", "agents", "integrations"]
@@ -29,9 +29,9 @@ source_kind = "translation"
 
 自 [推出 Skills](https://claude.com/blog/skills) 以来，客户最常问的两个问题是：「Skills 和 MCP 如何配合？」「什么时候该用哪一个？」
 
-[Model Context Protocol（MCP）](https://modelcontextprotocol.io/docs/getting-started/intro) 把 Claude 接到第三方工具；Skills 则教 Claude **如何用好**这些连接。把两者结合起来，你就能构建遵循团队工作流的 agent，而不是总要纠偏的通用流程。
+[Model Context Protocol（MCP）](https://modelcontextprotocol.io/docs/getting-started/intro) 把 Claude 接到第三方工具；Skills 则教 Claude **如何用好**这些连接。把两者结合起来，你就能构建遵循团队工作流的 agent，减少使用通用流程时反复纠偏的需要。
 
-例如：连上 Notion 的 MCP 后，Claude 可以搜索你的工作区；再叠加一个会议筹备 Skill，Claude 就知道该从哪些页面取数、如何排版筹备文档、以及团队对会议纪要的标准是什么。连接从「可用」变成「好用」。
+例如：连上 Notion 的 MCP 后，Claude 可以搜索你的工作区；再加上一个会议筹备 Skill，Claude 就知道该从哪些页面收集信息、如何排版筹备文档，以及团队对会议纪要有什么标准。连接从「可用」变成「好用」。
 
 本文将拆解 Skills 与 MCP 的关系，说明如何组合它们以产出一致输出，并给出若干真实场景下的协作方式。
 
@@ -41,21 +41,21 @@ source_kind = "translation"
 
 MCP 好比你能走进各个货架区；Skills 则像店员的专业经验。再全的库存，若不知道要什么、怎么用，也帮不上忙。Skill 就像那位带你一步步完成维修、指给你正确耗材、并示范正确手法的人。
 
-更具体地说：**MCP 服务器**让 Claude 能访问你的外部系统、服务与平台；**Skills**提供 Claude 有效使用这些连接所需的上下文——在「有了权限」之后教它「该做什么」。没有 Skills 提供的上下文，Claude 只能猜你想要什么；有了 Skill，它可以按你们的 playbook 执行。
+更具体地说：**MCP 服务器**让 Claude 能访问你的外部系统、服务与平台；**Skills**提供 Claude 有效使用这些连接所需的上下文——在「有了权限」之后教它「该做什么」。没有 Skills 提供的上下文，Claude 只能猜你想要什么；有了 Skill，它可以按你们既定的操作流程执行。
 
 ## 为什么 Skills 与 MCP 很合拍
 
 MCP 负责**连接**：安全、标准化地访问外部系统。无论接 GitHub、Salesforce、Notion 还是内部 API，MCP 服务器都让 Claude 能触达你的工具与数据。
 
-Skills 负责**专长**：把原始工具访问变成可靠产出的领域知识与工作流逻辑。Skill 知道何时查 CRM、结果里该看什么、如何排版输出、以及哪些边界情况要换处理方式。
+Skills 负责**专长**：提供领域知识和操作流程，说明怎样用这些工具产出可靠的结果。Skill 说明何时查询客户关系管理系统（CRM）、应关注结果中的哪些内容、如何排版输出，以及遇到哪些边界情况时需要换一种处理方式。
 
 这种分工让架构**可组合**：一个 Skill 可以编排多个 MCP 服务器；一个 MCP 服务器也可以支撑许多不同 Skill。新增连接时，现有 Skill 可以纳入它；打磨 Skill 时，它又能跨所有已连接工具生效。
 
 #### 把 Skills 与 MCP 合用时，你会得到：
 
-**清晰的发现（Discovery）**：Claude 不再乱猜该去哪找。会议筹备 Skill 可能规定：先看项目页，再看往期会议纪要，最后看干系人档案。研究 Skill 可能规定：从共享盘起步，与 CRM 交叉核对，再用网页搜索补洞。Skill 把「对哪些任务、哪些来源重要」这类机构知识编码进去。
+**清晰的发现（Discovery）**：Claude 不再乱猜该去哪找。会议筹备 Skill 可能规定：先看项目页，再看往期会议纪要，最后看相关人员档案。研究 Skill 可能规定：先查共享盘，再与 CRM 中的信息交叉核对，最后用网页搜索补齐缺失的信息。Skill 把「不同任务应该参考哪些来源」这类组织内部的经验写成明确说明。
 
-**可靠的编排（Orchestration）**：多步流程变得可预期。没有 Skill 时，Claude 可能在凑齐信息前就拉数据并排版。Skills 明确顺序，让工作流每次执行方式一致。
+**可靠的编排（Orchestration）**：多步流程变得可预期。没有 Skill 时，Claude 可能在信息尚未收集齐时，就把已取回的数据排成文档。Skills 明确顺序，让工作流每次执行方式一致。
 
 **一致的表现（Performance）**：输出真正符合标准。泛泛的结果需要大改。Skills 定义团队眼中「完成」的样子：结构、详略、对受众的语气。
 
@@ -71,7 +71,7 @@ MCP 服务器里也可能带有工具使用提示、常见任务的 prompt 等�
 
 经验法则：**MCP 的说明**覆盖如何正确使用该服务器及其工具；**Skill 的说明**覆盖如何把它们用于特定流程，或用于多服务器编排。
 
-例如：Salesforce MCP 服务器可能规定查询语法与 API 格式；Skill 则会规定先看哪些记录、如何与 Slack 里的近期对话交叉引用、以及如何把输出整理成你们管道评审用的结构。
+例如：Salesforce MCP 服务器可能规定查询语法与 API 格式；Skill 则会规定先看哪些记录、如何与 Slack 里的近期对话交叉引用、以及如何按你们销售机会评审所需的结构整理输出。
 
 同时使用 MCP 与 Skills 时，注意**指令冲突**：若 MCP 要求返回 JSON，而 Skill 要求排成 Markdown 表格，Claude 只能猜谁优先。让 MCP 管连接，让 Skills 管呈现、顺序与工作流逻辑。
 
@@ -100,7 +100,7 @@ MCP 服务器里也可能带有工具使用提示、常见任务的 prompt 等�
 
 #### 会议筹备：Notion 的 Meeting Intelligence Skill
 
-会议筹备很繁琐：要从项目文档、往期纪要、干系人信息等多处拉上下文，再合成 pre-read 与议程——这种多步流程往往每次都要重新解释一遍。
+会议筹备很繁琐：要从项目文档、往期纪要、相关人员资料等多处收集信息，再整理成会前阅读材料（pre-read）与议程。这种多步流程往往每次都要重新解释一遍。
 
 **Skill：** [Meeting Intelligence](https://notiondevs.notion.site/notion-skills-for-claude) 规定搜索哪些页面、如何组织输出、包含哪些章节。
 
@@ -108,10 +108,10 @@ MCP 服务器里也可能带有工具使用提示、常见任务的 prompt 等�
 
 **工作流：**
 
-1. Skill 识别要搜的相关页面（项目、往期会议、干系人等）（Discovery）
+1. Skill 识别需要搜索的相关页面（项目、往期会议、相关人员等）（Discovery）
 2. MCP 在 Notion 中搜索并取回内容
-3. Skill 组织两份文档：内部 pre-read 与对外议程（Orchestration）
-4. MCP 将两份文档写回 Notion，并做好组织与链接
+3. Skill 组织两份文档：内部会前阅读材料与对外议程（Orchestration）
+4. MCP 将两份文档写回 Notion，按要求组织页面并建立链接
 5. Skill 确保输出符合格式标准（Performance）
 
 ## 何时用 Skills、何时用 MCP
@@ -125,7 +125,7 @@ Skills 承载那些本来在你脑子里、或每次新人入职都要重新讲�
 - **涉及工具的多步工作流**：从多处取数再生成结构化文档的会议筹备
 - **一致性至关重要的流程**：每季财务分析必须同一套方法论、带强制检查点的合规评审
 - **希望沉淀与共享的领域专长**：研究方法论、代码评审标准、写作规范
-- **需要超越人员流动的流程**：把机构知识写成可复用说明
+- **人员变动后仍需延续的流程**：把组织内部的经验写成可复用说明
 
 #### 适合用 MCP 服务器的场景
 
@@ -142,7 +142,7 @@ MCP 扩展 Claude 能访问、能操作的范围。在以下情况使用 MCP：
 
 | | Skills | MCP |
 | --- | --- | --- |
-| 本质 | 程序性知识 | 工具连接能力 |
+| 本质 | 完成任务的步骤与经验 | 工具连接能力 |
 | 作用 | 教 Claude 如何做某事 | 让 Claude 能访问某物 |
 | 加载时机 | 相关时按需加载 | 连接后始终可用 |
 | 内容 | 说明、脚本、模板、资源 | Tools、resources、prompts |
@@ -161,11 +161,11 @@ MCP 扩展 Claude 能访问、能操作的范围。在以下情况使用 MCP：
 
 #### 能针对一个 MCP 服务器做多个 Skill 吗？
 
-可以。Skill 能放大单一 MCP 连接的价值。Notion 用独立 Skill 分别覆盖会议筹备、研究、知识沉淀、从 spec 到实现等场景，可在[此处](https://claude.com/connectors/notion)查看。
+可以。Skill 能放大单一 MCP 连接的价值。Notion 用独立 Skill 分别覆盖会议筹备、研究、知识沉淀、从规格说明到实现等场景，可在[此处](https://claude.com/connectors/notion)查看。
 
 ## 上手
 
-准备用 Skills 与 MCP 开建？可以按下面起步：
+准备开始使用 Skills 与 MCP？可以按以下步骤起步：
 
 **Skills：**
 
@@ -175,9 +175,9 @@ MCP 扩展 Claude 能访问、能操作的范围。在以下情况使用 MCP：
 
 **MCP：**
 
-- 在 [MCP servers](https://github.com/modelcontextprotocol/servers) 中查找适合你工具的 server
+- 在 [MCP servers](https://github.com/modelcontextprotocol/servers) 中查找适合你所用工具的服务器
 - 阅读 [MCP 文档](https://modelcontextprotocol.io/introduction)
-- 按 [MCP quick start](https://modelcontextprotocol.io/quickstart) 自建 server
+- 按 [MCP quick start](https://modelcontextprotocol.io/quickstart) 自建服务器
 
 **组合使用：**
 

@@ -21,7 +21,7 @@ original_date = ""
 original_site = "Simon Willison’s Weblog"
 ShowToc = true
 source_kind = "translation"
-lastmod = 2026-10-11T21:22:32+08:00
+lastmod = 2026-10-17
 +++
 
 > **译文信息**
@@ -37,7 +37,7 @@ lastmod = 2026-10-11T21:22:32+08:00
 
 ## Artifacts（产物） {#artifacts}
 
-我经常使用 Claude 的 Artifacts 功能制作原型和小型 HTML 工具。Artifacts 指的是普通 Claude 对话用 HTML 和 JavaScript 构建应用，并直接在 Claude 的聊天界面中展示。OpenAI 和 Gemini 也提供类似的功能，两者都称之为 Canvas。
+我经常使用 Claude 的 Artifacts 功能制作原型和小型 HTML 工具。使用这项功能时，可以在普通 Claude 对话中用 HTML 和 JavaScript 构建应用，并直接在 Claude 的聊天界面中展示。OpenAI 和 Gemini 也提供类似的功能，两者都称之为 Canvas。
 
 模型很喜欢用 React 来构建这些应用。我不喜欢 React 需要额外的构建步骤，因为这会妨碍我直接把代码从 Artifact 中复制出来，粘贴到其他静态托管服务。因此，我会在一个设置了以下自定义指令的 Claude 项目中创建 Artifacts：
 

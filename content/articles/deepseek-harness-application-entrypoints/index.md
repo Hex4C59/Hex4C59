@@ -20,7 +20,7 @@ ShowToc = true
 
 [第三篇](/articles/deepseek-harness-source-map/)从 `read` 工具追到文件系统提供者，最后停在一个问题上：究竟是哪份配置，把这些插件放进了应用？
 
-这个问题会直接影响你读到的行为。浏览器提交一条消息、终端执行一次任务、Python 调用一次 `run()`，都能驱动 Agent，但它们的启动者、通信方式和退出条件不同。只看 Agent 循环，解释不了为什么 Web 会监听端口、SDK 必须独占标准输出，也解释不了 Desktop 为什么要启动另一个进程。
+这个问题会直接影响你读到的行为。浏览器提交一条消息、终端执行一次任务、Python 通过软件开发工具包（Software Development Kit，SDK）调用一次 `run()`，都能驱动 Agent，但它们的启动者、通信方式和退出条件不同。只看 Agent 循环，解释不了为什么 Web 会监听端口、SDK 必须独占标准输出，也解释不了 Desktop 为什么要启动另一个进程。
 
 **dsh 的共享部分是启动流程与底层服务；具体应用由有序配置层装配出来。** `dsh-base` 提供常用基础能力，Web、headless、完整 SDK 分别在它上面添加应用层。Desktop 通过共享 profile runner 启动完整 Web 应用。`sdk-minimal` 则使用一份独立的完整配置，不继承 base。
 
@@ -30,7 +30,7 @@ ShowToc = true
 
 ## 先把启动通道与任务通道分开
 
-在终端输入 `dsh web`，产生的是应用启动：加载配置、安装插件、监听本地端口。浏览器随后提交“解释这个项目”，才产生任务输入。两件事可以相隔很久，也有不同的失败位置。
+在终端使用命令行界面（Command-Line Interface，CLI）输入 `dsh web`，产生的是应用启动：加载配置、安装插件、监听本地端口。浏览器随后提交“解释这个项目”，才产生任务输入。两件事可以相隔很久，也有不同的失败位置。
 
 SDK 也一样。启动子进程后，客户端先执行 `initialize` 握手，再发送 `session/prompt`。子进程已经存在，不代表配置树已经准备好；一条 prompt 已被接收，也不代表模型已经完成回答。
 
@@ -44,7 +44,7 @@ SDK 也一样。启动子进程后，客户端先执行 `initialize` 握手，�
 
 ### profile 保存一次应用组合
 
-在该版本中，profile 是 Harness home 中的一份命名配置。它的 `package.json` 通过 `dsh.profile.bundles` 指定要叠加的 bundle，同时可以记录安装在此 profile 中的外部插件依赖。用户修改放在 `cordis.patch.yml` 中。
+在该版本中，profile 是一份有名字的应用配置，保存在 Harness home，也就是 dsh 保存配置等数据的根目录中。它的 `package.json` 通过 `dsh.profile.bundles` 指定要依次加载哪些 bundle；每个 bundle 提供一组插件及其配置。该文件还可以记录安装在此 profile 中的外部插件依赖。用户对组合的修改放在 `cordis.patch.yml` 中，这类修改文件称为 patch。
 
 一个简化的 manifest 如下。这里省略了其他字段，只展示 Web 模板的 bundle 顺序，不是可直接用于安装的完整文件：
 
@@ -112,9 +112,9 @@ profile 名称主要划分组合与包依赖。默认 base 的会话存储仍指
 
 bundle 的 manifest 通过 `dsh.bundle.patch` 指向它携带的配置文件。比如 [`dsh-web-app/package.json`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/bundle/web-app/package.json)指向同包中的 `cordis.patch.yml`。
 
-打开这份 patch，会看到三类动作：给已有配置行换配置、禁用某些行、插入新行。Web 给 base 已有的系统提示词等行设置应用值，并加入 Web server、连接、API 与界面插件。完整 SDK 则加入标准输入输出的 JSON-RPC 服务。
+打开这份 patch，会看到三类动作：给已有配置行换配置、禁用某些行、插入新行。这里的“配置行”是一条插件加载记录，说明加载谁、使用什么配置；多条记录还可以组织成父子结构，所以后文也称它们为“配置树”。Web 给 base 已有的系统提示词等行设置应用值，并加入 Web server、连接、API 与界面插件。完整 SDK 则加入标准输入输出的 JSON-RPC 服务。
 
-因此，bundle 名称并不等于只有一个插件。`dsh-web-app` 既提供组合配置，也包含 Web 应用自己的运行时代码；它的 [`src/index.ts`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/bundle/web-app/src/index.ts)负责静态前端、应用 URL、浏览器打开等胶合工作。理解一个 bundle，至少要看 manifest、patch 和 patch 挂载的实现。
+因此，bundle 名称并不等于只有一个插件。`dsh-web-app` 既提供组合配置，也包含 Web 应用自己的运行时代码；它的 [`src/index.ts`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/bundle/web-app/src/index.ts)负责提供静态前端、确定应用 URL，以及按需打开浏览器。理解一个 bundle，至少要看包描述文件 manifest、patch，以及 patch 要求加载的实现。
 
 ### patch 有顺序，而且会替换整份 config
 
@@ -134,7 +134,7 @@ bundle 的 manifest 通过 `dsh.bundle.patch` 指向它携带的配置文件。�
 
 还有一个容易出错的细节：**patch 定位一行后，会替换这一行的整个 `config`。** 它不会按你想象的方式递归补齐旧字段。[Web patch 的开头注释](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/bundle/web-app/cordis.patch.yml#L1)专门说明了这一点。
 
-假设前一层给某行设置了 `{ host, port, tls }`，后一层只写 `{ port }`，就不能假定旧 `host` 和 `tls` 仍保留在那份 config 中。最终行为还要结合插件 schema 的默认值与校验来判断。这是解释合成规则的假设例子，不是建议照抄的部署配置。
+假设前一层给某行设置了 `{ host, port, tls }`，后一层只写 `{ port }`，就不能假定旧 `host` 和 `tls` 仍保留在那份 config 中。最终行为还要结合插件 schema 的默认值与校验来判断；schema 描述插件接受哪些配置、字段的约束和默认值。这是解释合成规则的假设例子，不是建议照抄的部署配置。
 
 ### 列进 manifest 的 bundle，也可能没有进入配置树
 
@@ -164,7 +164,7 @@ dsh --profile web --no-open
 dsh --profile headless --json "解释当前目录的项目结构"
 ```
 
-[`args.ts`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/apps/cli/src/args.ts#L1)规定：第一个不由启动器识别的 token 会开启内部参数部分，所以启动器参数应放在应用参数前面。`dsh web` 是 `dsh --profile web` 的简写；`dsh web --help` 交给 Web 应用打印自己的帮助。
+[`args.ts`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/apps/cli/src/args.ts#L1)规定：遇到第一个不由启动器识别的参数项后，后面的内容就交给应用处理，所以启动器参数应放在应用参数前面。`dsh web` 是 `dsh --profile web` 的简写；`dsh web --help` 交给 Web 应用打印自己的帮助。
 
 ### `runProfile()` 提供各应用共同的启动准备
 
@@ -177,13 +177,13 @@ dsh --profile headless --json "解释当前目录的项目结构"
 - `PluginPackages`：按已解析的安装位置和 profile 包环境解析插件。
 - `cmdlineArgs`、`appExit`、`appReady`：应用参数、退出请求和启动完成通知。
 
-这几项说明了为什么 Web 的参数解析和 SDK 的输入生命周期都可以写成普通插件。它们拿到所需服务后执行自己的工作；启动器只需要提供共同事实。
+这几项说明了为什么 Web 的参数解析和 SDK 的输入处理、关闭流程都可以写成普通插件。插件取得启动参数、退出通知等所需服务后，便能执行各自的工作；启动器负责提供这些共同信息。
 
 [`composeProfile()`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/apps/cli/src/profile-boot.ts#L197)还接受应用传入的 `resolvedProfile` 和 `installAnchor`。`installAnchor` 指向本次运行时安装的包位置，供包解析使用。Desktop 正是通过这条路径，将自己的打包运行时交给共享 runner。
 
 ### `boot()` 创建 Context，再让 Loader 挂载配置
 
-[`boot()`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/boot/app-boot/src/index.ts#L975)创建 Cordis 根 Context、安装 Loader、执行上述准备函数，随后挂载根 include 与 patch。
+[`boot()`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/boot/app-boot/src/index.ts#L975)创建 Cordis 根 Context、安装 Loader、执行上述准备函数，随后加载根 include 与 patch。根 include 是读取并加载配置树的入口。
 
 Context 可以先理解成插件共享服务与事件的运行环境。Loader 根据配置加载插件，插件声明的注入关系决定它依赖哪些服务。YAML 中行的排列提供组合输入，不能当作所有插件 `apply()` 严格串行执行的保证。
 
@@ -209,9 +209,9 @@ Context 可以先理解成插件共享服务与事件的运行环境。Loader �
 
 最后两行限制了“就绪”的含义：审查确认的是这棵配置树符合当前启动策略，并没有证明完整产品能力都已出现。假设整个 Web bundle 被跳过，不能仅凭必需集合里写着 `webserver`，就推断缺失的 Web 行一定会被这次审查拦住。
 
-后续 HMR 也有自己的处理方式。[启动与重载失败说明](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/boot/app-boot/README.md#startup-and-reload-failures)区分了启动审查与运行中的配置更新：后者不会重新执行整套必需启动审查，也不会遇到任意失败就回滚整棵树。某项配置修正后能否重新激活，要继续看 Loader 与重载协调逻辑。
+后续热替换（Hot Module Replacement，HMR），也就是运行中因配置变化而触发的重载，也有自己的处理方式。[启动与重载失败说明](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/boot/app-boot/README.md#startup-and-reload-failures)区分了启动审查与运行中的配置更新：后者不会重新执行整套必需启动审查，也不会遇到任意失败就回滚整棵树。某项配置修正后能否重新激活，要继续看 Loader 与重载协调逻辑。
 
-插件自行启动、却未纳入 `apply()` 返回 Promise 的异步工作，若产生未处理的拒绝，还会进入共享的致命错误处理。普通条目启动失败可以只警告，不意味着所有后台异常都可以被当作可选能力缺失。
+如果插件另外启动了一项异步工作，却没有让 `apply()` 返回的 Promise 等待它，那么这项工作后来失败时，就可能产生未处理的 Promise 拒绝，并进入共享的致命错误处理。普通条目启动失败可以只警告，不意味着所有后台异常都可以被当作可选能力缺失。
 
 ### 正常结束与进程信号共享清理控制
 
@@ -235,7 +235,7 @@ Web 的 [`startup.ts`](https://github.com/deepseek-ai/deepseek-harness/blob/d743
 
 Web 的配置除了 Agent 能力，还加入 Web server、静态前端、`client-modules`、`connection`、`api-remotes` 与界面插件。
 
-[`client-modules` 的 Node 部分](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/client/modules/src/index.ts#L1)扫描 Host Loader 中声明 `dsh.client` 的条目，生成浏览器需要的 `window.__DSH_BOOT__` 图，并提供对应客户端 bundle。浏览器的模块系统根据这些启动信息建立客户端插件环境。
+[`client-modules` 的 Node 部分](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/client/modules/src/index.ts#L1)扫描 Host Loader 中声明 `dsh.client` 的条目，生成浏览器需要的 `window.__DSH_BOOT__` 启动信息，列出客户端模块及其关系，并提供对应客户端 bundle。浏览器的模块系统据此加载和组合自己的插件。
 
 因此，同一个配置组合可以同时决定后端服务与浏览器插件名单，但浏览器没有取得 Node 根 Context 的对象引用。跨这条运行环境边界，要使用传输和远程接口。
 
@@ -253,7 +253,7 @@ Web runtime 的 `publicUrl` 决定对外打印、打开以及提供给模型上�
 
 `headless` 的默认组合是 base 加 [`dsh-headless/cordis.patch.yml`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/bundle/headless/cordis.patch.yml)。这个应用层没有挂载 Web Host、HTTP server 或浏览器插件。它加入参数提供者与直接驱动 Agent 的 runner，并关闭默认配置 HMR。
 
-HMR（Hot Module Replacement，热替换）在这里指配置变化后的重载协调；是否启用由配置行决定。默认 Web 继承 base 的配置 HMR，headless 与完整 SDK 则在各自 patch 中禁用它。用户 patch 仍能覆盖默认值。
+这里的 HMR 负责协调配置变化后的重载；是否启用由配置行决定。默认 Web 继承 base 的配置 HMR，headless 与完整 SDK 则在各自 patch 中禁用它。用户 patch 仍能覆盖默认值。
 
 [`headless/startup.ts`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/bundle/headless/src/startup.ts#L37)处理任务、`--session-id` 和 `--json`，发布 `headlessStartup`。runner 的配置等待这个服务，再取得任务文本与运行选项。
 
@@ -289,7 +289,7 @@ Desktop profile 的初始 bundle 来自 Web 模板，见 [`project-manager.ts`](
 
 ### 本地文档、HTTP 与 IPC 分别传什么
 
-根据 [Desktop 架构说明](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/docs/architecture.md#desktop-application)，窗口立即加载打包的 `dsh-app://app/` 文档，等 Host 的启动注入到达后，在同一个文档中激活客户端插件。
+根据 [Desktop 架构说明](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/docs/architecture.md#desktop-application)，窗口立即加载打包的 `dsh-app://app/` 文档。等 Host 发来客户端模块等启动信息后，窗口再在同一个文档中激活客户端插件；这里把送入这些启动信息的动作称为“启动注入”。
 
 应用 HTTP 请求经过桌面载体转发到已认证的本地 Web Host。实现入口为 [`forwardWebRequest()`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/apps/desktop/src/web-document.ts#L77)。WebSocket 连接也指向该 Host，并受桌面应用窗口的凭据附加规则约束。
 
@@ -335,9 +335,9 @@ SDK 子进程可以在多次运行之间保留。会话是否延续，还要看�
 
 以 TypeScript 的 [`HarnessSession.run()`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/sdk/client/src/api.ts#L195)为例，它先完成初始化、建立通知订阅，再发送 prompt。建立订阅早于投递，可以保留紧接着出现的通知。
 
-拿到 `messageId` 后，客户端在通知流里等待根 Session 的 `agent/inbox/spliced`，确认其中的 `inserted` 列表包含这条消息。它从这个入队事实开始收集，直到收到该根 Session 的 `idle` 状态。这里使用的是消息身份与 Session 状态，无法用“收到第一个 assistant chunk”代替完成条件。
+拿到 `messageId` 后，客户端在通知流里等待根 Session 的 `agent/inbox/spliced`，确认其中的 `inserted` 列表包含这条消息。根 Session 就是本次直接接收任务的会话。客户端从确认消息入队时开始收集结果，直到该根 Session 报告 `idle`，即当前没有执行活动。收到第一个助手文本片段，只能说明回答已经开始，无法代替这个收集结束条件。
 
-收集时还有两个范围：`events` 只保存根 Session 的持久事件；`notifications` 可以包含根与已发现后代的通知。[`finalResponse()`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/sdk/client/src/api.ts#L323)从根事件中倒序寻找最后一个 `assistant/message`，拼接其文本块。因此，子 Agent 的消息可以出现在通知中，却不会直接替换根 Agent 的最终文本。
+收集时还有两个范围：`events` 只保存根 Session 的持久事件；`notifications` 可以包含根 Session 及已发现的后代 Agent 的通知。“后代”包括它启动的子 Agent，以及子 Agent 继续启动的 Agent。[`finalResponse()`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/sdk/client/src/api.ts#L323)从根事件中倒序寻找最后一个 `assistant/message`，拼接其文本块。因此，子 Agent 的消息可以出现在通知中，却不会直接替换根 Agent 的最终文本。
 
 Python 的 [`Session.run()`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/python/sdk/src/deepseek_harness/api.py#L149)采用相同的入队回执到 idle 区间，但两种语言的返回对象字段并不完全相同：
 

@@ -1,11 +1,11 @@
 +++
 title = "Skills 详解：与 prompts、Projects、MCP、Subagents 如何分工与配合"
 date = 2026-03-25T12:00:00+08:00
-lastmod = 2026-03-25T12:00:00+08:00
+lastmod = 2026-10-17
 draft = false
 author = "Hex4C59"
 description = "说明 Claude 生态中 Skills、prompts、Projects、Subagents、MCP 各自解决什么问题、何时选用，以及如何组合成研究型 agent 等工作流。"
-summary = "Skills 负责可复用的程序性知识与渐进式加载；Projects 承载长期背景与知识库；MCP 接数据与工具；Subagents 做隔离与分工；prompts 负责当下对话微调。"
+summary = "Skills 保存可反复使用的操作流程，并按需加载；Projects 保存长期背景与参考资料；MCP 连接外部数据与工具；Subagents 独立处理子任务；prompts 给出当前任务的指令与补充要求。"
 tags = ["智能体技能", "Claude", "模型上下文协议"]
 categories = ["ai"]
 topics = ["agent-skills", "claude", "mcp", "claude-code", "projects"]
@@ -27,7 +27,7 @@ source_kind = "translation"
 
 自 [Skills](https://www.anthropic.com/news/skills) 推出以来，不少人希望弄清 Claude 的 agent 生态里各组件如何协同。
 
-无论你是在 [Claude Code](https://www.claude.com/product/claude-code) 里搭复杂工作流、用 API 做企业方案，还是在 [Claude.ai](https://claude.ai/) 上提升日常效率，**知道该伸手拿哪件工具、什么时候用**，都会显著改变你与 Claude 的配合方式。
+无论你是在 [Claude Code](https://www.claude.com/product/claude-code) 里搭复杂工作流、用 API 做企业方案，还是在 [Claude.ai](https://claude.ai/) 上提升日常效率，**知道该选哪种工具、什么时候用**，都会显著改变你与 Claude 的配合方式。
 
 本篇拆解每一块「积木」、说明选型时机，并展示如何组合出强有力的 agent 工作流。
 
@@ -37,7 +37,7 @@ source_kind = "translation"
 
 Skills 是包含说明、脚本与资源的文件夹；Claude 会在与任务相关时**发现并动态加载**它们。可以把它想成**分领域的培训手册**，让 Claude 在特定场景具备专长——从处理 Excel 表格到遵循组织的品牌规范。
 
-**Skills 如何运作：** 遇到任务时，Claude 会扫描可用 Skills 寻找匹配项。Skills 采用 **progressive disclosure（渐进式披露）**：先加载元数据（约 100 tokens），让 Claude 判断是否与当前任务相关；需要时再加载完整说明（少于 5k tokens）；捆绑文件或脚本仅在确有需要时加载。
+**Skills 如何运作：** 遇到任务时，Claude 会扫描可用 Skills 寻找匹配项。Skills 采用 **progressive disclosure（渐进式披露）**：先加载描述等元数据（约 100 tokens），让 Claude 判断是否与当前任务相关；需要时再加载完整说明（少于 5k tokens）；捆绑文件或脚本仅在确有需要时加载。
 
 **何时用 Skills：** 当你需要 Claude **稳定、高效地完成专项任务**时选用。特别适合：
 
@@ -51,7 +51,7 @@ Skills 是包含说明、脚本与资源的文件夹；Claude 会在与任务相
 
 ### prompts 是什么？
 
-[Prompts](https://docs.claude.com/en/prompt-library/library) 是你在对话中用自然语言给 Claude 的指令。它们是**即时、对话式、被动响应**的——你在当下提供语境与方向。
+[Prompts](https://docs.claude.com/en/prompt-library/library) 是你在对话中用自然语言给 Claude 的指令。这些指令需要由你在当前对话中给出，为 Claude 提供当下任务所需的背景与方向。
 
 **何时用 prompts：**
 
@@ -101,9 +101,9 @@ Skills 是包含说明、脚本与资源的文件夹；Claude 会在与任务相
 
 ### Projects 是什么？
 
-在所有付费计划中，[Projects](https://support.claude.com/en/articles/9517075-what-are-projects) 是自带聊天记录与知识库的**独立工作区**。每个 Project 有 **200K** 的上下文窗口，可上传文档、补充背景，并设置对该 Project 内**所有对话**生效的自定义说明。
+在所有付费计划中，[Projects](https://support.claude.com/en/articles/9517075-what-are-projects) 是自带聊天记录与知识库的**独立工作区**。每个 Project 有 **200K** token 的上下文窗口，可上传文档、补充背景，并设置对该 Project 内**所有对话**生效的自定义说明。
 
-**Projects 如何运作：** 上传到 Project 知识库的内容，在该 Project 下的所有会话中均可使用；Claude 会据此给出更贴合的回答。当知识体量接近上下文上限时，Claude 会无缝启用 **Retrieval Augmented Generation（RAG）**，将可用容量扩展约 **10 倍**。
+**Projects 如何运作：** 上传到 Project 知识库的内容，在该 Project 下的所有会话中均可使用；Claude 会据此给出更贴合的回答。当知识体量接近上下文上限时，Claude 会无缝启用 **Retrieval Augmented Generation（RAG）**，将可用容量扩展约 **10 倍**。（译者注：这里的 RAG 即检索增强生成，通过检索资料来补充回答所需的信息。）
 
 **何时用 Projects：**
 
@@ -114,13 +114,13 @@ Skills 是包含说明、脚本与资源的文件夹；Claude 会在与任务相
 
 **示例：** 建一个「Q4 产品发布」Project，放入市场调研、竞品资料与产品规格；该 Project 下任意会话都能用到这些材料，无需重复上传或复述。
 
-**何时改用 Skill：** Projects 为**某一摊子工作**提供持久背景——公司代码库、研究课题、长期客户项目等。**Skills 教的是「怎么做」**。一个 Project 可以装下产品发布的全部背景，而一个 Skill 可以教 Claude 你们团队的写作规范或 code review 流程。若在多个 Project 里复制同一段说明，更适合抽成 Skill。
+**何时改用 Skill：** Projects 为**一个持续开展的项目或课题**提供持久背景——公司代码库、研究课题、长期客户项目等。**Skills 教的是「怎么做」**。一个 Project 可以装下产品发布的全部背景，而一个 Skill 可以教 Claude 你们团队的写作规范或代码审查流程。若在多个 Project 里复制同一段说明，更适合抽成 Skill。
 
 更多见 [Projects 说明](https://support.claude.com/en/articles/9517075-what-are-projects)。
 
 ### Subagents 是什么？
 
-[Subagents](https://docs.claude.com/en/docs/claude-code/sub-agents) 是带有**独立上下文窗口**、**自定义 system prompt** 与**特定工具权限**的专用 AI 助手。在 Claude Code 与 Claude Agent SDK 中可用；它们独立处理子任务，再把结果交回主 agent。
+[Subagents](https://docs.claude.com/en/docs/claude-code/sub-agents) 是带有**独立上下文窗口**、**自定义系统提示词（system prompt）** 与**特定工具权限**的专用 AI 助手。在 Claude Code 与 Claude Agent SDK 中可用；它们独立处理子任务，再把结果交回主 agent。
 
 **Subagents 如何运作：** 每个 subagent 有独立配置——你定义其职责、解题方式与可用工具。Claude 可根据描述自动把任务派给合适的 subagent，你也可以显式指定某一个。
 
@@ -137,7 +137,7 @@ Skills 是包含说明、脚本与资源的文件夹；Claude 会在与任务相
 创建一个 code-reviewer subagent，仅允许 Read、Grep、Glob，不允许 Write 或 Edit。你改代码时，Claude 会自动把质量与安全审查交给该 subagent，降低误改代码的风险。
 ```
 
-**何时改用 Skill：** 若多种 agent 或会话都需要同一套专长——如安全审查流程、数据分析套路——应做成 **Skill**，而不是写进每个 subagent。Skills **可移植、可复用**；subagents 为**特定工作流量身定制**。用 Skills 传授任何 agent 都能用的专长；用 subagents 当你需要**独立执行**、**特定工具权限**与**上下文隔离**时。
+**何时改用 Skill：** 若多种 agent 或会话都需要同一套专长——如安全审查流程、数据分析方法——应做成 **Skill**，而不是写进每个 subagent。Skills **可移植、可复用**；subagents 为**特定工作流量身定制**。用 Skills 传授任何 agent 都能用的专长；用 subagents 当你需要**独立执行**、**特定工具权限**与**上下文隔离**时。
 
 更多见 [subagents 文档](https://code.claude.com/docs/en/sub-agents)。
 
@@ -147,7 +147,7 @@ MCP 在 AI 应用与你现有的工具、数据源之间提供**通用连接层*
 
 **Model Context Protocol（MCP）** 是开放标准，用于把 AI 助手接到数据所在的外部系统——内容库、业务工具、数据库与开发环境等。
 
-**MCP 如何运作：** MCP 用统一方式把 Claude 接到工具与数据源。不必为每个数据源各写一套集成，只需按同一协议对接。**MCP server** 暴露数据与能力；**MCP client**（如 Claude）连接这些 server。
+**MCP 如何运作：** MCP 用统一方式把 Claude 接到工具与数据源。不必为每个数据源各写一套集成，只需按同一协议对接。**MCP 服务器（server）** 提供数据与工具等能力；**MCP 客户端（client）**（如 Claude）连接这些服务器。
 
 **何时用 MCP：** 当你需要 Claude：
 
@@ -170,7 +170,7 @@ MCP 在 AI 应用与你现有的工具、数据源之间提供**通用连接层*
 
 | 维度 | Skills | Prompts | Projects | Subagents | MCP |
 | --- | --- | --- | --- | --- | --- |
-| **提供什么** | 程序性知识 | 逐轮即时指令 | 背景知识 | 任务委派 | 工具与数据连通 |
+| **提供什么** | 操作流程与经验 | 逐轮即时指令 | 背景知识 | 任务委派 | 工具与数据连通 |
 | **持久性** | 跨会话 | 单次会话 | 在 Project 内 | 跨会话（会话级配置） | 持续连接 |
 | **内含** | 说明 + 代码 + 资源 | 自然语言 | 文档 + 上下文 | 完整 agent 逻辑 | 工具定义 |
 | **加载时机** | 按需动态 | 每轮对话 | 在 Project 中始终可用 | 被调用时 | 常时可用 |
@@ -179,7 +179,7 @@ MCP 在 AI 应用与你现有的工具、数据源之间提供**通用连接层*
 
 ### 示例工作流：研究型 agent
 
-下面用多块积木拼一个**竞品分析**向的研究 agent。
+下面把这些组件组合成一个用于**竞品分析**的研究 agent。
 
 **步骤 1：搭建 Project**
 
@@ -205,6 +205,8 @@ MCP 在 AI 应用与你现有的工具、数据源之间提供**通用连接层*
 **步骤 3：编写专项 Skills**
 
 例如 `competitive-analysis` Skill：
+
+译者注：下列示例保留原文内容。正文称它为 competitive-analysis，但示例标题和主要内容讲的是公司 Google Drive 的目录组织与检索规则。
 
 ```text
 # My Company GDrive Navigation Skill
@@ -289,7 +291,7 @@ Focus on actionable technical insights that inform our product decisions.
 2. **MCP 连接生效**：在 Drive 中搜最新竞品简报、拉取 GitHub 数据  
 3. **Skills 介入**：competitive-analysis Skill 提供分析框架  
 4. **Subagents 执行**（在 Claude Code 中）：market-researcher 汇总行业信息，technical-analyst 看技术实现  
-5. **Prompts 微调**：你用对话补充：「尤其关注医疗行业的 enterprise 客户」  
+5. **Prompts 微调**：你用对话补充：「尤其关注医疗行业的企业客户」
 
 **结果：** 一份综合竞品分析，融合多数据源、遵循你的分析框架、调用专项能力，并在整个研究 Project 中保持上下文连贯。
 
@@ -307,7 +309,7 @@ Skills 借助 [progressive disclosure](https://www.anthropic.com/engineering/equ
 
 **用 subagents：** 需要为特定目的设计的、可独立跑完流程的完整助手。Subagents 像各有工位与权限的专员。
 
-**一起用：** 让 subagent 带上专项 Skill。例如 code-review subagent 可加载某语言的 best-practice Skill，兼顾独立性与可迁移的专长。
+**一起用：** 让 subagent 带上专项 Skill。例如 code-review subagent 可加载某语言的最佳实践 Skill，兼顾独立性与可迁移的专长。
 
 #### Skills 与 prompts：怎么选？
 
@@ -319,9 +321,9 @@ Skills 借助 [progressive disclosure](https://www.anthropic.com/engineering/equ
 
 #### Skills 与 Projects：怎么选？
 
-**用 Projects：** 某一 initiative 下所有对话都应知晓的背景知识。Projects 提供相对静态、持续在场的参考资料。
+**用 Projects：** 某个项目或计划下所有对话都应知晓的背景知识。Projects 提供相对静态、持续在场的参考资料。
 
-**用 Skills：** 程序性知识与可执行代码，仅在相关时加载。Skills 提供动态专长，节省上下文。
+**用 Skills：** 操作流程与可执行代码，仅在相关时加载。Skills 提供动态专长，节省上下文。
 
 **一起用：** 既要长期背景又要专项能力。例如「产品开发」Project 放规格与用户研究，再配合撰写技术文档、分析反馈数据的 Skills。
 
@@ -335,7 +337,7 @@ Skills 借助 [progressive disclosure](https://www.anthropic.com/engineering/equ
 
 ## 上手
 
-准备用 Skills 开建？可以按角色起步：
+准备开始使用 Skills？可以按角色起步：
 
 **[Claude.ai](https://claude.ai/) 用户：**
 

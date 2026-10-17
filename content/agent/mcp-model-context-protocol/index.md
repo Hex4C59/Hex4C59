@@ -15,7 +15,7 @@ topics = ["mcp", "tool-use", "protocol", "architecture", "agent"]
 frameworks = ["Anthropic", "OpenAI"]
 ShowToc = true
 source_kind = "original"
-lastmod = 2026-03-23T10:35:35+00:00
+lastmod = 2026-10-17
 +++
 
 在 [Tool Use](/agent/tool-use-core-of-agent/) 那篇里，我在最后提到过 MCP：当 Tool Use 要走向规模化复用时，工具生态的标准化就成了绕不开的问题。在[工具接口设计](/agent/tool-interface-design/)那篇里，我们讨论了面向 Agent 的工具应该怎么设计——粒度、返回值、错误处理、状态管理。
@@ -24,16 +24,16 @@ lastmod = 2026-03-23T10:35:35+00:00
 
 现实往往不是这样。你可能想让 Agent 同时用上 GitHub、Slack、数据库、本地文件系统、Jira、Notion——这些工具来自不同的提供方，每个都有自己的 API 风格、认证方式和数据格式。如果每个 Agent 框架都要自己写一遍这些适配层，整个生态就会陷入重复造轮子的困局。
 
-MCP（Model Context Protocol）要解决的，就是这个问题。
+MCP（Model Context Protocol，模型上下文协议）约定应用与工具服务怎样交换请求和结果。本文面向会写函数和简单客户端、还没有接触过 MCP 的读者，按发现工具、提出请求、执行并回传的顺序说明角色分工。下文请求中的协议版本是 2025-03-26；代码和产品配置用于解释结构，不能据此判断其他版本的兼容性。
 
 ---
 
 ## 先给结论
 
-1. **MCP 的核心价值是把工具集成从 N×M 问题变成 N+M 问题。** N 个 Agent 客户端和 M 个工具提供方，不需要各写一遍适配，只要双方都遵守同一套协议，就能直接互通。
+1. **MCP 用共同的通信协议减少重复适配。** N×M 与 N+M 是集成关系的简化模型：应用实现客户端，工具方实现服务端，便可复用协议层。实际接入仍需配置版本、权限、认证和工具参数。
 2. **MCP 是一个开放协议，不是一个框架。** 它定义的是 Host、Client、Server 三层之间的通信规范，不绑定任何特定模型或 Agent 框架。
 3. **MCP 提供三种原语：Tools（工具）、Resources（资源）和 Prompts（提示模板）。** 其中 Tools 是最核心的——模型可以主动调用；Resources 是被动读取的数据源；Prompts 是可复用的交互模板。
-4. **MCP 的安全模型基于信任边界分层。** Host 控制用户交互和授权策略，Client 负责与 Server 的协议通信，Server 只暴露能力不触碰模型——三层各司其职，权限不互相穿透。
+4. **MCP 的角色分工帮助划分检查责任。** Host 决定授权，Client 负责通信，Server 执行并校验请求。仅按角色分层，不会自动阻止越权或数据泄露。
 5. **MCP 已经在主流 Agent 产品中落地。** Cursor、Claude Desktop、Windsurf、Claude Code 都已原生支持 MCP，生态在快速增长。
 
 ---
@@ -52,7 +52,7 @@ MCP 的解法是在中间插入一层标准协议：
 
 ![MCP 协议解法](mcp_nm_solution.svg)
 
-工具提供方只需要实现一个 MCP Server，所有兼容 MCP 的 Agent 客户端就能直接接入。集成工作量从 N×M 降到 N+M。
+工具提供方实现 MCP Server 后，兼容的客户端可以复用发现与调用方式。所谓从 N×M 降到 N+M，指不再为每一对应用与工具单独设计通信协议，并不表示所有认证、部署和兼容性工作都消失了。
 
 这和 USB 解决外设连接问题的逻辑是一样的。在 USB 之前，每种外设都需要专用接口；有了 USB，设备只要遵守同一个协议标准，就能即插即用。MCP 想成为 AI Agent 工具层的"USB"。
 
@@ -77,7 +77,7 @@ Host 是信任链的最上层。用户信任 Host，Host 信任（或不信任�
 
 ### Client
 
-Client 是 Host 内部的协议层，负责和 Server 建立连接、维护协议状态。每个 Client 实例和一个 Server 保持一对一的连接。
+Client（客户端）是 Host 内负责通信的组件，向 Server（服务端）发送请求并接收结果。本文的连接结构中，每个 Client 实例对应一个 Server；Host 可以管理多个这样的实例。
 
 Client 的职责是纯粹的协议通信：
 
@@ -96,7 +96,7 @@ Server 是工具或数据的实际提供方。每个 Server 封装一组特定�
 - 一个 PostgreSQL MCP Server 可能暴露 `query`、`list_tables`、`describe_table` 等工具
 - 一个文件系统 MCP Server 可能暴露 `read_file`、`write_file`、`list_directory` 等工具
 
-Server 不需要知道谁在调用它，也不需要知道上游是什么模型。它只需要实现 MCP 协议规定的接口，暴露自己的能力描述和执行逻辑。
+Server 不必根据上游模型分别实现接口，但仍需检查调用者是否有权执行请求。它提供能力说明、校验参数并执行操作；Host 决定是否把这些能力开放给模型。
 
 这种分层的好处是职责清晰：**Server 只管"我能做什么"，Client 只管"怎么通信"，Host 只管"要不要执行、怎么展示给用户"。** 三层各自独立演进，互不依赖。
 
@@ -104,7 +104,7 @@ Server 不需要知道谁在调用它，也不需要知道上游是什么模型�
 
 ## 三种核心原语
 
-MCP 定义了三种原语（Primitive），对应 Agent 在与外部世界交互时的三种基本需求。
+这里的“原语”（Primitive）指协议提供的基本交互类别：Tools 用来请求操作，Resources 用来读取资料，Prompts 用来获取可复用的消息模板。
 
 ### Tools：模型主动调用的能力
 
@@ -142,9 +142,9 @@ MCP 规范中，一个 Tool 的描述长这样：
 }
 ```
 
-这个结构和 OpenAI 的 function calling 定义很像，但 MCP 把它标准化了——无论是哪个 Server 提供的工具，描述格式都是一样的。Host 拿到这些描述后，可以直接转换成任何模型 API 能理解的 tools 参数。
+这个结构和 OpenAI 的 function calling 定义很像，但 MCP 把它标准化了——无论是哪个 Server 提供的工具，描述格式都是一样的。Host 拿到描述后，再按所用模型 API 的要求转换工具定义；协议统一了服务端的描述方式，但不保证任意模型接口都能原样接收。
 
-**关键特征：Tools 的控制权在模型侧。** 模型决定要不要调用、调用哪个、传什么参数。Host 可以加一层确认（比如有副作用的操作弹窗让用户批准），但调用的发起者始终是模型。
+**常见用法是由模型提出工具请求。** 模型选择工具和参数，Host 再按权限与批准策略决定是否执行。提出请求与取得执行权限是两件事，协议也不要求所有应用都只能由模型发起调用。
 
 ### Resources：被动读取的数据源
 
@@ -161,7 +161,7 @@ Resources 代表 Server 可以提供的数据——文件内容、数据库 sche
 
 Resources 的 URI 可以是文件路径、数据库标识、API 端点等。Host 通过 `resources/list` 获取可用资源列表，通过 `resources/read` 读取具体内容。
 
-**Resources 和 Tools 的区别在于控制权：** Tools 由模型决定是否调用，Resources 由应用层或用户决定是否加载到上下文。这个区分很重要——它意味着 Resources 不会被模型"过度调用"，也不需要在 system prompt 里花费 token 来描述每个 Resource。
+**本文按常见控制方式区分两者：** 模型提出工具请求，应用或用户选择加载资料。Resources 仍需由应用管理何时读取、读取多少；内容一旦放入模型输入，同样占用上下文，不能因为叫“资源”就忽略预算。
 
 一个典型场景：用户在 Cursor 里用 `@` 符号引用了一个数据库的表结构，Cursor 通过 MCP 的 Resources 接口读取这个结构，注入到模型的上下文里。模型不需要主动调用任何工具就能看到这些信息。
 
@@ -188,7 +188,7 @@ Prompts 是预定义的提示模板，由 Server 提供，用户可以选择使�
 }
 ```
 
-当用户选择一个 Prompt 模板时，Server 会根据参数生成一组完整的消息（可能包含 system message、user message、甚至预填的 assistant message），直接注入到对话中。
+用户选择 Prompt 模板并提供参数后，Server 返回模板生成的消息，Host 再决定怎样把它们加入对话。模板由服务端提供，不应仅因它被称作 Prompt，就自动取得应用系统指令的权限。
 
 Prompts 的使用频率不如 Tools 和 Resources，但它在某些场景下很有价值：比如一个安全审计 MCP Server 可以提供标准化的审计流程模板，确保每次审计都遵循相同的检查清单。
 
@@ -205,7 +205,7 @@ Prompts 的使用频率不如 Tools 和 Resources，但它在某些场景下很�
 
 ## 传输机制
 
-MCP 是一个基于 JSON-RPC 2.0 的协议，支持两种主要的传输方式。
+文中请求使用 JSON-RPC 2.0：消息带有方法名、参数和请求标识，接收方用对应标识回传结果。下面区分本地子进程通信与远程 HTTP 通信。
 
 ### stdio（标准输入输出）
 
@@ -213,7 +213,7 @@ Client 以子进程方式启动 Server，通过 stdin/stdout 通信。
 
 ![stdio 传输方式](mcp_stdio_transport.svg)
 
-这是本地场景下最常见的方式。Cursor、Claude Desktop 接入本地 MCP Server 时默认用 stdio。优势是简单、无需网络配置、进程隔离天然提供了安全边界。
+stdio 是标准输入输出：Client 启动本地 Server 子进程，通过输入输出流交换协议消息，不必额外开放网络端口。子进程仍可能继承启动者的文件与网络权限；进程分开不等于已经建立沙箱。
 
 配置通常长这样：
 
@@ -243,7 +243,7 @@ Client 以子进程方式启动 Server，通过 stdin/stdout 通信。
 
 Streamable HTTP 适合 Server 运行在远程服务器上的场景——比如企业内部的数据库 MCP Server 部署在内网，多个开发者的 Agent 客户端远程接入。
 
-两种传输方式在协议层面是透明的：同一个 Server 实现可以同时支持 stdio 和 HTTP，Client 不需要关心底层用的是哪种传输。
+两种方式可以承载相同的协议请求，但连接配置不同：本地方式要管理子进程，远程方式要管理地址、网络和认证。Client 仍需选择受支持的传输，不能仅更换名称就假定实现兼容。
 
 ---
 
@@ -306,15 +306,15 @@ Server 返回自己的能力声明：
 
 ### 3. 关闭
 
-Client 发送 `close` 通知，或者直接断开连接（对于 stdio，就是终止子进程）。Server 清理资源。
+结束时，Client 按所用传输关闭连接或终止本地子进程，Server 清理资源。这里用 `close` 表示应用中的关闭动作，不把它当作所有 MCP 实现通用的通知方法名。
 
-整个生命周期设计得相当克制——没有复杂的状态机，没有心跳机制，连接模型是简单的请求-响应。这让实现一个 MCP Server 的门槛很低。
+初始化、正常请求和关闭是阅读实现时需要区分的阶段。异常断线后怎样恢复、是否保留会话，仍需按所用传输和实现处理。
 
 ---
 
 ## 动手写一个 MCP Server
 
-理论讲得再多，不如看一个完整例子。下面用 Python 的官方 MCP SDK 实现一个简单的笔记管理 MCP Server。
+下面的 Python 示例用 MCP SDK 展示笔记管理：添加笔记、按名读取、列出笔记，以及把索引作为资源提供。它把数据放在进程内字典里，进程退出后不会保留笔记；依赖版本和启动配置还需在实际环境中确认。
 
 ```python
 from mcp.server.fastmcp import FastMCP
@@ -500,7 +500,7 @@ MCP 规范建议工具在描述中通过 `annotations` 标注自己的行为特�
 }
 ```
 
-Host 可以根据这些标注决定授权策略：`readOnlyHint: true` 的工具自动执行，`destructiveHint: true` 的工具弹窗确认。
+Host 可以把这些标注作为授权参考，例如区分 `readOnlyHint: true` 与 `destructiveHint: true`。但标注由 Server 声明，不能单凭“只读”提示就认定安全或自动批准；Host 还需结合工具来源、参数和实际授予的权限判断。
 
 ### 最小权限
 
@@ -508,7 +508,7 @@ Host 可以根据这些标注决定授权策略：`readOnlyHint: true` 的工具
 
 ### 数据隔离
 
-MCP Client 不应该把不同 Server 的数据随意混在一起。一个 Server 的 Resource 内容不应该被发送给另一个 Server 的 Tool。Host 需要维护数据在不同 Server 之间的隔离。
+Host 应检查资料会被发送给谁。例如，读到一个 Server 的内部文档后，若要把内容作为另一个 Server 的工具参数，需确认任务授权允许这次传递。重点是控制数据流向；同处一个对话，不代表所有服务都可读取全部内容。
 
 ---
 

@@ -21,7 +21,7 @@ original_date = ""
 original_site = "Simon Willison’s Weblog"
 ShowToc = true
 source_kind = "translation"
-lastmod = 2026-10-11T21:22:32+08:00
+lastmod = 2026-10-17
 +++
 
 > **译文信息**
@@ -59,7 +59,7 @@ lastmod = 2026-10-11T21:22:32+08:00
 
 `showboat note` 命令向文档添加 Markdown 内容。`showboat exec` 接收一条 shell 命令，执行它，然后把命令和输出一起加入文档。
 
-我让它使用「`sed`、`grep`、`cat` 或任何你需要的工具，加入正在讲解的代码片段」，是为了确保 Claude Code 不会手动把代码片段复制到文档中，因为手动复制可能引入幻觉或错误。
+我要求它使用「`sed`、`grep`、`cat` 或任何你需要的工具，加入正在讲解的代码片段」，是想让这些工具直接从源码中读取片段，避免 Claude Code 手动复制时引入幻觉或错误。
 
 这种做法效果非常好。这是 [Claude Code 使用 Showboat 生成的文档](https://github.com/simonw/present/blob/main/walkthrough.md)。它详细讲解了全部六个 `.swift` 文件，清楚地解释了代码如何工作，也提供了能够据此开展工作的具体说明。
 

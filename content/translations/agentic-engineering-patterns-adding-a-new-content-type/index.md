@@ -21,7 +21,7 @@ original_date = ""
 original_site = "Simon Willison’s Weblog"
 ShowToc = false
 source_kind = "translation"
-lastmod = 2026-10-11T21:22:32+08:00
+lastmod = 2026-10-17
 +++
 
 > **译文信息**
@@ -33,13 +33,13 @@ lastmod = 2026-10-11T21:22:32+08:00
 >
 > 本文为非官方中文译文，依据提供的原文正文翻译。正文中的「我」、项目状态和结果判断均指原作者。示例代码逐字保留，均为原文片段，不是完整的可运行程序；译者未执行提示词、SQL 或浏览器测试。
 
-下面这个例子中，一条看起来短得有些出乎意料的提示词，一次就完成了相当多的工作。
+下面这个例子里，我只用了一条意外简短的提示词，就一次完成了相当多的工作。
 
 先介绍一点背景。我大约每周发送一期[免费的 Substack 邮件简报](https://simonw.substack.com/)，内容从博客复制粘贴而来。实际上，我把 Substack 当作一种轻量的方式，让读者通过邮件订阅我的博客。
 
 我使用自己的 [blog-to-newsletter](https://tools.simonwillison.net/blog-to-newsletter) 工具生成简报。这是一个用 HTML 和 JavaScript 编写的应用，会从[这个 Datasette 实例](https://datasette.simonwillison.net/)获取最新内容，把它整理成富文本 HTML。随后，我可以把结果复制到剪贴板，再粘贴进 Substack 编辑器。这里有一篇[详细介绍其工作方式的文章](https://simonwillison.net/2023/Apr/4/substack-observable/)。
 
-最近，我给博客[添加了一种新的内容类型](https://simonwillison.net/2026/Feb/20/beats/)，用来收集我在其他地方发布的内容。我把它叫作「beats」。这类条目包括开源项目的新版本、我构建的新工具、我参观过的博物馆——来自 [niche-museums.com](https://www.niche-museums.com/)——以及其他外部内容。
+最近，我给博客[添加了一种新的内容类型](https://simonwillison.net/2026/Feb/20/beats/)，用来收集我在其他地方发布的内容。我把它叫作「beats」。这类条目包括开源项目的新版本、我构建的新工具、我参观过的博物馆（收录在 [niche-museums.com](https://www.niche-museums.com/)），以及其他外部内容。
 
 我想把这些内容也加入生成的邮件简报。下面是我通过[网页版 Claude Code](https://code.claude.com/docs/en/claude-code-on-the-web)，针对存放 blog-to-newsletter 工具的 [simonw/tools](https://github.com/simonw/tools) 仓库发出的提示词：
 
@@ -61,15 +61,15 @@ lastmod = 2026-10-11T21:22:32+08:00
 
 只要提到 `blog-to-newsletter.html`，就足以告诉 Claude：在 simonw/tools 仓库的 200 多个 HTML 应用中，应该修改哪一个。
 
-Beats 会自动从多个来源导入。很多条目并没有太大意思，比如我某个小型开源项目的一次修复缺陷的小版本发布。
+Beats 会自动从多个来源导入。很多条目并不太值得关注，比如我的某个小型开源项目发布了一个只修复缺陷的小版本。
 
-我的博客允许我为任何一条 beat 添加额外的描述。它既能提供补充说明，也能标记这条 beat 比那些我没有添加说明的条目更值得关注。
+我可以在博客里为任何一条 beat 添加描述。这段描述既提供了补充说明，也表明我认为这条 beat 比没有说明的条目更值得关注。
 
 我已经用这个区别来决定哪些 beats 应该进入网站的 [Atom 订阅源](https://simonwillison.net/about/#atom)。让 Claude 仿照现有做法，就不必再额外详细描述筛选逻辑。
 
 > 用 `python -m http.server` 启动它，再使用 `uvx rodney --help` 进行测试。比较邮件简报中显示的内容与 https://simonwillison.net 首页上的内容。
 
-当编程智能体有某种验证机制，能够测试自己的工作时，它们的表现总是最好。
+编程智能体能用某种方式测试自己的工作时，表现总是最好。
 
 这一次，我希望 Claude Code 主动检查：它对工具的修改，是否确实能够正确获取并显示最新数据。
 
@@ -109,7 +109,7 @@ union all
 
 ```
 
-它还整理出了 beat 类型与正式名称的映射，推测是从探索参考代码库时读到的 [Django 对象关系映射（ORM）定义](https://github.com/simonw/simonwillisonblog/blob/2e9d7ebe64da799b3927e61b4f85d98f7e9bc9aa/blog/models.py#L545-L551)中得出的：
+它还整理出了 beat 类型与正式名称的对应关系，推测是根据它在参考代码库中读到的 [Django 对象关系映射（ORM）定义](https://github.com/simonw/simonwillisonblog/blob/2e9d7ebe64da799b3927e61b4f85d98f7e9bc9aa/blog/models.py#L545-L551)得出的：
 
 ```
 const beatTypeDisplay = {

@@ -18,13 +18,15 @@ frameworks = ["DeepSeek Harness", "Cordis"]
 ShowToc = true
 +++
 
-[第七篇](/articles/deepseek-harness-event-dispatch/)讲到，监听器会随着拥有它的 Fiber 被撤销。但一个 Agent 退出时，还需要停止驱动、等待当前工作结束、释放作用域，再关闭会话写入通道。这些操作有先后依赖：资源最终都被清理，还不足以说明顺序正确。
+[第七篇](/articles/deepseek-harness-event-dispatch/)讲到，插件卸载时会撤销它登记的监听器。但一个 Agent 退出时，还需要停止接收新工作、等待当前工作结束、撤下工具和监听器，再关闭会话写入通道。若当前任务还在使用工具，就不能提前撤下工具；若最后的事件还没写完，也不能提前关闭写入通道。资源需要按依赖顺序清理。
 
-Cordis 的一个细节很容易影响判断：**同一个 effect 内的清理函数按逆序串行等待，Fiber 上多个兄弟 effect 的清理却会并行推进。** 把确切的 disposer 函数交给一个组合 effect，可以改变这份资源的持有关系；给它再包一层函数，可能让原来的资源仍留在并行清理名单中。
+Cordis 会把初始化和对应的清理函数放进同一份登记，称为 effect；保存一次插件挂载状态和这些登记的运行实例，称为 Fiber。本文说资源“归谁持有”，就是问它的清理函数登记在哪一份名单上，谁退出时会调用它。
 
-本文从这个区别出发，追踪资源归谁持有、什么时候开始撤销、调用方等到什么，以及失败后还有哪些动作能继续。读者需要了解 Promise、生成器和前几篇的 Context/插件依赖。配置表达式、Loader 和热重载的完整控制流程留给下一篇。
+Cordis 的一个细节很容易影响判断：**同一个 effect 内的清理函数按逆序串行等待，Fiber 上多个兄弟 effect 的清理却会并行推进。** disposer 是用于请求清理的函数。把登记在同一个 Fiber 上的原 disposer 函数直接交给组合 effect，可以把它从 Fiber 的顶层名单移进组合内部；给它再包一层函数，可能让原函数仍留在顶层，与组合里的其他清理并行运行。
 
-本文分析 [DeepSeek Harness `0.2.1-alpha.2`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/package.json)，核对日期为 2026-10-15。[vendored Cordis manifest](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/package.json)为 `4.0.5-alpha.1`。文末实验用 TypeScript 6.0.3 转译固定快照中的 Cordis、cosmokit 和 dsh-scope，在 macOS 27.0.1 arm64、Node `v25.9.0` 上运行了 22 组聚焦检查；dsh 业务调用的连接关系另由源码核对。
+本文从这个区别出发，追踪资源归谁持有、什么时候开始撤销、调用方等到什么，以及失败后还有哪些动作能继续。读者需要能阅读函数调用和 Promise；生成器的用法会在对应片段旁说明，Context 和插件依赖则沿用前几篇的解释。配置表达式、Loader 和热重载的完整控制流程留给下一篇。
+
+本文分析 [DeepSeek Harness `0.2.1-alpha.2`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/package.json)，源码取自[固定快照](https://github.com/deepseek-ai/deepseek-harness/tree/d743267388641bc76f17c45ce8b4c231aed1d32c)；核对日期为 2026-10-15。[vendored Cordis manifest](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/package.json)为 `4.0.5-alpha.1`。文末实验用 TypeScript 6.0.3 转译固定快照中的 Cordis、cosmokit 和 dsh-scope，在 macOS 27.0.1 arm64、Node `v25.9.0` 上运行了 22 组聚焦检查；dsh 业务调用的连接关系另由源码核对。
 
 ## 先分清 Context、Fiber、effect 和 Scope
 
@@ -32,15 +34,15 @@ Cordis 的一个细节很容易影响判断：**同一个 effect 内的清理函
 
 | 对象 | 在这条资源链中的职责 |
 |---|---|
-| Context | 访问服务、登记资源和创建子插件的入口；派生 Context 可以继续共享同一个 Fiber |
-| Fiber | 一次插件应用的运行实例，持有配置、依赖状态、当前过渡任务和顶层清理名单 |
+| Context | 插件访问服务、登记资源和创建子插件的入口；派生 Context 可以继续共享同一个 Fiber |
+| Fiber | 一次插件应用的运行实例，记录配置、依赖是否齐备、正在进行的装载或卸载，以及顶层清理名单 |
 | effect | 立即执行一段初始化，并收集它交出的清理函数；可将多项清理组合起来 |
 | disposer | 请求释放已登记资源的函数；具体返回值与等待规则要看该入口 |
-| dsh Scope | 通过一个空插件 Fiber 持有局部注册，并给 Context 增加用于可见性和事件路由的 key |
+| dsh Scope | 创建一个空插件的 Fiber，让局部注册可以一起清理；再给 Context 增加 key，决定局部工具和提示词的查找范围，并筛选事件监听器 |
 
 [Context.extend()](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/context.ts#L99) 用 `Object.create(this)` 派生 Context。单独调用 `ctx.extend(...)` 没有创建新的 Fiber，资源仍归原 Fiber。实验从派生 Context 登记清理，卸载原插件后，该清理执行一次。
 
-[RegistryService.plugin()](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/registry.ts#L316) 才会为一次插件应用创建 Fiber。相同插件回调可以对应多个 Fiber，运行实例的 `ctx`、配置与寿命分别记录；注册表中的 runtime 是共享插件记录，不等于某一次资源所有者。[Fiber 构造函数](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/fiber.ts#L234) 为子实例建立 Context，并通过父 Fiber 的 effect 登记它的释放入口。
+[RegistryService.plugin()](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/registry.ts#L316) 才会为一次插件应用创建 Fiber。相同插件回调可以对应多个 Fiber，每个实例分别记录自己的 `ctx`、配置与寿命。注册表把这些实例汇集在同一个 runtime 记录中，但每次挂载的资源仍由各自的 Fiber 持有。[Fiber 构造函数](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/fiber.ts#L234) 为子实例建立 Context，并通过父 Fiber 的 effect 登记它的释放入口。
 
 Scope 的实现位于 `packages/core/scope`。它建立在这套 Fiber/effect 机制之上，后文会分别检查它的路由关系和真实的父子所有权。
 
@@ -63,7 +65,7 @@ effect 返回的 stop 由框架包装。它既是手动释放入口，也留在 
 
 [_execute()](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/fiber.ts#L356) 接受几种初始化结果：清理函数、产生清理函数的同步/异步迭代器，或解析为清理函数的 Promise。实现也允许 null/undefined 表示没有清理项；返回 `42` 等无效结果则抛出 `TypeError('Invalid effect')`。
 
-生成器中的 `yield` 逐项提交清理函数。这里的“提交”发生在初始化阶段，真正调用这些函数通常发生在之后的撤销阶段。仅把代码写进生成器的 finally，不能代替这份资源登记。
+生成器可以执行一段代码，再通过 `yield` 逐项交出值；这里交出的是清理函数。effect 在初始化时收集这些函数，通常等到撤销时才调用它们。仅把清理代码写进生成器的 finally，不会把它加入这份名单，不能代替显式登记。
 
 ### await effect 等初始化，不会自动清理
 
@@ -82,7 +84,7 @@ await readyStop()
 
 直接调用 stop 也可以请求释放：若初始化尚未结束，框架会先等它结束，再清理已经得到的资源。
 
-插件主体只创建异步 effect 后直接返回时，单独 await 插件不会补齐该 effect 的就绪等待。本次实验也核对了对应写法：在插件的异步主体中显式 `await stop`，Fiber 会保持 LOADING，直到这项 setup 完成。
+插件主体只创建异步 effect 后直接返回时，单独 await 插件不会补齐该 effect 的就绪等待。本次实验也核对了对应写法：在插件的异步主体中显式 `await stop`，Fiber 会保持 LOADING，也就是仍在初始化，直到这项 setup 完成。
 
 ## 两层“逆序”为什么产生不同的完成顺序
 
@@ -125,7 +127,7 @@ await Promise.all(this._disposables.clear().map(async (dispose) => {
 
 ## yield 确切 disposer，为什么会改变所有权
 
-[collect()](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/fiber.ts#L450) 在收集一项清理函数时，会把这个函数从当前 Fiber 的顶层名单移除，再放入当前 effect 的内部名单。比较的是函数身份，而不是函数名或最终调用目标。若该函数带有 effect 元数据，还会成为当前 effect 的诊断子项。
+[collect()](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/fiber.ts#L450) 在收集一项清理函数时，会把这个函数从当前 Fiber 的顶层名单移除，再放入当前 effect 的内部名单。比较的是不是同一个函数对象。两个函数即使最终调用同一个关闭方法，也不因此被当作同一项。若该函数带有框架记录的 effect 信息，还会成为当前 effect 的诊断子项，供检查组合关系时查看。
 
 这使下面两种形状具有不同含义。片段中的 scope 来自 createScope，releaseB 和 releaseTail 代表说明性的业务清理：
 
@@ -150,15 +152,15 @@ rawDispose 原本已登记在当前 Fiber 上。直接 yield 它后，该项从�
 
 这里的 owner 指登记资源时归属的 Fiber。collect 从执行这个 effect 的 Fiber 名单中删除函数。如果原 disposer 属于另一个 Fiber，当前名单里没有它，直接 yield 也不会替另一个 Fiber 转移所有权。业务可以通过函数等待别处清理，但不能据此宣称原所有者已经解绑。
 
-真实的 [组合 Scope 清理](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent-loop/src/index.ts#L610) 特意在创建 Scope 的原 Fiber 上嵌套 rawDispose。这一条件决定了收编能否发生，不能只照抄 yield 的表面形状。
+真实的 [组合 Scope 清理](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent-loop/src/index.ts#L610) 特意在创建 Scope 的原 Fiber 上嵌套 rawDispose。只有从这份原始登记名单中移除 rawDispose，才能让组合独自安排它的执行顺序；仅照抄 yield 的写法并不足够。
 
 [getEffects()](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/fiber.ts#L568) 可以显示标签与组合子项，帮助检查“资源登记在哪一层”。这些是诊断元数据，不能当成文件句柄或所有外部任务都已释放的证明。
 
 ## 初始化没结束就卸载，迟到的资源归谁处理
 
-[提前登记 wrapper](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/fiber.ts#L520) 在执行用户初始化之前，先把 effect 的 wrapper 放进 Fiber 名单。这样，初始化同步重入并触发 owner 卸载时，清理方已经能够找到这项尚未返回的登记。
+[提前登记 wrapper](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/fiber.ts#L520) 在执行用户初始化之前，先把 effect 的 wrapper 放进 Fiber 名单。这样，即使初始化函数在返回前又触发了本插件的卸载，清理方也已经能够找到这项登记。这种从正在执行的函数中再次进入卸载流程的情况，就是这里的同步重入。
 
-wrapper 还记录初始化是否仍在执行。重入卸载发生在 setup 尚未返回时，它通过一份等待 setup 返回的 Promise（setup barrier）衔接清理；异步 setup 已经返回 Promise 时，则等待这项初始化任务。取得清理函数后再执行它，避免只清空旧名单而漏掉迟到的资源。
+wrapper 还记录初始化是否仍在执行。如果卸载发生在 setup 尚未返回时，清理先等待一份专门的 Promise，直到 setup 返回后才继续；源码把这份等待称为 setup barrier。异步 setup 已经返回 Promise 时，则等待那项初始化任务。两种情况都要先取得初始化交出的清理函数，再执行它，避免只清空当时的名单而漏掉迟到的资源。
 
 实验让一个异步 effect 卡在获取资源的 Promise 上，然后卸载 Fiber。放行后，轨迹是 `acquired → cleanup`，Fiber 最后进入 DISPOSED。另一个实验在同步 setup 内调用 owner.dispose，观察到 `setup → setup:return → cleanup`。
 
@@ -178,7 +180,7 @@ wrapper 还记录初始化是否仍在执行。重入卸载发生在 setup 尚�
 
 [公开 wrapper 的入口](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/fiber.ts#L504) 在首次请求撤销后使 runner 失效。正常返回给用户的 disposer 再次被调用时，这个版本会返回 undefined；第一次清理若仍在等待，第二次调用不会自动返回同一份 Promise。
 
-内部的 [runDisposable()](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/fiber.ts#L114) 则另有处理：它调用 disposer 后，还会查询 effectInertia 记录的在途清理。这样，即使另一处已经开始释放，Fiber 或确切的组合所有者仍可以加入正在进行的任务。
+内部的 [runDisposable()](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/fiber.ts#L114) 则另有处理：它调用 disposer 后，还会查询 effectInertia 中记录的、尚未完成的清理 Promise。这样，即使另一处已经开始释放，Fiber 或直接持有这个函数的组合 effect 仍可以等待同一项任务。
 
 本次实验先手动启动子 effect 的异步清理，再进入持有它的外层组合。重复调用子 disposer 得到 undefined，但外层较早登记的 tail 没有提前运行；放行子清理后，tail 才执行一次。
 
@@ -199,9 +201,9 @@ return {
 }
 ```
 
-scope 是共享的空插件回调，每次调用仍创建独立 Fiber。通过 scoped Context 登记的监听器、工具或其他 effect，归这次子 Fiber 持有；kScope 则让注册携带一个路由与可见性身份。
+scope 是共享的空插件回调，每次调用仍创建独立 Fiber。通过 scoped Context 登记的监听器、工具或其他 effect，都加入这次子 Fiber 的清理名单；kScope 则标明这些注册属于哪个作用域，供工具查找和事件筛选使用。
 
-[ScopedLayers.effect()](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/scope/src/store.ts#L226) 展示了局部注册怎样接入这套寿命：它把当前 layer 的修改与 undo 绑定到登记 Context 的 effect。撤销时先调用 undo，再移除已经为空的局部 layer，并按选项发送变化通知。表中借用的业务对象是否还有异步关闭动作，需要相应业务 API 另外负责。
+[ScopedLayers.effect()](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/scope/src/store.ts#L226) 展示了局部注册怎样随 Scope 撤销。它把一个作用域中的注册保存在一层表中，称为 layer；修改表时，也把撤回这次修改的 undo 函数交给登记 Context 的 effect。清理时先调用 undo，再移除已经为空的局部 layer，并按选项发送变化通知。从表中撤掉登记之后，业务对象是否还需要异步关闭，要由相应业务 API 另外负责。
 
 rawDispose 保留原 Cordis 函数，适合交给同 owner 的组合 effect。dispose 会共享第一次创建的 Promise，适合多条退出路径等待同一个 Scope 结束。
 
@@ -209,7 +211,7 @@ rawDispose 保留原 Cordis 函数，适合交给同 owner 的组合 effect。di
 
 ### 路由祖先和 Fiber 父子不能互相代替
 
-[scopeParents](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/scope/src/index.ts#L39) 保存 key 的祖先关系，用于层级注册可见性和事件过滤。它不修改 Fiber.parent。
+[scopeParents](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/scope/src/index.ts#L39) 保存 key 的祖先关系，用来决定查找注册时可以向哪些祖先继续查找，以及派发事件时哪些监听器能入选。它不修改 Fiber.parent，也就不改变哪个 Fiber 卸载时会清理哪个子实例。
 
 如果都从 ownerCtx 创建 A、B 两个 Scope，即使 B 的 options.parent 指向 A 的 key，二者的 Fiber 仍是 ownerCtx 的两个子项。实验撤销 A 后，B 仍为 ACTIVE，B 的监听器仍能执行；之后卸载真实 owner，B 才随它退出。
 
@@ -229,9 +231,9 @@ rawDispose 保留原 Cordis 函数，适合交给同 owner 的组合 effect。di
 | DISPOSED | 该普通子 Fiber 已被移除并结束当前清理，实例不能再 restart |
 | inertia | 当前装载或卸载的 Promise；后续过渡可能替换它，需要循环等待 |
 
-[Fiber 状态判断](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/fiber.ts#L574) 根据 uid、错误和 epoch 判断稳定状态；LOADING/UNLOADING 则在过渡开始时显式设置。[_refresh() 与 _setEpoch()](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/fiber.ts#L611) 用所需服务的提供方 uid 组合执行标记，服务变化时使旧执行失效，并让正在进行的过渡接续卸载或重载。
+[Fiber 状态判断](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/fiber.ts#L574) 根据 uid、错误和 epoch 判断稳定状态；LOADING/UNLOADING 则在过渡开始时显式设置。[_refresh() 与 _setEpoch()](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/fiber.ts#L611) 把所需服务的提供方 uid 组成一个执行标记。提供方变化后，旧标记不再有效，框架便让当前装载或卸载接着进入必要的清理或重载，避免继续使用旧依赖。
 
-本次实验先移除服务提供方，消费插件释放一次资源、回到 PENDING，uid 保持不变；提供新服务后，同一消费 Fiber 再次进入 ACTIVE。[_reload()](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/fiber.ts#L646) 在进入插件主体前检查执行标记；另一个实验在 LOADING 的微任务检查点前请求 dispose，插件主体最终没有运行。
+本次实验先移除服务提供方，消费插件释放一次资源、回到 PENDING，uid 保持不变；提供新服务后，同一消费 Fiber 再次进入 ACTIVE。[_reload()](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/fiber.ts#L646) 在进入插件主体前检查执行标记；另一个实验在 LOADING 状态、插件主体执行前的异步检查点到来之前请求 dispose，插件主体最终没有运行。
 
 PENDING 也有自己的清理路径。Fiber 发布给 internal/plugin 观察者时，观察者可能先登记资源；即使插件主体始终没有启动，dispose 仍需撤销这些登记。本次检查核对了这一分支。
 
@@ -253,7 +255,7 @@ Fiber 顶层则对每个独立清理任务分别捕获异常并记录日志，�
 
 因此，dispose 的 Promise 正常结束不能单独证明每一项资源释放成功。业务如果要求“一项失败后仍继续其余清理”，需要在自己的组合内部显式尝试后续步骤，并汇集失败，不能只依赖外层 Fiber 的捕获。
 
-真实的 [Agent Loop 的 teardown](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent-loop/src/index.ts#L544) 就明确实现了这份业务合同。它共享一份 disposing Promise，停止新工作、取消驱动并等待 whenIdle，再清理 Scope、关闭会话写入 handle、撤销 Agent/Session 注册并释放记账；各阶段失败被收集，后面的必要步骤仍继续，最后再报告汇总错误。
+真实的 [Agent Loop 的 teardown](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent-loop/src/index.ts#L544) 就明确实现了这份业务合同。它共享一份 disposing Promise，先停止新工作、取消驱动并通过 whenIdle 等当前工作结束，再清理 Scope、关闭会话写入 handle、撤销 Agent/Session 注册，最后移除工厂和调用方对这次实例的跟踪记录。各阶段失败被收集，后面的必要步骤仍继续，最后再报告汇总错误。
 
 这条顺序保护的是仍在收尾的运行实例。Scope 过早卸载可能撤掉收尾需要的声明或监听器，写入 handle 过早关闭则会影响最后的事件处理。具体哪些资源跨过哪些阶段，仍由相应业务拥有者安排。
 

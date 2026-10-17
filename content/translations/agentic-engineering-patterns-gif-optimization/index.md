@@ -21,7 +21,7 @@ original_date = ""
 original_site = "Simon Willison’s Weblog"
 ShowToc = true
 source_kind = "translation"
-lastmod = 2026-10-11T21:22:32+08:00
+lastmod = 2026-10-17
 +++
 
 > **译文信息**
@@ -85,7 +85,7 @@ WASM 是 [WebAssembly](https://webassembly.org/) 的简称。这项技术让浏�
 
 HTML 文件上传控件已经能够完成文件选择，但更好的界面，尤其是在桌面端，是让用户把文件拖放到页面上一个醒目的区域。
 
-实现它需要一点 JavaScript 来处理事件，再用一些 CSS 设置拖放区域的样式。这并不复杂，但额外的工作量足以让我平时可能不会主动添加它。有了提示词，这项工作的成本就几乎为零。
+实现它需要一点 JavaScript 来处理事件，再用一些 CSS 设置拖放区域的样式。这些工作并不复杂，但平时我可能还是会因为这点额外工作而放弃添加拖放功能。有了提示词，这项工作的成本就几乎为零。
 
 下面是最终界面。Claude 参考了我现有的 [image-resize-quality](https://tools.simonwillison.net/image-resize-quality) 工具，因此界面也受到了它的影响：
 
@@ -93,7 +93,7 @@ HTML 文件上传控件已经能够完成文件选择，但更好的界面，尤
 
 *原文截图：[GIF 优化工具的文件选择界面](https://static.simonwillison.net/static/2026/gif-optimizer.jpg)。*
 
-我没有要求加入 GIF URL 输入框，也不太喜欢这个功能，因为它只对提供开放的跨源资源共享（Cross-Origin Resource Sharing，CORS）响应头的 GIF 地址有效。我很可能会在今后的更新中移除它。
+我没有要求加入 GIF URL 输入框，也不太喜欢这个功能，因为它只能读取那些通过跨源资源共享（Cross-Origin Resource Sharing，CORS）响应头允许跨站访问的 GIF 地址。我很可能会在今后的更新中移除它。
 
 「用 gifsicle 按多种不同设置压缩这个 GIF，并展示各个版本；每个预览都要显示文件大小，并提供下载按钮」，描述的是应用的核心功能。
 

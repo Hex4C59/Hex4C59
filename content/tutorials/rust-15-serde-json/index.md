@@ -2,7 +2,7 @@
 url = "/posts/rust-15-serde-json/"
 title = "Rust 入门 15：用 Serde 保存 JSON，并迁移旧任务"
 date = 2026-10-13T09:00:00+08:00
-lastmod = 2026-10-13T09:00:00+08:00
+lastmod = 2026-10-17
 draft = false
 author = "Hex4C59"
 description = "引入 Serde 和 serde_json，验证任务文件的结构与业务规则，并把旧 TSV 数据迁移到不覆盖原文件的新 JSON。"
@@ -22,7 +22,7 @@ series_role = "chapter"
 
 本章把待办任务保存成 JSON（JavaScript Object Notation）文本，并提供一条迁移命令，把旧 TSV 数据转换到新文件。新增、完成、筛选和删除继续复用第十三章的逻辑，文件错误则采用第十四章的类型化处理方式。
 
-你会第一次给业务项目引入第三方库：Serde 定义序列化、反序列化接口，`serde_json` 负责 JSON 格式。本章完成后，你应该能添加依赖、理解派生实现、区分格式错误与业务错误，并检查迁移是否保留原数据。
+你会第一次给业务项目引入第三方库。Serde 提供序列化和反序列化接口：序列化按字段读出 Rust 值，反序列化读取输入中的字段并构造 Rust 值；`serde_json` 负责把这些字段写成 JSON 文本，或从 JSON 文本中读出。本章完成后，你应该能添加依赖、理解派生实现、区分格式错误与业务错误，并检查迁移是否保留原数据。
 
 ## 先确定工作目录和依赖
 
@@ -54,7 +54,7 @@ serde = { version = "=1.0.229", features = ["derive"] }
 serde_json = "=1.0.154"
 ```
 
-`features = ["derive"]` 启用 Serde 的派生宏，让 `#[derive(Serialize, Deserialize)]` 可以生成对应实现。`Serialize` 表示值能按序列化接口输出，`Deserialize` 表示值能按反序列化接口读入。
+`features = ["derive"]` 启用 Serde 的派生宏，让 `#[derive(Serialize, Deserialize)]` 可以生成对应实现。派生 `Serialize` 时，生成的代码读取结构体字段并交给格式库；派生 `Deserialize` 时，生成的代码按字段名称和类型构造结构体。这些代码在编译时生成，真正转换文本时才由下面的 JSON 函数调用。
 
 `serde_json` 实现具体格式。它们都不是 Rust 标准库的一部分，`use serde::...` 能工作，是因为这个包的清单已经声明了依赖。
 
@@ -94,7 +94,7 @@ fn main() -> Result<(), serde_json::Error> {
 读回：Rust 练习，启用：true
 ```
 
-`to_string` 把 Rust 值编码成文本，`from_str` 把文本解析成 Rust 值。后者需要知道目标类型；这里通过 `let restored: Settings` 提供类型信息，也可以写 `serde_json::from_str::<Settings>(&json)`。
+`to_string` 把 Rust 值编码成文本，`from_str` 把文本解析成 Rust 值。后者需要知道目标类型；这里通过 `let restored: Settings` 提供类型信息，也可以写 `serde_json::from_str::<Settings>(&json)`。这次转换先从原对象读出名称和启用状态，生成 JSON 字符串，再从字符串构造一个拥有名称文本的新对象，两个对象各自保有自己的字段内容。
 
 `active` 是 JSON 布尔值 `true`，没有引号；`"true"` 是字符串，无法直接作为这里的 `bool` 字段读入。结构体的派生实现帮助你检查字段类型，但它不会自动判断标题是否为空、任务编号是否重复。
 
@@ -299,6 +299,8 @@ pub fn migrate(source: &Path, destination: &Path) -> Result<usize, StoreError> {
 
 `#[serde(deny_unknown_fields)]` 让 `Document` 和 `StoredTask` 拒绝未定义字段。例如把 `done` 拼成别的名字，应报告错误，不能假装这个字段已正确读入。这个选择也意味着未来新增字段时，旧程序可能拒绝它；格式演进需要单独设计。
 
+这里既没有给必需字段设置默认值，也没有允许未知字段，所以缺少完成状态和多出一个拼错的状态字段都会失败，而不会悄悄补成未完成。
+
 ### 自定义错误与第三方错误怎么连起来
 
 `StoreError::Json` 保存 `serde_json::Error`，`Io` 保存 `io::Error`；两者通过 `From` 接到 `?`，通过 `source` 提供底层原因。`InvalidData(String)` 保存业务检查消息，没有附加底层错误。
@@ -389,7 +391,7 @@ fn main() -> ExitCode {
 
 这里复用 `taskbook_plus::parse_args` 和筛选、删除函数，把它们返回的 `String` 错误包装成 `InvalidData`。原接口仍只返回文本；若以后调用方还需要区分“关键词为空”和“任务不存在”，相应核心接口也需要换成更具体的错误类型。
 
-迁移命令单独接收源、目标两个路径。它不通过环境变量猜测路径，参数形式错误时直接给出迁移用法。
+迁移命令单独接收源、目标两个路径。它不通过环境变量猜测路径，参数形式错误时直接给出迁移用法。迁移分支完成后立即返回，因此不会再加载普通命令的默认任务文件；迁移的数据只由这两个显式路径决定。
 
 ## 先运行新的 JSON 工具
 
@@ -559,7 +561,7 @@ fn main() -> Result<(), serde_json::Error> {
 {"title":"Rust 练习","tags":[]}
 ```
 
-`#[serde(default)]` 在字段缺失时使用该类型的默认值，`Vec<String>` 的默认值就是空列表。它不会把一个现有的字符串自动当作标签列表。
+`#[serde(default)]` 在字段缺失时使用该类型的默认值，`Vec<String>` 的默认值就是空列表。它不会把一个现有的字符串自动当作标签列表；字段已经提供却类型不对时，仍是输入错误。再次序列化时，这个空列表也会作为标签字段写进 JSON，而不是继续省略。
 
 为旧文件提供默认值是一种兼容选择，不应随便用于必需字段。任务编号或格式版本缺失时若悄悄补 0，反而会隐藏数据问题。本章的任务格式仍要求这些字段存在。
 

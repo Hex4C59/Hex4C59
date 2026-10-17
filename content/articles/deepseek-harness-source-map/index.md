@@ -20,7 +20,7 @@ ShowToc = true
 
 [第二篇](/articles/deepseek-harness-request-lifecycle/)沿一次请求走过模型、工具和会话记录。读到工具执行时，你会遇到这样的代码：`ctx.fs.readText(...)`。工具已经叫作 `read`，执行函数也找到了，可这里的 `fs` 究竟是谁？它直接读取本机文件，还是把请求交给另一种后端？
 
-在 DeepSeek Harness 中，同一项能力可能分布在接口包、实现包、工具包和装配配置里。**找到一个调用点以后，需要继续追踪服务定义、提供者和装配关系**，才能确认这条路径实际执行了什么。目录名和依赖图分别提供一部分线索。
+在 DeepSeek Harness 中，声明“能读文件”的接口、实际读文件的实现、模型调用的工具，以及选择这些插件的配置，可能分属不同文件。**找到一个调用点以后，需要继续追踪服务定义、提供者和装配关系**：先看接口允许做什么，再找实现它的对象，最后确认应用配置选择了谁。目录名和依赖图分别提供一部分线索。
 
 本文以文件读取为主线，建立三张用途不同的地图：代码归属在哪里、包之间依赖什么、运行时调用哪个服务。读者需要能阅读 TypeScript 的导入、函数和类继承，知道 `package.json` 的基本作用；不必先启动 dsh。本文与前两篇均分析 [DeepSeek Harness `0.2.1-alpha.2`](https://github.com/deepseek-ai/deepseek-harness/tree/d743267388641bc76f17c45ce8b4c231aed1d32c)，本次核对日期为 2026-10-14。
 
@@ -33,10 +33,10 @@ ShowToc = true
 | 地图 | 回答的问题 | 文件读取的例子 | 它没有直接回答什么 |
 |---|---|---|---|
 | 目录归属 | 哪个代码范围负责这项能力 | `fs`、`fs-local`、`tool-fs` 同属 `packages/fs/` | 包是否互相依赖、应用加载了谁 |
-| 包依赖 | 一个包需要哪些代码或共享接口 | `tool-fs` 与 `fs-local` 都声明 `dsh-fs` 为 peer 依赖 | 服务实例如何装配、函数调用顺序 |
+| 包依赖 | 一个包需要哪些代码或共享接口 | `tool-fs` 与 `fs-local` 都声明 `dsh-fs` 为 peer 依赖，要求使用方提供兼容的共享包 | 服务实例如何装配、函数调用顺序 |
 | 运行时服务关系 | 消费方使用什么服务，谁提供它 | `tool-fs` 通过 `ctx.fs` 使用已装配的文件系统 | 所有代码分支、实际执行结果 |
 
-下面可以切换这三种视角。目录图只画文件系统家族的三个代表包；依赖图只保留它们与 `dsh-fs` 有关的两条 peer 边；服务图选择共享 base 配置中的文件系统提供者。它们分别依据[目录说明](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/fs/README.md)、[工具 manifest](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/fs/tool-fs/package.json)与[base patch](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/bundle/base/cordis.patch.yml#L506)。省略的关系不代表不存在。
+下面可以切换这三种视角。目录图只画文件系统家族的三个代表包；依赖图只保留它们与 `dsh-fs` 有关的两条 peer 依赖箭头；服务图则展示共享 base 配置所选择的文件系统提供者。它们分别依据[目录说明](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/fs/README.md)、[工具 manifest](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/fs/tool-fs/package.json)与[base patch](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/bundle/base/cordis.patch.yml#L506)。省略的关系不代表不存在。
 
 {{< interactive-diagram src="source-map.html" title="切换目录归属、包依赖与服务装配，比较同一项文件系统能力的三种关系" height="840" mobile-height="1120" compact-height="1060" >}}
 
@@ -69,7 +69,7 @@ Python SDK 在这里通过标准输入输出上的 JSON-RPC 驱动配套 dsh 运
 
 文件系统家族的 [README](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/fs/README.md)先给出角色，再列包名。理解三个角色以后，才能判断该读哪一层。
 
-**服务定义**描述消费方能够使用的接口。在 `packages/fs/fs/` 中，`FileSystem` 定义文件系统能力，并以 `fs` 这个键注册为 Cordis 服务。工具因此可以写 `ctx.fs`，不必在调用处固定某个本地实现。
+**服务定义**描述使用者能够调用哪些方法。在 `packages/fs/fs/` 中，`FileSystem` 定义文件系统能力，并以 `fs` 这个键注册为 Cordis 服务。应用装入具体实现后，工具就可以通过 `ctx.fs` 取得该服务，不必在调用处固定某个本地实现。
 
 **服务提供者**实现接口。`packages/fs/fs-local/` 中的 `LocalFileSystem` 处理本机文件；`packages/fs/fs-sandbox/` 中的 `SandboxedFileSystem` 在它的基础上加入写入范围等策略。不同实现的行为和限制，要分别查看代码。
 
@@ -107,13 +107,13 @@ const chunks = info.size === undefined || info.size >= caps.streamMinSize
   : [await ctx.fs.readText(target, exec.signal)]
 ```
 
-工具接着构建带行号、大小限制的读取窗口，返回结构化结果，并发出 `fs/observed`。[源码中的读取分支](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/fs/tool-fs/src/read.ts#L137)说明：如果问题是“返回的行号或截断格式不对”，应继续读窗口与渲染代码；如果问题是“读到了哪个路径、底层怎样取内容”，应继续查文件系统服务。
+大小未知或达到阈值时，工具按片段读取；否则一次读取全文。工具接着从读取内容中选出本次要返回的行，添加行号并限制返回大小，这就是“读取窗口”，随后返回结构化结果，并发出 `fs/observed`。[源码中的读取分支](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/fs/tool-fs/src/read.ts#L137)说明：如果问题是“返回的行号或截断格式不对”，应继续读窗口与渲染代码；如果问题是“读到了哪个路径、底层怎样取内容”，应继续查文件系统服务。
 
 ### 服务定义给出契约，提供者落实读取
 
 [`FileSystem`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/fs/fs/src/index.ts#L87)继承 Cordis 的 `Service`，构造时使用 `super(ctx, 'fs')`。它定义了接口和共同词汇。
 
-在 [`LocalFileSystem`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/fs/fs-local/src/index.ts#L175)中，`readText()` 转给 `readWholeText()`，`streamText()` 转给 `streamWholeText()`。若还要追到本机 I/O，就继续进入同目录的 [`fsio.ts`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/fs/fs-local/src/fsio.ts)。
+在 [`LocalFileSystem`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/fs/fs-local/src/index.ts#L175)中，`readText()` 转给 `readWholeText()`，`streamText()` 转给 `streamWholeText()`。若还要查这些方法怎样从本机文件取得数据，就继续进入同目录的 [`fsio.ts`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/fs/fs-local/src/fsio.ts)。
 
 到这里，我们已经找到了本地读取实现，但还没有确认某个应用装配的 `ctx.fs` 就是它。接口能由谁实现，与这次应用选择了谁，需要分别检查。
 
@@ -123,11 +123,11 @@ const chunks = info.size === undefined || info.size >= caps.streamMinSize
 
 因此，在这个未被后续 patch 替换的装配片段中，消费方取得的服务来自带策略的提供者，读取代码仍可沿继承关系追到 `fs-local`。要说明实际启动配置，还必须继续检查 profile 的 bundle 顺序与覆盖层。
 
-[架构文档](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/docs/architecture.md#profiles-and-bundles)说明，profile 是命名的应用组合；bundle 提供一层插件配置及代码，之后还可能应用用户 patch。它还指出 `sdk-minimal` 使用独立组合，并不应用共享 base。本文选取 base 解释追踪方法，不能据此宣称所有 dsh 应用都加载相同的文件系统提供者。
+[架构文档](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/docs/architecture.md#profiles-and-bundles)说明，profile 是一份有名字的应用组合配置；bundle 提供一组插件配置及配套代码，用户还可以用 patch 修改组合结果。因此，后加载的配置可能改变前面选择的服务提供者。它还指出 `sdk-minimal` 使用独立组合，并不应用共享 base。本文选取 base 解释追踪方法，不能据此宣称所有 dsh 应用都加载相同的文件系统提供者。
 
 ## `package.json` 和依赖图应该怎样读
 
-文件读取的例子已经说明了服务关系。现在回头看 manifest，就能解释它为什么没有直接告诉我们完整调用路径。
+文件读取的例子已经说明了服务关系。现在回头看包的描述文件 manifest，就能解释它为什么没有直接告诉我们完整调用路径。
 
 ### 三种依赖字段有不同用途
 

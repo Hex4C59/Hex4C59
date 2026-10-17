@@ -2,7 +2,7 @@
 url = "/posts/rust-08-projects/"
 title = "Rust 入门 08：拆分模块，为程序写测试"
 date = 2026-10-12T09:00:00+08:00
-lastmod = 2026-10-13T09:00:00+08:00
+lastmod = 2026-10-17
 draft = false
 author = "Hex4C59"
 description = "拆分模块并写测试，解释 crate、self、super 路径、可见性、use 别名、宏和属性。"
@@ -32,14 +32,14 @@ series_role = "chapter"
 
 | 名称 | 本章中的意思 |
 | --- | --- |
-| package（包） | 由一个 `Cargo.toml` 管理的一组目标和配置 |
-| crate | Rust 的编译单元，例如一个库或一个可执行程序 |
-| module（模块） | crate 内组织名称、代码和可见性的边界 |
+| package（包） | 由一个 `Cargo.toml` 管理的库、程序、示例等构建目标及其配置 |
+| crate | 单独交给 Rust 编译器处理的一组代码；本章的库和示例程序分别是一个 crate |
+| module（模块） | 在一个 crate 内把函数等名称分组，并规定其他代码能否访问它们 |
 | workspace（工作区） | 由一个顶层清单统一管理的多个包 |
 
 配套源码的顶层 `Cargo.toml` 是工作区。`basics` 和 `taskbook` 是两个包；`basics/src/lib.rs` 是库 crate 的入口；`math` 是库里的模块。
 
-一个包可以同时有库和可执行程序。常见做法是把可复用、可测试的逻辑放进 `lib.rs`，`main.rs` 只负责接收输入和调用逻辑。最后两章会采用这个结构。
+一个包可以同时有库和可执行程序。常见做法是把可复用、可测试的逻辑放进 `lib.rs`，`main.rs` 只负责接收输入和调用逻辑。后续的待办工具项目会采用这个结构。
 
 ### 看文件树，比记四个名词更直观
 
@@ -153,7 +153,7 @@ cd rust-basics
 mkdir examples tests
 ```
 
-将下文展示的 `src/lib.rs`、`src/math.rs`、`examples/ch08_modules.rs` 和 `tests/conversion.rs` 分别写到相应位置。`cargo new` 生成的默认 `lib.rs` 要由本文版本替换。这次包名也叫 `rust-basics`，因此代码里的 `rust_basics` 路径不用改。
+将本文展示的 `src/lib.rs`、`src/math.rs`、`examples/ch08_modules.rs` 和 `tests/conversion.rs` 分别写到相应位置。`cargo new` 生成的默认 `lib.rs` 要由本文版本替换。这次包名也叫 `rust-basics`，因此代码里的 `rust_basics` 路径不用改。
 
 在这个单包目录，可以省略 `-p rust-basics`：
 
@@ -209,7 +209,7 @@ fn boiling_point_through_public_api() {
 }
 ```
 
-它从库外部使用公开路径，不能依赖库的私有函数。运行 `cargo test -p rust-basics --test conversion`，应有一个测试通过。这类测试能发现公开接口无法使用或接线错误。
+它从库外部使用公开路径，不能依赖库的私有函数。运行 `cargo test -p rust-basics --test conversion`，应有一个测试通过。这类测试能发现库的公开入口无法使用，以及调用路径或可见性设置有误等问题。
 
 ### 两类测试该放在哪里
 
@@ -244,7 +244,7 @@ cargo test --workspace --all-targets
 
 第三方库通常记录在 `Cargo.toml` 的 `[dependencies]` 下，由 Cargo 下载、构建和连接。一个常见安装命令是 `cargo add 库名`，其中“库名”必须换成实际依赖名称；这不是本章需要执行的步骤。
 
-本教材项目只使用标准库。能完成基础项目后，再按照需要引入命令行解析、序列化和网络库，并查阅对应版本的官方文档。可执行程序通常应保留 `Cargo.lock`，让依赖选择更容易复现。
+本章和前面的基础示例只使用标准库。能完成基础项目后，再按照需要引入命令行解析、序列化和网络库，并查阅对应版本的官方文档。可执行程序通常应保留 `Cargo.lock`，让依赖选择更容易复现。
 
 ## 语法细读：路径、可见性、宏和属性 {#syntax-depth}
 
@@ -326,7 +326,7 @@ Point { x: 3 } / [3, 4]
 
 `println!`、`vec!`、`assert_eq!` 是宏调用；括号或方括号中的内容会按该宏的规则处理，不能仅因为写法像调用就认为它是普通函数。宏可以展开成表达式或其他代码结构，也不是“程序运行时再拼接一段源代码”。
 
-`#[derive(Debug)]` 是外层属性，作用于后面的结构体定义，要求生成相应的 trait 实现。`#[cfg(test)]` 用条件控制后面的项是否参与编译，`#[test]` 标记测试函数；它们不是放在函数前的一行注释，也不是每次调用函数都会执行的普通表达式。
+`#[derive(Debug)]` 是外层属性，作用于后面的结构体定义，要求编译器生成调试输出所需的代码，也就是前面用过的 trait 实现；下一章会解释这种约定。`#[cfg(test)]` 用条件控制后面的项是否参与编译，`#[test]` 标记测试函数；它们不是放在函数前的一行注释，也不是每次调用函数都会执行的普通表达式。
 
 阅读一个陌生片段时，先区分路径 `::`、方法访问 `.`、宏调用 `!` 和属性 `#[...]`，再去找名字的定义和作用范围。
 
@@ -353,7 +353,7 @@ fn room_temperature() {
 
 ### 自查：三个常见接线问题
 
-- 创建了 `math.rs`，但 `lib.rs` 没写 `mod math`：模块还没有进入编译树。
+- 创建了 `math.rs`，但 `lib.rs` 没写 `mod math`：编译器还没有从库入口找到这个模块，不会仅凭文件存在就把它加入库。
 - 模块已声明，示例却无法访问函数：检查路径经过的模块和函数是否公开。
 - `cargo test --all-targets` 通过，就认为文档代码也验证了：文档测试需要普通的 `cargo test` 或 `cargo test --doc`。
 

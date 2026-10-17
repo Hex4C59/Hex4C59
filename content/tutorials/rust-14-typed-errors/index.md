@@ -2,7 +2,7 @@
 url = "/posts/rust-14-typed-errors/"
 title = "Rust 入门 14：用自定义错误类型保留失败原因"
 date = 2026-10-13T09:00:00+08:00
-lastmod = 2026-10-13T09:00:00+08:00
+lastmod = 2026-10-17
 draft = false
 author = "Hex4C59"
 description = "用枚举、Display、Error 和 From 区分输入与文件错误，通过问号传播，并在命令行显示原因链。"
@@ -124,7 +124,7 @@ pub fn read_minutes(path: &Path) -> Result<u32, AppError> {
 
 `ZeroMinutes` 是业务校验失败：整数解析已经成功，但不满足“大于 0”的规则。它没有底层解析错误。`Usage` 则表示参数形式不符合这个演示程序的命令约定。
 
-返回 `Result<u32, AppError>` 后，成功分支仍交出 `u32`，错误分支交出枚举。错误信息改用枚举组织，解析规则仍然相同。
+返回 `Result<u32, AppError>` 后，成功分支仍交出 `u32`，错误分支交出枚举。错误信息改用枚举组织，解析规则仍然相同。调用方可以直接匹配错误变体来决定下一步，无须从显示给人的句子里猜测失败原因；修改提示文字也不会改变错误属于哪一类。
 
 ## Display 决定给用户看的文本
 
@@ -146,7 +146,7 @@ pub fn read_minutes(path: &Path) -> Result<u32, AppError> {
 
 ## From 让问号完成错误转换
 
-`parse::<u32>()` 原本返回 `Result<u32, ParseIntError>`，而 `parse_minutes` 要返回 `Result<u32, AppError>`。`impl From<ParseIntError> for AppError` 给出这两个错误类型之间的转换，`?` 就能在失败时使用它。
+`parse::<u32>()` 原本返回 `Result<u32, ParseIntError>`，而 `parse_minutes` 要返回 `Result<u32, AppError>`。`impl From<ParseIntError> for AppError` 给出这两个错误类型之间的转换，`?` 就能在失败时使用它。例如输入为 `30` 时，问号取出成功的数字，让函数继续检查是否为 0；输入为 `abc` 时，它把解析错误包装成 `AppError::Number` 并立即返回，后面的业务检查不再执行。
 
 `fs::read_to_string` 的错误是 `io::Error`，对应另一份 `From` 实现。这里取回的是拥有内容的原错误，没有先变成字符串再丢掉结构。
 
@@ -195,7 +195,7 @@ fn main() -> ExitCode {
 
 数字形式要求恰好一项参数；文件形式要求 `--file` 和文件路径两项。没有参数、单独输入 `--file` 或多余参数会得到用法错误。
 
-`while let Some(cause) = source` 读取当前原因并继续往下找，直到没有下一层。循环中的引用来自仍然存活的 `error`。这里使用 `eprintln!`，所以错误内容进入标准错误通道，正常分钟数进入标准输出。
+`while let Some(cause) = source` 读取当前原因并继续往下找，直到没有下一层。循环中的引用来自仍然存活的 `error`。例如数字解析失败时，先由入口显示应用定义的错误类别，再由循环显示保留的解析错误；分钟数为 0 时没有下一层原因，循环一次也不执行。这里使用 `eprintln!`，所以错误内容进入标准错误通道，正常分钟数进入标准输出。
 
 入口返回 `ExitCode::FAILURE` 才让 shell 知道命令失败。仅打印一句错误、然后正常返回，并不能提供这个状态。
 
@@ -299,7 +299,7 @@ CLI 测试则检查数字和文件入口、标准输出、标准错误与失败�
 
 ## 练习：给一天的分钟数设置上限
 
-让 `parse_minutes` 拒绝超过 1440 的分钟数，新增 `TooLong(u32)` 变体。保留 0 的检查和底层数字错误。
+让 `parse_minutes` 拒绝超过 1440 的分钟数，新增 `TooLong(u32)` 变体。保留 0 的检查和底层数字错误。上限检查要放在数字解析成功之后：能表示为 `u32` 但超过一天的值属于新业务错误，连 `u32` 都容纳不了的数字仍属于原来的解析错误。
 
 要求 `1440` 成功，`1441` 返回 `TooLong(1441)`，显示 `一天最多记录 1440 分钟，收到 1441`，并且没有底层原因。
 

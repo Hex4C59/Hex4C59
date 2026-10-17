@@ -25,13 +25,13 @@ disableComment = true
 
 在[开篇](/agent/deepseek-harness-agent-engineering/)里，我们把 Harness 理解为模型周围组织上下文、工具、状态和执行过程的软件层。这个定义还比较抽象。要理解 dsh 的职责，可以沿着一条用户消息走一遍：谁接收它，谁把它放进模型请求，模型提出工具调用以后又由谁执行？
 
-本文面向了解 HTTP、Git 和大语言模型基本概念的开发者，阅读代码时会用到少量 TypeScript。主场景是已经启动的 Web 应用：用户选择一个普通 Session，以 `queue` 模式提交非空文本，模型路由已经配置。Session 是 dsh 保存一段会话记录的对象；这里的 `queue` 表示输入等待后续 Turn 消费。
+本文面向了解 HTTP、Git 和大语言模型基本概念的开发者，阅读代码时会用到少量 TypeScript。主场景是已经启动的 Web 应用：用户选择一个普通 Session，以 `queue` 模式提交非空文本，模型路由已经配置，也就是系统已知道应把请求交给哪个模型服务。Session 是 dsh 保存一段会话记录的对象；这里的 `queue` 表示先把输入排队，等后续一轮执行（Turn）开始时再取出处理。
 
 我们用一个假设任务贯穿全文：**“读取 README.md，并概述这个项目。”** 这个例子选择原生 `read` 工具路径，未启用程序化工具调用（Programmatic Tool Calling，PTC）。图里的文件内容与事件序号都是演示数据，用来观察模块之间传递什么。附件、子 Agent 和不同 preset 的组合留给对应篇章。
 
 ## 先看完整链路
 
-一次 Web 提交大致经过以下过程：客户端组织内容，经远程调用交给 Host；Host 校验并解析 Agent，消息进入 Inbox；Agent 消费输入，开启 Turn 和 Step，准备模型请求；模型流式返回内容，工具结果进入后续 Step；会话事件与实时帧再通过独立下行链路更新浏览器。
+用户在浏览器发送消息后，服务器先检查输入，再把消息交给负责这段会话的 Agent 排队处理。开始执行时，Agent 取出待处理的内容，准备模型请求，并接收陆续返回的结果。模型若提出工具调用，系统可以在获准后执行工具，把结果放入下一次请求。一次工作可以包含多次这样的请求。与此同时，会话记录和实时输出通过另一条订阅连接送回浏览器。
 
 这里有三条同时值得关注的路径。
 
@@ -52,7 +52,7 @@ disableComment = true
 
 ## 输入之前，应用已经完成组合
 
-“消息进入 dsh”有两个不同的起点。应用启动时要选择 Profile、装配插件树、注册服务，并准备模型和会话能力。应用已经运行后，用户每次发送消息主要经过会话接口与 Agent 循环。把启动和提交画在同一条顺序线上，会让人误以为每条消息都重新建立整个运行时。
+“消息进入 dsh”有两个不同的起点。应用启动时要选择 Profile，也就是要运行的应用配置，再按配置加载插件、把服务登记到运行时，并准备模型和会话能力。应用已经运行后，用户每次发送消息主要经过会话接口与 Agent 循环。把启动和提交画在同一条顺序线上，会让人误以为每条消息都重新建立整个运行时。
 
 CLI 的 [`runCli()`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/apps/cli/src/bin.ts#L26) 识别调用类型，Profile 路径进入 [`runProfile()`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/apps/cli/src/profile-boot.ts#L244)，根据 bundle、profile patch 和用户覆盖装配插件。Web 和 Headless 由不同组合提供外围入口，后面的核心 Agent 循环可以共享。
 
@@ -72,7 +72,7 @@ Web Host 的 Agent 控制器会[复用已经存活的 Agent，或恢复所选 Se
 
 远程过程调用（Remote Procedure Call，RPC）让客户端以调用方法的方式请求 Host 服务。客户端 [Gateway](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/api/gateway/src/client/index.ts#L431) 根据生成的接口描述准备参数，通过 `connection.rpc.call('/api', endpoint, ...)` 发出调用。
 
-[Host Gateway](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/api/gateway/src/index.ts#L699) 查找描述、校验参数、解析目标服务和作用域，然后在携带调用上下文的服务视图上执行对应方法。这个 RPC 是客户端与 dsh Host 的通信，模型 provider 的网络请求还在后面。
+[Host Gateway](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/api/gateway/src/index.ts#L699) 查找接口描述、校验参数，并确定这次调用应使用哪个服务实例。它再通过携带本次调用信息的服务对象执行对应方法，让方法能取得本次远程调用的上下文信息。这个 RPC 是客户端与 dsh Host 的通信，模型 provider 的网络请求还在后面。
 
 物理连接、重连与逻辑流协议另有实现。本篇先区分它们的位置：RPC 送达会话控制器，模型请求由 Agent 后续驱动。
 
@@ -94,7 +94,7 @@ Host 的 [`prompt()`](https://github.com/deepseek-ai/deepseek-harness/blob/d7432
 
 这三个入口体现了输入消费的时机差别。排队消息等待新的 Turn；引导输入或工具附加上下文可以进入后续 Step。它们仍要经过队列和准备流程，才会成为一次模型调用看到的内容。
 
-[`ReactLoopInbox.mutate()`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent-loop/src/inbox.ts#L198) 同步追加 `agent/inbox/spliced`，会话投影据此更新队列，并另外发出实时 `agent/inbox/inserted`。**这里的 `agent/inbox/spliced` 是通过 Session 提交的持久类型事件。** 不能仅凭 `agent/` 前缀把所有事件都归为临时通知。
+[`ReactLoopInbox.mutate()`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent-loop/src/inbox.ts#L198) 同步追加 `agent/inbox/spliced`。会话根据这条事件更新当前队列，这种从事件算出当前状态的过程称为“投影”；系统还会另外发出实时 `agent/inbox/inserted` 通知。**这里的 `agent/inbox/spliced` 是通过 Session 提交、供持久化保存的事件。** 不能仅凭 `agent/` 前缀把所有事件都归为临时通知；至于记录何时真正写到磁盘，后文会单独说明。
 
 Inbox 事件携带了输入，却还不是模型对话中的 `user/message`。理解这一区别，才能解释“Host 接收成功，但模型请求尚未发出”的状态。
 
@@ -102,17 +102,17 @@ Inbox 事件携带了输入，却还不是模型对话中的 `user/message`。�
 
 在本文的场景里，Turn 是消费一次排队输入后展开的执行轮次；Step 是其中的一次模型请求阶段及后续工具处理。同一 Step 中还可能存在失败后的请求重试，所以 Step 编号也不能直接当成 provider 调用次数。
 
-驱动先记录 `turn/start`，再进入 `preStep()`。它 claim 下一 Step 的待处理输入，并在新 Turn 开始时消费一条排队输入；随后组装 Prompt，进入 `agent/pre-step` waterfall。Waterfall 指一组按顺序传递和处理结果的插件处理函数，后续函数接收前面形成的提案。
+负责推进执行的代码先记录 `turn/start`，再进入 `preStep()`。它取走下一 Step 的待处理输入，这个动作在源码中称为 claim；在新 Turn 开始时，还会消费一条排队输入。随后它组装 Prompt，也就是准备发给模型的提示内容，再进入 `agent/pre-step` waterfall。Waterfall 指一组依次运行的插件处理函数：每个函数接收前面修改后的提案，继续调整这一步的输入或执行决定。
 
-插件最后给出的 `enter` 或 `reject` 决定是否执行该 Step。获准后才追加 `step/start`。如果被拒绝，Turn 可以以 blocked 结束；首批最终为空时也可能结束 Turn 而不消耗一个模型 Step。已经 claim 的批次在默认路径中不会自动重新入队。
+插件最后给出的 `enter` 或 `reject` 决定是否执行该 Step。获准后才追加 `step/start`。如果被拒绝，Turn 可以以 blocked（被阻止）结束；首批输入处理后为空时，也可能直接结束 Turn，不开始模型 Step。前面已经 claim 的输入默认不会自动放回队列，因此拒绝执行不等于把消息留待下一轮再试。
 
 这些边界都可以在[Agent 实现](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent-loop/src/agent.ts#L163)和[Prompt 组装入口](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/system-prompt/src/index.ts#L610)中定位。后续专篇会拆开 Prompt 节点、上下文来源和各个处理函数的修改规则。
 
 ### 先准备调用，再提交模型可见输入
 
-进入 Step 后，`prepareRequest()` 根据实例模型选项和已记录的请求头构造提案，经 `agent/request` 处理，再调用 [`llm.prepareCall()`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/llm/llm/src/index.ts#L933)。正常 adapter 路径返回一个绑定模型路由和配置的 prepared call，可以理解为“已经准备好、只允许分派一次的调用能力”。
+进入 Step 后，`prepareRequest()` 根据 Agent 实例的模型选项和已记录的请求头构造请求提案，交给 `agent/request` 的处理函数调整，再调用 [`llm.prepareCall()`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/llm/llm/src/index.ts#L933)。正常 adapter 路径返回一个 prepared call 对象：它已确定模型路由和配置，只允许实际发起一次调用。Adapter 是对接具体模型服务的适配器，后文会说明它如何发送请求。
 
-准备与取消检查通过后，Step 同步处理 system prompt 和获准输入：追加或替换 `system/message`，在首个 attempt 提交用户消息，并处理运行时上下文。然后根据变化记录 `request/header`、`request/context`，必要时记录工具注册变化。
+准备与取消检查通过后，Step 同步处理 system prompt（系统提示）和获准输入：追加或替换 `system/message`，在首次请求尝试（attempt）中提交用户消息，并处理本次运行提供的上下文。然后根据变化记录 `request/header`、`request/context`，必要时记录工具注册变化。
 
 模型历史从 [`session.deriveMessages()`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/session/src/index.ts#L984) 取得。这里的“投影”指从已提交事件推导出当前消息序列；发送前再冻结消息和请求对象。要回答模型看到了什么，应沿这份日志投影和请求构造追踪，不能仅检查客户端界面。
 
@@ -130,9 +130,9 @@ prepared call 的 `stream()` 仍经过 `llm/stream` waterfall，然后进入具�
 
 ### 实时片段与结算记录各有用途
 
-Agent 用 `AssistantStreamAttempt` 组装流式块，并发出实时 `agent/assistant-stream`。Attempt 表示本次实际请求尝试；它帮助系统区分成功响应、失败重试和中断后的局部内容。
+Agent 用 `AssistantStreamAttempt` 组装陆续到达的内容块，并通过实时 `agent/assistant-stream` 把更新发出去。每份这样的实时更新称为一帧。Attempt 表示一次实际请求尝试，系统据此区分成功响应、失败后的重试，以及中断前只收到了一部分内容的情况。请求结束时还要保存相应记录，后文称这一步为“结算”。
 
-成功响应会提交 `assistant/message`，包含相应内容、使用量和该 attempt 的流记录。失败或没有表面消息的中断 attempt 使用 `assistant/attempt` 等结算路径。已经产生可见内容的取消还要按相应分支处理，不能把所有中断都归为同一种空失败。
+成功响应会提交 `assistant/message`，保存内容、使用量和该次请求尝试的流记录。请求失败，或中断且没有形成会话消息时，会使用 `assistant/attempt` 等路径保存结束记录。若取消前已经产生可见内容，还要进入对应分支处理，不能把所有中断都记成没有内容的失败。
 
 这两类数据回答的问题不同：实时帧说明当前正在生成什么，结算事件支持重放和后续读取。进程若在结算前硬退出，不能保证界面上已经显示的片段都有可恢复记录。上述处理位于[核心 Agent 循环](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent-loop/src/agent.ts#L163)。
 
@@ -159,7 +159,7 @@ Agent 用 `AssistantStreamAttempt` 组装流式块，并发出实时 `agent/assi
 
 工具名和参数可以在 [`read` 实现](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/fs/tool-fs/src/read.ts#L78)中核对。实际返回什么，取决于运行工作区、文件状态与工具配置；动画使用合成内容，不代表读取了 dsh 仓库的 README。
 
-Agent 将成功响应中的工具调用交给 [`executeToolCalls()`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent-loop/src/tool-calls.ts#L60)。调度器解析参数，并按 `executionMode` 区分可安全并发和独占调用。独占调用形成执行屏障，可并发调用受最大并发数限制；尚未开始的调用还会重新分类。
+Agent 将成功响应中的工具调用交给 [`executeToolCalls()`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent-loop/src/tool-calls.ts#L60)。调度器解析参数，并按 `executionMode` 区分可安全并发和必须独占执行的调用。独占调用要与其他调用错开执行，这就是这里的“执行屏障”；允许并发的调用也受最大并发数限制。尚未开始的调用还会重新判断所属类别。
 
 开始执行的调用先记录 `tool/call`。运行时负责参数处理、`tools/pre-execute`、审批与 guard 等策略，再通过 `tools/execute` 执行工具主体，之后处理结果。Guard 在这里承担继续执行前的检查，策略组合的完整规则见后续工具与安全篇章。不同错误分支可能跳过部分后置处理，不能只用“调用函数后返回字符串”概括整个工具流水线。
 
@@ -171,21 +171,21 @@ Agent 将成功响应中的工具调用交给 [`executeToolCalls()`](https://git
 
 图中只演示一次调用。多个工具同时执行时，“哪个先完成”和“哪个先提交”需要分开观察；调度器的结果槽位与连续提交机制会在工具执行篇章中展开。
 
-取消会停止补充新的调用，并等待已经开始的工作收敛，保存可以提交的结果。保存日志不能撤销已经发生的文件修改、进程行为或外部请求。这些调度和策略边界分别位于[工具批次实现](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent-loop/src/tool-calls.ts#L60)与[工具运行时](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/tools/src/index.ts#L1499)。
+取消会停止启动新的调用，并等待已经开始的调用返回，保存其中可以提交的结果。保存日志不能撤销已经发生的文件修改、进程行为或外部请求。这些调度和策略边界分别位于[工具批次实现](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent-loop/src/tool-calls.ts#L60)与[工具运行时](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/tools/src/index.ts#L1499)。
 
-没有工具调用的正常响应可以完成当前 Step。工具结果中的 `concludesTurn`、待处理的 next-step 输入，以及自然停止窗口中的 `agent/turn-stopping` 还会影响是否继续。`step/end`、`turn/end` 和实时 idle 状态因此需要分别观察。
+没有工具调用的正常响应可以完成当前 Step，但这不自动决定整个 Turn 已结束。工具结果中的 `concludesTurn` 会参与结束判断；队列里是否还有待处理的 next-step 输入，以及准备自然停止时的 `agent/turn-stopping` 处理结果，也会影响是否继续。因此要分别观察 `step/end`、`turn/end` 和实时 idle 状态，确认结束的是一个模型步骤、一轮执行，还是 Agent 当前已无执行活动。
 
 ### 下一次请求怎样得到文件内容
 
-在获准继续的正常路径里，下一 Step 的 [`prepareRequest()`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent-loop/src/agent.ts#L687) 调用 `session.deriveMessages()`，从会话表面派生消息历史。历史已包含助手提出的 `read` 调用，以及带 `toolCallId = c1` 的工具消息；文件内容就在工具消息的 `content` 里。
+在获准继续的正常路径里，下一 Step 的 [`prepareRequest()`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent-loop/src/agent.ts#L687) 调用 `session.deriveMessages()`，读取当前参与消息构造的事件记录，也就是“会话表面”，并生成消息历史。历史已包含助手提出的 `read` 调用，以及带 `toolCallId = c1` 的工具消息；文件内容就在工具消息的 `content` 里。
 
-图里的第五阶段展示派生后的消息，第六阶段展示请求边界：dsh 冻结边界消息与请求对象，再把请求交给 [`adapter.stream()`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent-loop/src/agent.ts#L439)。因此，模型的下一次生成能够利用读取结果。图中只展示 `user`、`assistant`、`tool`，实际请求还可能有其他上下文消息与配置。
+图里的第五阶段展示派生后的消息，第六阶段展示请求边界：dsh 冻结边界消息与请求对象，固定本次采用的输入，再把请求交给 [`adapter.stream()`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent-loop/src/agent.ts#L439)。因此，模型的下一次生成能够利用读取结果。图中只展示 `user`、`assistant`、`tool`，实际请求还可能有其他上下文消息与配置。
 
 工具结果已提交，只能说明返回值已进入会话记录。下一次请求是否发出，还要经过后续 Step 的执行判断。图中展开的是正常继续路径。
 
 ## 回答经另一条链路到达浏览器
 
-浏览器提交 `prompt()` 以后，主要通过已建立的会话订阅持续接收结果。[`SessionHistoryController.follow()`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/api/session-controller/src/history.ts#L120) 先订阅事件和可选的实时帧，再获取 snapshot/baseline，随后按游标发送增量。这样的顺序要处理取快照与接收新事件之间的衔接，日志序号缺口也有对应校验。
+浏览器提交 `prompt()` 以后，主要通过已建立的会话订阅持续接收结果。[`SessionHistoryController.follow()`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/api/session-controller/src/history.ts#L120) 先订阅事件和可选的实时帧，再获取 snapshot/baseline，随后按游标发送新增记录。游标用来记住记录已经发送到哪里。这套流程要处理一个衔接问题：获取快照期间也可能产生新事件，后续发送必须接上这部分记录；实现还会检查日志序号是否出现缺口。
 
 这里的 snapshot 是某一时点的记录快照，baseline 是继续接收增量所依据的起点。另一个 [control stream](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/api/session-controller/src/control.ts#L42) 提供 Host 范围的投影状态，供队列、运行状态等消费者使用。
 
@@ -201,7 +201,7 @@ Agent 将成功响应中的工具调用交给 [`executeToolCalls()`](https://git
 
 [`Session.commit()`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/session/src/index.ts#L876) 校验候选事件，将其加入内存日志，再通知 `session/event` 观察者。模型历史投影和客户端增量消费的是已经提交的事件。
 
-[JSONL 持久化 provider](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/session/session-persistence-jsonl/src/storage.ts#L534) 的观察者把这些事件排入写入链。JSONL 指每行保存一个 JSON 对象的存储格式。缓冲队列中的记录何时写完，还要看 provider 的 drain 与 flush。
+[JSONL 持久化 provider](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/session/session-persistence-jsonl/src/storage.ts#L534) 负责把记录保存到文件。它的事件观察者把已提交事件依次排入写入队列。JSONL 指每行保存一个 JSON 对象的存储格式；入队后仍需等待队列中的写入完成，并通过 provider 的 drain、flush 流程确认保存进度。
 
 因此，排查状态时可以依次核对：Host 是否接收输入，Inbox 是否记录，消息是否进入模型历史，响应是否结算，以及持久化 provider 是否完成相应写入。`sessions.flush(session)` 是另一个需要显式等待的边界。仅观察 `accepted` 或 `session.append()`，无法证明后面的磁盘写入已经完成。
 

@@ -2,7 +2,7 @@
 url = "/posts/rust-17-clap/"
 title = "Rust 入门 17：用 clap 整理命令行接口"
 date = 2026-10-13T09:00:00+08:00
-lastmod = 2026-10-13T09:00:00+08:00
+lastmod = 2026-10-17
 draft = false
 author = "Hex4C59"
 description = "用 clap 的派生宏声明子命令、路径选项和参数类型，把参数错误与业务错误分开，并复用 JSON 存储和备份。"
@@ -160,7 +160,9 @@ pub fn execute(cli: Cli) -> Result<String, StoreError> {
 
 `Cli` 是解析后的参数，包含路径和一个子命令。`PathBuf` 拥有路径，适合放在这个结构体里；`Command` 表达这次需要执行哪一种操作。
 
-`#[derive(Parser)]` 为结构体生成解析接口，`#[derive(Subcommand)]` 为枚举生成子命令接口。`#[command(subcommand)]` 把二者接起来。枚举变体 `Add` 对应命令 `add`，变体内的 `title` 是必需的位置参数。
+`#[derive(Parser)]` 为结构体生成解析接口，`#[derive(Subcommand)]` 为枚举生成子命令接口。`#[command(subcommand)]` 把二者接起来。枚举变体 `Add` 对应命令 `add`，变体内的 `title` 是必需的位置参数。例如命令行中的新增动作和标题会被转换成枚举值，后面的业务函数不必再按位置拆字符串。
+
+路径字段上的 `long` 让它通过 `--file` 输入，`global = true` 允许在子命令前后使用，未提供时采用声明中的默认路径。
 
 这里的 `Parser` 是 clap 提供的 trait。下一段 `Cli::parse()` 能调用它生成的关联方法，也需要把这个 trait 引入作用域。这和第九章讨论的“类型实现某种行为”是同一个机制，只是实现由派生宏生成。
 
@@ -179,7 +181,9 @@ pub fn execute(cli: Cli) -> Result<String, StoreError> {
 - `backup backup.json` 从 `--file` 读取，创建 `backup.json`；源文件必须存在。
 - `restore backup.json` 从备份读取，创建 `--file` 指定的目标；目标必须不存在。
 
-恢复直接读取备份，并要求目标是一个新文件。规则来自上一章的 `copy_snapshot`。
+恢复直接读取备份，并要求目标是一个新文件。规则来自上一章的 `copy_snapshot`。如果先走普通任务的加载流程，恢复目标中的旧数据可能先导致解析失败，反而掩盖了“恢复应创建新目标”的规则，所以这两种操作在前面单独处理。
+
+第一个 `match &cli.command` 只借用命令，未在这里返回的普通命令仍完整保留。第二个匹配再按值取出标题或关键词等字段，把它们用于具体操作。
 
 最后的 `unreachable!()` 对应已经在函数开头返回的两个变体。如果以后调整控制流程，要一起检查这项假设；它不是处理用户输入错误的方式。
 
@@ -303,7 +307,7 @@ Command::Stats => {
 }
 ```
 
-第一个 `match` 的 `_ => {}` 已经让普通命令继续往下执行，不需要修改那里。第二个 `match` 需要显式处理新变体，否则编译器会报告匹配不完整。
+第一个 `match` 的 `_ => {}` 已经让普通命令继续往下执行，不需要修改那里。统计分支只读取已加载的列表，把数量组织成返回字符串，入口收到后才打印；它既不修改完成状态，也不调用保存。第二个 `match` 需要显式处理新变体，否则编译器会报告匹配不完整。
 
 完成前面的演示后，运行 `cargo run -p taskbook-cli -- --file cli-demo/tasks.json stats`，应输出：
 

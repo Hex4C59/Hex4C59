@@ -1,7 +1,7 @@
 +++
 title = "抽象的收益与代价：封装何时降低复杂度"
 date = 2026-10-14T12:00:00+08:00
-lastmod = 2026-10-14
+lastmod = 2026-10-17
 draft = false
 author = "Hex4C59"
 description = "比较直接读取、查询函数和单纯转调，通过版本数据的结构变化，检查一层抽象隐藏了什么、保留了什么依赖，以及新增了什么成本。"
@@ -41,7 +41,7 @@ export const appInfo = {
 
 这些值都是合成数据。`node-demo` 和 `electron-demo` 不代表本机版本，示例也没有加载 Electron。`export` 使其他模块可以导入 `appInfo`，所以调用者能直接访问它的属性。
 
-初始需求只约定关于页文本和诊断对象中的三个字段，不约定两条路径返回同一个对象。后面比较查询方案时，会另外检查返回对象的身份和修改隔离，避免把“字段值相同”误写成“所有行为相同”。
+初始需求只约定关于页文本和诊断对象中的三个字段，不约定两条路径返回同一个对象。后面比较查询方案时，会另外检查两次返回的是不是同一个对象，以及修改返回结果会不会影响内部数据，避免把“字段值相同”误写成“所有行为相同”。
 
 ### 直接读取
 
@@ -87,7 +87,7 @@ export function getAppVersion() {
 }
 ```
 
-这个模块只导出 `getAppVersion`。通过正常的模块导入，调用者不能取得这里的 `appInfo` 绑定。它得到的是一个新组装的对象，字段名为 `app`、`node` 和 `electron`。
+这个模块只导出 `getAppVersion`。通过正常的模块导入，调用者不能直接取得这里的 `appInfo` 对象。它调用查询函数后得到的是一个新组装的对象，字段名为 `app`、`node` 和 `electron`。
 
 两个调用者的相关片段变为：
 
@@ -121,7 +121,7 @@ export function queryVersion() {
 
 调用者改用 `queryVersion()`，得到的仍是 `getAppVersion()` 新建的结果。这个包装没有增加字段选择、输入检查或错误处理；排查查询行为时，又多了一个需要追踪的函数。
 
-对当前案例，我会保留字段组装的位置，省去这层转调。如果应用后来确实需要一个长期稳定的公共入口，而内部查询函数会独立替换，`queryVersion` 就可能承担边界职责。那时还要检查导出路径和实际依赖，确认调用者通过这个入口取得能力。判断这样的短函数时，需要具体说明它负责稳定哪条边界。
+对当前案例，我会保留字段组装的位置，省去这层转调。如果应用后来确实需要一个长期稳定的公共入口，而内部查询函数会独立替换，`queryVersion` 就可能负责维持这个入口：调用者继续使用它，由它转向更换后的内部函数。那时还要检查导出路径和实际调用，确认调用者确实通过这个入口查询。判断这样的短函数时，需要说明内部哪一部分变化后，调用者可以继续按原样使用。
 
 ## 改变内部结构，看看谁必须跟着改
 
@@ -206,7 +206,7 @@ info.runtime.node = "after-freeze";
 console.log(info.runtime.node); // after-freeze
 ```
 
-`const` 限制 `info` 绑定重新赋值。`Object.freeze(info)` 固定的是 `info` 自身的属性；这里并没有递归冻结它所引用的 `runtime`。冻结与模块导出分别影响可写性和访问方式，需要分开核对。示例包的 `freeze.mjs` 还检查了外层写入被拒绝，以及单独冻结 `runtime` 后嵌套写入被拒绝的情况。
+`const` 禁止再次给 `info` 赋值，但不禁止修改对象里的属性。`Object.freeze(info)` 固定的是 `info` 自身的属性；它不会继续冻结嵌套的 `runtime` 对象。冻结决定数据能否被改写，模块导出决定其他文件能通过导入取得什么，需要分开核对。示例包的 `freeze.mjs` 还检查了外层写入被拒绝，以及单独冻结 `runtime` 后嵌套写入被拒绝的情况。
 
 这些语义可对照 ECMAScript 工作稿的[不可变绑定操作](https://tc39.es/ecma262/multipage/executable-code-and-execution-contexts.html#sec-declarative-environment-records-setmutablebinding-n-v-s)、[`Object.freeze`](https://tc39.es/ecma262/multipage/fundamental-objects.html#sec-object.freeze) 与 [`SetIntegrityLevel`](https://tc39.es/ecma262/multipage/abstract-operations.html#sec-setintegritylevel)。截至 2026-10-14，在线页眉标为 ECMAScript 2027 工作稿；这里引用具体算法，并用下述运行环境检查本例行为。
 

@@ -1,11 +1,11 @@
 +++
 title = "什么是 Model Context Protocol？让 AI 连接你的世界"
 date = 2026-03-25T12:00:00+08:00
-lastmod = 2026-03-25T12:00:00+08:00
+lastmod = 2026-10-17
 draft = false
 author = "Hex4C59"
-description = "介绍 Model Context Protocol（MCP）：开放标准如何统一 LLM 与外部系统的连接方式，以及 Connectors、开发者与企业场景的适用性。"
-summary = "把 MCP 比作 LLM 的 USB-C：一端 MCP Client、一端 MCP Server，减少重复集成，让 agent 能读写真实工具与数据。"
+description = "介绍 Model Context Protocol（MCP）如何统一大语言模型与外部工具、数据源的连接方式，解释客户端与服务器的分工，并以 Claude Connectors 展示实际用途。"
+summary = "MCP 像大语言模型的 USB-C：AI 应用通过客户端，连接提供工具与数据的服务器。采用同一协议可减少重复集成，让 agent 访问外部数据并执行操作。"
 tags = ["模型上下文协议", "Claude"]
 categories = ["ai"]
 topics = ["mcp", "model-context-protocol", "claude", "agents", "integrations"]
@@ -25,13 +25,13 @@ source_kind = "translation"
 > - 原文发布：2025-10-31  
 > - 翻译发布：2026-03-25（东八区）
 
-AI 模型能发挥多大作用，取决于你给了它多少上下文。像 [Claude](https://claude.ai/) 这样的 AI 助手可以回答问题、完成许多复杂任务，但如果拿不到需要的数据或工具，能替你做的事就会受限。你通常会在各个标签页之间复制、粘贴上下文——无论是在 Google Drive 里改文档、在 Slack 里回帖，还是在 IDE 里改代码。这个过程慢、费手，还容易漏掉关键信息。
+AI 模型能发挥多大作用，取决于你给了它多少上下文。像 [Claude](https://claude.ai/) 这样的 AI 助手可以回答问题、完成许多复杂任务，但如果拿不到需要的数据或工具，能替你做的事就会受限。你通常会在各个标签页之间复制、粘贴上下文——无论是在 Google Drive 里改文档、在 Slack 里回帖，还是在 IDE 里改代码。这个过程慢，需要反复操作，还容易漏掉关键信息。
 
 **Model Context Protocol（MCP）** 提供了一种开放、可在各类 AI 应用与助手中广泛采用的方案。本文将介绍 MCP 是什么、如何运作、为何重要、适合谁，并给出在 Claude 中的 Connectors 示例，以及如何开始接入或自建 MCP。
 
 ## 什么是 Model Context Protocol（MCP）？
 
-**Model Context Protocol** 是一项开放标准，规定 LLM 如何与外部系统通信。
+**Model Context Protocol**（模型上下文协议）是一项开放标准，规定大语言模型（LLM）如何与外部系统通信。
 
 可以把 MCP 理解为 **面向 LLM 的 USB-C**。正如 USB-C 为手机、笔记本等设备提供统一接口，MCP 为 LLM 连接外部系统提供统一格式。在 USB-C 普及之前，每种设备往往各用各的线：iPhone 用 Lightning，Android 用 micro-USB，相机还有专有接口。随着更多设备采用 USB-C，整个生态里的连接变得顺畅。
 
@@ -39,13 +39,13 @@ MCP 为 AI 集成带来同样的简化。在 MCP 之前，每个应用、每个�
 
 ## MCP 从何而来？
 
-MCP 由 Anthropic 的 David Sorria Para 与 Justin Spahr-Summers 创建。起因是 David 在 Claude Desktop 与 IDE 之间反复拷贝代码感到厌烦。他意识到这是典型的 **M×N 问题**（多种应用 × 多种集成），于是向 Justin 提议做一套协议来解决。他们参考了广泛使用的 Language Server Protocol 进行设计，并于 2024 年 11 月在 Anthropic 支持下将其开源，以便整个 AI 生态都能受益。
+MCP 由 Anthropic 的 David Sorria Para 与 Justin Spahr-Summers 创建。起因是 David 在 Claude Desktop 与 IDE 之间反复拷贝代码感到厌烦。他意识到这是典型的 **M×N 问题**（多种 AI 应用都要分别对接多种外部工具），于是向 Justin 提议做一套协议来解决。他们参考了广泛使用的语言服务器协议（Language Server Protocol）进行设计，并于 2024 年 11 月在 Anthropic 支持下将其开源，以便整个 AI 生态都能受益。
 
 ## MCP 如何工作？
 
-MCP 采用 **双边** 模型：Claude 等 AI agent 与聊天机器人实现 **MCP Client**，从而连接 Notion、Canva、Figma 等通过 **MCP Server** 暴露工具与数据的应用。
+MCP 采用**客户端与服务器两端协作**的模型：Claude 等 AI agent 与聊天机器人实现 **MCP Client（客户端）**；Notion、Canva、Figma 等应用通过 **MCP Server（服务器）** 提供工具与数据，供客户端连接和调用。
 
-实现 **MCP Client** 后，AI agent 与聊天机器人可以接入社区构建的成千上万台 MCP Server，以直接路径扩展能力。实现 **MCP Server** 后，公司与开发者可以让产品更容易被 AI 调用，开辟新的价值场景。
+实现 **MCP Client** 后，AI agent 与聊天机器人可以接入社区构建的成千上万个 MCP Server，直接调用它们提供的工具与数据，扩展自身能力。实现 **MCP Server** 后，公司与开发者可以让产品更容易被 AI 调用，开辟新的价值场景。
 
 MCP 是开源的，任何人都可以实现 Server 或 Client。
 
@@ -63,7 +63,7 @@ MCP 让 LLM 不局限于「聊天」，而能执行真实世界任务：读完�
 
 **任何人都可以构建与分享** — 作为开放标准，开发者或公司发布的 MCP server 可与任意 MCP client 互通。这种开放性催生了大量社区 server，加快了 AI 助手可用工具与应用的丰富度。
 
-**让软件从设计上就便于 AI 使用** — 传统软件主要为人类和网页界面而造。MCP 提供面向 AI 交互的并行接口，使应用能真正 **AI-native**，从而带来 AI 模型与人们日常工具之间更好、更可靠的集成。
+**让软件从设计上就便于 AI 使用** — 传统软件主要为人类和网页界面而造。MCP 提供面向 AI 交互的并行接口，使应用能真正做到 **AI 原生（AI-native）**，从而带来 AI 模型与人们日常工具之间更好、更可靠的集成。
 
 ### Agent 的基础协议
 
@@ -77,7 +77,7 @@ MCP 为 AI agent 访问任意数量的服务与工具提供基础设施，支撑
 
 开发者只需遵循同一套标准，即可把外部产品接到你们的 AI 应用与 agent 上。这能简化集成建设、增加可连接产品数量，并提升生态里连接方式的整体质量与安全。
 
-在搭一个要接很多应用的 agent？还是在做一个要接很多 agent 的应用？MCP 让你进入兼容工具生态，并以更轻量的方式完成集成。
+在搭一个要接很多应用的 agent？还是在做一个要接很多 agent 的应用？MCP 让你进入兼容工具生态，并减少完成集成所需的工作。
 
 ### 面向企业：组织内安全、可扩展的 AI 连接
 
@@ -99,7 +99,7 @@ Canva Connector 让 Claude 直接在 Canva 里生成新设计。通过 MCP，Cla
 
 ### Claude 中的 Notion 与 Linear
 
-通过 Notion 与 Linear Connectors，Claude 可以读取你在 Notion 中的页面，并据此更新 Linear 中的工单。这里 MCP 把非结构化上下文顺畅转入另一套项目管理里的结构化工单。
+通过 Notion 与 Linear Connectors，Claude 可以读取你在 Notion 中的页面，并据此更新 Linear 中的工单。这里，Claude 通过 MCP 连接，把 Notion 页面的非结构化资料整理到 Linear 的结构化工单中。
 
 ### Claude Code 中的 Figma
 
@@ -117,7 +117,7 @@ Claude Connectors 包括但不限于：
 - **Sentry**：错误追踪  
 - ……还有更多  
 
-每个 Connector 通常只需数秒即可完成配置，进入 Claude 的工作上下文。在 Claude 之外，开源生态里还有 [MCP Registry](https://modelcontextprotocol.io/) 上的大量 MCP server。
+每个 Connector 通常只需数秒即可完成配置，让 Claude 在工作时调用它连接的应用。在 Claude 之外，开源生态里还有 [MCP Registry](https://modelcontextprotocol.io/) 上的大量 MCP server。
 
 ## 开始探索 MCP
 
@@ -149,8 +149,10 @@ MCP 开源，任何人都可以采用它来把 AI 接到应用上。[Model Conte
 
 ### MCP 的安全模型是怎样的？
 
-每个 server 会请求具体权限以允许 Claude 访问。你可以批准或拒绝访问，并随时撤销授权。
+每个服务器会请求具体权限，让 Claude 访问相应内容。你可以批准或拒绝访问，并随时撤销授权。
 
 ### MCP 性能如何？
 
 MCP 使用高效的传输方式：本地 server 可用 stdio，开销很小；远端 server 可用 SSE（Server-Sent Events）与 Streamable HTTP 维持长连接。响应流式传输有助于在大数据操作上避免超时。协议还支持分页、过滤与部分响应，以便高效处理大数据集。
+
+译者注：stdio 在这里指通过进程的标准输入和标准输出传递消息；SSE 则是服务器向客户端持续发送事件的一种方式。

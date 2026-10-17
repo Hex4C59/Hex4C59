@@ -20,9 +20,9 @@ ShowToc = true
 
 [第五篇](/articles/deepseek-harness-cordis-context-services/)解释了 `ctx.fs` 在运行时怎样沿依赖和服务域找到实现。现在换到编译器这一侧：Cordis 的 Context 类没有亲自声明每个 dsh 服务，编辑器为什么仍能补全 `ctx.fs`？文件工具里一行没有导入任何名字的 `import type {}`，又在做什么？
 
-**声明合并让编译器认识字段，服务注册让具体运行环境取得实现。** 两条路径通过 `fs` 这个约定的名称接在一起，但并不互相代替。编译器接受 `ctx.fs`，不代表这次挂载已经取得文件系统；运行时有可用服务，也不代表某个独立 TypeScript 工程已经包含它的声明。
+**声明合并让编译器认识字段，服务注册让具体运行环境取得实现。** 声明合并是在已有类型上补充成员；服务注册则把实际对象交给运行中的 Cordis。两条路径通过 `fs` 这个约定的名称接在一起，但并不互相代替。编译器接受 `ctx.fs`，不代表这次挂载已经取得文件系统；运行时有可用服务，也不代表某个独立 TypeScript 工程已经包含它的声明。
 
-本文面向能阅读 TypeScript、已了解 Cordis 服务和 inject 的开发者。继续沿文件系统接口、工具消费方和本地提供方追踪，再看 Host/Client 的类型检查边界和包发布入口。这里的 Program 指 TypeScript 为一次检查加载的源文件、声明文件及其依赖集合，不是 dsh 的插件树。
+本文面向能阅读 TypeScript、已了解 Cordis 服务和 inject 的开发者。继续沿文件系统接口、工具消费方和本地提供方追踪，再看 Host（后端）与 Client（浏览器端）的类型检查边界和包发布入口。这里的 Program 指 TypeScript 为一次检查加载的源文件、声明文件及其依赖集合，不是 dsh 的插件树。声明文件只描述类型，供编译器检查接口；它与运行时执行的 JavaScript 文件承担不同职责。
 
 本文分析 **DeepSeek Harness `0.2.1-alpha.2`**，对应[固定源码快照](https://github.com/deepseek-ai/deepseek-harness/tree/d743267388641bc76f17c45ce8b4c231aed1d32c)，核对与补充实验日期为 2026-10-17。该版本内的 [Cordis](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/package.json)为 `4.0.5-alpha.1`，[Cosmokit](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cosmokit/package.json)为 `1.8.6-alpha.1`。[锁文件](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/pnpm-lock.yaml#L22670)将 TypeScript 固定到 `6.0.3`，两套实验均使用这个版本。
 
@@ -30,7 +30,7 @@ ShowToc = true
 
 ## `fs` 字段来自接口包的声明合并
 
-Cordis 在 [`context.ts`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/context.ts#L16)同时导出了 `interface Context` 和同名的 `class Context`。前者描述可访问的类型形状，后者提供构造函数与运行实现；TypeScript 允许同名接口补充类的实例类型。Cordis 的[包入口](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/index.ts#L2)再将它们导出。
+Cordis 在 [`context.ts`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/context.ts#L16)同时导出了 `interface Context` 和同名的 `class Context`。前者描述实例有哪些属性和方法，后者提供构造函数与运行实现；TypeScript 允许同名接口为类的实例类型补充成员。Cordis 的[包入口](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/index.ts#L2)再将它们导出。
 
 文件系统接口包没有修改 Cordis 源文件，而是在自己的 [`fs/src/index.ts`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/fs/fs/src/index.ts#L45)中扩展模块。下面只保留 Context 成员，省略同一块中的 Events 增强：
 
@@ -44,11 +44,11 @@ declare module '@deepseek-ai/cordis' {
 
 它表达的是：**当这份声明进入当前 Program 时，Cordis 导出的 Context 类型具有一个 `FileSystem` 类型的 `fs` 字段。**
 
-这份文件顶部已经有 import 和 export，本身就是模块。这里的 `declare module` 属于模块增强，也就是补充已经解析到的模块导出。单独复制几行到一个没有顶层 import/export 的脚本文件，不能直接假定仍有相同的解析含义。
+这份文件顶部已经有 import 和 export，本身就是模块。这里的 `declare module` 因而属于模块增强：编译器先找到指定模块，再给它已有的导出类型补充成员。若把这几行单独复制到一个没有顶层 import/export 的脚本文件，就不能假定编译器仍把它理解为对已有模块的补充。
 
 这个动作不会给 `Context.prototype` 写入属性，不会创建 FileSystem 实例，也不会执行 `provide()`。它为类型检查提供信息；运行对象仍由第五篇追踪的代理、服务存储和 Fiber 管理。
 
-同一处声明还扩展了 [`Events`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/fs/fs/src/index.ts#L50)，登记 `fs/write-intent`、`fs/edit-intent` 和 `fs/observed` 的参数及返回类型。它们补充的是事件 API 的静态词汇，事件究竟按什么顺序执行，仍要看调度实现；下一篇再展开。
+同一处声明还扩展了 [`Events`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/fs/fs/src/index.ts#L50)，登记 `fs/write-intent`、`fs/edit-intent` 和 `fs/observed` 的参数及返回类型。这些声明告诉编译器允许使用哪些事件名称、应传入什么参数，以及返回什么类型。事件究竟按什么顺序执行，仍要看调度实现；下一篇再展开。
 
 ### 字段写成必需，不表示所有 Context 实例都已经有服务
 
@@ -69,7 +69,7 @@ import type {} from '@deepseek-ai/dsh-fs'
 
 第一行取得 Context 类型。第二行没有给本文件增加一个可引用的名字，却让编译器解析文件系统包的类型入口，把其中的模块增强纳入当前 Program。这样，本文件便可以按文件系统接口使用 `ctx.fs`。
 
-它不是 JavaScript 的副作用导入。`import type` 在 JavaScript 输出中会被擦除，因此这条语句不会要求运行进程为它求值文件系统模块，更不会安装本地文件系统提供者。
+它不是 JavaScript 的副作用导入。`import type` 在 JavaScript 输出中会被擦除，因此运行进程不会因为这行语句去执行文件系统模块的顶层代码，更不会安装本地文件系统提供者。
 
 还有一个阅读源码时很容易误判的情况：删除第二行后，本地检查不一定立即报错。Program 中的其他文件、另一个类型导入或聚合入口，可能已经把同一份增强加载进来。声明的可见范围是当前 Program，并非“只对写了这行 import 的文件生效”。
 
@@ -113,7 +113,7 @@ Loader 加载相应插件后，Cordis 在执行这次 Fiber 时，对类入口�
 | tool-fs 的 inject | `'fs'` | 声明消费者激活所需的能力 |
 | 具体提供方与配置 | LocalFileSystem、filesystem 条目 | 决定装配哪份实现 |
 
-这些名称要保持对应，但对应关系并不是由一处声明自动生成的。源码审查需要把三条 `fs` 约定和实际装配位置一起核对。
+这几处名称要保持对应，但编译器不会从某一处声明自动生成另外几处。源码审查需要核对三条 `fs` 约定是否一致，再确认应用确实挂载了相应提供方。
 
 ## 把声明可见与实现可用分开观察
 
@@ -136,9 +136,9 @@ get<K extends string & keyof this>(name: K, strict?: boolean): undefined | this[
 get(name: string, strict?: boolean): any
 ```
 
-在 FileSystem 增强已可见、参数保留为已知的 `'fs'` 字面量时，第一个重载给出 `FileSystem | undefined`。这使消费方有机会在可选能力路径中处理缺失。直接属性的 `FileSystem` 类型，并没有自动变成同样的探测 API。
+在 FileSystem 增强已可见、参数保留为已知的 `'fs'` 字面量时，也就是编译器确定参数恰好是这个字符串时，第一个重载给出 `FileSystem | undefined`。返回类型明确包含“没有找到服务”的可能，提醒消费方处理缺失。直接属性的 `FileSystem` 类型则没有表达这层可能性，不能当作同样的探测 API。
 
-第二个重载则允许类型表面之外的字符串名称，并返回 `any`。它是开放扩展的入口，也削弱了静态检查：一个拼错的服务名可能仍被接受，所得值不会继续受到具体接口的约束。
+第二个重载允许传入 Context 类型尚未声明的字符串名称，并返回 `any`。它为扩展服务留下入口，也削弱了静态检查：即使服务名拼错，调用也可能匹配这个重载；返回值可以被当作任意类型使用，编译器不再按具体服务接口检查后续操作。
 
 [`provide()`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/reflect.ts#L44)也有类似的宽松重载。因此，不能把“有一个按 Context 字段关联值类型的重载”理解为“所有错误注册都会被编译器拒绝”。文末实验保留了这组重载的简化形状，验证错误值仍可匹配宽松入口。
 
@@ -148,7 +148,7 @@ get(name: string, strict?: boolean): any
 
 既然 Context 已经知道有哪些服务，写错 `inject` 中的名字是不是也会被拒绝？要继续看依赖声明的实际签名。
 
-在 [`registry.ts`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/registry.ts#L19) 中，`Inject<M = Dict>` 允许键数组或键值对象；插件元数据的 [`inject?: Inject`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/registry.ts#L106)没有把 M 收窄成 Context 的字段。下面节选自真实 Cordis 实验，两段代码都能通过检查：
+在 [`registry.ts`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/registry.ts#L19) 中，`Inject<M = Dict>` 允许键数组或键值对象。这里的 M 决定用哪份对象类型限制键名，默认采用通用字典；插件元数据的 [`inject?: Inject`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/src/registry.ts#L106)并没有指定只能使用 Context 已声明的字段。因此，依赖名称拼错也可能通过编译。下面节选自真实 Cordis 实验，两段代码都能通过检查：
 
 ```ts
 export const wrongName: Plugin.Object<void> = {
@@ -178,7 +178,7 @@ export class TypedConsumer {}
 
 声明合并在当前 Program 中起作用。若把两个运行世界的声明无差别放进同一次检查，它们对同名字段的不同定义就可能相遇。
 
-dsh 的[根 tsconfig](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/tsconfig.json)是 solution 文件：`files` 为空，通过 references 指向 Host 和 Client 两个检查单元。solution 用来组织多个项目，并不把所有源文件自动拼成一个共同的 Context 类型世界。
+dsh 的[根 tsconfig](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/tsconfig.json)是 solution 文件：`files` 为空，通过 references 指向 Host 和 Client 两个检查单元。这里的 solution 相当于项目索引，告诉编译器要检查哪几个项目；它不会把所有源文件放进同一个 Program，也不会自动合并两边对 Context 的全部声明。
 
 这项拆分在源码中有具体对应：
 
@@ -198,7 +198,7 @@ dsh 的[根 tsconfig](https://github.com/deepseek-ai/deepseek-harness/blob/d7432
 
 基础配置使用 `moduleResolution: bundler`、严格检查、声明输出、相对导入扩展名重写等选项。文件系统包自己的 [`tsconfig.json`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/fs/fs/tsconfig.json)将源码目录设为 `src`，输出目录设为 `lib/types`，并列出 Cordis 等项目引用。
 
-项目引用负责组织编译依赖，`paths` 负责源码层的模块定位。它们和 pnpm 的包依赖声明、运行时插件装配分别工作，不能互相当作替代证据。比如 manifest 中列了 peer dependency，不等于消费者的 Program 必然已经导入了那份模块增强；列出文件系统接口依赖，也不等于安装并挂载了本地后端。
+项目引用负责组织编译依赖，`paths` 负责告诉编译器到哪里找源码模块。它们和 pnpm 的包依赖声明、运行时插件装配分别工作，不能互相当作替代证据。比如 manifest 中的 peer dependency 要求使用方提供兼容包，却不等于消费者的 Program 已经加载那份模块增强；列出文件系统接口依赖，也不等于安装并挂载了本地后端。
 
 ### 发布入口指向生成的声明与 JavaScript
 
@@ -245,7 +245,7 @@ import type { Context } from './runtime.js';
 export declare function readThroughContext(ctx: Context): string;
 ```
 
-函数的公开签名只需要 Context 与 string，输出没有保留 `fs-contract` 这条类型入口。模块增强仍存在于 `fs-contract.d.ts` 自己的文件中，但一个外部 Program 只加载上述消费函数声明和 Context 基础声明时，不会因此自动取得这份增强。
+声明输出省略了函数体，只留下参数和返回值类型；这份公开签名只需要 Context 与 string，因此输出没有保留 `fs-contract` 这条类型入口。模块增强仍存在于 `fs-contract.d.ts` 自己的文件中，但一个外部 Program 只加载上述消费函数声明和 Context 基础声明时，不会因此自动取得这份增强。
 
 实验进一步编译了两个外部消费方：未引入 contract 的版本访问 `ctx.fs` 得到 `TS2339`，显式引入后通过。这里的结论是**需要核对最终声明依赖路径**，不是“所有类型导入都会从 `.d.ts` 消失”，也不是断言真实 dsh 包必然输出完全相同的内容。
 
@@ -262,7 +262,7 @@ npm run verify
 
 实验中的 Context 是一个空类，FileSystem 是仅含 `readText()` 的示意接口。`mountFs()` 用普通对象赋值给一个实例增加能力；它不是 Cordis 的 `provide()` 实现，不负责注入、隔离或资源清理。
 
-脚本对以下条件分别检查，负例按预期诊断通过，不是把报错忽略掉：
+脚本分别检查以下条件。对预期会编译失败的反例，它会核对编译器是否给出对应诊断；只有报错符合预期，这项检查才算通过：
 
 | 检查 | 实际观察 |
 |---|---|
@@ -334,9 +334,9 @@ export class MemoryFiles extends BlogFiles {
 
 这套实验还把“源码里类型可见”推进到一次实际的包消费。构建对象是快照中的真实 Cordis、Cosmokit，以及两个教学包：`@dsh-blog/files` 提供示意能力，`@dsh-blog/reader` 导出读取函数。
 
-Cordis/Cosmokit 使用原始 tsconfig 和项目引用完成 `tsc -b`。随后，针对这两个包的 tsdown 配置读取已发出的 JavaScript，生成 `lib/index.js`，保留 tsc 输出的 `lib/types/index.d.ts`。这沿用了前面解释的构建分工，但没有运行根构建中的 Typert 插件或完整 Host/Client 工程。
+Cordis/Cosmokit 使用原始 tsconfig 和项目引用完成 `tsc -b`，先由 TypeScript 编译器生成 JavaScript 和类型声明。随后，打包器 tsdown 针对这两个包读取已生成的 JavaScript，生成 `lib/index.js`，保留 tsc 输出的 `lib/types/index.d.ts`。这沿用了前面解释的构建分工，但没有运行根构建中的 Typert 插件或完整 Host/Client 工程。
 
-打包前，脚本只在临时副本中把 manifest 的 `workspace:` 依赖替换成快照中的对应版本，保留原有 main、types、exports 和 files。两个真实包、两个教学包以及 standard-schema 共生成五个本地 tarball，再显式安装进一个独立消费工程。该工程没有指向 dsh 源码的 `paths`，类型检查使用 `skipLibCheck: false`。
+打包前，脚本只在临时副本中把 manifest 的 `workspace:` 依赖替换成快照中的对应版本，保留原有 main、types、exports 和 files。两个真实包、两个教学包以及 standard-schema 共生成五个本地包归档（tarball），再逐个安装进一个独立消费工程。该工程没有指向 dsh 源码的 `paths`，类型检查使用 `skipLibCheck: false`。
 
 教学 reader 的源码仍然有空类型导入：
 
