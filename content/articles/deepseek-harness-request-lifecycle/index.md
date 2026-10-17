@@ -1,7 +1,7 @@
 +++
 title = "DeepSeek Harness 源码解析（二）：一次用户请求如何经过整个 dsh 系统"
 date = 2026-10-14T10:00:00+08:00
-lastmod = 2026-10-14
+lastmod = 2026-10-17
 draft = false
 author = "Hex4C59"
 description = "沿固定版本的源码追踪一次 dsh 请求：从浏览器提交、Host 校验和 Agent 入队，到模型调用、工具执行、会话日志及界面更新，配合可暂停和单步推进的数据流演示。"
@@ -19,7 +19,7 @@ ShowToc = true
 disableComment = true
 +++
 
-> 本文依据固定版本的源码解析请求链路。源码为 `d743267388641bc76f17c45ce8b4c231aed1d32c`，对应根包版本 `0.2.1-alpha.2`。实现分析依据源码和已有测试定义；动画采用教学时序与演示数据。本轮没有运行 dsh 行为测试或真实模型请求。
+> 本文依据 [DeepSeek Harness `0.2.1-alpha.2`](https://github.com/deepseek-ai/deepseek-harness/tree/d743267388641bc76f17c45ce8b4c231aed1d32c) 的源码解析请求链路。实现分析依据源码和已有测试定义；动画采用教学时序与演示数据。本轮没有运行 dsh 行为测试或真实模型请求。
 
 ## 从“发送”按钮开始
 

@@ -1,7 +1,7 @@
 +++
 title = "DeepSeek Harness 源码解析（三）：源码目录、包依赖与文档地图"
 date = 2026-10-14T21:31:52+08:00
-lastmod = 2026-10-14
+lastmod = 2026-10-17
 draft = false
 author = "Hex4C59"
 description = "沿 read 工具寻找真正的文件读取实现，区分 DeepSeek Harness 的目录归属、包依赖与运行时服务关系，建立从文档、manifest、插件入口到具体实现的源码阅读路线。"
@@ -22,7 +22,7 @@ ShowToc = true
 
 在 DeepSeek Harness 中，同一项能力可能分布在接口包、实现包、工具包和装配配置里。**找到一个调用点以后，需要继续追踪服务定义、提供者和装配关系**，才能确认这条路径实际执行了什么。目录名和依赖图分别提供一部分线索。
 
-本文以文件读取为主线，建立三张用途不同的地图：代码归属在哪里、包之间依赖什么、运行时调用哪个服务。读者需要能阅读 TypeScript 的导入、函数和类继承，知道 `package.json` 的基本作用；不必先启动 dsh。文中的源码基线与前两篇一致，为固定 commit [`d7432673`](https://github.com/deepseek-ai/deepseek-harness/tree/d743267388641bc76f17c45ce8b4c231aed1d32c)，本次核对日期为 2026-10-14。
+本文以文件读取为主线，建立三张用途不同的地图：代码归属在哪里、包之间依赖什么、运行时调用哪个服务。读者需要能阅读 TypeScript 的导入、函数和类继承，知道 `package.json` 的基本作用；不必先启动 dsh。本文与前两篇均分析 [DeepSeek Harness `0.2.1-alpha.2`](https://github.com/deepseek-ai/deepseek-harness/tree/d743267388641bc76f17c45ce8b4c231aed1d32c)，本次核对日期为 2026-10-14。
 
 ## 先分清三张地图回答的问题
 
@@ -211,7 +211,7 @@ rg -n 'peerDependencies|startsWith' scripts/package-graph.ts
 
 下一篇将专门研究 CLI、Web、Desktop 与 SDK 的入口和组合关系：应用怎样选择 profile，bundle 层如何叠加，后续 patch 又怎样改变插件树。本篇到这里保留一个明确条件：源码里存在某个提供者，还不足以说明某次启动使用了它。
 
-本次分析以 commit `d7432673` 的源码与文档为依据，完成只读检索和引用核对。没有运行 dsh、真实模型请求或项目行为测试，也没有验证跨平台隔离效果；上面的读取过程是静态分析，不是运行轨迹。
+本次分析以 [DeepSeek Harness `0.2.1-alpha.2`](https://github.com/deepseek-ai/deepseek-harness/tree/d743267388641bc76f17c45ce8b4c231aed1d32c) 的源码与文档为依据，完成只读检索和引用核对。没有运行 dsh、真实模型请求或项目行为测试，也没有验证跨平台隔离效果；上面的读取过程是静态分析，不是运行轨迹。
 
 ## 延伸阅读
 

@@ -1,6 +1,7 @@
 +++
 title = "DeepSeek Harness 源码解析（七）：五种事件派发怎样执行监听器"
 date = 2026-10-15
+lastmod = 2026-10-17
 draft = false
 author = "Hex4C59"
 description = "沿 Cordis EventsService 追踪 emit、parallel、serial、bail 与 waterfall 的监听器选择、执行顺序、返回值、异常及清理，结合固定源码聚焦实验解释 fs 与 Agent 事件的实际用法。"
@@ -25,7 +26,7 @@ ShowToc = true
 
 本文面向了解 Promise、Context 和插件依赖的开发者。先追踪监听器如何进入一次派发，再分别看执行与失败路径，最后回到文件工具、Agent 和事件作用域。以下讨论普通字符串业务事件；内部更新 Hook 和完整 Fiber 清理算法留给后续章节。
 
-源码固定为 [`d743267388641bc76f17c45ce8b4c231aed1d32c`](https://github.com/deepseek-ai/deepseek-harness/tree/d743267388641bc76f17c45ce8b4c231aed1d32c)，核对日期为 2026-10-15。[dsh 根包](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/package.json)版本为 `0.2.1-alpha.2`，[Cordis manifest](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/package.json)为 `4.0.5-alpha.1`。本文另用 TypeScript 6.0.3 转译固定快照的 Cordis/cosmokit 源文件，在 Node `v25.9.0` 上完成 18 组聚焦检查。
+本文分析 [DeepSeek Harness `0.2.1-alpha.2`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/package.json)，核对日期为 2026-10-15。[Cordis manifest](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/package.json)为 `4.0.5-alpha.1`。本文另用 TypeScript 6.0.3 转译固定快照的 Cordis/cosmokit 源文件，在 Node `v25.9.0` 上完成 18 组聚焦检查。
 
 这些检查执行了原有事件服务和 Context，实现方法没有被替换为自写模拟器；转译不做完整语义类型检查。它们不等于 dsh 全量构建、所有插件组合、进程故障或模型请求已经验证。下载包和复现范围见文末。
 

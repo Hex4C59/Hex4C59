@@ -1,7 +1,7 @@
 +++
 title = "DeepSeek Harness 源码解析（四）：CLI、Web、Desktop 与 SDK 如何组装同一套运行时"
 date = 2026-10-14
-lastmod = 2026-10-14
+lastmod = 2026-10-17
 draft = false
 author = "Hex4C59"
 description = "沿 runCli、runProfile 与 Cordis Loader 追踪 DeepSeek Harness 的配置创建、分层覆盖、启动审查与退出，比较 Web、headless、Desktop 和 SDK 的任务通道，并解释 SDK 结果收集与 minimal 组合。"
@@ -26,7 +26,7 @@ ShowToc = true
 
 本文面向能阅读 TypeScript 导入、函数和 YAML 配置的开发者，沿“谁启动、装哪些插件、输入从哪里进入、何时就绪和退出”追踪入口。Agent 内部的 Turn、Step 和工具循环见[第二篇](/articles/deepseek-harness-request-lifecycle/)；这里着重解释循环外面如何形成一个可使用的应用。
 
-源码基线仍为 [`d743267388641bc76f17c45ce8b4c231aed1d32c`](https://github.com/deepseek-ai/deepseek-harness/tree/d743267388641bc76f17c45ce8b4c231aed1d32c)，根包版本为 `0.2.1-alpha.2`，核对日期为 2026-10-14。本文依据该版本的实现和配置作静态分析，没有启动 dsh、发送模型请求或验证安装后的产品行为。
+本文分析 [DeepSeek Harness `0.2.1-alpha.2`](https://github.com/deepseek-ai/deepseek-harness/tree/d743267388641bc76f17c45ce8b4c231aed1d32c)，核对日期为 2026-10-14。本文依据该版本的实现和配置作静态分析，没有启动 dsh、发送模型请求或验证安装后的产品行为。
 
 ## 先把启动通道与任务通道分开
 

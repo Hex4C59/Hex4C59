@@ -1,6 +1,7 @@
 +++
 title = "DeepSeek Harness 源码解析（八）：effect、Fiber 与 Scope 怎样清理资源"
 date = 2026-10-15
+lastmod = 2026-10-17
 draft = false
 author = "Hex4C59"
 description = "沿固定源码追踪 Cordis effect 与 Fiber 的资源所有权、逆序与并发清理、异步初始化和失败，再解释 dsh Scope 的双重释放入口与 Agent Loop 的有序卸载。"
@@ -23,7 +24,7 @@ Cordis 的一个细节很容易影响判断：**同一个 effect 内的清理函
 
 本文从这个区别出发，追踪资源归谁持有、什么时候开始撤销、调用方等到什么，以及失败后还有哪些动作能继续。读者需要了解 Promise、生成器和前几篇的 Context/插件依赖。配置表达式、Loader 和热重载的完整控制流程留给下一篇。
 
-源码固定为 [d743267388641bc76f17c45ce8b4c231aed1d32c](https://github.com/deepseek-ai/deepseek-harness/tree/d743267388641bc76f17c45ce8b4c231aed1d32c)，核对日期为 2026-10-15。[dsh 根包](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/package.json)为 `0.2.1-alpha.2`，[vendored Cordis manifest](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/package.json)为 `4.0.5-alpha.1`。文末实验用 TypeScript 6.0.3 转译固定快照中的 Cordis、cosmokit 和 dsh-scope，在 macOS 27.0.1 arm64、Node `v25.9.0` 上运行了 22 组聚焦检查；dsh 业务调用的连接关系另由源码核对。
+本文分析 [DeepSeek Harness `0.2.1-alpha.2`](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/package.json)，核对日期为 2026-10-15。[vendored Cordis manifest](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/package.json)为 `4.0.5-alpha.1`。文末实验用 TypeScript 6.0.3 转译固定快照中的 Cordis、cosmokit 和 dsh-scope，在 macOS 27.0.1 arm64、Node `v25.9.0` 上运行了 22 组聚焦检查；dsh 业务调用的连接关系另由源码核对。
 
 ## 先分清 Context、Fiber、effect 和 Scope
 

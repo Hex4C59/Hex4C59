@@ -1,6 +1,7 @@
 +++
 title = "DeepSeek Harness 源码解析（十）：Agent、AgentHandle 与实例所有权"
 date = 2026-10-15
+lastmod = 2026-10-17
 draft = false
 author = "Hex4C59"
 description = "从 AgentRegistry 追到真实 AgentLoop，解释 Agent 与销毁 handle 的区别、未发布 setup、创建公告、调用方与工厂所有权，以及取消、回滚和持久化句柄的清理边界。"
@@ -23,7 +24,7 @@ ShowToc = true
 
 [第九篇](/articles/deepseek-harness-loader-config-hmr/)讲过配置怎样改变插件实例。这篇继续进入 Agent 层，面向已经认识 Context、Fiber 和 effect、希望读懂 dsh 创建与清理代码的开发者。这里先讲实例怎样建立、何时可见、谁负责销毁；Turn、Step 和模型请求循环留给后面的文章。
 
-本文固定源码 **`d743267388641bc76f17c45ce8b4c231aed1d32c`**，核对日期 **2026-10-15**，Agent 与 AgentLoop 包版本均为 `0.2.1-alpha.2`。文末 36 组实验运行了真实 AgentRegistry、AgentLoop、Session 等实现；没有调用模型，也没有执行真实磁盘持久化或跨进程协议。[Agent manifest](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent/package.json) · [AgentLoop manifest](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent-loop/package.json)
+本文分析 [DeepSeek Harness `0.2.1-alpha.2`](https://github.com/deepseek-ai/deepseek-harness/tree/d743267388641bc76f17c45ce8b4c231aed1d32c)，核对日期为 **2026-10-15**。Agent 与 AgentLoop 包版本均为 `0.2.1-alpha.2`。文末 36 组实验运行了真实 AgentRegistry、AgentLoop、Session 等实现；没有调用模型，也没有执行真实磁盘持久化或跨进程协议。[Agent manifest](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent/package.json) · [AgentLoop manifest](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/packages/core/agent-loop/package.json)
 
 ## 先分清四个对象
 

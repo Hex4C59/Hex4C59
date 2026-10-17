@@ -1,6 +1,7 @@
 +++
 title = "DeepSeek Harness 源码解析（九）：Loader 怎样把配置变成运行中的插件"
 date = 2026-10-15
+lastmod = 2026-10-17
 draft = false
 author = "Hex4C59"
 description = "沿着 EntryTree、配置表达式、volatile 引用、服务隔离与 dsh HMR，追踪一次配置变化怎样影响插件实例，并用 28 组固定源码实验核对完成边界。"
@@ -23,7 +24,7 @@ ShowToc = true
 
 Fiber 是一次插件挂载的实例与生命周期边界，持有这次挂载登记的资源。这篇面向读过前面运行时文章、能阅读 TypeScript 的读者，追踪“谁决定让这些资源重新创建”。读完后，应当能判断一次配置编辑会保留哪个对象、重做哪段初始化，以及需要等待哪个完成信号。
 
-本文固定在 **`d743267388641bc76f17c45ce8b4c231aed1d32c`**，核对日期为 **2026-10-15**。Loader 的包版本为 `1.0.6-alpha.1`；Cordis 为 `4.0.5-alpha.1`。正文以该提交的本地源码为依据，文末附 28 组可重跑实验。文件监听、真实 Node 模块缓存替换和完整应用启动没有在这次实验中运行，对应部分明确按源码分析。[Loader manifest](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/loader/package.json) · [Cordis manifest](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/package.json)
+本文分析 [DeepSeek Harness `0.2.1-alpha.2`](https://github.com/deepseek-ai/deepseek-harness/tree/d743267388641bc76f17c45ce8b4c231aed1d32c)，核对日期为 **2026-10-15**。Loader 的包版本为 `1.0.6-alpha.1`；Cordis 为 `4.0.5-alpha.1`。正文以该版本的本地源码为依据，文末附 28 组可重跑实验。文件监听、真实 Node 模块缓存替换和完整应用启动没有在这次实验中运行，对应部分明确按源码分析。[Loader manifest](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/loader/package.json) · [Cordis manifest](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/package.json)
 
 ## 先看同一个修改怎样走向不同结果
 

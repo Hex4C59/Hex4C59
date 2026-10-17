@@ -1,6 +1,7 @@
 +++
 title = "DeepSeek Harness 源码解析（五）：Context、Service 与依赖注入如何协作"
 date = 2026-10-15
+lastmod = 2026-10-17
 draft = false
 author = "Hex4C59"
 description = "沿 ctx.fs 追踪 DeepSeek Harness 的 Cordis 服务解析，解释 Context 代理、Service 注册、inject 激活条件、服务域隔离和调用方追踪，并区分 Cordis 服务域与 Agent 注册 scope。"
@@ -25,7 +26,7 @@ ShowToc = true
 
 本文面向能阅读 TypeScript、了解 dsh 应用组合的开发者。主线是 `tool-fs` 与 `fs`；随后解释子 Context、服务隔离与 Agent scope。这里的 Context 是插件运行环境，不是提交给模型的上下文窗口。类型声明合并、事件分派和完整 effect 卸载算法分别留给后续文章。
 
-分析继续使用固定 commit [`d743267388641bc76f17c45ce8b4c231aed1d32c`](https://github.com/deepseek-ai/deepseek-harness/tree/d743267388641bc76f17c45ce8b4c231aed1d32c)，核对日期为 2026-10-15。dsh 根包版本是 `0.2.1-alpha.2`，该快照的 [`@deepseek-ai/cordis` manifest](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/package.json)声明 `4.0.5-alpha.1`。[vendor 记录](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/README.md)另列上游来源为 `4.0.0-rc.7`，并记录本地修改。本文以快照中的实现为准，不把上游文档直接当作该版本行为。
+本文继续分析 [DeepSeek Harness `0.2.1-alpha.2`](https://github.com/deepseek-ai/deepseek-harness/tree/d743267388641bc76f17c45ce8b4c231aed1d32c)，核对日期为 2026-10-15。该版本的 [`@deepseek-ai/cordis` manifest](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/cordis/package.json)声明 `4.0.5-alpha.1`。[vendor 记录](https://github.com/deepseek-ai/deepseek-harness/blob/d743267388641bc76f17c45ce8b4c231aed1d32c/vendor/README.md)另列上游来源为 `4.0.0-rc.7`，并记录本地修改。本文以快照中的实现为准，不把上游文档直接当作该版本行为。
 
 本文进行了静态源码核对，没有启动 dsh、运行 Cordis 行为测试或发送模型请求。下文的缺失依赖和隔离案例均为按源码推演的条件，代码节选用于解释机制，不是独立可启动的应用。
 
