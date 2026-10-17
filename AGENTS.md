@@ -26,6 +26,7 @@
 
 只读取与当前任务匹配的专项文档：
 
+- 博客正文写作、续写、重构、润色、翻译或系列规划：先读取并执行[博客写作工作流](.agents/content/blog-writing-workflow.md)与[易读性规则](.agents/content/technical-writing.md#readability)，按任务分支使用所需 skill。
 - 新建文章、规划或续写系列、调整文章栏目：先读取 [.agents/content/section-routing.md](.agents/content/section-routing.md)，确定主题、来源与系列关系，新文章默认使用统一文章目录。
 - 创建或编辑任意技术文章：读取 [.agents/content/technical-writing.md](.agents/content/technical-writing.md)。
 - 编写或编辑原创 Agent 机制与实践文章，包括 `content/agent/` 下的已有内容：再读取 [.agents/content/agent-section.md](.agents/content/agent-section.md)，并使用 [archetypes/agent.md](archetypes/agent.md) 作为 front matter 和文章骨架的来源。
